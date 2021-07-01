@@ -3,10 +3,10 @@ name: Container
 on:
   push:
     branches:
-      - develop
+      - ghcr-test
 
 env:
-  CONTAINER: ghcr.io/deepmodeling/abacus-development-kit:gnu
+  CONTAINER: ghcr.io/deepmodeling/test:latest
 
 jobs:
   build_container_and_push:

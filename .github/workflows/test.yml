@@ -3,10 +3,10 @@ name: Test
 on:
   pull_request:
     branches:
-      - develop
+      - ghcr-test
 
 env:
-  CONTAINER: ghcr.io/deepmodeling/abacus-development-kit:gnu
+  CONTAINER: ghcr.io/deepmodeling/test:latest
 
 jobs:
   test:
@@ -19,7 +19,7 @@ jobs:
       - name: Build Docker Image
         uses: docker/build-push-action@v2
         with:
-          tags: abacus-development-kit:gnu
+          tags: test:latest
           cache-from: type=registry,ref=${{ env.CONTAINER }}
       - name: Build and Test
-        run: docker run -v $GITHUB_WORKSPACE:/workspace -w /workspace abacus-development-kit:gnu bash entrypoint.sh
+        run: docker run -v $GITHUB_WORKSPACE:/workspace -w /workspace test:latest bash entrypoint.sh
