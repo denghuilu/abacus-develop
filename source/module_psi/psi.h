@@ -3,7 +3,7 @@
 //#incude "Inputs.h"
 //#include "Basis.h"
 //#include "Cell.h"
-
+#include <string>
 #include <vector>
 #include <cassert>
 #include "module_base/global_variable.h"
