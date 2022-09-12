@@ -8,6 +8,8 @@
 #include "src_pw/global.h"
 #include <algorithm>
 
+#include "module_psi/psi.h"
+
 namespace hsolver
 {
 HSolverPW::HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in)
@@ -105,6 +107,28 @@ void HSolverPW::solve(hamilt::Hamilt* pHamilt, psi::Psi<std::complex<double>>& p
         ModuleBase::timer::tick("HSolverPW", "solve");
         return;
     }
+
+#ifdef __CUDA
+    psi::psi_gpu_test_in(psi);
+#endif
+
+    // CPU版本的 psiTo1:
+    // for (int ik = 0; ik < psi.get_nk(); ++ik)
+    // {
+    //     psi.fix_k(ik);     
+    //     for (int ibnd = 0; ibnd < psi.get_nbands(); ibnd++)
+    //     {
+    //         double sum = 0.0;
+    //         for (int ibasis = 0; ibasis < psi.get_nbasis(); ibasis++){          
+    //             sum = sum + ( psi(ik,ibnd,ibasis).imag() * psi(ik,ibnd,ibasis).imag() + psi(ik,ibnd,ibasis).real() * psi(ik,ibnd,ibasis).real() );
+    //             // sum = sum + norm( psi(ibnd,ibasis) );
+    //         }
+    //         MPI_Allreduce(MPI_IN_PLACE,&sum,1,MPI_DOUBLE,MPI_SUM,POOL_WORLD);
+    //         std::cout << "SUM = " << sum << std::endl;  
+    //     }
+    // }
+
+
     pes->psiToRho(psi);
 
     ModuleBase::timer::tick("HSolverPW", "solve");

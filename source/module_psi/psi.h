@@ -9,6 +9,7 @@
 #include "module_base/global_variable.h"
 
 #include <complex>
+#include "src_parallel/parallel_global.h"
 
 namespace psi
 {
@@ -133,6 +134,16 @@ public:
         this->psi_current = psi.data();
         return;
     }
+
+// #ifdef __CUDA
+//     void psi_gpu_test(){
+//         psi_gpu_test_in();
+//     };
+// #endif
+
+//     void psi_gpu_test(){
+//         psi_gpu_test_in();
+//     };
         
     // get the pointer for current k point or current band
     T* get_pointer(){return psi_current;}
@@ -320,6 +331,11 @@ void initialize(Psi<T> &psi);
         const int &hardware_type, 
         const int &parallel_type 
     );*/
+
+#ifdef __CUDA
+    template<typename T>
+    void psi_gpu_test_in(Psi<T> &psi);
+#endif
 
 
 }//namespace psi
