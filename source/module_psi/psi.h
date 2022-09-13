@@ -52,26 +52,26 @@ struct Range
 
 // there is the structure of electric wavefunction coefficient
 // the basic operations defined in the Operator Class
-template<typename T, typename Device = ABACUS::DEVICE_CPU>
+template<typename T, typename Device = DEVICE_CPU>
 class Psi
 {
 public:
     //Constructor 1: basic
     Psi(){
         this->npol = GlobalV::NPOL;
-        this->device = psi::get_device_type<Device>(ctx);
+        this->device = device::get_device_type<Device>(ctx);
     };
     //Constructor 2: specify ngk only, should call resize() later
     Psi(const int* ngk_in)
     {
         this->ngk = ngk_in;
         this->npol = GlobalV::NPOL;
-        this->device = psi::get_device_type<Device>(this->ctx);
+        this->device = device::get_device_type<Device>(this->ctx);
     }
     //Constructor 3: specify nk, nbands, nbasis, ngk, and do not need to call resize() later
     Psi(int nk_in, int nbd_in, int nbs_in, const int* ngk_in=nullptr)
     {
-        this->device = psi::get_device_type<Device>(this->ctx);
+        this->device = device::get_device_type<Device>(this->ctx);
         this->resize(nk_in, nbd_in, nbs_in);
         this->ngk = ngk_in;
         this->current_b = 0;
@@ -108,7 +108,7 @@ public:
     //in this case, fix_k can not be used
     Psi(T* psi_pointer, const Psi& psi_in, const int nk_in, int nband_in=0)
     {
-        this->device = psi::get_device_type<Device>(this->ctx);
+        this->device = device::get_device_type<Device>(this->ctx);
         assert(this->device == psi_in.device);
         assert(nk_in<=psi_in.get_nk());
         if(nband_in == 0)
@@ -133,7 +133,7 @@ public:
         const int nbasis_in)
     {
         assert(nks_in>0 && nbands_in>=0 && nbasis_in>0);
-        abacus_resize_memory(this->psi, nks_in * nbands_in * nbasis_in, this->device);
+        memory::abacus_reallocate_memory(this->psi, nks_in * nbands_in * nbasis_in, this->device);
         this->nk = nks_in;
         this->nbands = nbands_in;
         this->nbasis = nbasis_in;
@@ -275,7 +275,7 @@ public:
     void zero_out()
     {
         // this->psi.assign(this->psi.size(), T(0));
-        abacus_memset(this->psi, 0, this->size(), device);
+        memory::abacus_memset(this->psi, 0, this->size(), device);
     }
 
     // solve Range: return(pointer of begin, number of bands or k-points)
@@ -304,11 +304,10 @@ public:
     int npol = 1;
  
  private:   
-    std::vector<T> psi_insider;
-    T * psi = nullptr;
+    T * psi = nullptr; // avoid using C++ STL
 
-    std::string device = "";
-    Device * ctx = {};
+    AbacusDevice_t device = {}; // track the device type (CPU, GPU and SYCL are supported currented)
+    Device * ctx = {}; // an context identifier for obtaining the device variable
     // dimensions
     int nk=1; // number of k points
     int nbands=1; // number of bands

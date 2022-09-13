@@ -1,28 +1,13 @@
-#pragma once
+#ifndef MODULE_PSI_GPU_CUDA_H_
+#define MODULE_PSI_GPU_CUDA_H_
+
 #include <vector>
 #include <stdio.h>
 #include <assert.h>
 #include <cuda_runtime.h>
 
+namespace psi {
 namespace gpu_cuda {
-
-template <typename FPTYPE>
-void memcpy_device_to_host(
-    const FPTYPE * device, 
-    std::vector<FPTYPE> &host) 
-{
-  cudaMemcpy(&host[0], device, sizeof(FPTYPE) * host.size(), cudaMemcpyDeviceToHost);  
-}
-
-template <typename FPTYPE>
-void malloc_host_memory_sync(
-    FPTYPE * &host,
-    const FPTYPE * device,
-    const int size)
-{
-  host = (FPTYPE *)malloc(sizeof(FPTYPE) * size);
-  memcpy_device_to_host(device, host, size);
-}
 
 template <typename FPTYPE>
 void memcpy_host_to_device(
@@ -55,9 +40,7 @@ template <typename FPTYPE>
 void delete_device_memory(
     FPTYPE * &device) 
 {
-  if (device != NULL) {
-    cudaFree(device);
-  }
+  cudaFree(device);
 }
 
 template <typename FPTYPE>
@@ -118,4 +101,7 @@ void abacus_memcpy_host_to_device(
 }
 
 
-} // end of namespace deepmd
+} // end of namespace gpu_cuda
+} // end of namespace psi
+
+#endif  // MODULE_PSI_GPU_CUDA_H_

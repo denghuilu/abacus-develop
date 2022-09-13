@@ -5,16 +5,18 @@
 
 namespace psi{
 
+namespace device{
 
 // functions used in custom ops
-template<> std::string get_device_type <ABACUS::DEVICE_CPU> (ABACUS::DEVICE_CPU* dev) {
-    return "CPU";
+template<> AbacusDevice_t get_device_type <psi::DEVICE_CPU> (psi::DEVICE_CPU* dev) {
+    return CpuDevice;
 }
 
 #if ((defined __CUDA) || (defined __ROCM))
-template<> std::string get_device_type <ABACUS::DEVICE_GPU> (ABACUS::DEVICE_GPU* dev) {
-    return "GPU";
+template<> AbacusDevice_t get_device_type <psi::DEVICE_GPU> (psi::DEVICE_GPU* dev) {
+    return GpuDevice;
 }
 #endif
 
-}
+} // end of namespace device
+} // end of namespace psi

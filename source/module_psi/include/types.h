@@ -1,20 +1,18 @@
-#ifndef ABACUS_TYPES_H_
-#define ABACUS_TYPES_H_
+#ifndef MODULE_PSI_TYPES_H_
+#define MODULE_PSI_TYPES_H_
 
 #include <map>
 #include <set>
 #include <string>
 
-namespace ABACUS {
+namespace psi {
+
 struct DEVICE_CPU;
 struct DEVICE_GPU;
 struct DEVICE_SYCL;
 
-extern DEVICE_CPU CpuDevice;
-extern DEVICE_GPU GpuDevice;
-extern DEVICE_SYCL SyclDevice;
-}  // end namespace Eigen
+enum AbacusDevice_t {UnKnown, CpuDevice, GpuDevice, SyclDevice};
 
+}  // end namespace psi
 
-
-#endif  // ABACUS_TYPES_H_
+#endif  // MODULE_PSI_TYPES_H_

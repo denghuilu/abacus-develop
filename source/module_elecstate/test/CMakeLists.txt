@@ -11,6 +11,7 @@ AddTest(
           ../../src_pw/structure_factor.cpp ../../src_pw/pw_complement.cpp 
           ../../src_pw/klist.cpp ../../src_parallel/parallel_kpoints.cpp ../../src_pw/occupy.cpp  
           ../../module_elecstate/elecstate_pw.cpp ../../module_elecstate/elecstate.cpp
+          ../../module_psi/src/device.cpp
 )
 
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
@@ -33,6 +34,7 @@ AddTest(
             ../../src_pw/charge.cpp 
             ../../src_pdiag/pdiag_common.cpp
             ../../src_io/output.cpp ../../src_pw/soc.cpp
+            ../../module_psi/src/device.cpp
 )
 target_compile_definitions(EState_psiToRho_lcao PRIVATE __MPI)
 install(FILES elecstate_lcao_parallel_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

@@ -1,5 +1,5 @@
-#ifndef ABACUS_MEMORY_H_
-#define ABACUS_MEMORY_H_
+#ifndef MODULE_PSI_MEMORY_H_
+#define MODULE_PSI_MEMORY_H_
 
 #include <string.h>
 #include "module_psi/include/types.h"
@@ -10,15 +10,18 @@
 #include <module_psi/include/gpu_cuda.h>
 #endif
 
+namespace psi {
+namespace memory {
+
 template<typename FPTYPE>
-void abacus_resize_memory(FPTYPE * &arr, const int& size, const std::string& device) {
-  if (device == "CPU") {
+void abacus_reallocate_memory(FPTYPE * &arr, const int& size, const AbacusDevice_t& device) {
+  if (device == CpuDevice) {
     if (arr != nullptr) {
       free(arr);
     }
     arr = (FPTYPE*) malloc(sizeof(FPTYPE) * size);
   }
-  else if (device == "GPU") {
+  else if (device == GpuDevice) {
     #if __CUDA
       gpu_cuda::abacus_resize_memory(arr, size);
     #elif __ROCM
@@ -28,11 +31,11 @@ void abacus_resize_memory(FPTYPE * &arr, const int& size, const std::string& dev
 }
 
 template<typename FPTYPE>
-void abacus_memset(FPTYPE * &arr, const int & val, const int& size, const std::string& device) {
-  if (device == "CPU") {
+void abacus_memset(FPTYPE * &arr, const int & val, const int& size, const AbacusDevice_t& device) {
+  if (device == CpuDevice) {
     memset(arr, val, sizeof(FPTYPE) * size);
   }
-  else if (device == "GPU") {
+  else if (device == GpuDevice) {
     #if __CUDA
       gpu_cuda::abacus_memset(arr, val, size);
     #elif __ROCM
@@ -41,38 +44,7 @@ void abacus_memset(FPTYPE * &arr, const int & val, const int& size, const std::s
   }
 }
 
-template<typename FPTYPE>
-void abacus_memory_sync(
-    FPTYPE * &arr1, 
-    const FPTYPE * &arr2, 
-    const int& size, 
-    const std::string& device1, 
-    const std::string& device2) 
-{
-  if (device1 == "CPU" and device2 == "CPU") {
-    memcpy(arr1, arr2, size);
-  }
-  if (device1 == "GPU" and device2 == "GPU") {
-    #if __CUDA
-      gpu_cuda::abacus_memcpy_device_to_device(arr1, arr2, size);
-    #elif __ROCM
-      gpu_rocm::abacus_memcpy_device_to_device(arr1, arr2, size);
-    #endif
-  }
-  else if (device1 == "CPU" and device2 == "GPU") {
-    #if __CUDA
-      gpu_cuda::abacus_memcpy_device_to_host(arr1, arr2, size);
-    #elif __ROCM
-      gpu_rocm::abacus_memcpy_device_to_host(arr1, arr2, size);
-    #endif
-  }
-  else if (device1 == "GPU" and device2 == "CPU") {
-    #if __CUDA
-      gpu_cuda::abacus_memcpy_host_to_device(arr1, arr2, size);
-    #elif __ROCM
-      gpu_rocm::abacus_memcpy_host_to_device(arr1, arr2, size);
-    #endif
-  }
-}
+} // end of namespace memory
+} // end of namespace psi
 
-#endif // ABACUS_MEMORY_H_
+#endif // MODULE_PSI_MEMORY_H_
