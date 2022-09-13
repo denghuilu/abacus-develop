@@ -133,7 +133,8 @@ public:
         const int nbasis_in)
     {
         assert(nks_in>0 && nbands_in>=0 && nbasis_in>0);
-        memory::abacus_reallocate_memory(this->psi, nks_in * nbands_in * nbasis_in, this->device);
+        // This function will delete the psi array first(if psi exist), then malloc a new memory for it.
+        memory::abacus_resize_memory(this->psi, nks_in * nbands_in * nbasis_in, this->device);
         this->nk = nks_in;
         this->nbands = nbands_in;
         this->nbasis = nbasis_in;

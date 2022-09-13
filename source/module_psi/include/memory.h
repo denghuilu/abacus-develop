@@ -14,7 +14,7 @@ namespace psi {
 namespace memory {
 
 template<typename FPTYPE>
-void abacus_reallocate_memory(FPTYPE * &arr, const int& size, const AbacusDevice_t& device) {
+void abacus_resize_memory(FPTYPE * &arr, const int& size, const AbacusDevice_t& device) {
   if (device == CpuDevice) {
     if (arr != nullptr) {
       free(arr);
