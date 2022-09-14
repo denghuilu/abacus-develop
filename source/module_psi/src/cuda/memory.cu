@@ -6,6 +6,7 @@
 #include <complex>
 #include <assert.h>
 #include <cuda_runtime.h>
+#include "module_psi/include/memory.h"
 
 namespace psi {
 namespace memory {
@@ -122,6 +123,9 @@ template void abacus_memcpy_device_to_host_gpu_cuda<std::complex<double>>(std::c
 
 template void abacus_memcpy_host_to_device_gpu_cuda<double>(double*, const double *, const int);
 template void abacus_memcpy_host_to_device_gpu_cuda<std::complex<double>>(std::complex<double>*, const std::complex<double>*, const int);
+
+template void abacus_delete_memory_gpu_cuda<double>(double*);
+template void abacus_delete_memory_gpu_cuda<std::complex<double>>(std::complex<double>*);
 
 } // end of namespace gpu_cuda
 } // end of namespace psi
