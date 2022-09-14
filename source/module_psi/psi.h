@@ -47,9 +47,8 @@ public:
     //Constructor 6: initialize a new psi from the given psi_in
     //in this case, psi_in may have a different device type.
     Psi(const Psi& psi_in);
-    // initialize the wavefunction coefficient
-    // only resize and construct function now is used
-    
+    //Destructor for deleting the psi array manually
+    ~Psi();
     // allocate psi for three dimensions 
     void resize(const int nks_in, const int nbands_in, const int nbasis_in);
 

@@ -1,3 +1,4 @@
+#include <iostream>
 #include <complex>
 #include <string.h>
 #include "module_psi/include/types.h"
@@ -75,6 +76,23 @@ void abacus_sync_memory(
   }
 }
 
+template<typename T>
+void abacus_delete_memory(
+    T* arr,
+    const AbacusDevice_t device) 
+{
+  if (device == CpuDevice) {
+    free(arr);
+  }
+  else{
+    #if __CUDA
+      abacus_delete_memory_gpu_cuda(arr);
+    #elif __ROCM
+      abacus_delete_memory_gpu_rocm(arr);
+    #endif
+  }
+}
+
 template void abacus_resize_memory<double>(double*&, const int, const AbacusDevice_t);
 template void abacus_resize_memory<std::complex<double>>(std::complex<double>*&, const int, const AbacusDevice_t);
 
@@ -83,6 +101,9 @@ template void abacus_memset<std::complex<double>>(std::complex<double>*, const i
 
 template void abacus_sync_memory<double>(double*, const double*, const size_t,  const AbacusDevice_t, const AbacusDevice_t);
 template void abacus_sync_memory<std::complex<double>>(std::complex<double>*, const std::complex<double>*, const size_t,  const AbacusDevice_t, const AbacusDevice_t);
+
+template void abacus_delete_memory<double>(double*, const AbacusDevice_t);
+template void abacus_delete_memory<std::complex<double>>(std::complex<double>*, const AbacusDevice_t);
 
 }
 }

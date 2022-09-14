@@ -15,6 +15,9 @@ void abacus_memset(T*, const int, const int, const AbacusDevice_t);
 template<typename T>
 void abacus_sync_memory(T*, const T*, const size_t,  const AbacusDevice_t, const AbacusDevice_t);
 
+template<typename T>
+void abacus_delete_memory(T*, const AbacusDevice_t);
+
 #if __CUDA
 template<typename T>
 void abacus_resize_memory_gpu_cuda(T*&, const int);
@@ -31,6 +34,8 @@ void abacus_memcpy_host_to_device_gpu_cuda(T* , const T*, const int);
 template <typename T>
 void abacus_memcpy_device_to_host_gpu_cuda(T* , const T*, const int);
 
+template<typename T>
+void abacus_delete_memory_gpu_cuda(T*);
 #elif __ROCM
 template<typename T>
 void abacus_resize_memory_gpu_rocm(T*&, const int, const AbacusDevice_t);
@@ -46,6 +51,9 @@ void abacus_memcpy_host_to_device_gpu_rocm(T* , const T*, const int);
 
 template <typename T>
 void abacus_memcpy_device_to_host_gpu_rocm(T* , const T*, const int);
+
+template<typename T>
+void abacus_delete_memory_gpu_rocm(T*);
 #endif
 
 } // end of namespace memory

@@ -64,7 +64,6 @@ void abacus_resize_memory_gpu_cuda(
   malloc_device_memory(arr, size);  
 }
 
-
 template <typename T>
 void abacus_memset_gpu_cuda(
     T* arr, 
@@ -100,6 +99,13 @@ void abacus_memcpy_host_to_device_gpu_cuda(
     const int size) 
 {
   cudaMemcpy(arr1, arr2, sizeof(T) * size, cudaMemcpyHostToDevice);  
+}
+
+template <typename T>
+void abacus_delete_memory_gpu_cuda(
+  T* arr) 
+{
+  delete_device_memory(arr);
 }
 
 template void abacus_resize_memory_gpu_cuda<double>(double*&, const int);

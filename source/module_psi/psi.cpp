@@ -38,6 +38,12 @@ Psi<T, Device>::Psi()
 }
 
 template<typename T, typename Device>
+Psi<T, Device>::~Psi() 
+{
+    memory::abacus_delete_memory(this->psi, this->device);
+}
+
+template<typename T, typename Device>
 Psi<T, Device>::Psi(
     const int* ngk_in) 
 {
@@ -78,7 +84,7 @@ Psi<T, Device>::Psi(
     if(nband_in <= psi_in.get_nbands()) {
         // copy from Psi from psi_in(current_k, 0, 0), 
         // if size of k is 1, current_k in new Psi is psi_in.current_k 
-        if(nk_in==1) {
+        if(nk_in == 1) {
             //current_k for this Psi only keep the spin index same as the copied Psi
             this->current_k = psi_in.get_current_k();
         } 
@@ -126,6 +132,7 @@ Psi<T, Device>::Psi(
     this->psi_current = psi_in.psi_current;
     // this function will copy psi_in.psi to this->psi no matter the device types of each other.
     this->device = device::get_device_type<Device>(this->ctx);
+    this->resize(psi_in.get_nk(), psi_in.get_nbands(), psi_in.get_nbasis());
     memory::abacus_sync_memory(
         this->psi,
         psi_in.get_pointer(), psi_in.size(), this->device, psi_in.device);
@@ -195,7 +202,10 @@ const int& Psi<T, Device>::get_nbasis() const
 
 template<typename T, typename Device>
 size_t Psi<T, Device>::size() const
-{
+{   
+    if (this-> psi == nullptr) {
+        return 0;
+    }
     return this->nk * this->nbands * this->nbasis;
 }
 
