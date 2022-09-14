@@ -13,6 +13,6 @@ struct DEVICE_SYCL;
 
 enum AbacusDevice_t {UnKnown, CpuDevice, GpuDevice, SyclDevice};
 
-}  // end namespace psi
+}  // end of namespace psi
 
 #endif  // MODULE_PSI_TYPES_H_

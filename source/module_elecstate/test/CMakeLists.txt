@@ -6,19 +6,18 @@ remove_definitions(-D__DEEPKS)
 
 AddTest(
   TARGET EState_updaterhok_pw
-  LIBS ${math_libs} planewave_serial base_serial
+  LIBS ${math_libs} planewave_serial base_serial psi
   SOURCES updaterhok_pw_test.cpp ../../src_pw/charge.cpp ../../src_parallel/parallel_reduce.cpp 
           ../../src_pw/structure_factor.cpp ../../src_pw/pw_complement.cpp 
           ../../src_pw/klist.cpp ../../src_parallel/parallel_kpoints.cpp ../../src_pw/occupy.cpp  
           ../../module_elecstate/elecstate_pw.cpp ../../module_elecstate/elecstate.cpp
-          ../../module_psi/src/device.cpp
 )
 
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 AddTest(
   TARGET EState_psiToRho_lcao
-  LIBS ${math_libs} ELPA::ELPA base orb cell neighbor planewave
+  LIBS ${math_libs} ELPA::ELPA base orb cell neighbor planewave psi
   SOURCES elecstate_lcao_test.cpp ../elecstate_lcao.cpp ../dm2d_to_grid.cpp
             ../../src_parallel/parallel_global.cpp ../../src_parallel/parallel_common.cpp ../../src_parallel/parallel_reduce.cpp 
             ../../src_lcao/local_orbital_charge.cpp ../../src_lcao/DM_gamma.cpp ../../src_lcao/DM_k.cpp 
