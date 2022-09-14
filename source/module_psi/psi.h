@@ -3,10 +3,14 @@
 //#incude "Inputs.h"
 //#include "Basis.h"
 //#include "Cell.h"
-
+#include <string>
 #include <vector>
 #include <cassert>
 #include "module_base/global_variable.h"
+#include "module_base/tool_quit.h"
+#include "module_psi/include/types.h"
+#include "module_psi/include/device.h"
+#include "module_psi/include/memory.h"
 
 #include <complex>
 
@@ -48,25 +52,28 @@ struct Range
 
 // there is the structure of electric wavefunction coefficient
 // the basic operations defined in the Operator Class
-template<typename T>
+template<typename T, typename Device = DEVICE_CPU>
 class Psi
 {
 public:
     //Constructor 1: basic
-    Psi(void){
+    Psi(){
         this->npol = GlobalV::NPOL;
+        this->device = device::get_device_type<Device>(ctx);
     };
     //Constructor 2: specify ngk only, should call resize() later
     Psi(const int* ngk_in)
     {
         this->ngk = ngk_in;
         this->npol = GlobalV::NPOL;
+        this->device = device::get_device_type<Device>(this->ctx);
     }
     //Constructor 3: specify nk, nbands, nbasis, ngk, and do not need to call resize() later
     Psi(int nk_in, int nbd_in, int nbs_in, const int* ngk_in=nullptr)
     {
-        this->ngk = ngk_in;
+        this->device = device::get_device_type<Device>(this->ctx);
         this->resize(nk_in, nbd_in, nbs_in);
+        this->ngk = ngk_in;
         this->current_b = 0;
         this->current_k = 0;
         this->npol = GlobalV::NPOL;
@@ -79,6 +86,7 @@ public:
         {
             nband_in = psi_in.get_nbands();
         }
+        this->device = psi_in.device;
         this->resize(nk_in, nband_in, psi_in.get_nbasis());
         this->ngk = psi_in.ngk;
         this->npol = psi_in.npol;
@@ -88,13 +96,11 @@ public:
             // copy from Psi from psi_in(current_k, 0, 0), 
             // if size of k is 1, current_k in new Psi is psi_in.current_k 
             const T* tmp = psi_in.get_pointer();
-            if(nk_in==1) for(size_t index=0; index<this->size();++index)
-            {
-                psi[index] = tmp[index];
+            if(nk_in==1) {
                 //current_k for this Psi only keep the spin index same as the copied Psi
                 this->current_k = psi_in.get_current_k();
             } 
-            else for(size_t index=0; index<this->size();++index) psi[index] = tmp[index];
+            for(size_t index=0; index<this->size();++index) psi[index] = tmp[index];
         }
     }
 
@@ -102,6 +108,8 @@ public:
     //in this case, fix_k can not be used
     Psi(T* psi_pointer, const Psi& psi_in, const int nk_in, int nband_in=0)
     {
+        this->device = device::get_device_type<Device>(this->ctx);
+        assert(this->device == psi_in.device);
         assert(nk_in<=psi_in.get_nk());
         if(nband_in == 0)
         {
@@ -125,15 +133,15 @@ public:
         const int nbasis_in)
     {
         assert(nks_in>0 && nbands_in>=0 && nbasis_in>0);
-        this->psi.resize(nks_in * nbands_in * nbasis_in);
+        // This function will delete the psi array first(if psi exist), then malloc a new memory for it.
+        memory::abacus_resize_memory(this->psi, nks_in * nbands_in * nbasis_in, this->device);
         this->nk = nks_in;
         this->nbands = nbands_in;
         this->nbasis = nbasis_in;
         this->current_nbasis = nbasis_in;
-        this->psi_current = psi.data();
-        return;
+        this->psi_current = this->psi;
     }
-        
+
     // get the pointer for current k point or current band
     T* get_pointer(){return psi_current;}
     T* get_pointer(const int& ibands)
@@ -152,7 +160,8 @@ public:
     const int& get_nk() const {return nk;}
     const int& get_nbands() const {return nbands;}
     const int& get_nbasis() const {return nbasis;}
-    size_t size() const {return this->psi.size();}
+    // size_t size() const {return this->psi.size();}
+    size_t size() const {return this->nk * this->nbands * this->nbasis;}
 
     // choose k-point index , then Psi(iband, ibasis) can reach Psi(ik, iband, ibasis)
     void fix_k(const int ik) const
@@ -188,6 +197,9 @@ public:
         assert(ik>=0 && ik<this->nk);
 		assert(ibands>=0 && ibands<this->nbands);	
         assert(ibasis>=0 && ibasis<this->nbasis);
+        #if ((defined __CUDA) || (defined __ROCM))
+            ModuleBase::WARNING_QUIT("Psi operator ()", "GPU psi cannot fetch value by an overloaded operator ()!");
+        #endif 
 		return this->psi[(ik*this->nbands + ibands) * this->nbasis + ibasis];
 	}
 
@@ -196,6 +208,9 @@ public:
         assert(ik>=0 && ik<this->nk);
 		assert(ibands>=0 && ibands<this->nbands);	
         assert(ibasis>=0 && ibasis<this->nbasis);
+        #if ((defined __CUDA) || (defined __ROCM))
+            ModuleBase::WARNING_QUIT("Psi operator ()", "GPU psi cannot fetch value by an overloaded operator ()!");
+        #endif
 		return this->psi[(ik*this->nbands + ibands) * this->nbasis + ibasis];
 	}
 
@@ -205,6 +220,9 @@ public:
         assert(this->current_b==0);
 		assert(ibands>=0 && ibands<this->nbands);	
         assert(ibasis>=0 && ibasis<this->nbasis);
+        #if ((defined __CUDA) || (defined __ROCM))
+            ModuleBase::WARNING_QUIT("Psi operator ()", "GPU psi cannot fetch value by an overloaded operator ()!");
+        #endif
 		return this->psi_current[ibands * this->nbasis + ibasis];
 	}
 
@@ -213,6 +231,9 @@ public:
         assert(this->current_b==0);
 		assert(ibands>=0 && ibands<this->nbands);	
         assert(ibasis>=0 && ibasis<this->nbasis);
+        #if ((defined __CUDA) || (defined __ROCM))
+            ModuleBase::WARNING_QUIT("Psi operator ()", "GPU psi cannot fetch value by an overloaded operator ()!");
+        #endif
 		return this->psi_current[ibands * this->nbasis + ibasis];
 	}
 
@@ -220,12 +241,18 @@ public:
     T &operator()(const int ibasis)
 	{	
         assert(ibasis>=0 && ibasis<this->nbasis);
+        #if ((defined __CUDA) || (defined __ROCM))
+            ModuleBase::WARNING_QUIT("Psi operator ()", "GPU psi cannot fetch value by an overloaded operator ()!");
+        #endif
 		return this->psi_current[this->current_b * this->nbasis + ibasis];
 	}
 
 	const T &operator()(const int ibasis) const
 	{
         assert(ibasis>=0 && ibasis<this->nbasis);
+        #if ((defined __CUDA) || (defined __ROCM))
+            ModuleBase::WARNING_QUIT("Psi operator ()", "GPU psi cannot fetch value by an overloaded operator ()!");
+        #endif
 		return this->psi_current[this->current_b * this->nbasis + ibasis];
 	}
  
@@ -245,9 +272,11 @@ public:
     int get_current_nbas() const {return this->current_nbasis;}
     const int& get_ngk(const int ik_in) const {return this->ngk[ik_in];}
 
+    // mark
     void zero_out()
     {
-        this->psi.assign(this->psi.size(), T(0));
+        // this->psi.assign(this->psi.size(), T(0));
+        memory::abacus_memset(this->psi, 0, this->size(), device);
     }
 
     // solve Range: return(pointer of begin, number of bands or k-points)
@@ -276,8 +305,10 @@ public:
     int npol = 1;
  
  private:   
-    std::vector<T> psi;
- 
+    T * psi = nullptr; // avoid using C++ STL
+
+    AbacusDevice_t device = {}; // track the device type (CPU, GPU and SYCL are supported currented)
+    Device * ctx = {}; // an context identifier for obtaining the device variable
     // dimensions
     int nk=1; // number of k points
     int nbands=1; // number of bands
