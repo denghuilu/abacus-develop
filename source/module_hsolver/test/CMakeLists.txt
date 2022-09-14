@@ -6,7 +6,6 @@ AddTest(
   SOURCES diago_cg_test.cpp ../diago_cg.cpp  ../diago_iter_assist.cpp  
           ../../src_parallel/parallel_reduce.cpp
           ../../src_parallel/parallel_global.cpp ../../module_pw/test/test_tool.cpp
-          ../../module_psi/src/device.cpp
 )
 AddTest(
   TARGET HSolver_dav
