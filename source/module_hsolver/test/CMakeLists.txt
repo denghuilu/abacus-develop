@@ -6,6 +6,7 @@ AddTest(
   SOURCES diago_cg_test.cpp ../diago_cg.cpp  ../diago_iter_assist.cpp  
           ../../module_psi/psi.cpp  ../../src_parallel/parallel_reduce.cpp
           ../../src_parallel/parallel_global.cpp ../../module_pw/test/test_tool.cpp
+          ../../module_psi/src/device.cpp
 )
 AddTest(
   TARGET HSolver_dav
@@ -13,12 +14,14 @@ AddTest(
   SOURCES diago_david_test.cpp ../diago_david.cpp  ../diago_iter_assist.cpp 
           ../../module_psi/psi.cpp  ../../src_parallel/parallel_reduce.cpp ../../src_parallel/parallel_global.cpp 
           ../../module_pw/test/test_tool.cpp
+          ../../module_psi/src/device.cpp
 )
 AddTest(
   TARGET HSolver_LCAO
   LIBS ${math_libs} ELPA::ELPA base
   SOURCES diago_lcao_test.cpp ../diago_elpa.cpp ../diago_blas.cpp ../../src_parallel/parallel_global.cpp 
           ../../src_parallel/parallel_common.cpp ../../src_parallel/parallel_reduce.cpp
+          ../../module_psi/src/device.cpp
 )
 
 install(FILES H-KPoints-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
