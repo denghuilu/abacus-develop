@@ -171,6 +171,13 @@ void initialize(Psi<T> &psi);
 #ifdef __CUDA
     template<typename T>
     void psi_gpu_test_in(Psi<T> &psi);
+
+    template<typename T>
+    void psiTo1(Psi<T> &psi);
+
+    template<typename T>
+    void checkComplexToDouble2(Psi<T> &psi);
+
 #endif
 
 
