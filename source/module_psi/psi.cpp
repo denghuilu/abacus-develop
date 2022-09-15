@@ -411,9 +411,13 @@ void initialize(Psi<double> &psi)
 namespace psi {
 template class Psi<std::complex<double>, DEVICE_CPU>;
 template class Psi<double, DEVICE_CPU>;
+template Psi<std::complex<double>, DEVICE_CPU>::Psi<std::complex<double>, DEVICE_CPU>(const Psi<std::complex<double>, DEVICE_CPU>&);
+template Psi<double, DEVICE_CPU>::Psi<double, DEVICE_CPU>(const Psi<double, DEVICE_CPU>&);
 #if ((defined __CUDA) || (defined __ROCM))
 template class Psi<std::complex<double>, DEVICE_GPU>;
 template class Psi<double, DEVICE_GPU>;
+template Psi<std::complex<double>, DEVICE_GPU>::Psi<std::complex<double>, DEVICE_GPU>(const Psi<std::complex<double>, DEVICE_GPU>&);
+template Psi<double, DEVICE_GPU>::Psi<double, DEVICE_GPU>(const Psi<double, DEVICE_GPU>&);
 template Psi<std::complex<double>, DEVICE_GPU>::Psi<std::complex<double>, DEVICE_CPU>(const Psi<std::complex<double>, DEVICE_CPU>&);
 template Psi<double, DEVICE_GPU>::Psi<double, DEVICE_CPU>(const Psi<double, DEVICE_CPU>&);
 template Psi<std::complex<double>, DEVICE_CPU>::Psi<std::complex<double>, DEVICE_GPU>(const Psi<std::complex<double>, DEVICE_GPU>&);
