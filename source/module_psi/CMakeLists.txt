@@ -1,12 +1,20 @@
-if(USE_CUDA)
-    list(APPEND objects
+list(APPEND psi_srcs
+    psi.cpp
+    src/device.cpp
+    src/memory.cpp
+)
+
+if (USE_CUDA) 
+    list(APPEND psi_srcs 
+        src/cuda/memory.cu
         psi.cu
     )
+elseif(USE_ROCM)
+    list(APPEND psi_srcs src/rocm/memory.hip)
 endif()
+
 add_library(
     psi
     OBJECT
-    psi.cpp
-    src/device.cpp
-    ${objects}
+    ${psi_srcs}
 )

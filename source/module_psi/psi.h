@@ -3,16 +3,10 @@
 //#incude "Inputs.h"
 //#include "Basis.h"
 //#include "Cell.h"
-#include <string>
-#include <vector>
-#include <cassert>
-#include "module_base/global_variable.h"
-#include "module_base/tool_quit.h"
 #include "module_psi/include/types.h"
-#include "module_psi/include/device.h"
-#include "module_psi/include/memory.h"
 
-#include <complex>
+
+
 #include "src_parallel/parallel_global.h"
 
 namespace psi
@@ -31,24 +25,10 @@ struct Range
     size_t range_1;
     //range_2 is the end of second index 
     size_t range_2;
-
-    Range(const size_t range_in)
-    {//this is simple constructor for hPsi return
-        k_first = 1;
-        index_1 = 0;
-        range_1 = range_in;
-        range_2 = range_in;
-    }
-    Range(const bool k_first_in,
-        const size_t index_1_in,
-        const size_t range_1_in,
-        const size_t range_2_in)
-    {
-        k_first = k_first_in;
-        index_1 = index_1_in;
-        range_1 = range_1_in;
-        range_2 = range_2_in;
-    }
+    //this is simple constructor for hPsi return
+    Range(const size_t range_in);
+    //constructor 2
+    Range(const bool k_first_in, const size_t index_1_in, const size_t range_1_in, const size_t range_2_in);
 };
 
 // there is the structure of electric wavefunction coefficient
@@ -58,204 +38,53 @@ class Psi
 {
 public:
     //Constructor 1: basic
-    Psi(){
-        this->npol = GlobalV::NPOL;
-        this->device = device::get_device_type<Device>(ctx);
-    };
+    Psi();
     //Constructor 2: specify ngk only, should call resize() later
-    Psi(const int* ngk_in)
-    {
-        this->ngk = ngk_in;
-        this->npol = GlobalV::NPOL;
-        this->device = device::get_device_type<Device>(this->ctx);
-    }
+    Psi(const int* ngk_in);
     //Constructor 3: specify nk, nbands, nbasis, ngk, and do not need to call resize() later
-    Psi(int nk_in, int nbd_in, int nbs_in, const int* ngk_in=nullptr)
-    {
-        this->device = device::get_device_type<Device>(this->ctx);
-        this->resize(nk_in, nbd_in, nbs_in);
-        this->ngk = ngk_in;
-        this->current_b = 0;
-        this->current_k = 0;
-        this->npol = GlobalV::NPOL;
-    }
+    Psi(int nk_in, int nbd_in, int nbs_in, const int* ngk_in=nullptr);
     //Constructor 4: copy a new Psi which have several k-points and several bands from inputted psi_in
-    Psi(const Psi& psi_in, const int nk_in, int nband_in=0)
-    {
-        assert(nk_in<=psi_in.get_nk());
-        if(nband_in == 0)
-        {
-            nband_in = psi_in.get_nbands();
-        }
-        this->device = psi_in.device;
-        this->resize(nk_in, nband_in, psi_in.get_nbasis());
-        this->ngk = psi_in.ngk;
-        this->npol = psi_in.npol;
-
-        if(nband_in <= psi_in.get_nbands())
-        {
-            // copy from Psi from psi_in(current_k, 0, 0), 
-            // if size of k is 1, current_k in new Psi is psi_in.current_k 
-            const T* tmp = psi_in.get_pointer();
-            if(nk_in==1) {
-                //current_k for this Psi only keep the spin index same as the copied Psi
-                this->current_k = psi_in.get_current_k();
-            } 
-            for(size_t index=0; index<this->size();++index) psi[index] = tmp[index];
-        }
-    }
-
+    Psi(const Psi& psi_in, const int nk_in, int nband_in=0);
     //Constructor 5: a wrapper of a data pointer, used for Operator::hPsi()
     //in this case, fix_k can not be used
-    Psi(T* psi_pointer, const Psi& psi_in, const int nk_in, int nband_in=0)
-    {
-        this->device = device::get_device_type<Device>(this->ctx);
-        assert(this->device == psi_in.device);
-        assert(nk_in<=psi_in.get_nk());
-        if(nband_in == 0)
-        {
-            nband_in = psi_in.get_nbands();
-        }
-        this->ngk = psi_in.ngk;
-        this->npol = psi_in.npol;
-        this->nk = nk_in;
-        this->nbands = nband_in;
-        this->nbasis = psi_in.nbasis;
-        this->psi_current = psi_pointer;
-    }
-    // initialize the wavefunction coefficient
-    // only resize and construct function now is used
-    
-    
+    Psi(T* psi_pointer, const Psi& psi_in, const int nk_in, int nband_in=0);
+    //Constructor 6: initialize a new psi from the given psi_in
+    //in this case, psi_in may have a different device type.
+    Psi(const Psi& psi_in);
+    //Destructor for deleting the psi array manually
+    ~Psi();
     // allocate psi for three dimensions 
-    void resize(
-        const int nks_in,
-        const int nbands_in,
-        const int nbasis_in)
-    {
-        assert(nks_in>0 && nbands_in>=0 && nbasis_in>0);
-        // This function will delete the psi array first(if psi exist), then malloc a new memory for it.
-        memory::abacus_resize_memory(this->psi, nks_in * nbands_in * nbasis_in, this->device);
-        this->nk = nks_in;
-        this->nbands = nbands_in;
-        this->nbasis = nbasis_in;
-        this->current_nbasis = nbasis_in;
-        this->psi_current = this->psi;
-    }
+    void resize(const int nks_in, const int nbands_in, const int nbasis_in);
 
     // get the pointer for current k point or current band
-    T* get_pointer(){return psi_current;}
-    T* get_pointer(const int& ibands)
-    {
-        assert(ibands>=0 && ibands<this->nbands);
-        return &psi_current[ibands*this->nbasis];
-    }
-    const T* get_pointer()const{return psi_current;}
-    const T* get_pointer(const int& ibands) const
-    {
-        assert(ibands>=0 && ibands<this->nbands);
-        return &psi_current[ibands*this->nbasis];
-    }
+    T* get_pointer();
+    T* get_pointer(const int& ibands);
+
+    const T* get_pointer() const;
+    const T* get_pointer(const int& ibands) const;
    
     // interface to get three dimension size
-    const int& get_nk() const {return nk;}
-    const int& get_nbands() const {return nbands;}
-    const int& get_nbasis() const {return nbasis;}
+    const int& get_nk() const;
+    const int& get_nbands() const;
+    const int& get_nbasis() const;
     // size_t size() const {return this->psi.size();}
-    size_t size() const {return this->nk * this->nbands * this->nbasis;}
-
+    size_t size() const;
     // choose k-point index , then Psi(iband, ibasis) can reach Psi(ik, iband, ibasis)
-    void fix_k(const int ik) const
-    {
-        assert(ik>=0);
-        this->current_k = ik;
-        if(this->ngk != nullptr && this->npol != 2) this->current_nbasis = this->ngk[ik];
-        else this->current_nbasis = this->nbasis;
-        this->current_b = 0;
-        if( ik >= this->nk)
-        {
-            // mem_saver case
-            this->psi_current = const_cast<T*>(&(this->psi[0]));
-        }
-        else
-        {
-            this->psi_current = const_cast<T*>(&(this->psi[ik * this->nbands * this->nbasis]));
-        }
-        return;
-    }
-
+    void fix_k(const int ik) const;
     // choose k-point index , then Psi(iband, ibasis) can reach Psi(ik, iband, ibasis)
-    void fix_band(const int iband) const
-    {
-        assert(iband>=0 && iband<this->nbands);
-        this->current_b = iband;
-        return;
-    }
+    void fix_band(const int iband) const;
 
     //use operator "(ik, iband, ibasis)" to reach target element
-    T &operator()(const int ik, const int ibands, const int ibasis)
-	{
-        assert(ik>=0 && ik<this->nk);
-		assert(ibands>=0 && ibands<this->nbands);	
-        assert(ibasis>=0 && ibasis<this->nbasis);
-        #if ((defined __CUDA) || (defined __ROCM))
-            ModuleBase::WARNING_QUIT("Psi operator ()", "GPU psi cannot fetch value by an overloaded operator ()!");
-        #endif 
-		return this->psi[(ik*this->nbands + ibands) * this->nbasis + ibasis];
-	}
-
-	const T &operator()(const int ik, const int ibands, const int ibasis) const
-	{
-        assert(ik>=0 && ik<this->nk);
-		assert(ibands>=0 && ibands<this->nbands);	
-        assert(ibasis>=0 && ibasis<this->nbasis);
-        #if ((defined __CUDA) || (defined __ROCM))
-            ModuleBase::WARNING_QUIT("Psi operator ()", "GPU psi cannot fetch value by an overloaded operator ()!");
-        #endif
-		return this->psi[(ik*this->nbands + ibands) * this->nbasis + ibasis];
-	}
+    T& operator()(const int ik, const int ibands, const int ibasis);
+	const T& operator()(const int ik, const int ibands, const int ibasis) const;
 
     //use operator "(iband, ibasis)" to reach target element for current k
-    T &operator()(const int ibands, const int ibasis)
-	{
-        assert(this->current_b==0);
-		assert(ibands>=0 && ibands<this->nbands);	
-        assert(ibasis>=0 && ibasis<this->nbasis);
-        #if ((defined __CUDA) || (defined __ROCM))
-            ModuleBase::WARNING_QUIT("Psi operator ()", "GPU psi cannot fetch value by an overloaded operator ()!");
-        #endif
-		return this->psi_current[ibands * this->nbasis + ibasis];
-	}
-
-	const T &operator()(const int ibands, const int ibasis) const
-	{
-        assert(this->current_b==0);
-		assert(ibands>=0 && ibands<this->nbands);	
-        assert(ibasis>=0 && ibasis<this->nbasis);
-        #if ((defined __CUDA) || (defined __ROCM))
-            ModuleBase::WARNING_QUIT("Psi operator ()", "GPU psi cannot fetch value by an overloaded operator ()!");
-        #endif
-		return this->psi_current[ibands * this->nbasis + ibasis];
-	}
+    T& operator()(const int ibands, const int ibasis);
+	const T& operator()(const int ibands, const int ibasis) const;
 
     //use operator "(ibasis)" to reach target element for current k and current band
-    T &operator()(const int ibasis)
-	{	
-        assert(ibasis>=0 && ibasis<this->nbasis);
-        #if ((defined __CUDA) || (defined __ROCM))
-            ModuleBase::WARNING_QUIT("Psi operator ()", "GPU psi cannot fetch value by an overloaded operator ()!");
-        #endif
-		return this->psi_current[this->current_b * this->nbasis + ibasis];
-	}
-
-	const T &operator()(const int ibasis) const
-	{
-        assert(ibasis>=0 && ibasis<this->nbasis);
-        #if ((defined __CUDA) || (defined __ROCM))
-            ModuleBase::WARNING_QUIT("Psi operator ()", "GPU psi cannot fetch value by an overloaded operator ()!");
-        #endif
-		return this->psi_current[this->current_b * this->nbasis + ibasis];
-	}
+    T& operator()(const int ibasis);
+	const T& operator()(const int ibasis) const;
  
     /* //would be updated later
     int get_basis_type();
@@ -266,42 +95,19 @@ public:
     //Psi& operator=(const Psi &p);
 
     // return current k-point index
-    int get_current_k() const {return this->current_k;}
+    int get_current_k() const;
     // return current band index
-    int get_current_b() const {return this->current_b;}
+    int get_current_b() const;
     // return current ngk for PW base
-    int get_current_nbas() const {return this->current_nbasis;}
-    const int& get_ngk(const int ik_in) const {return this->ngk[ik_in];}
+    int get_current_nbas() const;
+
+    const int& get_ngk(const int ik_in) const;
 
     // mark
-    void zero_out()
-    {
-        // this->psi.assign(this->psi.size(), T(0));
-        memory::abacus_memset(this->psi, 0, this->size(), device);
-    }
+    void zero_out();
 
     // solve Range: return(pointer of begin, number of bands or k-points)
-    std::tuple<const T*, int> to_range(const Range& range)const
-    {
-        int index_1_in = range.index_1;
-        //mem_saver=1 case, only k==0 memory space is avaliable
-        if(index_1_in>0 & this->nk == 1)
-        {
-            index_1_in = 0;
-        }
-        if(range.k_first != this->k_first || index_1_in<0 || range.range_1<0 || range.range_2<range.range_1
-        || (range.k_first && range.range_2>=this->nbands)
-        || (!range.k_first && (range.range_2>=this->nk || range.index_1>=this->nbands) ) ) 
-        {
-            return std::tuple<const T*, int>(nullptr, 0);
-        }
-        else
-        {
-            const T* p = &this->psi[(index_1_in * this->nbands + range.range_1) * this->nbasis];
-            int m = (range.range_2 - range.range_1 + 1)* this->npol;
-            return std::tuple<const T*, int>(p, m);
-        }
-    }
+    std::tuple<const T*, int> to_range(const Range& range) const;
 
     int npol = 1;
  
