@@ -116,26 +116,26 @@ Psi<T, Device>::Psi(
 }
 
 template<typename T, typename Device>
+template<typename T_in, typename Device_in>
 Psi<T, Device>::Psi(
-    const Psi& psi_in)
+    const Psi<T_in, Device_in>& psi_in)
 {
-    this->ngk = psi_in.ngk;
+    this->ngk = psi_in.get_ngk_pointer();
     this->npol = psi_in.npol;
-    this->nk = psi_in.nk;
-    this->nbands = psi_in.nbands;
-    this->nbasis = psi_in.nbasis;
-    this->current_k = psi_in.current_k;
-    this->current_b = psi_in.current_b;
-    this->current_nbasis = psi_in.current_nbasis;
-    this->ngk = psi_in.ngk;
-    this->k_first = psi_in.k_first;
-    this->psi_current = psi_in.psi_current;
+    this->nk = psi_in.get_nk();
+    this->nbands = psi_in.get_nbands();
+    this->nbasis = psi_in.get_nbasis();
+    this->current_k = psi_in.get_current_k();
+    this->current_b = psi_in.get_current_b();
+    this->current_nbasis = psi_in.get_current_nbas();
+    this->k_first = psi_in.get_k_first();
     // this function will copy psi_in.psi to this->psi no matter the device types of each other.
     this->device = device::get_device_type<Device>(this->ctx);
     this->resize(psi_in.get_nk(), psi_in.get_nbands(), psi_in.get_nbasis());
     memory::abacus_sync_memory(
         this->psi,
-        psi_in.get_pointer(), psi_in.size(), this->device, psi_in.device);
+        psi_in.get_pointer(), psi_in.size(), this->device, psi_in.get_device());
+    this->psi_current = this->psi + psi_in.get_psi_bias();
 }
 
 template<typename T, typename Device>
@@ -173,6 +173,30 @@ template<typename T, typename Device>
 const T* Psi<T, Device>::get_pointer() const
 {
     return this->psi_current;
+}
+
+template<typename T, typename Device>
+const int* Psi<T, Device>::get_ngk_pointer() const
+{
+    return this->ngk;
+}
+
+template<typename T, typename Device>
+const bool& Psi<T, Device>::get_k_first() const
+{
+    return this->k_first;
+}
+
+template<typename T, typename Device>
+const AbacusDevice_t& Psi<T, Device>::get_device() const
+{
+    return this->device;
+}
+
+template<typename T, typename Device>
+const int& Psi<T, Device>::get_psi_bias() const
+{
+    return this->psi_bias;
 }
 
 template<typename T, typename Device>
@@ -220,9 +244,11 @@ void Psi<T, Device>::fix_k(const int ik) const
     if(ik >= this->nk) {
         // mem_saver case
         this->psi_current = const_cast<T*>(&(this->psi[0]));
+        this->psi_bias = 0;
     }
     else {
         this->psi_current = const_cast<T*>(&(this->psi[ik * this->nbands * this->nbasis]));
+        this->psi_bias = ik * this->nbands * this->nbasis;
     }
 }
 
@@ -388,5 +414,9 @@ template class Psi<double, DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
 template class Psi<std::complex<double>, DEVICE_GPU>;
 template class Psi<double, DEVICE_GPU>;
+template Psi<std::complex<double>, DEVICE_GPU>::Psi<std::complex<double>, DEVICE_CPU>(const Psi<std::complex<double>, DEVICE_CPU>&);
+template Psi<double, DEVICE_GPU>::Psi<double, DEVICE_CPU>(const Psi<double, DEVICE_CPU>&);
+template Psi<std::complex<double>, DEVICE_CPU>::Psi<std::complex<double>, DEVICE_GPU>(const Psi<std::complex<double>, DEVICE_GPU>&);
+template Psi<double, DEVICE_CPU>::Psi<double, DEVICE_GPU>(const Psi<double, DEVICE_GPU>&);
 #endif
 } // namespace psi
