@@ -50,7 +50,7 @@ public:
     Psi(T* psi_pointer, const Psi& psi_in, const int nk_in, int nband_in=0);
     //Constructor 6: initialize a new psi from the given psi_in
     //in this case, psi_in may have a different device type.
-    Psi(const Psi& psi_in);
+    template<typename T_in, typename Device_in = Device> Psi(const Psi<T_in, Device_in>& psi_in);
     //Destructor for deleting the psi array manually
     ~Psi();
     // allocate psi for three dimensions 
@@ -102,6 +102,14 @@ public:
     int get_current_nbas() const;
 
     const int& get_ngk(const int ik_in) const;
+    // return ngk array of psi
+    const int* get_ngk_pointer() const;
+    // return k_first
+    const bool& get_k_first() const;
+    // return device type of psi
+    const AbacusDevice_t& get_device() const;
+    // return psi_bias
+    const int& get_psi_bias() const;
 
     // mark
     void zero_out();
@@ -134,6 +142,7 @@ public:
 
     bool k_first = true;
 
+    mutable int psi_bias = 0; // psi_current = psi + psi_bias;
 /*    // control if the system has only gamma point
     bool gamma_only; 
 

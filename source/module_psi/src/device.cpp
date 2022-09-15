@@ -1,5 +1,7 @@
 
+#include <complex>
 #include <iostream>
+#include "module_psi/psi.h"
 #include "module_psi/include/types.h"
 #include "module_psi/include/device.h"
 
