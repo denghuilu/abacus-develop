@@ -1,5 +1,7 @@
 
+#include <complex>
 #include <iostream>
+#include "module_psi/psi.h"
 #include "module_psi/include/types.h"
 #include "module_psi/include/device.h"
 
@@ -8,12 +10,12 @@ namespace psi{
 namespace device{
 
 // functions used in custom ops
-template<> AbacusDevice_t get_device_type <psi::DEVICE_CPU> (psi::DEVICE_CPU* dev) {
+template<> AbacusDevice_t get_device_type <DEVICE_CPU> (DEVICE_CPU* dev) {
     return CpuDevice;
 }
 
 #if ((defined __CUDA) || (defined __ROCM))
-template<> AbacusDevice_t get_device_type <psi::DEVICE_GPU> (psi::DEVICE_GPU* dev) {
+template<> AbacusDevice_t get_device_type <DEVICE_GPU> (DEVICE_GPU* dev) {
     return GpuDevice;
 }
 #endif
