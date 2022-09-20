@@ -9,7 +9,7 @@
 namespace psi
 {
 
-__global__ void gpu_norm_test_double2(double2 *psi_band, double *result, int size){
+__global__ void kernel_norm(double2 *psi_band, double *result, int size){
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
     if(tid < size){
         result[tid] = psi_band[tid].x * psi_band[tid].x + psi_band[tid].y * psi_band[tid].y;
@@ -34,7 +34,7 @@ void psi_gpu_test_in( Psi<std::complex<double>> &psi){
     int thread = 512;
     int block = (psi.size() + thread - 1) / thread;
     // 这里有complex 到 double2 的强转
-    gpu_norm_test_double2<<<block,thread>>>((double2*)psi_complex_gpu->get_pointer(), dev_result, psi.size());
+    kernel_norm<<<block,thread>>>((double2*)psi_complex_gpu->get_pointer(), dev_result, psi.size());
     // result from gpu to cpu
     cudaMemcpy(result, dev_result, (psi.size()) * sizeof(double), cudaMemcpyDeviceToHost);
 
@@ -53,22 +53,7 @@ void psi_gpu_test_in( Psi<std::complex<double>> &psi){
 
 }
 
-// 检查 将Complex in GPU 通过cudaMemcpy 到 double2 in CPU 数据的正确性
-// 数据不正确
-// template<>
-// void checkComplexGPUToDouble2CPU(Psi<std::complex<double>> &psi){
-//     psi.fix_k(0);
-//     // complex in GPU
-//     Psi<std::complex<double>, DEVICE_GPU>* psi_complex_gpu = new Psi<std::complex<double>, DEVICE_GPU>(psi);
 
-//     // double2 in cpu
-//     double2* cpu_psi = (double2*) malloc((psi.size()+1) * sizeof(double2));
-//     cudaMemcpy(cpu_psi, psi_complex_gpu, (psi.size()+1) * sizeof(double2), cudaMemcpyDeviceToHost);
-//     std::cout << "double2 :Real:" << cpu_psi[0].x << ", Imag:" <<  cpu_psi[0].y << std::endl;
-
-//     psi.fix_k(0);
-//     std::cout << "complex :Real:" << psi.get_pointer()[0].real() << ", Imag:" <<  psi.get_pointer()[0].imag() << std::endl;
-// } 
 
 
 // 检查 将Complex in CPU 通过cudaMemcpy 到 double2 in GPU 数据的正确性
@@ -109,7 +94,7 @@ void psiTo1(Psi<std::complex<double>> &psi){
     // 调用核函数
     int thread = 512;
     int block = (psi.size() + thread - 1) / thread;
-    gpu_norm_test_double2<<<block,thread>>>(dev_psi, dev_result, psi.size());
+    kernel_norm<<<block,thread>>>(dev_psi, dev_result, psi.size());
     
     cudaMemcpy(result, dev_result, (psi.size()+1) * sizeof(double), cudaMemcpyDeviceToHost);
 

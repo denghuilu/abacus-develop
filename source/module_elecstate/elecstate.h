@@ -37,6 +37,12 @@ class ElecState
     {
         return;
     }
+    virtual void psiToRho_CUDA(const psi::Psi<double, psi::DEVICE_GPU> &psi){
+        return;
+    }
+    virtual void psiToRho_CUDA(const psi::Psi<std::complex<double>, psi::DEVICE_GPU> &psi){
+        return;
+    }
     // virtual void updateRhoK(const psi::Psi<std::complex<double>> &psi) = 0;
     // virtual void updateRhoK(const psi::Psi<double> &psi)=0
 

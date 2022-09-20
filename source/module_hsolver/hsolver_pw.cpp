@@ -110,6 +110,9 @@ void HSolverPW::solve(hamilt::Hamilt* pHamilt, psi::Psi<std::complex<double>>& p
 
 #ifdef __CUDA
     psi::psi_gpu_test_in(psi);
+
+    // psi::Psi<std::complex<double>, psi::DEVICE_GPU> psi_complex_gpu = psi::Psi<std::complex<double>, psi::DEVICE_GPU>(psi);  
+    // pes->psiToRho_CUDA(psi_complex_gpu);
 #endif
 
     // CPU版本的 psiTo1:

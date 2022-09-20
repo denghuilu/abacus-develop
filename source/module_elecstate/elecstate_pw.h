@@ -19,6 +19,8 @@ class ElecStatePW : public ElecState
 
     // interface for HSolver to calculate rho from Psi
     virtual void psiToRho(const psi::Psi<std::complex<double>>& psi) override;
+
+    virtual void psiToRho_CUDA(const psi::Psi<std::complex<double>, psi::DEVICE_GPU>& psi) override;
     // return current electronic density rho, as a input for constructing Hamiltonian
     // const double* getRho(int spin) const override;
 
