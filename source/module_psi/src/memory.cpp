@@ -22,6 +22,7 @@ void abacus_resize_memory(T * &arr, const int size, const AbacusDevice_t device)
       abacus_resize_memory_gpu_rocm(arr, size);
     #endif
   }
+  abacus_memset(arr, 0, size, device);
 }
 
 template<typename T>
