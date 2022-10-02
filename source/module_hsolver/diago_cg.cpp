@@ -60,25 +60,25 @@ void DiagoCG<FPTYPE, Device>::diag_mock(hamilt::Hamilt *phm_in, psi::Psi<std::co
     //-------------------------------------------------------------------
     this->phi_m = new psi::Psi<std::complex<FPTYPE>, Device>(phi, 1, 1);
     // this->hphi.resize(this->dmx, ModuleBase::ZERO);
-    psi::memory::abacus_resize_memory(this->hphi, this->dmx, this->device);
+    psi::memory::abacus_resize_memory_zero(this->hphi, this->dmx, this->device);
     // this->sphi.resize(this->dmx, ModuleBase::ZERO);
-    psi::memory::abacus_resize_memory(this->sphi, this->dmx, this->device);
+    psi::memory::abacus_resize_memory_zero(this->sphi, this->dmx, this->device);
 
     this->cg = new psi::Psi<std::complex<FPTYPE>, Device>(phi, 1, 1);
     // this->scg.resize(this->dmx, ModuleBase::ZERO);
-    psi::memory::abacus_resize_memory(this->scg, this->dmx, this->device);
+    psi::memory::abacus_resize_memory_zero(this->scg, this->dmx, this->device);
     // this->pphi.resize(this->dmx, ModuleBase::ZERO);
-    psi::memory::abacus_resize_memory(this->pphi, this->dmx, this->device);
+    psi::memory::abacus_resize_memory_zero(this->pphi, this->dmx, this->device);
 
     //in band_by_band CG method, only the first band in phi_m would be calculated
     psi::Range cg_hpsi_range(0);
 
     // this->gradient.resize(this->dmx, ModuleBase::ZERO);
-    psi::memory::abacus_resize_memory(this->gradient, this->dmx, this->device);
+    psi::memory::abacus_resize_memory_zero(this->gradient, this->dmx, this->device);
     // this->g0.resize(this->dmx, ModuleBase::ZERO);
-    psi::memory::abacus_resize_memory(this->g0, this->dmx, this->device);
+    psi::memory::abacus_resize_memory_zero(this->g0, this->dmx, this->device);
     // this->lagrange.resize(this->n_band, ModuleBase::ZERO);
-    psi::memory::abacus_resize_memory(this->lagrange, this->n_band, this->device);
+    psi::memory::abacus_resize_memory_zero(this->lagrange, this->n_band, this->device);
 
     for (int m = 0; m < this->n_band; m++)
     {
@@ -213,25 +213,25 @@ void DiagoCG<double, psi::DEVICE_GPU>::diag_mock(hamilt::Hamilt *phm_in, psi::Ps
     //-------------------------------------------------------------------
     this->phi_m = new psi::Psi<std::complex<double>, psi::DEVICE_GPU>(phi, 1, 1);
     // this->hphi.resize(this->dmx, ModuleBase::ZERO);
-    psi::memory::abacus_resize_memory(this->hphi, this->dmx, this->device);
+    psi::memory::abacus_resize_memory_zero(this->hphi, this->dmx, this->device);
     // this->sphi.resize(this->dmx, ModuleBase::ZERO);
-    psi::memory::abacus_resize_memory(this->sphi, this->dmx, this->device);
+    psi::memory::abacus_resize_memory_zero(this->sphi, this->dmx, this->device);
 
     this->cg = new psi::Psi<std::complex<double>, psi::DEVICE_GPU>(phi, 1, 1);
     // this->scg.resize(this->dmx, ModuleBase::ZERO);
-    psi::memory::abacus_resize_memory(this->scg, this->dmx, this->device);
+    psi::memory::abacus_resize_memory_zero(this->scg, this->dmx, this->device);
     // this->pphi.resize(this->dmx, ModuleBase::ZERO);
-    psi::memory::abacus_resize_memory(this->pphi, this->dmx, this->device);
+    psi::memory::abacus_resize_memory_zero(this->pphi, this->dmx, this->device);
 
     //in band_by_band CG method, only the first band in phi_m would be calculated
     psi::Range cg_hpsi_range(0);
 
     // this->gradient.resize(this->dmx, ModuleBase::ZERO);
-    psi::memory::abacus_resize_memory(this->pphi, this->dmx, this->device);
+    psi::memory::abacus_resize_memory_zero(this->pphi, this->dmx, this->device);
     // this->g0.resize(this->dmx, ModuleBase::ZERO);
-    psi::memory::abacus_resize_memory(this->g0, this->dmx, this->device);
+    psi::memory::abacus_resize_memory_zero(this->g0, this->dmx, this->device);
     // this->lagrange.resize(this->n_band, ModuleBase::ZERO);
-    psi::memory::abacus_resize_memory(this->lagrange, this->n_band, this->device);
+    psi::memory::abacus_resize_memory_zero(this->lagrange, this->n_band, this->device);
 
     for (int m = 0; m < this->n_band; m++)
     {

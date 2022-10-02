@@ -22,6 +22,23 @@ void abacus_resize_memory(T * &arr, const int size, const AbacusDevice_t device)
       abacus_resize_memory_gpu_rocm(arr, size);
     #endif
   }
+}
+
+template<typename T>
+void abacus_resize_memory_zero(T * &arr, const int size, const AbacusDevice_t device) {
+  if (device == CpuDevice) {
+    if (arr != nullptr) {
+      free(arr);
+    }
+    arr = (T*) malloc(sizeof(T) * size);
+  }
+  else if (device == GpuDevice) {
+    #if __CUDA
+      abacus_resize_memory_gpu_cuda(arr, size);
+    #elif __ROCM
+      abacus_resize_memory_gpu_rocm(arr, size);
+    #endif
+  }
   abacus_memset(arr, 0, size, device);
 }
 
@@ -96,6 +113,9 @@ void abacus_delete_memory(
 
 template void abacus_resize_memory<double>(double*&, const int, const AbacusDevice_t);
 template void abacus_resize_memory<std::complex<double>>(std::complex<double>*&, const int, const AbacusDevice_t);
+
+template void abacus_resize_memory_zero<double>(double*&, const int, const AbacusDevice_t);
+template void abacus_resize_memory_zero<std::complex<double>>(std::complex<double>*&, const int, const AbacusDevice_t);
 
 template void abacus_memset<double>(double*, const int, const int, const AbacusDevice_t);
 template void abacus_memset<std::complex<double>>(std::complex<double>*, const int, const int, const AbacusDevice_t);
