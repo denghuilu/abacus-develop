@@ -53,24 +53,24 @@ class DiagoCG : public DiagH
     psi::Psi<std::complex<FPTYPE>, Device>* phi_m = nullptr;
     // psi::Psi<std::complex<FPTYPE>, Device>* phi_m = nullptr;
     /// temp vector for S|psi> for one band, size dim
-    std::vector<std::complex<FPTYPE>> sphi;
+    std::complex<FPTYPE>* sphi = nullptr;
     /// temp vector for H|psi> for one band, size dim
-    std::vector<std::complex<FPTYPE>> hphi;
+    std::complex<FPTYPE>* hphi = nullptr;
 
     /// temp vector for , size dim
     psi::Psi<std::complex<FPTYPE>, Device>* cg = nullptr;
     // psi::Psi<std::complex<FPTYPE>, Device>* cg = nullptr;
     /// temp vector for , size dim
-    std::vector<std::complex<FPTYPE>> scg;
+    std::complex<FPTYPE>* scg = nullptr;
     /// temp vector for store psi in sorting with eigenvalues, size dim
-    std::vector<std::complex<FPTYPE>> pphi;
+    std::complex<FPTYPE>* pphi = nullptr;
 
     /// temp vector for , size dim
-    std::vector<std::complex<FPTYPE>> gradient;
+    std::complex<FPTYPE>* gradient = nullptr;
     /// temp vector for , size dim
-    std::vector<std::complex<FPTYPE>> g0;
+    std::complex<FPTYPE>* g0 = nullptr;
     /// temp vector for matrix eigenvector * vector S|psi> , size m_band
-    std::vector<std::complex<FPTYPE>> lagrange;
+    std::complex<FPTYPE>* lagrange = nullptr;
 
     /// device type of psi
     psi::AbacusDevice_t device = {};

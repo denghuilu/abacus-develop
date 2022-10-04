@@ -10,6 +10,9 @@ template<typename T>
 void abacus_resize_memory(T*&, const int, const AbacusDevice_t);
 
 template<typename T>
+void abacus_resize_memory_zero(T*&, const int, const AbacusDevice_t);
+
+template<typename T>
 void abacus_memset(T*, const int, const int, const AbacusDevice_t);
 
 template<typename T>
