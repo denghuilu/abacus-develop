@@ -109,28 +109,10 @@ void HSolverPW::solve(hamilt::Hamilt* pHamilt, psi::Psi<std::complex<double>>& p
     }
 
 #ifdef __CUDA
-    psi::psi_gpu_test_in(psi);
-
+    // psi::psi_gpu_test_in(psi);
     // psi::Psi<std::complex<double>, psi::DEVICE_GPU> psi_complex_gpu = psi::Psi<std::complex<double>, psi::DEVICE_GPU>(psi);  
     // pes->psiToRho_CUDA(psi_complex_gpu);
 #endif
-
-    // CPU版本的 psiTo1:
-    // for (int ik = 0; ik < psi.get_nk(); ++ik)
-    // {
-    //     psi.fix_k(ik);     
-    //     for (int ibnd = 0; ibnd < psi.get_nbands(); ibnd++)
-    //     {
-    //         double sum = 0.0;
-    //         for (int ibasis = 0; ibasis < psi.get_nbasis(); ibasis++){          
-    //             sum = sum + ( psi(ik,ibnd,ibasis).imag() * psi(ik,ibnd,ibasis).imag() + psi(ik,ibnd,ibasis).real() * psi(ik,ibnd,ibasis).real() );
-    //             // sum = sum + norm( psi(ibnd,ibasis) );
-    //         }
-    //         MPI_Allreduce(MPI_IN_PLACE,&sum,1,MPI_DOUBLE,MPI_SUM,POOL_WORLD);
-    //         std::cout << "SUM = " << sum << std::endl;  
-    //     }
-    // }
-
 
     pes->psiToRho(psi);
 

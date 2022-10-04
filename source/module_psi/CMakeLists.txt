@@ -5,10 +5,7 @@ list(APPEND psi_srcs
 )
 
 if (USE_CUDA) 
-    list(APPEND psi_srcs 
-        src/cuda/memory.cu
-        psi.cu
-    )
+    list(APPEND psi_srcs src/cuda/memory.cu)
 elseif(USE_ROCM)
     list(APPEND psi_srcs src/rocm/memory.hip)
 endif()
