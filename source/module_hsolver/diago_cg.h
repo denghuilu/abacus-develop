@@ -84,7 +84,7 @@ class DiagoCG : public DiagH
 
     bool update_psi(FPTYPE &cg_norm, FPTYPE &theta, FPTYPE &eigenvalue);
 
-    void schmit_orth(const int &m, const psi::Psi<std::complex<FPTYPE>> &psi);
+    void schmit_orth(const int &m, const psi::Psi<std::complex<FPTYPE>, Device> &psi);
 
     // used in diag() for template replace Hamilt with Hamilt_PW
     void diag_mock(hamilt::Hamilt *phm_in, psi::Psi<std::complex<FPTYPE>, Device> &phi, FPTYPE *eigenvalue_in);
