@@ -12,7 +12,7 @@ list(APPEND hsolver_srcs
 )
 
 if (USE_CUDA) 
-    list(APPEND hsolver_srcs src/cuda/math_kernel.cu)
+    list(APPEND hsolver_srcs src/cuda/math_kernel_cuda.cu)
 elseif(USE_ROCM)
     list(APPEND hsolver_srcs src/rocm/math_kernel.cu)
 endif()
