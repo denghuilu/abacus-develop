@@ -109,6 +109,15 @@ void abacus_delete_memory_gpu_cuda(
   delete_device_memory(arr);
 }
 
+template <typename FPTYPE>
+void abacus_malloc_device_memory_sync_gpu_cuda(
+    FPTYPE*& device, 
+    const std::vector<FPTYPE>& host)
+{
+  cudaMalloc((void **)&device, sizeof(FPTYPE) * host.size());
+  memcpy_host_to_device(device, host.data(), host.size());
+}
+
 template void abacus_resize_memory_gpu_cuda<double>(double*&, const int);
 template void abacus_resize_memory_gpu_cuda<std::complex<double>>(std::complex<double>*&, const int);
 
@@ -126,6 +135,9 @@ template void abacus_memcpy_host_to_device_gpu_cuda<std::complex<double>>(std::c
 
 template void abacus_delete_memory_gpu_cuda<double>(double*);
 template void abacus_delete_memory_gpu_cuda<std::complex<double>>(std::complex<double>*);
+
+template void abacus_malloc_device_memory_sync_gpu_cuda<double>(double*&, const std::vector<double>&);
+template void abacus_malloc_device_memory_sync_gpu_cuda<std::complex<double>>(std::complex<double>*&, const const std::vector<std::complex<double>>&);
 
 } // end of namespace gpu_cuda
 } // end of namespace psi

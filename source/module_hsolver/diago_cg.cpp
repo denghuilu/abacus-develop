@@ -6,6 +6,7 @@
 #include "module_base/global_function.h"
 #include "module_base/timer.h"
 #include "src_parallel/parallel_reduce.h"
+#include "module_hsolver/include/math_kernel.h"
 
 using namespace hsolver;
 
@@ -101,7 +102,7 @@ void DiagoCG<FPTYPE, Device>::diag_mock(hamilt::Hamilt *phm_in, psi::Psi<std::co
         hpsi_info cg_hpsi_in(this->phi_m, cg_hpsi_range, this->hphi);
         phm_in->ops->hPsi(cg_hpsi_in);
 
-        this->eigenvalue[m] = ModuleBase::GlobalFunc::ddot_real(this->dim, this->phi_m->get_pointer(), this->hphi);
+        this->eigenvalue[m] = hsolver::zdot_real(this->dim, this->phi_m->get_pointer(), this->hphi);
 
         int iter = 0;
         FPTYPE gg_last = 0.0;
@@ -254,7 +255,7 @@ void DiagoCG<double, psi::DEVICE_GPU>::diag_mock(hamilt::Hamilt *phm_in, psi::Ps
         hpsi_info cg_hpsi_in(this->phi_m, cg_hpsi_range, this->hphi);
         phm_in->ops->hPsi_gpu(cg_hpsi_in);
 
-        this->eigenvalue[m] = ModuleBase::GlobalFunc::ddot_real(this->dim, this->phi_m->get_pointer(), this->hphi);
+        this->eigenvalue[m] = hsolver::zdot_real(this->dim, this->phi_m->get_pointer(), this->hphi, this->phi_m->get_device());
 
         int iter = 0;
         double gg_last = 0.0;
@@ -355,9 +356,9 @@ void DiagoCG<FPTYPE, Device>::calculate_gradient()
 
     // Update lambda !
     // (4) <psi|SPH|psi >
-    const FPTYPE eh = ModuleBase::GlobalFunc::ddot_real(this->dim, this->sphi, this->gradient);
+    const FPTYPE eh = hsolver::zdot_real(this->dim, this->sphi, this->gradient);
     // (5) <psi|SPS|psi >
-    const FPTYPE es = ModuleBase::GlobalFunc::ddot_real(this->dim, this->sphi, this->pphi);
+    const FPTYPE es = hsolver::zdot_real(this->dim, this->sphi, this->pphi);
     const FPTYPE lambda = eh / es;
 
     // Update g!
@@ -467,7 +468,7 @@ void DiagoCG<FPTYPE, Device>::calculate_gamma_cg(const int iter, FPTYPE &gg_last
         // gg_inter = <g|g0>
         // Attention : the 'g' in g0 is getted last time
         gg_inter
-            = ModuleBase::GlobalFunc::ddot_real(this->dim, this->gradient, this->g0); // b means before
+            = hsolver::zdot_real(this->dim, this->gradient, this->g0); // b means before
     }
 
     // (2) Update for g0!
@@ -482,7 +483,7 @@ void DiagoCG<FPTYPE, Device>::calculate_gamma_cg(const int iter, FPTYPE &gg_last
 
     // (3) Update gg_now!
     // gg_now = < g|P|scg > = < g|g0 >
-    const FPTYPE gg_now = ModuleBase::GlobalFunc::ddot_real(this->dim, this->gradient, this->g0);
+    const FPTYPE gg_now = hsolver::zdot_real(this->dim, this->gradient, this->g0);
 
     if (iter == 0)
     {
@@ -526,7 +527,7 @@ bool DiagoCG<FPTYPE, Device>::update_psi(FPTYPE &cg_norm, FPTYPE &theta, FPTYPE 
     if (test_cg == 1)
         ModuleBase::TITLE("DiagoCG", "update_psi");
     // ModuleBase::timer::tick("DiagoCG","update");
-    cg_norm = sqrt(ModuleBase::GlobalFunc::ddot_real(this->dim, this->cg->get_pointer(), this->scg));
+    cg_norm = sqrt(hsolver::zdot_real(this->dim, this->cg->get_pointer(), this->scg));
 
     if (cg_norm < 1.0e-10)
         return 1;
@@ -534,9 +535,9 @@ bool DiagoCG<FPTYPE, Device>::update_psi(FPTYPE &cg_norm, FPTYPE &theta, FPTYPE 
     std::complex<FPTYPE>* phi_m_pointer = this->phi_m->get_pointer();
 
     const FPTYPE a0
-        = ModuleBase::GlobalFunc::ddot_real(this->dim, phi_m_pointer, this->pphi) * 2.0 / cg_norm;
+        = hsolver::zdot_real(this->dim, phi_m_pointer, this->pphi) * 2.0 / cg_norm;
     const FPTYPE b0
-        = ModuleBase::GlobalFunc::ddot_real(this->dim, this->cg->get_pointer(), this->pphi) / (cg_norm * cg_norm);
+        = hsolver::zdot_real(this->dim, this->cg->get_pointer(), this->pphi) / (cg_norm * cg_norm);
 
     const FPTYPE e0 = eigenvalue;
     theta = atan(a0 / (e0 - b0)) / 2.0;
@@ -589,7 +590,7 @@ bool DiagoCG<FPTYPE, Device>::update_psi(FPTYPE &cg_norm, FPTYPE &theta, FPTYPE 
 template<typename FPTYPE, typename Device>
 void DiagoCG<FPTYPE, Device>::schmit_orth(
                           const int &m, // end
-                          const psi::Psi<std::complex<FPTYPE>> &psi)
+                          const psi::Psi<std::complex<FPTYPE>, Device> &psi)
 {
     //	ModuleBase::TITLE("DiagoCG","schmit_orth");
     // ModuleBase::timer::tick("DiagoCG","schmit_orth");
@@ -648,7 +649,7 @@ void DiagoCG<FPTYPE, Device>::schmit_orth(
            &ModuleBase::ONE,
            this->phi_m->get_pointer(),
            &inc);
-    psi_norm -= ModuleBase::GlobalFunc::ddot_real(m, lagrange_so.data(), lagrange_so.data(), false);
+    psi_norm -= hsolver::zdot_real(m, lagrange_so.data(), lagrange_so.data(), this->phi_m->get_device(), false);
     //======================================================================
     /*for (int j = 0; j < m; j++)
     {
