@@ -49,6 +49,15 @@ void vector_div_vector(const int &dim,
                        const FPTYPE *vector2,
                        const psi::AbacusDevice_t device = psi::CpuDevice);
 
+// 向量操作：向量 🟰 一个向量 ✖️ 另一个向量（对应索引的元素）
+// TODO 主要vector2的模版问题
+template <typename FPTYPE>
+void vector_mul_vector(const int &dim,
+                       std::complex<FPTYPE> *result,
+                       const std::complex<FPTYPE> *vector1,
+                       const FPTYPE *vector2,
+                       const psi::AbacusDevice_t device = psi::CpuDevice);
+
 // 向量操作：一个向量  🟰  其本身  ➖  一个常数  ✖️ 另一个向量
 template <typename FPTYPE>
 void vector_sub_constantVector(const int &dim,
@@ -67,14 +76,14 @@ void vector_add_constantVector(const int &dim,
                                const FPTYPE constant,
                                const psi::AbacusDevice_t device = psi::CpuDevice);
 
-// 向量操作：向量 🟰 一个向量 ✖️ 另一个向量（对应索引的元素）
-// TODO 主要vector2的模版问题
+//  compute Y = alpha * X + Y
 template <typename FPTYPE>
-void vector_mul_vector(const int &dim,
-                       std::complex<FPTYPE> *result,
-                       const std::complex<FPTYPE> *vector1,
-                       const FPTYPE *vector2,
-                       const psi::AbacusDevice_t device = psi::CpuDevice);
+void axpy(const int *N,
+          const std::complex<double> *alpha,
+          const std::complex<double> *X,
+          const int *incX,
+          std::complex<double> *Y,
+          const int *incY);
 
 // 向量操作：一个向量 🟰 一个向量 ✖️ 一个常数 ➕ 另一个向量 ✖️ 另一个常数
 template <typename FPTYPE>

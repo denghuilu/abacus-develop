@@ -354,8 +354,6 @@ template <typename FPTYPE, typename Device> void DiagoCG<FPTYPE, Device>::calcul
         ModuleBase::TITLE("DiagoCG", "calculate_gradient");
     // ModuleBase::timer::tick("DiagoCG","grad");
 
-
-
     // for (int i = 0; i < this->dim; i++)
     // {
     //     //(2) PH|psi>
@@ -369,16 +367,13 @@ template <typename FPTYPE, typename Device> void DiagoCG<FPTYPE, Device>::calcul
     //(3) PS|psi>
     hsolver::vector_div_vector(this->dim, this->pphi, this->sphi, this->precondition);
 
-
-
     // Update lambda !
     // (4) <psi|SPH|psi >
     const FPTYPE eh = hsolver::zdot_real(this->dim, this->sphi, this->gradient);
     // (5) <psi|SPS|psi >
     const FPTYPE es = hsolver::zdot_real(this->dim, this->sphi, this->pphi);
+
     const FPTYPE lambda = eh / es;
-
-
 
     // Update g!
     // for (int i = 0; i < this->dim; i++)
@@ -392,8 +387,6 @@ template <typename FPTYPE, typename Device> void DiagoCG<FPTYPE, Device>::calcul
     // }
     // haozhihan replace this 2022-10-6
     hsolver::vector_sub_constantVector(this->dim, this->gradient, this->gradient, this->pphi, lambda);
-
-
 
     // ModuleBase::timer::tick("DiagoCG","grad");
     return;
@@ -409,10 +402,25 @@ void DiagoCG<FPTYPE, Device>::orthogonal_gradient(hamilt::Hamilt *phm_in,
     // ModuleBase::timer::tick("DiagoCG","orth_grad");
 
     phm_in->sPsi(this->gradient, this->scg, (size_t)this->dim);
+
     int inc = 1;
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    // qianrui replace 2021-3-15
+    // haozhihan replace 2022-10-07
     char trans = 'C';
+    hsolver::gemv(&trans,
+                  &(this->dim),
+                  &m,
+                  &ModuleBase::ONE,
+                  eigenfunction.get_pointer(),
+                  &(this->dmx),
+                  this->scg,
+                  &inc,
+                  &ModuleBase::ZERO,
+                  this->lagrange,
+                  &inc);
+    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    // qianrui replace 2021-3-15
+    /* char trans = 'C';
     zgemv_(&trans,
            &(this->dim),
            &m,
@@ -423,7 +431,7 @@ void DiagoCG<FPTYPE, Device>::orthogonal_gradient(hamilt::Hamilt *phm_in,
            &inc,
            &ModuleBase::ZERO,
            this->lagrange,
-           &inc);
+           &inc); */
     //======================================================================
     /*for (int i=0; i<m; i++)
     {
@@ -439,8 +447,33 @@ void DiagoCG<FPTYPE, Device>::orthogonal_gradient(hamilt::Hamilt *phm_in,
 
     // (3) orthogonal |g> and |scg> to all states (0~m-1)
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    // qianrui replace 2021-3-15
+    // haozhihan replace 2022-10-07
     char trans2 = 'N';
+    hsolver::gemv(&trans2,
+                  &(this->dim),
+                  &m,
+                  &ModuleBase::NEG_ONE,
+                  eigenfunction.get_pointer(),
+                  &(this->dmx),
+                  this->lagrange,
+                  &inc,
+                  &ModuleBase::ONE,
+                  this->gradient,
+                  &inc);
+    hsolver::gemv(&trans2,
+                  &(this->dim),
+                  &m,
+                  &ModuleBase::NEG_ONE,
+                  eigenfunction.get_pointer(),
+                  &(this->dmx),
+                  this->lagrange,
+                  &inc,
+                  &ModuleBase::ONE,
+                  this->scg,
+                  &inc);
+    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    // qianrui replace 2021-3-15
+    /* char trans2 = 'N';
     zgemv_(&trans2,
            &(this->dim),
            &m,
@@ -462,7 +495,7 @@ void DiagoCG<FPTYPE, Device>::orthogonal_gradient(hamilt::Hamilt *phm_in,
            &inc,
            &ModuleBase::ONE,
            this->scg,
-           &inc);
+           &inc); */
     //======================================================================
     /*for (int i=0; i<m; i++)
     {
@@ -511,7 +544,6 @@ void DiagoCG<FPTYPE, Device>::calculate_gamma_cg(const int iter,
     // haozhihan replace this 2022-10-6
     hsolver::vector_mul_vector(this->dim, this->g0, this->scg, this->precondition);
 
-
     // (3) Update gg_now!
     // gg_now = < g|P|scg > = < g|g0 >
     const FPTYPE gg_now = hsolver::zdot_real(this->dim, this->gradient, this->g0);
@@ -534,10 +566,10 @@ void DiagoCG<FPTYPE, Device>::calculate_gamma_cg(const int iter,
         gg_last = gg_now;
 
         // (6) Update cg direction !(need gamma and |go> ):
-        for (int i = 0; i < this->dim; i++)
-        {
-            pcg[i] = gamma * pcg[i] + this->gradient[i];
-        }
+        // for (int i = 0; i < this->dim; i++)
+        // {
+        //     pcg[i] = gamma * pcg[i] + this->gradient[i];
+        // }
         // haozhihan replace this 2022-10-6
         hsolver::vector_add_constantVector(this->dim, pcg, this->gradient, pcg, gamma);
 
@@ -549,6 +581,8 @@ void DiagoCG<FPTYPE, Device>::calculate_gamma_cg(const int iter,
         {
             pcg[i] -= norma * pphi_m[i];
         }*/
+
+
     }
     // ModuleBase::timer::tick("DiagoCG","gamma_cg");
     return;
@@ -595,14 +629,12 @@ bool DiagoCG<FPTYPE, Device>::update_psi(FPTYPE &cg_norm, FPTYPE &theta, FPTYPE 
 
     auto pcg = this->cg->get_pointer();
 
-
     // for (int i = 0; i < this->dim; i++)
     // {
     //     phi_m_pointer[i] = phi_m_pointer[i] * cost + sint_norm * pcg[i];
     // }
     // haozhihan replace this 2022-10-6
     hsolver::constantvector_add_constantVector(this->dim, phi_m_pointer, phi_m_pointer, cost, pcg, sint_norm);
-
 
     //	std::cout << "\n overlap2 = "  << this->ddot(dim, phi_m, phi_m);
 
@@ -648,17 +680,17 @@ void DiagoCG<FPTYPE, Device>::schmit_orth(const int &m, // end
     int inc = 1;
     int mp1 = m + 1;
     char trans = 'C';
-    gemv(&trans,
-         &(this->dim),
-         &mp1,
-         &ModuleBase::ONE,
-         psi.get_pointer(),
-         &(this->dmx),
-         this->sphi,
-         &inc,
-         &ModuleBase::ZERO,
-         lagrange_so.data(),
-         &inc);
+    hsolver::gemv(&trans,
+                  &(this->dim),
+                  &mp1,
+                  &ModuleBase::ONE,
+                  psi.get_pointer(),
+                  &(this->dmx),
+                  this->sphi,
+                  &inc,
+                  &ModuleBase::ZERO,
+                  lagrange_so.data(),
+                  &inc);
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // qianrui replace 2021-3-15
     // int inc = 1;
@@ -692,17 +724,17 @@ void DiagoCG<FPTYPE, Device>::schmit_orth(const int &m, // end
 
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     char trans2 = 'N';
-    gemv(&trans2,
-         &(this->dim),
-         &m,
-         &ModuleBase::NEG_ONE,
-         psi.get_pointer(),
-         &(this->dmx),
-         lagrange_so.data(),
-         &inc,
-         &ModuleBase::ONE,
-         this->phi_m->get_pointer(),
-         &inc);
+    hsolver::gemv(&trans2,
+                  &(this->dim),
+                  &m,
+                  &ModuleBase::NEG_ONE,
+                  psi.get_pointer(),
+                  &(this->dmx),
+                  lagrange_so.data(),
+                  &inc,
+                  &ModuleBase::ONE,
+                  this->phi_m->get_pointer(),
+                  &inc);
 
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // qianrui replace 2021-3-15
@@ -795,8 +827,6 @@ void DiagoCG<FPTYPE, Device>::diag(hamilt::Hamilt *phm_in,
 
     return;
 }
-
-
 
 namespace hsolver
 {
