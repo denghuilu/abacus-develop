@@ -1,3 +1,5 @@
+// TODO: This is a temperary location for these functions.
+// And will be moved to a global module(module base) later.
 #ifndef MODULE_PSI_MEMORY_H_
 #define MODULE_PSI_MEMORY_H_
 

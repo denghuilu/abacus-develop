@@ -1,3 +1,5 @@
+// TODO: This is a temperary location for these functions.
+// And will be moved to a global module(module base) later.
 #ifndef MODULE_HSOLVER_MATH_KERNEL_H
 #define MODULE_HSOLVER_MATH_KERNEL_H
 
