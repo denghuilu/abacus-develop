@@ -4,6 +4,7 @@
 //#include "Basis.h"
 //#include "Cell.h"
 #include "module_psi/include/types.h"
+#include "module_psi/include/memory.h"
 
 namespace psi
 {
@@ -103,7 +104,7 @@ public:
     // return k_first
     const bool& get_k_first() const;
     // return device type of psi
-    const AbacusDevice_t& get_device() const;
+    const Device* get_device() const;
     // return psi_bias
     const int& get_psi_bias() const;
 
@@ -152,6 +153,11 @@ public:
     // method for parallelization 
     int parallel_type;
 //would be updated later */
+    
+    using set_memory_op = psi::memory::set_memory_op<T, Device>;
+    using delete_memory_op = psi::memory::delete_memory_op<T, Device>;
+    using resize_memory_op = psi::memory::resize_memory_op<T, Device>;
+    using synchronize_memory_op = psi::memory::synchronize_memory_op<T, Device, Device>;
 };
 
 //method for initial psi for each base, should be updated later

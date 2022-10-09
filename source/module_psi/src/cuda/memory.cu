@@ -12,132 +12,83 @@ namespace psi {
 namespace memory {
 
 template <typename FPTYPE>
-void memcpy_host_to_device(
-    FPTYPE * device, 
-    const FPTYPE * host,
-    const int size) 
-{
-  cudaMemcpy(device, host, sizeof(FPTYPE) * size, cudaMemcpyHostToDevice);  
-}
-
-template <typename FPTYPE>
-void malloc_device_memory_sync(
-    FPTYPE * &device,
-    const FPTYPE * host,
-    const int size)
-{
-  cudaMalloc((void **)&device, sizeof(FPTYPE) * size);
-  memcpy_host_to_device(device, host, size);
-}
-
-template <typename FPTYPE>
-void malloc_device_memory(
-    FPTYPE * &device,
-    const int size)
-{
-  cudaMalloc((void **)&device, sizeof(FPTYPE) * size);
-}
-
-template <typename FPTYPE>
-void delete_device_memory(
-    FPTYPE * &device) 
-{
-  cudaFree(device);
-}
-
-template <typename FPTYPE>
-void memset_device_memory(
-    FPTYPE * device, 
-    const int var,
-    const int size) 
-{
-  cudaMemset(device, var, sizeof(FPTYPE) * size);  
-}
-
-template <typename T>
-void abacus_resize_memory_gpu_cuda(
-    T*& arr, 
-    const int size) 
+void resize_memory_op<FPTYPE, psi::DEVICE_GPU>::operator()(
+    const psi::DEVICE_GPU* dev, 
+    FPTYPE*& arr, 
+    const size_t size)
 {
   if (arr != nullptr) {
-    delete_device_memory(arr);
+    delete_memory_op<FPTYPE, psi::DEVICE_GPU>()(dev, arr);
   }
-  malloc_device_memory(arr, size);  
-}
-
-template <typename T>
-void abacus_memset_gpu_cuda(
-    T* arr, 
-    const int var,
-    const int size) 
-{
-  memset_device_memory(arr, var, size);  
-}
-
-template <typename T>
-void abacus_memcpy_device_to_device_gpu_cuda(
-    T* arr1, 
-    const T* arr2, 
-    const int size) 
-{
-  cudaMemcpy(arr1, arr2, sizeof(T) * size, cudaMemcpyDeviceToDevice);  
-}
-
-
-template <typename T>
-void abacus_memcpy_device_to_host_gpu_cuda(
-    T* arr1, 
-    const T* arr2, 
-    const int size) 
-{
-  cudaMemcpy(arr1, arr2, sizeof(T) * size, cudaMemcpyDeviceToHost);  
-}
-
-template <typename T>
-void abacus_memcpy_host_to_device_gpu_cuda(
-    T* arr1, 
-    const T* arr2, 
-    const int size) 
-{
-  cudaMemcpy(arr1, arr2, sizeof(T) * size, cudaMemcpyHostToDevice);  
-}
-
-template <typename T>
-void abacus_delete_memory_gpu_cuda(
-  T* arr) 
-{
-  delete_device_memory(arr);
+  cudaMalloc((void **)&arr, sizeof(FPTYPE) * size);
 }
 
 template <typename FPTYPE>
-void abacus_malloc_device_memory_sync_gpu_cuda(
-    FPTYPE*& device, 
-    const std::vector<FPTYPE>& host)
+void set_memory_op<FPTYPE, psi::DEVICE_GPU>::operator()(
+    const psi::DEVICE_GPU* dev, 
+    FPTYPE* arr, 
+    const int var, 
+    const size_t size) 
 {
-  cudaMalloc((void **)&device, sizeof(FPTYPE) * host.size());
-  memcpy_host_to_device(device, host.data(), host.size());
+  cudaMemset(arr, var, sizeof(FPTYPE) * size);  
 }
 
-template void abacus_resize_memory_gpu_cuda<double>(double*&, const int);
-template void abacus_resize_memory_gpu_cuda<std::complex<double>>(std::complex<double>*&, const int);
+template <typename FPTYPE> 
+void synchronize_memory_op<FPTYPE, psi::DEVICE_CPU, psi::DEVICE_GPU>::operator()(
+    const psi::DEVICE_CPU* dev_out, 
+    const psi::DEVICE_GPU* dev_in, 
+    FPTYPE* arr_out, 
+    const FPTYPE* arr_in,
+    const size_t size) 
+{
+  cudaMemcpy(arr_out, arr_in, sizeof(FPTYPE) * size, cudaMemcpyDeviceToHost);  
+}
 
-template void abacus_memset_gpu_cuda<double>(double*, const int, const int);
-template void abacus_memset_gpu_cuda<std::complex<double>>(std::complex<double>*, const int, const int);
+template <typename FPTYPE> 
+void synchronize_memory_op<FPTYPE, psi::DEVICE_GPU, psi::DEVICE_CPU>::operator()(
+    const psi::DEVICE_GPU* dev_out, 
+    const psi::DEVICE_CPU* dev_in, 
+    FPTYPE* arr_out, 
+    const FPTYPE* arr_in,
+    const size_t size) 
+{
+  cudaMemcpy(arr_out, arr_in, sizeof(FPTYPE) * size, cudaMemcpyHostToDevice);  
+}
 
-template void abacus_memcpy_device_to_device_gpu_cuda<double>(double*, const double *, const int);
-template void abacus_memcpy_device_to_device_gpu_cuda<std::complex<double>>(std::complex<double>*, const std::complex<double>*, const int);
+template <typename FPTYPE> 
+void synchronize_memory_op<FPTYPE, psi::DEVICE_GPU, psi::DEVICE_GPU>::operator()(
+    const psi::DEVICE_GPU* dev_out, 
+    const psi::DEVICE_GPU* dev_in, 
+    FPTYPE* arr_out, 
+    const FPTYPE* arr_in,
+    const size_t size) 
+{
+  cudaMemcpy(arr_out, arr_in, sizeof(FPTYPE) * size, cudaMemcpyDeviceToDevice);  
+}
 
-template void abacus_memcpy_device_to_host_gpu_cuda<double>(double*, const double *, const int);
-template void abacus_memcpy_device_to_host_gpu_cuda<std::complex<double>>(std::complex<double>*, const std::complex<double>*, const int);
+template <typename FPTYPE>
+void delete_memory_op<FPTYPE, psi::DEVICE_GPU>::operator() (
+    const psi::DEVICE_GPU* dev, 
+    FPTYPE* arr) 
+{
+  cudaFree(arr);
+}
 
-template void abacus_memcpy_host_to_device_gpu_cuda<double>(double*, const double *, const int);
-template void abacus_memcpy_host_to_device_gpu_cuda<std::complex<double>>(std::complex<double>*, const std::complex<double>*, const int);
+template struct resize_memory_op<double, psi::DEVICE_GPU>;
+template struct resize_memory_op<std::complex<double>, psi::DEVICE_GPU>;
 
-template void abacus_delete_memory_gpu_cuda<double>(double*);
-template void abacus_delete_memory_gpu_cuda<std::complex<double>>(std::complex<double>*);
+template struct set_memory_op<double, psi::DEVICE_GPU>;
+template struct set_memory_op<std::complex<double>, psi::DEVICE_GPU>;
 
-template void abacus_malloc_device_memory_sync_gpu_cuda<double>(double*&, const std::vector<double>&);
-template void abacus_malloc_device_memory_sync_gpu_cuda<std::complex<double>>(std::complex<double>*&, const const std::vector<std::complex<double>>&);
+template struct synchronize_memory_op<double, psi::DEVICE_CPU, psi::DEVICE_GPU>;
+template struct synchronize_memory_op<double, psi::DEVICE_GPU, psi::DEVICE_CPU>;
+template struct synchronize_memory_op<double, psi::DEVICE_GPU, psi::DEVICE_GPU>;
+template struct synchronize_memory_op<std::complex<double>, psi::DEVICE_CPU, psi::DEVICE_GPU>;
+template struct synchronize_memory_op<std::complex<double>, psi::DEVICE_GPU, psi::DEVICE_CPU>;
+template struct synchronize_memory_op<std::complex<double>, psi::DEVICE_GPU, psi::DEVICE_GPU>;
+
+template struct delete_memory_op<double, psi::DEVICE_GPU>;
+template struct delete_memory_op<std::complex<double>, psi::DEVICE_GPU>;
 
 } // end of namespace gpu_cuda
 } // end of namespace psi
