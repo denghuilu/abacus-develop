@@ -7,7 +7,7 @@ using namespace hsolver;
 
 // CPU specialization of actual computation.
 template <typename FPTYPE> 
-struct zdot_real_op<FPTYPE, psi::DEVICE_CPU> {
+struct hsolver::zdot_real_op<FPTYPE, psi::DEVICE_CPU> {
   FPTYPE operator() (
       const psi::DEVICE_CPU* d,
       const int& dim,
