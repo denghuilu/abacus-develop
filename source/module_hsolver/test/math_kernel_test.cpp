@@ -5,7 +5,7 @@
 #include "module_hsolver/include/math_kernel.h"
 
 
-class TestMathKernel : public ::testing::Test
+class TestModuleHsolverMathKernel : public ::testing::Test
 {
   protected:
     // xx = tf.random.uniform([100], minval=-4, maxval=4, dtype = tf.float64)
@@ -31,32 +31,43 @@ class TestMathKernel : public ::testing::Test
 
     const double expected_result = 2.206021622595902;
 
+    const psi::DEVICE_CPU * cpu_ctx = {};
+    const psi::DEVICE_GPU * gpu_ctx = {};
+
     void SetUp() override {
     }
     void TearDown() override {
     }
+
+    using zdot_real_cpu_op = hsolver::zdot_real_op<double, psi::DEVICE_CPU>;
+    using zdot_real_gpu_op = hsolver::zdot_real_op<double, psi::DEVICE_GPU>;
+    using resize_memory_op = psi::memory::resize_memory_op<std::complex<double>, psi::DEVICE_GPU>;
+    using delete_memory_op = psi::memory::delete_memory_op<std::complex<double>, psi::DEVICE_GPU>;
+    using synchronize_memory_op = psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_GPU, psi::DEVICE_CPU>;
 };
 
 // template<typename FPTYPE>
 // FPTYPE zdot_real(const int &dim, const std::complex<FPTYPE>* psi_L, const std::complex<FPTYPE>* psi_R, const psi::AbacusDevice_t device = psi::CpuDevice, const bool reduce = true);
-TEST_F(TestMathKernel, zdot_real)
+TEST_F(TestModuleHsolverMathKernel, zdot_real_op_cpu)
 {
-    double result = hsolver::zdot_real(dim, psi_L.data(), psi_R.data(), psi::CpuDevice, false);
-    EXPECT_LT(fabs(result - expected_result), 1e-12);
+  double result = zdot_real_cpu_op()(cpu_ctx, dim, psi_L.data(), psi_R.data(), false);
+  EXPECT_LT(fabs(result - expected_result), 1e-12);
 }
 
-#if __UT_USE_CUDA
-TEST_F(TestMathKernel, zdot_real_gpu_cuda)
+#if __UT_USE_CUDA || __UT_USE_ROCM
+TEST_F(TestModuleHsolverMathKernel, zdot_real_op_gpu)
 {
-  std::complex<double> * psi_L_dev = NULL, * psi_R_dev = NULL;
-  psi::memory::abacus_malloc_device_memory_sync_gpu_cuda(psi_L_dev, psi_L);
-  psi::memory::abacus_malloc_device_memory_sync_gpu_cuda(psi_R_dev, psi_R);
-  double result = hsolver::zdot_real_gpu_cuda(dim, psi_L_dev, psi_R_dev, psi::GpuDevice, false);
+  std::complex<double>* psi_L_dev = NULL, * psi_R_dev = NULL;
+  resize_memory_op()(gpu_ctx, psi_L_dev, psi_L.size());
+  resize_memory_op()(gpu_ctx, psi_R_dev, psi_R.size());
+  synchronize_memory_op()(gpu_ctx, cpu_ctx, psi_L_dev, psi_L.data(), psi_L.size());
+  synchronize_memory_op()(gpu_ctx, cpu_ctx, psi_R_dev, psi_R.data(), psi_R.size());
+  double result = zdot_real_gpu_op()(gpu_ctx, dim, psi_L_dev, psi_R_dev, false);
   EXPECT_LT(fabs(result - expected_result), 1e-12);
-  psi::memory::abacus_delete_memory_gpu_cuda(psi_L_dev);
-  psi::memory::abacus_delete_memory_gpu_cuda(psi_R_dev);
+  delete_memory_op()(gpu_ctx, psi_L_dev);
+  delete_memory_op()(gpu_ctx, psi_R_dev);
 }
-#endif
+#endif // __UT_USE_CUDA || __UT_USE_ROCM
 
 /*
 #if __UT_USE_ROCM

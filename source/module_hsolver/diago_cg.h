@@ -9,8 +9,9 @@
 #include "module_psi/include/device.h"
 #include "module_psi/include/memory.h"
 
-namespace hsolver
-{
+#include "module_hsolver/include/math_kernel.h"
+
+namespace hsolver {
 
 template<typename FPTYPE = double, typename Device = psi::DEVICE_CPU>
 class DiagoCG : public DiagH
@@ -88,6 +89,11 @@ class DiagoCG : public DiagH
 
     // used in diag() for template replace Hamilt with Hamilt_PW
     void diag_mock(hamilt::Hamilt *phm_in, psi::Psi<std::complex<FPTYPE>, Device> &phi, FPTYPE *eigenvalue_in);
+
+    using zdot_real_op = hsolver::zdot_real_op<FPTYPE, Device>;
+    using set_memory_op = psi::memory::set_memory_op<std::complex<FPTYPE>, Device>;
+    using delete_memory_op = psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
+    using resize_memory_op = psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
 };
 
 } // namespace hsolver

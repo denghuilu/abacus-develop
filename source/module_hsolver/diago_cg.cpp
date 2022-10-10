@@ -1,4 +1,4 @@
-#include "diago_cg.h"
+#include "module_hsolver/diago_cg.h"
 
 #include "diago_iter_assist.h"
 #include "module_base/blas_connector.h"
@@ -9,7 +9,6 @@
 #include "module_hsolver/include/math_kernel.h"
 
 using namespace hsolver;
-
 
 template<typename FPTYPE, typename Device>
 DiagoCG<FPTYPE, Device>::DiagoCG(const FPTYPE* precondition_in)
@@ -24,13 +23,13 @@ template<typename FPTYPE, typename Device>
 DiagoCG<FPTYPE, Device>::~DiagoCG() {
     // delete this->cg;
     // delete this->phi_m;
-    psi::memory::abacus_delete_memory(this->sphi, this->device);
-    psi::memory::abacus_delete_memory(this->hphi, this->device);
-    psi::memory::abacus_delete_memory(this->scg, this->device);
-    psi::memory::abacus_delete_memory(this->pphi, this->device);
-    psi::memory::abacus_delete_memory(this->gradient, this->device);
-    psi::memory::abacus_delete_memory(this->g0, this->device);
-    psi::memory::abacus_delete_memory(this->lagrange, this->device);
+    delete_memory_op()(this->ctx, this->sphi);
+    delete_memory_op()(this->ctx, this->hphi);
+    delete_memory_op()(this->ctx, this->scg);
+    delete_memory_op()(this->ctx, this->pphi);
+    delete_memory_op()(this->ctx, this->gradient);
+    delete_memory_op()(this->ctx, this->g0);
+    delete_memory_op()(this->ctx, this->lagrange);
 }
 
 template<typename FPTYPE, typename Device>
@@ -61,25 +60,32 @@ void DiagoCG<FPTYPE, Device>::diag_mock(hamilt::Hamilt *phm_in, psi::Psi<std::co
     //-------------------------------------------------------------------
     this->phi_m = new psi::Psi<std::complex<FPTYPE>, Device>(phi, 1, 1);
     // this->hphi.resize(this->dmx, ModuleBase::ZERO);
-    psi::memory::abacus_resize_memory_zero(this->hphi, this->dmx, this->device);
+    resize_memory_op()(this->ctx, this->hphi, this->dmx);
+    set_memory_op()(this->ctx, this->hphi, 0, this->dmx);
     // this->sphi.resize(this->dmx, ModuleBase::ZERO);
-    psi::memory::abacus_resize_memory_zero(this->sphi, this->dmx, this->device);
+    resize_memory_op()(this->ctx, this->sphi, this->dmx);
+    set_memory_op()(this->ctx, this->sphi, 0, this->dmx);
 
     this->cg = new psi::Psi<std::complex<FPTYPE>, Device>(phi, 1, 1);
     // this->scg.resize(this->dmx, ModuleBase::ZERO);
-    psi::memory::abacus_resize_memory_zero(this->scg, this->dmx, this->device);
+    resize_memory_op()(this->ctx, this->scg, this->dmx);
+    set_memory_op()(this->ctx, this->scg, 0, this->dmx);
     // this->pphi.resize(this->dmx, ModuleBase::ZERO);
-    psi::memory::abacus_resize_memory_zero(this->pphi, this->dmx, this->device);
+    resize_memory_op()(this->ctx, this->pphi, this->dmx);
+    set_memory_op()(this->ctx, this->pphi, 0, this->dmx);
 
     //in band_by_band CG method, only the first band in phi_m would be calculated
     psi::Range cg_hpsi_range(0);
 
     // this->gradient.resize(this->dmx, ModuleBase::ZERO);
-    psi::memory::abacus_resize_memory_zero(this->gradient, this->dmx, this->device);
+    resize_memory_op()(this->ctx, this->gradient, this->dmx);
+    set_memory_op()(this->ctx, this->gradient, 0, this->dmx);
     // this->g0.resize(this->dmx, ModuleBase::ZERO);
-    psi::memory::abacus_resize_memory_zero(this->g0, this->dmx, this->device);
+    resize_memory_op()(this->ctx, this->g0, this->dmx);
+    set_memory_op()(this->ctx, this->g0, 0, this->dmx);
     // this->lagrange.resize(this->n_band, ModuleBase::ZERO);
-    psi::memory::abacus_resize_memory_zero(this->lagrange, this->n_band, this->device);
+    resize_memory_op()(this->ctx, this->lagrange, this->n_band);
+    set_memory_op()(this->ctx, this->lagrange, 0, this->n_band);
 
     for (int m = 0; m < this->n_band; m++)
     {
@@ -102,7 +108,12 @@ void DiagoCG<FPTYPE, Device>::diag_mock(hamilt::Hamilt *phm_in, psi::Psi<std::co
         hpsi_info cg_hpsi_in(this->phi_m, cg_hpsi_range, this->hphi);
         phm_in->ops->hPsi(cg_hpsi_in);
 
-        this->eigenvalue[m] = hsolver::zdot_real(this->dim, this->phi_m->get_pointer(), this->hphi);
+        this->eigenvalue[m] = 
+            zdot_real_op()(
+                this->ctx, 
+                this->dim, 
+                this->phi_m->get_pointer(), 
+                this->hphi);
 
         int iter = 0;
         FPTYPE gg_last = 0.0;
@@ -214,25 +225,32 @@ void DiagoCG<double, psi::DEVICE_GPU>::diag_mock(hamilt::Hamilt *phm_in, psi::Ps
     //-------------------------------------------------------------------
     this->phi_m = new psi::Psi<std::complex<double>, psi::DEVICE_GPU>(phi, 1, 1);
     // this->hphi.resize(this->dmx, ModuleBase::ZERO);
-    psi::memory::abacus_resize_memory_zero(this->hphi, this->dmx, this->device);
+    resize_memory_op()(this->ctx, this->hphi, this->dmx);
+    set_memory_op()(this->ctx, this->hphi, 0, this->dmx);
     // this->sphi.resize(this->dmx, ModuleBase::ZERO);
-    psi::memory::abacus_resize_memory_zero(this->sphi, this->dmx, this->device);
+    resize_memory_op()(this->ctx, this->sphi, this->dmx);
+    set_memory_op()(this->ctx, this->sphi, 0, this->dmx);
 
     this->cg = new psi::Psi<std::complex<double>, psi::DEVICE_GPU>(phi, 1, 1);
     // this->scg.resize(this->dmx, ModuleBase::ZERO);
-    psi::memory::abacus_resize_memory_zero(this->scg, this->dmx, this->device);
+    resize_memory_op()(this->ctx, this->scg, this->dmx);
+    set_memory_op()(this->ctx, this->scg, 0, this->dmx);
     // this->pphi.resize(this->dmx, ModuleBase::ZERO);
-    psi::memory::abacus_resize_memory_zero(this->pphi, this->dmx, this->device);
+    resize_memory_op()(this->ctx, this->pphi, this->dmx);
+    set_memory_op()(this->ctx, this->pphi, 0, this->dmx);
 
     //in band_by_band CG method, only the first band in phi_m would be calculated
     psi::Range cg_hpsi_range(0);
 
     // this->gradient.resize(this->dmx, ModuleBase::ZERO);
-    psi::memory::abacus_resize_memory_zero(this->pphi, this->dmx, this->device);
+    resize_memory_op()(this->ctx, this->gradient, this->dmx);
+    set_memory_op()(this->ctx, this->gradient, 0, this->dmx);
     // this->g0.resize(this->dmx, ModuleBase::ZERO);
-    psi::memory::abacus_resize_memory_zero(this->g0, this->dmx, this->device);
+    resize_memory_op()(this->ctx, this->g0, this->dmx);
+    set_memory_op()(this->ctx, this->g0, 0, this->dmx);
     // this->lagrange.resize(this->n_band, ModuleBase::ZERO);
-    psi::memory::abacus_resize_memory_zero(this->lagrange, this->n_band, this->device);
+    resize_memory_op()(this->ctx, this->lagrange, this->n_band);
+    set_memory_op()(this->ctx, this->lagrange, 0, this->dmx);
 
     for (int m = 0; m < this->n_band; m++)
     {
@@ -255,7 +273,7 @@ void DiagoCG<double, psi::DEVICE_GPU>::diag_mock(hamilt::Hamilt *phm_in, psi::Ps
         hpsi_info cg_hpsi_in(this->phi_m, cg_hpsi_range, this->hphi);
         phm_in->ops->hPsi_gpu(cg_hpsi_in);
 
-        this->eigenvalue[m] = hsolver::zdot_real(this->dim, this->phi_m->get_pointer(), this->hphi, this->phi_m->get_device());
+        this->eigenvalue[m] = zdot_real_op()(this->ctx, this->dim, this->phi_m->get_pointer(), this->hphi, this->phi_m->get_device());
 
         int iter = 0;
         double gg_last = 0.0;
@@ -356,9 +374,9 @@ void DiagoCG<FPTYPE, Device>::calculate_gradient()
 
     // Update lambda !
     // (4) <psi|SPH|psi >
-    const FPTYPE eh = hsolver::zdot_real(this->dim, this->sphi, this->gradient);
+    const FPTYPE eh = hsolver::zdot_real_op<FPTYPE, Device>()(this->ctx, this->dim, this->sphi, this->gradient);
     // (5) <psi|SPS|psi >
-    const FPTYPE es = hsolver::zdot_real(this->dim, this->sphi, this->pphi);
+    const FPTYPE es = hsolver::zdot_real_op<FPTYPE, Device>()(this->ctx, this->dim, this->sphi, this->pphi);
     const FPTYPE lambda = eh / es;
 
     // Update g!
@@ -468,7 +486,7 @@ void DiagoCG<FPTYPE, Device>::calculate_gamma_cg(const int iter, FPTYPE &gg_last
         // gg_inter = <g|g0>
         // Attention : the 'g' in g0 is getted last time
         gg_inter
-            = hsolver::zdot_real(this->dim, this->gradient, this->g0); // b means before
+            = hsolver::zdot_real_op<FPTYPE, Device>()(this->ctx, this->dim, this->gradient, this->g0); // b means before
     }
 
     // (2) Update for g0!
@@ -483,7 +501,7 @@ void DiagoCG<FPTYPE, Device>::calculate_gamma_cg(const int iter, FPTYPE &gg_last
 
     // (3) Update gg_now!
     // gg_now = < g|P|scg > = < g|g0 >
-    const FPTYPE gg_now = hsolver::zdot_real(this->dim, this->gradient, this->g0);
+    const FPTYPE gg_now = hsolver::zdot_real_op<FPTYPE, Device>()(this->ctx, this->dim, this->gradient, this->g0);
 
     if (iter == 0)
     {
@@ -527,7 +545,7 @@ bool DiagoCG<FPTYPE, Device>::update_psi(FPTYPE &cg_norm, FPTYPE &theta, FPTYPE 
     if (test_cg == 1)
         ModuleBase::TITLE("DiagoCG", "update_psi");
     // ModuleBase::timer::tick("DiagoCG","update");
-    cg_norm = sqrt(hsolver::zdot_real(this->dim, this->cg->get_pointer(), this->scg));
+    cg_norm = sqrt(hsolver::zdot_real_op<FPTYPE, Device>()(this->ctx, this->dim, this->cg->get_pointer(), this->scg));
 
     if (cg_norm < 1.0e-10)
         return 1;
@@ -535,9 +553,9 @@ bool DiagoCG<FPTYPE, Device>::update_psi(FPTYPE &cg_norm, FPTYPE &theta, FPTYPE 
     std::complex<FPTYPE>* phi_m_pointer = this->phi_m->get_pointer();
 
     const FPTYPE a0
-        = hsolver::zdot_real(this->dim, phi_m_pointer, this->pphi) * 2.0 / cg_norm;
+        = hsolver::zdot_real_op<FPTYPE, Device>()(this->ctx, this->dim, phi_m_pointer, this->pphi) * 2.0 / cg_norm;
     const FPTYPE b0
-        = hsolver::zdot_real(this->dim, this->cg->get_pointer(), this->pphi) / (cg_norm * cg_norm);
+        = hsolver::zdot_real_op<FPTYPE, Device>()(this->ctx, this->dim, this->cg->get_pointer(), this->pphi) / (cg_norm * cg_norm);
 
     const FPTYPE e0 = eigenvalue;
     theta = atan(a0 / (e0 - b0)) / 2.0;
@@ -649,7 +667,7 @@ void DiagoCG<FPTYPE, Device>::schmit_orth(
            &ModuleBase::ONE,
            this->phi_m->get_pointer(),
            &inc);
-    psi_norm -= hsolver::zdot_real(m, lagrange_so.data(), lagrange_so.data(), this->phi_m->get_device(), false);
+    psi_norm -= hsolver::zdot_real_op<FPTYPE, Device>()(this->ctx, m, lagrange_so.data(), lagrange_so.data(), false);
     //======================================================================
     /*for (int j = 0; j < m; j++)
     {
@@ -692,9 +710,6 @@ void DiagoCG<FPTYPE, Device>::diag(hamilt::Hamilt *phm_in, psi::Psi<std::complex
     /// record the times of trying iterative diagonalization
     int ntry = 0;
     this->notconv = 0;
-    if (this->device != psi.get_device()) { 
-        ModuleBase::WARNING_QUIT("DiagoCG::diag()", "Device type of psi and diag_cg does not match!");
-    }
     do
     {
         if(DiagoIterAssist::need_subspace || ntry > 0)
@@ -719,7 +734,7 @@ void DiagoCG<FPTYPE, Device>::diag(hamilt::Hamilt *phm_in, psi::Psi<std::complex
     return;
 }
 
-namespace hsolver {
+namespace hsolver{
 template class DiagoCG<double, psi::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
 template class DiagoCG<double, psi::DEVICE_GPU>;

@@ -1,3 +1,5 @@
+// TODO: This is a temperary location for these functions.
+// And will be moved to a global module(module base) later.
 #ifndef MODULE_PSI_MEMORY_H_
 #define MODULE_PSI_MEMORY_H_
 
@@ -7,65 +9,77 @@
 namespace psi {
 namespace memory {
 
-template<typename T>
-void abacus_resize_memory(T*&, const int, const AbacusDevice_t);
+template <typename FPTYPE, typename Device> 
+struct resize_memory_op {
+  void operator()(const Device* dev, FPTYPE*& arr, const size_t size);
+};
 
-template<typename T>
-void abacus_resize_memory_zero(T*&, const int, const AbacusDevice_t);
+template <typename FPTYPE, typename Device> 
+struct set_memory_op {
+  void operator()(const Device* dev, FPTYPE* arr, const int var, const size_t size);
+};
 
-template<typename T>
-void abacus_memset(T*, const int, const int, const AbacusDevice_t);
+template <typename FPTYPE, typename Device_out, typename Device_in> 
+struct synchronize_memory_op {
+  void operator()(
+      const Device_out* dev_out, 
+      const Device_in* dev_in, 
+      FPTYPE* arr_out, 
+      const FPTYPE* arr_in, 
+      const size_t size);
+};
 
-template<typename T>
-void abacus_sync_memory(T*, const T*, const size_t,  const AbacusDevice_t, const AbacusDevice_t);
+template <typename FPTYPE, typename Device> 
+struct delete_memory_op {
+  void operator()(const Device* dev, FPTYPE* arr);
+};
 
-template<typename T>
-void abacus_delete_memory(T*, const AbacusDevice_t);
+#if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
+// Partially specialize operator for psi::GpuDevice.
+template <typename FPTYPE> 
+struct resize_memory_op<FPTYPE, psi::DEVICE_GPU> {
+  void operator()(const psi::DEVICE_GPU* dev, FPTYPE*& arr, const size_t size);
+};
 
-#if __CUDA || __UT_USE_CUDA
-template<typename T>
-void abacus_resize_memory_gpu_cuda(T*&, const int);
+template <typename FPTYPE> 
+struct set_memory_op<FPTYPE, psi::DEVICE_GPU> {
+  void operator()(const psi::DEVICE_GPU* dev, FPTYPE* arr, const int var, const size_t size);
+};
 
-template<typename T>
-void abacus_memset_gpu_cuda(T*, const int, const int);
-
-template <typename T>
-void abacus_memcpy_device_to_device_gpu_cuda(T* , const T*, const int);
-
-template <typename T>
-void abacus_memcpy_host_to_device_gpu_cuda(T* , const T*, const int);
-
-template <typename T>
-void abacus_memcpy_device_to_host_gpu_cuda(T* , const T*, const int);
-
-template<typename T>
-void abacus_delete_memory_gpu_cuda(T*);
+template <typename FPTYPE> 
+struct synchronize_memory_op<FPTYPE, psi::DEVICE_CPU, psi::DEVICE_GPU> {
+  void operator()(
+      const psi::DEVICE_CPU* dev_out, 
+      const psi::DEVICE_GPU* dev_in, 
+      FPTYPE* arr_out, 
+      const FPTYPE* arr_in, 
+      const size_t size);
+};
+template <typename FPTYPE> 
+struct synchronize_memory_op<FPTYPE, psi::DEVICE_GPU, psi::DEVICE_CPU> {
+  void operator()(
+      const psi::DEVICE_GPU* dev_out, 
+      const psi::DEVICE_CPU* dev_in, 
+      FPTYPE* arr_out, 
+      const FPTYPE* arr_in, 
+      const size_t size);
+};
+template <typename FPTYPE> 
+struct synchronize_memory_op<FPTYPE, psi::DEVICE_GPU, psi::DEVICE_GPU> {
+  void operator()(
+      const psi::DEVICE_GPU* dev_out, 
+      const psi::DEVICE_GPU* dev_in, 
+      FPTYPE* arr_out, 
+      const FPTYPE* arr_in, 
+      const size_t size);
+};
 
 template <typename FPTYPE>
-void abacus_malloc_device_memory_sync_gpu_cuda( FPTYPE*&, const std::vector<FPTYPE>&);
-
-#elif __ROCM || __UT_USE_ROCM
-template<typename T>
-void abacus_resize_memory_gpu_rocm(T*&, const int, const AbacusDevice_t);
-
-template<typename T>
-void abacus_memset_gpu_rocm(T*&, const int, const int, const AbacusDevice_t);
-
-template <typename T>
-void abacus_memcpy_device_to_device_gpu_rocm(T* , const T*, const int);
-
-template <typename T>
-void abacus_memcpy_host_to_device_gpu_rocm(T* , const T*, const int);
-
-template <typename T>
-void abacus_memcpy_device_to_host_gpu_rocm(T* , const T*, const int);
-
-template<typename T>
-void abacus_delete_memory_gpu_rocm(T*);
-
-template <typename FPTYPE>
-void malloc_device_memory_sync_gpu_rocm( FPTYPE*&, const std::vector<FPTYPE>&));
+struct delete_memory_op<FPTYPE, psi::DEVICE_GPU> {
+  void operator()(const psi::DEVICE_GPU* dev, FPTYPE* arr);
+};
 #endif
+// __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM 
 
 } // end of namespace memory
 } // end of namespace psi

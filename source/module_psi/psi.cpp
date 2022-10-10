@@ -2,9 +2,8 @@
 #include <cassert>
 #include "module_base/global_variable.h"
 #include "module_base/tool_quit.h"
-#include "module_psi/include/types.h"
 #include "module_psi/include/device.h"
-#include "module_psi/include/memory.h"
+
 #include <complex>
 
 using namespace psi;
@@ -40,7 +39,7 @@ Psi<T, Device>::Psi()
 template<typename T, typename Device>
 Psi<T, Device>::~Psi() 
 {
-    memory::abacus_delete_memory(this->psi, this->device);
+    delete_memory_op()(this->ctx, this->psi);
 }
 
 template<typename T, typename Device>
@@ -88,9 +87,12 @@ Psi<T, Device>::Psi(
             //current_k for this Psi only keep the spin index same as the copied Psi
             this->current_k = psi_in.get_current_k();
         } 
-        memory::abacus_sync_memory(
-            this->psi,
-            psi_in.get_pointer(), this->size(), this->device, psi_in.device);
+        synchronize_memory_op()(
+            this->ctx, 
+            psi_in.get_device(),
+            this->psi, 
+            psi_in.get_pointer(), 
+            this->size());
     }
 }
 
@@ -132,9 +134,12 @@ Psi<T, Device>::Psi(
     // this function will copy psi_in.psi to this->psi no matter the device types of each other.
     this->device = device::get_device_type<Device>(this->ctx);
     this->resize(psi_in.get_nk(), psi_in.get_nbands(), psi_in.get_nbasis());
-    memory::abacus_sync_memory(
+    memory::synchronize_memory_op<T, Device, Device_in>()(
+        this->ctx,
+        psi_in.get_device(),
         this->psi,
-        psi_in.get_pointer(), psi_in.size(), this->device, psi_in.get_device());
+        psi_in.get_pointer(), 
+        psi_in.size());
     this->psi_current = this->psi + psi_in.get_psi_bias();
 }
 
@@ -146,9 +151,10 @@ void Psi<T, Device>::resize(
 {
     assert(nks_in>0 && nbands_in>=0 && nbasis_in>0);
     // This function will delete the psi array first(if psi exist), then malloc a new memory for it.
-    memory::abacus_resize_memory(
+    resize_memory_op()(
+        this->ctx,
         this->psi, 
-        nks_in * nbands_in * nbasis_in, this->device);
+        nks_in * nbands_in * nbasis_in);
     this->nk = nks_in;
     this->nbands = nbands_in;
     this->nbasis = nbasis_in;
@@ -188,9 +194,9 @@ const bool& Psi<T, Device>::get_k_first() const
 }
 
 template<typename T, typename Device>
-const AbacusDevice_t& Psi<T, Device>::get_device() const
+const Device* Psi<T, Device>::get_device() const
 {
-    return this->device;
+    return this->ctx;
 }
 
 template<typename T, typename Device>
@@ -368,7 +374,7 @@ template<typename T, typename Device>
 void Psi<T, Device>::zero_out()
 {	
     // this->psi.assign(this->psi.size(), T(0));
-    memory::abacus_memset(this->psi, 0, this->size(), device);
+    set_memory_op()(this->ctx, this->psi, 0, this->size());
 }
 
 
