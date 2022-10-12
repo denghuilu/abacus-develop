@@ -15,3 +15,7 @@ add_library(
     OBJECT
     ${psi_srcs}
 )
+
+IF (BUILD_TESTING)
+  add_subdirectory(test)
+endif()

@@ -4,6 +4,7 @@
 #define MODULE_PSI_MEMORY_H_
 
 #include <vector>
+#include <stddef.h>
 #include "module_psi/include/types.h"
 
 namespace psi {
