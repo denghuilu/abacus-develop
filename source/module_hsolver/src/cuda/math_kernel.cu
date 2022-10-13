@@ -31,8 +31,7 @@ __global__ void vector_div_constant_kernel(
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < size) 
     {
-        result[i].x = vector[i].x / constant;
-        result[i].y = vector[i].y / constant;
+        result[i] = vector[i] / constant;
     }
 }
 
@@ -46,8 +45,7 @@ __global__ void vector_mul_vector_kernel(
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < size) 
     {
-        result[i].x = vector1[i].x * vector2[i];
-        result[i].y = vector1[i].y * vector2[i];
+        result[i] = vector1[i] * vector2[i];
     }
 }
 
@@ -61,14 +59,13 @@ __global__ void vector_div_vector_kernel(
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < size) 
     {
-        result[i].x = vector1[i].x / vector2[i];
-        result[i].y = vector1[i].y / vector2[i];
+        result[i] = vector1[i] / vector2[i];
     }
 }
 
 template <typename FPTYPE>
 __global__ void constantvector_addORsub_constantVector_kernel(
-    const int dim,
+    const int size,
     thrust::complex<FPTYPE>* result,
     const thrust::complex<FPTYPE>* vector1,
     const FPTYPE constant1,
@@ -78,8 +75,7 @@ __global__ void constantvector_addORsub_constantVector_kernel(
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < size) 
     {
-        result[i].x = vector1[i].x * constant1 + vector2[i].x * constant2;
-        result[i].y = vector1[i].y * constant1 + vector2[i].y * constant2;
+        result[i] = vector1[i] * constant1 + vector2[i] * constant2;
     }
 }
 
@@ -176,7 +172,7 @@ void constantvector_addORsub_constantVector_op<FPTYPE, psi::DEVICE_GPU>::operato
 
     int thread = 1024;
     int block = (dim + thread - 1) / thread;
-    constantvector_addORsub_constantVector_kernel<FPTYPE><<<block, thread>>>>(dim, result_tmp, vector1_tmp,constant1, vector2_tmp, constant2);
+    constantvector_addORsub_constantVector_kernel<FPTYPE><<<block, thread>>>(dim, result_tmp, vector1_tmp,constant1, vector2_tmp, constant2);
 }
 
 template <> 
@@ -220,16 +216,17 @@ void gemv_op<float, psi::DEVICE_GPU>::operator()(
     std::complex<float> *Y, 
     const int& incy)
 {
+    cublasOperation_t cutrans;
     if (trans == 'N'){
-        cublasOperation_t cutrans = CUBLAS_OP_N;
+        cutrans = CUBLAS_OP_N;
     } 
     else if (trans == 'T'){
-        cublasOperation_t cutrans = CUBLAS_OP_T;
+        cutrans = CUBLAS_OP_T;
     } 
     else if (trans == 'C'){
-        cublasOperation_t cutrans = CUBLAS_OP_C;
+        cutrans = CUBLAS_OP_C;
     } 
-    cublasCgemv(diag_handle, cutrans, m, n, (double2*)alpha, (double2*)A, lda, (double2*)X, incx, (double2*)beta, (double2*)Y, incx);
+    cublasCgemv(diag_handle, cutrans, m, n, (cuComplex*)alpha, (cuComplex*)A, lda, (cuComplex*)X, incx, (cuComplex*)beta, (cuComplex*)Y, incx);
 }
 
 template <> 
@@ -247,14 +244,15 @@ void gemv_op<double, psi::DEVICE_GPU>::operator()(
     std::complex<double> *Y, 
     const int& incy)
 {
+    cublasOperation_t cutrans;
     if (trans == 'N'){
-        cublasOperation_t cutrans = CUBLAS_OP_N;
+        cutrans = CUBLAS_OP_N;
     } 
     else if (trans == 'T'){
-        cublasOperation_t cutrans = CUBLAS_OP_T;
+        cutrans = CUBLAS_OP_T;
     } 
     else if (trans == 'C'){
-        cublasOperation_t cutrans = CUBLAS_OP_C;
+        cutrans = CUBLAS_OP_C;
     } 
     cublasZgemv(diag_handle, cutrans, m, n, (double2*)alpha, (double2*)A, lda, (double2*)X, incx, (double2*)beta, (double2*)Y, incx);
 }
