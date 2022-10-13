@@ -11,13 +11,13 @@ namespace hsolver
 {
 
 template <typename FPTYPE, typename Device> 
-struct zdot_real_op
-{
-    FPTYPE operator()(const Device* d,
-                      const int& dim,
-                      const std::complex<FPTYPE>* psi_L,
-                      const std::complex<FPTYPE>* psi_R,
-                      const bool reduce = true);
+struct zdot_real_op {
+  FPTYPE operator() (
+      const Device* d,
+      const int& dim,
+      const std::complex<FPTYPE>* psi_L,
+      const std::complex<FPTYPE>* psi_R,
+      const bool reduce = true);
 };
 
 // vector operator: result[i] = vector[i] / constant
