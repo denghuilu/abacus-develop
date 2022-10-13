@@ -9,7 +9,7 @@
 namespace psi{
 namespace device {
 
-template<typename Device> AbacusDevice_t get_device_type (Device* dev);
+template<typename Device> AbacusDevice_t get_device_type (const Device* dev);
 
 } // end of namespace device
 } // end of namespace psi
