@@ -8,7 +8,7 @@ namespace hsolver
 
 // CPU specialization of actual computation.
 template <typename FPTYPE> 
-struct hsolver::zdot_real_op<FPTYPE, psi::DEVICE_CPU> {
+struct zdot_real_op<FPTYPE, psi::DEVICE_CPU> {
   FPTYPE operator() (
       const psi::DEVICE_CPU* d,
       const int& dim,
@@ -27,7 +27,6 @@ struct hsolver::zdot_real_op<FPTYPE, psi::DEVICE_CPU> {
     }
     return result;
   }
-    }
 };
 
 template <typename FPTYPE> struct vector_div_constant_op<FPTYPE, psi::DEVICE_CPU>
