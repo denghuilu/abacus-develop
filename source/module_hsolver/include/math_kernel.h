@@ -101,72 +101,6 @@ template <typename FPTYPE, typename Device> struct gemv_op
                     const int& incy);
 };
 
-// ==================================================================
-//     full specialization of template classes
-// ==================================================================
-// template <> struct axpy_op<double, psi::DEVICE_CPU>
-// {
-//     void operator()(const psi::DEVICE_CPU* d,
-//                     const int& dim,
-//                     const std::complex<double>* alpha,
-//                     const std::complex<double>* X,
-//                     const int& incX,
-//                     std::complex<double>* Y,
-//                     const int& incY);
-//     // {
-//     //     zaxpy_(&dim, alpha, X, &incX, Y, &incY);
-//     // }
-// };
-// template <> struct axpy_op<float, psi::DEVICE_CPU>
-// {
-//     void operator()(const psi::DEVICE_CPU* d,
-//                     const int& dim,
-//                     const std::complex<float>* alpha,
-//                     const std::complex<float>* X,
-//                     const int& incX,
-//                     std::complex<float>* Y,
-//                     const int& incY);
-//     // {
-//     //     caxpy_(&dim, alpha, X, &incX, Y, &incY);
-//     // }
-// };
-// template <> struct gemv_op<float, psi::DEVICE_CPU>
-// {
-//     void operator()(const psi::DEVICE_CPU* d,
-//                     const char& trans,
-//                     const int& m,
-//                     const int& n,
-//                     const std::complex<float>* alpha,
-//                     const std::complex<float>* A,
-//                     const int& lda,
-//                     const std::complex<float>* X,
-//                     const int& incx,
-//                     const std::complex<float>* beta,
-//                     std::complex<float>* Y,
-//                     const int& incy)
-//     {
-//         // cgemv_(&trans, &m, &n, alpha, A, &lda, X, &incx, beta, Y, &incy);
-//     }
-// };
-// template <> struct gemv_op<double, psi::DEVICE_CPU>
-// {
-//     void operator()(const psi::DEVICE_CPU* d,
-//                     const char& trans,
-//                     const int& m,
-//                     const int& n,
-//                     const std::complex<double>* alpha,
-//                     const std::complex<double>* A,
-//                     const int& lda,
-//                     const std::complex<double>* X,
-//                     const int& incx,
-//                     const std::complex<double>* beta,
-//                     std::complex<double>* Y,
-//                     const int& incy)
-//     {
-//         zgemv_(&trans, &m, &n, alpha, A, &lda, X, &incx, beta, Y, &incy);
-//     }
-// };
-
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 
 // Partially specialize functor for psi::GpuDevice.
@@ -221,34 +155,8 @@ template <typename FPTYPE> struct constantvector_addORsub_constantVector_op<FPTY
                     const FPTYPE constant2);
 };
 
-// //  compute Y = alpha * X + Y
-// template <typename FPTYPE> struct axpy_op<FPTYPE, psi::DEVICE_GPU>
-// {
-//     void operator()(const psi::DEVICE_GPU* d,
-//                     const int& N,
-//                     const std::complex<FPTYPE>* alpha,
-//                     const std::complex<FPTYPE>* X,
-//                     const int& incX,
-//                     std::complex<FPTYPE>* Y,
-//                     const int& incY);
-// };
-
-// // compute y = alpha * op(A) * x + beta * y
-// template <typename FPTYPE> struct gemv_op<FPTYPE, psi::DEVICE_GPU>
-// {
-//     void operator()(const psi::DEVICE_GPU* d,
-//                     const char& trans,
-//                     const int& m,
-//                     const int& n,
-//                     const std::complex<FPTYPE>* alpha,
-//                     const std::complex<FPTYPE>* A,
-//                     const int& lda,
-//                     const std::complex<FPTYPE>* X,
-//                     const int& incx,
-//                     const std::complex<FPTYPE>* beta,
-//                     std::complex<FPTYPE>* Y,
-//                     const int& incy);
-// };
+void createBLAShandle();
+void destoryBLAShandle();
 
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 } // namespace hsolver
