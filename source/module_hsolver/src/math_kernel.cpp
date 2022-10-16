@@ -177,11 +177,5 @@ template struct vector_mul_vector_op<double, psi::DEVICE_CPU>;
 template struct vector_div_vector_op<double, psi::DEVICE_CPU>;
 template struct constantvector_addORsub_constantVector_op<double, psi::DEVICE_CPU>;
 
-// 由于blas将两种精度的接口做了区分，所以我们也得区分。
-// template struct axpy_op<double, psi::DEVICE_CPU>;
-// template struct axpy_op<float, psi::DEVICE_CPU>;
-
-// template struct gemv_op<double, psi::DEVICE_CPU>;
-// template struct gemv_op<float, psi::DEVICE_CPU>;
 
 } // namespace hsolver

@@ -226,7 +226,7 @@ void gemv_op<float, psi::DEVICE_GPU>::operator()(
     else if (trans == 'C'){
         cutrans = CUBLAS_OP_C;
     } 
-    cublasCgemv(diag_handle, cutrans, m, n, (cuComplex*)alpha, (cuComplex*)A, lda, (cuComplex*)X, incx, (cuComplex*)beta, (cuComplex*)Y, incx);
+    cublasCgemv(diag_handle, cutrans, m, n, (float2*)alpha, (float2*)A, lda, (float2*)X, incx, (float2*)beta, (float2*)Y, incx);
 }
 
 template <> 
@@ -259,6 +259,29 @@ void gemv_op<double, psi::DEVICE_GPU>::operator()(
 
 
 
+template <>
+void scal_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
+                                                  const int& N,
+                                                  const std::complex<double>* alpha,
+                                                  std::complex<double>* X,
+                                                  const int& incx)
+{
+    cublasZscal(diag_handle, N, (double2*)alpha, (double2*)X, incx);
+}
+
+template <>
+void scal_op<float, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
+                                                 const int& N,
+                                                 const std::complex<float>* alpha,
+                                                 std::complex<float>* X,
+                                                 const int& incx)
+
+{
+    cublasCscal(diag_handle, N, (float2*)alpha, (float2*)X, incx);
+}
+
+
+
 // Explicitly instantiate functors for the types of functor registered.
 template struct zdot_real_op<double, psi::DEVICE_GPU>;
 template struct vector_div_constant_op<double, psi::DEVICE_GPU>;
@@ -266,11 +289,5 @@ template struct vector_mul_vector_op<double, psi::DEVICE_GPU>;
 template struct vector_div_vector_op<double, psi::DEVICE_GPU>;
 template struct constantvector_addORsub_constantVector_op<double, psi::DEVICE_GPU>;
 
-// 由于blas将两种精度的接口做了区分，所以我们也得区分。
-// template struct axpy_op<double, psi::DEVICE_GPU>;
-// template struct axpy_op<float, psi::DEVICE_GPU>;
-
-// template struct gemv_op<double, psi::DEVICE_GPU>;
-// template struct gemv_op<float, psi::DEVICE_GPU>;
 
 }
