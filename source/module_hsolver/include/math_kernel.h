@@ -101,6 +101,26 @@ template <typename FPTYPE, typename Device> struct gemv_op
                     const int& incy);
 };
 
+
+// compute C = alpha * op(A) * op(B) + beta * C
+template <typename FPTYPE, typename Device> struct gemm_op
+{
+    void operator()(const Device* d,
+                    const char& transa, 
+                    const char& transb, 
+                    const int& m, 
+                    const int& n, 
+                    const int& k,
+		            const std::complex<FPTYPE> *alpha, 
+                    const std::complex<FPTYPE> *a, 
+                    const int& lda, 
+                    const std::complex<FPTYPE> *b, 
+                    const int& ldb,
+		            const std::complex<FPTYPE> *beta, 
+                    std::complex<FPTYPE> *c, 
+                    const int& ldc);
+};
+
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 
 // Partially specialize functor for psi::GpuDevice.

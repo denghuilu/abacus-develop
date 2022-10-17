@@ -170,6 +170,44 @@ void axpy_op<float, psi::DEVICE_CPU>::operator()(const psi::DEVICE_CPU* d,
     caxpy_(&dim, alpha, X, &incX, Y, &incY);
 }
 
+template <>
+void gemm_op<float, psi::DEVICE_CPU>::operator()(const psi::DEVICE_CPU* d,
+                                                 const char& transa, 
+                                                 const char& transb, 
+                                                 const int& m, 
+                                                 const int& n, 
+                                                 const int& k,
+                                                 const std::complex<float> *alpha, 
+                                                 const std::complex<float> *a, 
+                                                 const int& lda, 
+                                                 const std::complex<float> *b, 
+                                                 const int& ldb,
+                                                 const std::complex<float> *beta, 
+                                                 std::complex<float> *c, 
+                                                 const int& ldc)
+{
+    cgemm_(&transa, &transb, &m, &n ,&k, alpha, a ,&lda, b, &ldb, beta, c, &ldc);
+}
+
+template <>
+void gemm_op<double, psi::DEVICE_CPU>::operator()(const psi::DEVICE_CPU* d,
+                                                 const char& transa, 
+                                                 const char& transb, 
+                                                 const int& m, 
+                                                 const int& n, 
+                                                 const int& k,
+                                                 const std::complex<double> *alpha, 
+                                                 const std::complex<double> *a, 
+                                                 const int& lda, 
+                                                 const std::complex<double> *b, 
+                                                 const int& ldb,
+                                                 const std::complex<double> *beta, 
+                                                 std::complex<double> *c, 
+                                                 const int& ldc)
+{
+    zgemm_(&transa, &transb, &m, &n ,&k, alpha, a ,&lda, b, &ldb, beta, c, &ldc);
+}
+
 // Explicitly instantiate functors for the types of functor registered.
 template struct zdot_real_op<double, psi::DEVICE_CPU>;
 template struct vector_div_constant_op<double, psi::DEVICE_CPU>;
