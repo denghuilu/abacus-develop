@@ -67,6 +67,9 @@ extern "C"
 	void dgemm_(const char *transa, const char *transb, const int *m, const int *n, const int *k,
 		const double *alpha, const double *a, const int *lda, const double *b, const int *ldb,
 		const double *beta, double *c, const int *ldc);
+	void cgemm_(const char *transa, const char *transb, const int *m, const int *n, const int *k,
+		const std::complex<float> *alpha, const std::complex<float> *a, const int *lda, const std::complex<float> *b, const int *ldb,
+		const std::complex<float> *beta, std::complex<float> *c, const int *ldc);
 	void zgemm_(const char *transa, const char *transb, const int *m, const int *n, const int *k,
 		const std::complex<double> *alpha, const std::complex<double> *a, const int *lda, const std::complex<double> *b, const int *ldb,
 		const std::complex<double> *beta, std::complex<double> *c, const int *ldc);
