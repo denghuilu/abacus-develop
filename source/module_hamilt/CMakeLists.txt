@@ -4,6 +4,7 @@ add_subdirectory(ks_lcao)
 add_library(
     hamilt
     OBJECT
+    operator.cpp
     hamilt_pw.cpp
     hamilt_lcao.cpp
     ks_pw/ekinetic_pw.cpp
