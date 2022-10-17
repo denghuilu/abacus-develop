@@ -112,7 +112,7 @@ void DiagoDavid::diag_mock(hamilt::Hamilt* phm_in, psi::Psi<std::complex<double>
     sc.zero_out();
 
     this->cal_elem(dim, nbase, this->notconv, basis, hp, sp, hc, sc);
-
+    // TODO diag_zhegvx
     this->diag_zhegvx(nbase, nband, hc, sc, nbase_x, eigenvalue.data(), vc);
 
     for (int m = 0; m < nband; m++)
@@ -412,35 +412,75 @@ void DiagoDavid::cal_elem(const int &npw,
     char trans2 = 'N';
     const int nb_notc = (nbase + notconv);
     hc = transpose(hc, false);
-    zgemm_(&trans1,
-           &trans2,
-           &notconv,
-           &nb_notc,
-           &npw,
-           &ModuleBase::ONE,
-           &basis(nbase, 0),
-           &basis.get_nbasis(),
-           hp.c,
-           &hp.nc,
-           &ModuleBase::ONE,
-           hc.c + nbase,
-           &hc.nr);
+    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    // haozhihan repalce 2022-10-16
+    gemm_op<double, psi::DEVICE_CPU>()(
+        this->ctx,
+        trans1,
+        trans2,
+        notconv,
+        nb_notc,
+        npw,
+        &ModuleBase::ONE,
+        &basis(nbase, 0),
+        basis.get_nbasis(),
+        hp.c,
+        hp.nc,
+        &ModuleBase::ONE,
+        hc.c + nbase,
+        hc.nr
+    );
+    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    // zgemm_(&trans1,
+    //        &trans2,
+    //        &notconv,
+    //        &nb_notc,
+    //        &npw,
+    //        &ModuleBase::ONE,
+    //        &basis(nbase, 0),
+    //        &basis.get_nbasis(),
+    //        hp.c,
+    //        &hp.nc,
+    //        &ModuleBase::ONE,
+    //        hc.c + nbase,
+    //        &hc.nr);
+    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     hc = transpose(hc, false);
 
     sc = transpose(sc, false);
-    zgemm_(&trans1,
-           &trans2,
-           &notconv,
-           &nb_notc,
-           &npw,
-           &ModuleBase::ONE,
-           &basis(nbase, 0),
-           &basis.get_nbasis(),
-           sp.c,
-           &sp.nc,
-           &ModuleBase::ONE,
-           sc.c + nbase,
-           &sc.nr);
+    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    // haozhihan repalce 2022-10-16
+    gemm_op<double, psi::DEVICE_CPU>()(
+        this->ctx,
+        trans1,
+        trans2,
+        notconv,
+        nb_notc,
+        npw,
+        &ModuleBase::ONE,
+        &basis(nbase, 0),
+        basis.get_nbasis(),
+        sp.c,
+        sp.nc,
+        &ModuleBase::ONE,
+        sc.c + nbase,
+        sc.nr
+    );
+    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    // zgemm_(&trans1,
+    //        &trans2,
+    //        &notconv,
+    //        &nb_notc,
+    //        &npw,
+    //        &ModuleBase::ONE,
+    //        &basis(nbase, 0),
+    //        &basis.get_nbasis(),
+    //        sp.c,
+    //        &sp.nc,
+    //        &ModuleBase::ONE,
+    //        sc.c + nbase,
+    //        &sc.nr);
+    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     sc = transpose(sc, false);
 
     Parallel_Reduce::reduce_complex_double_pool(hc.c + offset_h, notconv * hc.nr);
@@ -719,32 +759,68 @@ void DiagoDavid::SchmitOrth(const int &npw,
     //calculate the square matrix for future lagranges
     if(mm_size != 0)
     {
-        zgemm_(&trans,
-            &transb,
-            &mm_size, // m: row of A,C
-            &mm_size, // n: col of B,C
-            &npw, // k: col of A, row of B
+        //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        // haozhihan repalce 2022-10-16
+        gemm_op<double, psi::DEVICE_CPU>()(
+            this->ctx,
+            trans,
+            transb,
+            mm_size, // m: row of A,C
+            mm_size, // n: col of B,C
+            npw, // k: col of A, row of B
             &ModuleBase::ONE, // alpha
             &psi(m-mv_size+1-mm_size, 0), // A
-            &psi.get_nbasis(), // LDA: if(N) max(1,m) if(T) max(1,k)
+            psi.get_nbasis(), // LDA: if(N) max(1,m) if(T) max(1,k)
             &spsi(m, 0), // B
-            &spsi.nc, // LDB: if(N) max(1,k) if(T) max(1,n)
+            spsi.nc, // LDB: if(N) max(1,k) if(T) max(1,n)
             &ModuleBase::ZERO, // belta
             &lagrange_m[m-mv_size+1-mm_size], // C
-            &n_band); // LDC: if(N) max(1, m)
+            n_band // LDC: if(N) max(1, m)
+        );
+        //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        // zgemm_(&trans,
+        //     &transb,
+        //     &mm_size, // m: row of A,C
+        //     &mm_size, // n: col of B,C
+        //     &npw, // k: col of A, row of B
+        //     &ModuleBase::ONE, // alpha
+        //     &psi(m-mv_size+1-mm_size, 0), // A
+        //     &psi.get_nbasis(), // LDA: if(N) max(1,m) if(T) max(1,k)
+        //     &spsi(m, 0), // B
+        //     &spsi.nc, // LDB: if(N) max(1,k) if(T) max(1,n)
+        //     &ModuleBase::ZERO, // belta
+        //     &lagrange_m[m-mv_size+1-mm_size], // C
+        //     &n_band); // LDC: if(N) max(1, m)
+        //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     }
     //calculate other lagranges for this band
-    zgemv_(&trans,
-           &npw,
-           &mv_size,
-           &ModuleBase::ONE,
-           &psi(m-mv_size+1, 0),
-           &psi.get_nbasis(),
-           &spsi(m, 0),
-           &inc,
-           &ModuleBase::ZERO,
-           &lagrange_m[m-mv_size+1],
-           &inc);
+    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    // haozhihan repalce 2022-10-16
+    gemv_op<double, psi::DEVICE_CPU>()(this->ctx,
+        trans,
+        npw,
+        mv_size,
+        &ModuleBase::ONE,
+        &psi(m-mv_size+1, 0),
+        psi.get_nbasis(),
+        &spsi(m, 0),
+        inc,
+        &ModuleBase::ZERO,
+        &lagrange_m[m-mv_size+1],
+        inc);
+    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    // zgemv_(&trans,
+    //        &npw,
+    //        &mv_size,
+    //        &ModuleBase::ONE,
+    //        &psi(m-mv_size+1, 0),
+    //        &psi.get_nbasis(),
+    //        &spsi(m, 0),
+    //        &inc,
+    //        &ModuleBase::ZERO,
+    //        &lagrange_m[m-mv_size+1],
+    //        &inc);
+    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     /*for (int j = 0; j < m; j++)
     {
         const std::complex<double>* psi_p = &(psi(j, 0));
@@ -773,7 +849,12 @@ void DiagoDavid::SchmitOrth(const int &npw,
     for (int j = 0; j < m; j++)
     {
         const std::complex<double> alpha = std::complex<double>(-1, 0) * lagrange_m[j];
-        zaxpy_(&npw, &alpha, &psi(j,0), &inc, psi_m, &inc);
+        //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        // haozhihan repalce 2022-10-16      
+        axpy_op<double, psi::DEVICE_CPU>()(this->ctx, npw, &alpha, &psi(j,0), inc, psi_m, inc);
+        //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        // zaxpy_(&npw, &alpha, &psi(j,0), &inc, psi_m, &inc);
+        //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         /*for (int ig = 0; ig < npw; ig++)
         {
             psi_m[ig] -= lagrange[j] * psi(j, ig);
@@ -794,10 +875,15 @@ void DiagoDavid::SchmitOrth(const int &npw,
     }
     else
     {
-        for (int i = 0; i < npw; i++)
-        {
-            psi_m[i] /= psi_norm;
-        }
+        //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        // haozhihan repalce 2022-10-16      
+        vector_div_constant_op<double, psi::DEVICE_CPU>()(this->ctx, npw, psi_m, psi_m, psi_norm);
+        //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        // for (int i = 0; i < npw; i++)
+        // {
+        //     psi_m[i] /= psi_norm;
+        // }
+
     }
 
     //delete[] lagrange;

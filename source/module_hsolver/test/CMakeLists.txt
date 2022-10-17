@@ -16,6 +16,7 @@ AddTest(
           ../../src_parallel/parallel_reduce.cpp ../../src_parallel/parallel_global.cpp 
           ../../module_pw/test/test_tool.cpp
           ../../module_hamilt/operator.cpp
+          ../src/math_kernel.cpp
 )
 AddTest(
   TARGET HSolver_LCAO
