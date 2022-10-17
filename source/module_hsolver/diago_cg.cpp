@@ -46,7 +46,10 @@ void DiagoCG<FPTYPE, Device>::diag_mock(hamilt::Hamilt *phm_in, psi::Psi<std::co
     this->dmx = phi.get_nbasis();
     this->n_band = phi.get_nbands();
     this->eigenvalue = eigenvalue_in;
-    ModuleBase::GlobalFunc::ZEROS(this->eigenvalue, this->n_band);
+
+    // haozhihan replace ZEROS 
+    psi::memory::set_memory_op<FPTYPE, Device>()(this->ctx, this->eigenvalue, 0, this->n_band);
+    // ModuleBase::GlobalFunc::ZEROS(this->eigenvalue, this->n_band);
 
     /// record for how many loops in cg convergence
     FPTYPE avg = 0.0;
@@ -96,7 +99,9 @@ void DiagoCG<FPTYPE, Device>::diag_mock(hamilt::Hamilt *phm_in, psi::Psi<std::co
         {
             const std::complex<FPTYPE>* psi_m_in = &(phi(m, 0));
             auto pphi_m = this->phi_m->get_pointer();
-            ModuleBase::GlobalFunc::COPYARRAY(psi_m_in, pphi_m, this->dim);
+            // haozhihan replace COPY_ARRAY
+            psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, Device>()(this->ctx, this->ctx, pphi_m, psi_m_in, this->dim);
+            // ModuleBase::GlobalFunc::COPYARRAY(psi_m_in, pphi_m, this->dim);
         }
         phm_in->sPsi(this->phi_m->get_pointer(), this->sphi, (size_t)this->dim); // sphi = S|psi(m)>
         this->schmit_orth(m, phi);
@@ -137,7 +142,9 @@ void DiagoCG<FPTYPE, Device>::diag_mock(hamilt::Hamilt *phm_in, psi::Psi<std::co
         } // end iter
 
         std::complex<FPTYPE>* psi_temp = &(phi(m, 0));
-        ModuleBase::GlobalFunc::COPYARRAY(this->phi_m->get_pointer(), psi_temp, this->dim);
+        // haozhihan replace COPY_ARRAY
+        psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, Device>()(this->ctx, this->ctx, psi_temp, this->phi_m->get_pointer(), this->dim);
+        // ModuleBase::GlobalFunc::COPYARRAY(this->phi_m->get_pointer(), psi_temp, this->dim);
 
         if (!converged)
         {
@@ -164,20 +171,27 @@ void DiagoCG<FPTYPE, Device>::diag_mock(hamilt::Hamilt *phm_in, psi::Psi<std::co
 
                 // last calculated eigenvalue should be in the i-th position: reorder
                 FPTYPE e0 = eigenvalue[m];
-                ModuleBase::GlobalFunc::COPYARRAY(psi_temp, pphi, this->dim);
+                // haozhihan replace COPY_ARRAY
+                psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, Device>()(this->ctx, this->ctx, pphi, psi_temp, this->dim);
+                // ModuleBase::GlobalFunc::COPYARRAY(psi_temp, pphi, this->dim);
 
                 for (int j = m; j >= i + 1; j--)
                 {
                     eigenvalue[j] = eigenvalue[j - 1];
                     std::complex<FPTYPE>* phi_j = &phi(j, 0);
                     std::complex<FPTYPE>* phi_j1 = &phi(j-1, 0);
-                    ModuleBase::GlobalFunc::COPYARRAY(phi_j1, phi_j, this->dim);
+                    // haozhihan replace COPY_ARRAY
+                    psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, Device>()(this->ctx, this->ctx, phi_j, phi_j1, this->dim);
+                    // ModuleBase::GlobalFunc::COPYARRAY(phi_j1, phi_j, this->dim);
                 }
 
                 eigenvalue[i] = e0;
                 // dcopy(pphi, phi, i);
                 std::complex<FPTYPE>* phi_pointer = &phi(i, 0);
-                ModuleBase::GlobalFunc::COPYARRAY(pphi, phi_pointer, this->dim);
+                // haozhihan replace COPY_ARRAY
+                psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, Device>()(this->ctx, this->ctx, phi_pointer, pphi, this->dim);
+                // ModuleBase::GlobalFunc::COPYARRAY(pphi, phi_pointer, this->dim);
+
                 // this procedure should be good if only a few inversions occur,
                 // extremely inefficient if eigenvectors are often in bad order
                 // (but this should not happen)
@@ -560,7 +574,10 @@ void DiagoCG<FPTYPE, Device>::calculate_gamma_cg(const int iter, FPTYPE &gg_last
         gg_last = gg_now;
         // (50) cg direction first value : |g>
         // |cg> = |g>
-        ModuleBase::GlobalFunc::COPYARRAY(this->gradient, pcg, this->dim);
+
+        // haozhihan replace COPY_ARRAY
+        psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, Device>()(this->ctx, this->ctx, pcg, this->gradient, this->dim);
+        // ModuleBase::GlobalFunc::COPYARRAY(this->gradient, pcg, this->dim);
     }
     else
     {
