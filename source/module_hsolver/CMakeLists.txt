@@ -23,6 +23,8 @@ add_library(
     ${hsolver_srcs}
 )
 
+add_subdirectory(genelpa)
+
 IF (BUILD_TESTING)
   add_subdirectory(test)
 endif()

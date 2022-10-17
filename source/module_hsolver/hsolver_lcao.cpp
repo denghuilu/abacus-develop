@@ -73,8 +73,6 @@ void HSolverLCAO::solveTemplate(hamilt::Hamilt* pHamilt,
         ModuleBase::WARNING_QUIT("HSolverLCAO::solve", "This method of DiagH is not supported!");
     }
 
-    pHamilt->constructHamilt();
-
     /// Loop over k points for solve Hamiltonian to charge density
     for (int ik = 0; ik < psi.get_nk(); ++ik)
     {
@@ -145,12 +143,18 @@ void HSolverLCAO::solve(hamilt::Hamilt* pHamilt,
 
 void HSolverLCAO::hamiltSolvePsiK(hamilt::Hamilt* hm, psi::Psi<std::complex<double>>& psi, double* eigenvalue)
 {
+    ModuleBase::TITLE("HSolverLCAO", "hamiltSolvePsiK");
+    ModuleBase::timer::tick("HSolverLCAO", "hamiltSolvePsiK");
     pdiagh->diag(hm, psi, eigenvalue);
+    ModuleBase::timer::tick("HSolverLCAO", "hamiltSolvePsiK");
 }
 
 void HSolverLCAO::hamiltSolvePsiK(hamilt::Hamilt* hm, psi::Psi<double>& psi, double* eigenvalue)
 {
+    ModuleBase::TITLE("HSolverLCAO", "hamiltSolvePsiK");
+    ModuleBase::timer::tick("HSolverLCAO", "hamiltSolvePsiK");
     pdiagh->diag(hm, psi, eigenvalue);
+    ModuleBase::timer::tick("HSolverLCAO", "hamiltSolvePsiK");
 }
 
 } // namespace hsolver

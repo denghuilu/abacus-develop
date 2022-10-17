@@ -3,7 +3,6 @@
 #
 # This particular makefile defines all the executables and objects
 # files needed, who they depend on, and the compilation defaults.#
-# The file makefile.local is included below.
 # That file defines the actual commands to use to run the C++
 # compiler, library options and directories, etc., all of which are
 # machine specific and depend on the local installation.  Hence the name.
@@ -11,6 +10,37 @@
 
 VERSION = ABACUS
 HEADERS = *.h
+
+VPATH=./src_global\
+:./module_orbital\
+:./module_neighbor\
+:./module_symmetry\
+:./module_cell\
+:./module_base\
+:./module_md\
+:./module_pw\
+:./module_surchem\
+:./module_deepks\
+:./module_xc\
+:./module_esolver\
+:./module_hsolver\
+:./module_hsolver/genelpa\
+:./module_elecstate\
+:./module_psi\
+:./module_hamilt\
+:./module_hamilt/ks_pw\
+:./module_hamilt/ks_lcao\
+:./module_gint\
+:./src_pw\
+:./src_lcao\
+:./module_relaxation\
+:./src_io\
+:./src_parallel\
+:./src_pdiag\
+:./src_pdiag/MRRR\
+:./src_ri\
+:./module_rpa\
+:./\
 
 OBJS_MAIN=driver.o\
 input.o \
@@ -31,6 +61,7 @@ read_pp_blps.o \
 pseudo_nc.o \
 VL_in_pw.o\
 VNL_in_pw.o\
+VNL_grad_pw.o\
 atom_pseudo.o\
 unitcell_pseudo.o\
 threshold_elec.o\
@@ -178,7 +209,15 @@ center2_orb-orb21.o \
 center2_orb-orb22.o \
 abfs.o \
 abfs-vector3_order.o \
-exx_abfs.o \
+dm_2d.o \
+unk_overlap_lcao.o \
+cal_r_overlap_R.o \
+bessel_basis.o\
+numerical_basis.o\
+numerical_descriptor.o\
+wavefunc_in_pw.o\
+
+OBJS_EXX=exx_abfs.o \
 exx_abfs-abfs_index.o \
 exx_abfs-dm.o \
 exx_abfs-inverse_matrix_double.o \
@@ -203,21 +242,13 @@ exx_abfs-screen-schwarz.o \
 exx_abfs-screen-cauchy.o \
 exx_lcao.o \
 exx_opt_orb.o \
-exx_opt_orb-print.o \
-dm_2d.o \
-unk_overlap_lcao.o \
-cal_r_overlap_R.o \
-bessel_basis.o\
-numerical_basis.o\
-numerical_descriptor.o\
-wavefunc_in_pw.o\
+exx_opt_orb-print.o
 
 OBJS_PARALLEL=parallel_global.o\
 parallel_kpoints.o\
 parallel_common.o\
 parallel_reduce.o\
-parallel_pw.o\
-parallel_grid.o\
+parallel_grid.o
 
 OBJS_ESOLVER=esolver.o\
     esolver_ks.o\
@@ -243,6 +274,7 @@ OBJS_SURCHEM=H_correction_pw.o\
     minimize_cg.o\
     efield.o\
     sol_force.o\
+    gatefield.o\
 
 OBJS_XC=xc_funct_corr_gga.o \
 xc_funct_corr_lda.o \
@@ -277,6 +309,11 @@ hsolver_lcao.o\
 hsolver_pw.o\
 hsolver_pw_sdft.o
 
+OBJ_GENELPA=elpa_new_complex.o\
+elpa_new_real.o\
+elpa_new.o\
+utils.o
+
 OBJ_ELECSTATES=elecstate.o\
 dm2d_to_grid.o\
 elecstate_lcao.o\
@@ -291,7 +328,17 @@ hamilt_pw.o\
 ekinetic_pw.o\
 meta_pw.o\
 veff_pw.o\
-nonlocal_pw.o
+nonlocal_pw.o\
+velocity_pw.o\
+deepks_lcao.o\
+ekinetic_lcao.o\
+meta_lcao.o\
+nonlocal_lcao.o\
+op_dftu_lcao.o\
+op_exx_lcao.o\
+operator_lcao.o\
+overlap_lcao.o\
+veff_lcao.o
 
 OBJS_FIRST_PRINCIPLES=$(OBJS_MAIN)\
 $(OBJS_PW)\
@@ -304,6 +351,10 @@ $(OBJ_HSOLVER)\
 $(OBJ_ELECSTATES)\
 $(OBJ_PSI)\
 ${OBJ_OPERATOR}\
+${OBJ_GENELPA}\
+$(OBJS_PARALLEL)\
+$(OBJS_TOOLS) \
+$(OBJS_COMMON)\
 charge.o \
 charge_mixing.o \
 charge_pulay.o \
@@ -358,6 +409,7 @@ dftu.o\
 dftu_yukawa.o\
 dftu_relax.o\
 dmft.o \
+rpa.o\
 
 OBJS_COMMON=atom_spec.o \
 unitcell.o \
@@ -399,7 +451,7 @@ symmetry_rho.o \
 symm_other.o \
 eximport.o \
 mulliken_charge.o\
-setup_nonlocal.o\
+setup_nonlocal.o
 
 OBJS_PDIAG=pdgseps.o \
 pzgseps.o \

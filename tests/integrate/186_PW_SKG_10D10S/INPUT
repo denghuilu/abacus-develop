@@ -10,12 +10,13 @@ nche_sto		120
 emax_sto		0
 emin_sto		0
 seed_sto        20000
-pseudo_dir      ../tools/PP_ORB
+pseudo_dir	../../PP_ORB
 symmetry	    1
 kpar            2
 bndpar          2
 out_chg         0
 init_chg        file
+read_file_dir 		./
 
 #Parameters (2.Iteration)
 ecutwfc			20
@@ -40,3 +41,4 @@ cond_fwhm   8
 cond_wcut        20
 cond_dw          0.02
 cond_wenlarge    9
+cond_nonlocal    0

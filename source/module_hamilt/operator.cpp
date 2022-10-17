@@ -48,18 +48,33 @@ template<typename FPTYPE, typename Device>
 void Operator<FPTYPE, Device>::add(Operator* next) 
 {
     if(next==nullptr) return;
+    next->is_first_node = false;
     if(next->next_op != nullptr) this->add(next->next_op);
     Operator* last = this;
+    //loop to end of the chain
     while(last->next_op != nullptr)
     {
         if(next->cal_type==last->cal_type)
         {
-            last->add(next);
-            return;
+            break;
         }
         last = last->next_op;
     }
-    last->next_op = next; 
+    if(next->cal_type == last->cal_type)
+    {
+        //insert next to sub chain of current node
+        Operator* sub_last = last;
+        while(sub_last->next_sub_op != nullptr)
+        {
+            sub_last = sub_last->next_sub_op;
+        }
+        sub_last->next_sub_op = next;
+        return;
+    }
+    else
+    {
+        last->next_op = next;
+    }
 }
 
 template<typename FPTYPE, typename Device>

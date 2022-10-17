@@ -13,13 +13,13 @@ AddTest(
   TARGET HSolver_dav
   LIBS ${math_libs} base psi
   SOURCES diago_david_test.cpp ../diago_david.cpp  ../diago_iter_assist.cpp 
-          ../../src_parallel/parallel_reduce.cpp ../../src_parallel/parallel_global.cpp 
+          ../../src_parallel/parallel_reduce.cpp ../../src_parallel/parallel_global.cpp  ../../src_parallel/parallel_common.cpp
           ../../module_pw/test/test_tool.cpp
           ../../module_hamilt/operator.cpp
 )
 AddTest(
   TARGET HSolver_LCAO
-  LIBS ${math_libs} ELPA::ELPA base psi
+  LIBS ${math_libs} ELPA::ELPA base genelpa psi
   SOURCES diago_lcao_test.cpp ../diago_elpa.cpp ../diago_blas.cpp ../../src_parallel/parallel_global.cpp 
           ../../src_parallel/parallel_common.cpp ../../src_parallel/parallel_reduce.cpp
 )
