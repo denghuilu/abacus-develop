@@ -6,4 +6,5 @@ add_library(
     nonlocal_pw.cpp
     meta_pw.cpp
     velocity_pw.cpp
+    ../operator.cpp
 )

@@ -38,42 +38,12 @@ class Operator
     // do H|psi> from input |psi> , 
 
     // output of hpsi would be first member of the returned tuple 
-    typedef std::tuple<const psi::Psi<T>*, const psi::Range, T*> hpsi_info;
+    typedef std::tuple<const psi::Psi<FPTYPE>*, const psi::Range, FPTYPE*> hpsi_info;
     virtual hpsi_info hPsi(hpsi_info& input)const;
 
     virtual void init(const int ik_in);
 
-    virtual void add(Operator* next)
-    {
-        if(next==nullptr) return;
-        next->is_first_node = false;
-        if(next->next_op != nullptr) this->add(next->next_op);
-        Operator* last = this;
-        //loop to end of the chain
-        while(last->next_op != nullptr)
-        {
-            if(next->cal_type==last->cal_type)
-            {
-                break;
-            }
-            last = last->next_op;
-        }
-        if(next->cal_type == last->cal_type)
-        {
-            //insert next to sub chain of current node
-            Operator* sub_last = last;
-            while(sub_last->next_sub_op != nullptr)
-            {
-                sub_last = sub_last->next_sub_op;
-            }
-            sub_last->next_sub_op = next;
-            return;
-        }
-        else
-        {
-            last->next_op = next;
-        }    
-    }
+    virtual void add(Operator* next);
 
     #if ((defined __CUDA) || (defined __ROCM))
     typedef std::tuple<const psi::Psi<FPTYPE, psi::DEVICE_GPU>*, const psi::Range, FPTYPE*> hpsi_info_gpu;

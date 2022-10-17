@@ -269,7 +269,7 @@ void DiagoCG<double, psi::DEVICE_GPU>::diag_mock(hamilt::Hamilt *phm_in, psi::Ps
 
         //do hPsi, actually the result of hpsi stored in Operator,
         //the necessary of copying operation should be checked later
-        using hpsi_info = typename hamilt::Operator<std::complex<double>, psi::DEVICE_GPU>::hpsi_info;
+        using hpsi_info = typename hamilt::Operator<std::complex<double>, psi::DEVICE_GPU>::hpsi_info_gpu;
         hpsi_info cg_hpsi_in(this->phi_m, cg_hpsi_range, this->hphi);
         phm_in->ops->hPsi_gpu(cg_hpsi_in);
 

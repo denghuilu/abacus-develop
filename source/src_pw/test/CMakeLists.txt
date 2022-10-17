@@ -5,7 +5,7 @@ remove_definitions(-D__ROCM)
 
 AddTest(
   TARGET abacus_pw.exe #Test PW ABACUS without LCAO #Please also update Makefile in src_pw
-  LIBS ${math_libs} planewave base surchem xc_ operator_ks_pw neighbor symmetry
+  LIBS ${math_libs} planewave base surchem xc_ operator_ks_pw neighbor symmetry psi
   SOURCES ../../driver.cpp ../../input.cpp ../../input_conv.cpp ../../driver_run.cpp ../../main.cpp ../../input_update.cpp
   # src_pw
   ../charge.cpp  ../charge_mixing.cpp  ../charge_pulay.cpp  ../charge_broyden.cpp  ../charge_extra.cpp  ../potential.cpp
@@ -29,8 +29,8 @@ AddTest(
   ../../module_hsolver/diago_cg.cpp ../../module_hsolver/diago_david.cpp ../../module_hsolver/diago_iter_assist.cpp
   ../../module_hsolver/hsolver_pw.cpp ../../module_hsolver/hsolver_pw_sdft.cpp
   ../../module_elecstate/elecstate.cpp ../../module_elecstate/elecstate_pw.cpp ../../module_elecstate/elecstate_pw_sdft.cpp
-  ../../module_psi/psi.cpp
   ../../module_hamilt/hamilt_pw.cpp
+  ../../module_hsolver/src/math_kernel.cpp
   # src_io
   ../../src_io/numerical_basis.cpp ../../src_io/bessel_basis.cpp ../../src_io/numerical_descriptor.cpp ../../src_io/output.cpp
   ../../src_io/dos.cpp ../../src_io/energy_dos_pw.cpp ../../src_io/wf_io.cpp ../../src_io/rwstream.cpp
