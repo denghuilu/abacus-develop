@@ -281,6 +281,89 @@ void scal_op<float, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
 }
 
 
+template <>
+void gemm_op<float, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
+                                                 const char& transa, 
+                                                 const char& transb, 
+                                                 const int& m, 
+                                                 const int& n, 
+                                                 const int& k,
+                                                 const std::complex<float> *alpha, 
+                                                 const std::complex<float> *a, 
+                                                 const int& lda, 
+                                                 const std::complex<float> *b, 
+                                                 const int& ldb,
+                                                 const std::complex<float> *beta, 
+                                                 std::complex<float> *c, 
+                                                 const int& ldc)
+{
+    cublasOperation_t cutransA;
+    cublasOperation_t cutransB;
+    // cutransA
+    if (transa == 'N'){
+        cutransA = CUBLAS_OP_N;
+    } 
+    else if (transa == 'T'){
+        cutransA = CUBLAS_OP_T;
+    } 
+    else if (transa == 'C'){
+        cutransA = CUBLAS_OP_C;
+    } 
+    // cutransB
+    if (transb == 'N'){
+        cutransB = CUBLAS_OP_N;
+    } 
+    else if (transb == 'T'){
+        cutransB = CUBLAS_OP_T;
+    } 
+    else if (transb == 'C'){
+        cutransB = CUBLAS_OP_C;
+    } 
+    cublasCgemm(diag_handle, cutransA, cutransB, m, n ,k, (float2*)alpha, (float2*)a , lda, (float2*)b, ldb, (float2*)beta, (float2*)c, ldc);
+}
+
+template <>
+void gemm_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
+                                                 const char& transa, 
+                                                 const char& transb, 
+                                                 const int& m, 
+                                                 const int& n, 
+                                                 const int& k,
+                                                 const std::complex<double> *alpha, 
+                                                 const std::complex<double> *a, 
+                                                 const int& lda, 
+                                                 const std::complex<double> *b, 
+                                                 const int& ldb,
+                                                 const std::complex<double> *beta, 
+                                                 std::complex<double> *c, 
+                                                 const int& ldc)
+{
+    cublasOperation_t cutransA;
+    cublasOperation_t cutransB;
+    // cutransA
+    if (transa == 'N'){
+        cutransA = CUBLAS_OP_N;
+    } 
+    else if (transa == 'T'){
+        cutransA = CUBLAS_OP_T;
+    } 
+    else if (transa == 'C'){
+        cutransA = CUBLAS_OP_C;
+    } 
+    // cutransB
+    if (transb == 'N'){
+        cutransB = CUBLAS_OP_N;
+    } 
+    else if (transb == 'T'){
+        cutransB = CUBLAS_OP_T;
+    } 
+    else if (transb == 'C'){
+        cutransB = CUBLAS_OP_C;
+    } 
+    cublasZgemm(diag_handle, cutransA, cutransB, m, n ,k, (double2*)alpha, (double2*)a , lda, (double2*)b, ldb, (double2*)beta, (double2*)c, ldc);
+}
+
+
 
 // Explicitly instantiate functors for the types of functor registered.
 template struct zdot_real_op<double, psi::DEVICE_GPU>;

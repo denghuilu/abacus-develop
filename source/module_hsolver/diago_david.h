@@ -14,6 +14,12 @@
 #include "module_base/complexmatrix.h"
 #include "src_pw/structure_factor.h"
 
+#include "module_psi/include/types.h"
+#include "module_psi/include/device.h"
+#include "module_psi/include/memory.h"
+
+#include "module_hsolver/include/math_kernel.h"
+
 namespace hsolver
 {
 
@@ -32,6 +38,10 @@ class DiagoDavid : public DiagH
 
     /// record for how many bands not have convergence eigenvalues
     int notconv = 0;
+
+    /// device type of psi
+    psi::AbacusDevice_t device = {};
+    psi::DEVICE_CPU * ctx = {};
 
     void cal_grad(hamilt::Hamilt* phm_in,
                   const int& npw,
