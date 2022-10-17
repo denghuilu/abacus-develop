@@ -4,7 +4,7 @@ suffix			autotest
 calculation     scf
 ntype			1
 nbands			100
-pseudo_dir      ../tools/PP_ORB
+pseudo_dir	../../PP_ORB
 symmetry	    1
 kpar            2
 
@@ -31,3 +31,4 @@ cond_fwhm   8
 cond_wcut        20
 cond_dw          0.02
 cond_wenlarge    9
+cond_nonlocal    0

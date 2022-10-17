@@ -60,10 +60,10 @@ namespace ModuleESolver
             this->pelec = nullptr;
         }
         //delete Hamilt
-        if(this->phami != nullptr)
+        if(this->p_hamilt != nullptr)
         {
-            delete (hamilt::HamiltPW*)this->phami;
-            this->phami = nullptr;
+            delete (hamilt::HamiltPW*)this->p_hamilt;
+            this->p_hamilt = nullptr;
         }
     }
 
@@ -129,9 +129,6 @@ namespace ModuleESolver
     {
         ESolver_KS::Init(inp,ucell);
 
-        //temporary
-        this->Init_GlobalC(inp,ucell);
-
         //init ElecState,
         if(this->pelec == nullptr)
         {
@@ -142,6 +139,16 @@ namespace ModuleESolver
         {
             this->phsol = new hsolver::HSolverPW(GlobalC::wfcpw);
         }
+
+        // Inititlize the charge density.
+        this->pelec->charge->allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
+        //GlobalC::CHR.allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
+        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT CHARGE");
+        // Initializee the potential.
+        GlobalC::pot.allocate(GlobalC::rhopw->nrxx);
+        
+        //temporary
+        this->Init_GlobalC(inp,ucell);
     }
 
     void ESolver_KS_PW::beforescf(int istep)
@@ -176,15 +183,15 @@ namespace ModuleESolver
         //init Hamilt, this should be allocated before each scf loop
         //Operators in HamiltPW should be reallocated once cell changed
         //delete Hamilt if not first scf
-        if(this->phami != nullptr)
+        if(this->p_hamilt != nullptr)
         {
-            delete (hamilt::HamiltPW*)this->phami;
-            this->phami = nullptr;
+            delete (hamilt::HamiltPW*)this->p_hamilt;
+            this->p_hamilt = nullptr;
         }
         //allocate HamiltPW
-        if(this->phami == nullptr)
+        if(this->p_hamilt == nullptr)
         {
-            this->phami = new hamilt::HamiltPW();
+            this->p_hamilt = new hamilt::HamiltPW();
         }
 
         //----------------------------------------------------------
@@ -236,11 +243,11 @@ namespace ModuleESolver
             return;
         }
 
-        if (GlobalV::CALCULATION == "gen_jle")
+        if (GlobalV::CALCULATION == "gen_bessel")
         {
             // caoyu add 2020-11-24, mohan updat 2021-01-03
             Numerical_Descriptor nc;
-            nc.output_descriptor(this->psi[0], INPUT.deepks_descriptor_lmax);
+            nc.output_descriptor(this->psi[0], INPUT.bessel_lmax, INPUT.bessel_rcut, INPUT.bessel_tol);
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"GENERATE DESCRIPTOR FOR DEEPKS");
             return;
         }
@@ -308,7 +315,7 @@ namespace ModuleESolver
 
             hsolver::DiagoIterAssist::PW_DIAG_THR = ethr; 
             hsolver::DiagoIterAssist::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
-            this->phsol->solve(this->phami, this->psi[0], this->pelec, GlobalV::KS_SOLVER);
+            this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec, GlobalV::KS_SOLVER);
 
             // transform energy for print
             GlobalC::en.eband = this->pelec->eband;
@@ -425,7 +432,7 @@ namespace ModuleESolver
     }
 
 
-    void ESolver_KS_PW::afterscf()
+    void ESolver_KS_PW::afterscf(const int istep)
     {
         for(int ik=0; ik<this->pelec->ekb.nr; ++ik)
         {
@@ -698,7 +705,7 @@ namespace ModuleESolver
         {
             hsolver::DiagoIterAssist::need_subspace = false;
             hsolver::DiagoIterAssist::PW_DIAG_THR = ethr; 
-            this->phsol->solve(this->phami, this->psi[0], this->pelec, GlobalV::KS_SOLVER, true);
+            this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec, GlobalV::KS_SOLVER, true);
         }
         else
         {

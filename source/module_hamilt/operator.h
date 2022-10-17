@@ -1,5 +1,5 @@
-#ifndef __OPERATOR
-#define __OPERATOR
+#ifndef OPERATOR_H
+#define OPERATOR_H
 
 #include<complex>
 #include "module_psi/psi.h"
@@ -8,6 +8,20 @@
 
 namespace hamilt
 {
+
+enum calculation_type
+{
+    no,
+    pw_ekinetic, 
+    pw_nonlocal,
+    pw_veff,
+    pw_meta,
+    lcao_fixed,
+    lcao_gint,
+    lcao_deepks,
+    lcao_exx,
+    lcao_dftu,
+};
 
 // Basic class for operator module, 
 // it is designed for "O|psi>" and "<psi|O|psi>"
@@ -22,18 +36,49 @@ class Operator
 
     //this is the core function for Operator
     // do H|psi> from input |psi> , 
-    // output of hpsi would be first member of the returned tuple
-    typedef std::tuple<const psi::Psi<FPTYPE, Device>*, const psi::Range, FPTYPE*> hpsi_info;
-    virtual hpsi_info hPsi(hpsi_info& input) const; 
+
+    // output of hpsi would be first member of the returned tuple 
+    typedef std::tuple<const psi::Psi<T>*, const psi::Range, T*> hpsi_info;
+    virtual hpsi_info hPsi(hpsi_info& input)const;
+
+    virtual void init(const int ik_in);
+
+    virtual void add(Operator* next)
+    {
+        if(next==nullptr) return;
+        next->is_first_node = false;
+        if(next->next_op != nullptr) this->add(next->next_op);
+        Operator* last = this;
+        //loop to end of the chain
+        while(last->next_op != nullptr)
+        {
+            if(next->cal_type==last->cal_type)
+            {
+                break;
+            }
+            last = last->next_op;
+        }
+        if(next->cal_type == last->cal_type)
+        {
+            //insert next to sub chain of current node
+            Operator* sub_last = last;
+            while(sub_last->next_sub_op != nullptr)
+            {
+                sub_last = sub_last->next_sub_op;
+            }
+            sub_last->next_sub_op = next;
+            return;
+        }
+        else
+        {
+            last->next_op = next;
+        }    
+    }
 
     #if ((defined __CUDA) || (defined __ROCM))
     typedef std::tuple<const psi::Psi<FPTYPE, psi::DEVICE_GPU>*, const psi::Range, FPTYPE*> hpsi_info_gpu;
     virtual hpsi_info_gpu hPsi_gpu(hpsi_info_gpu& input) const; 
     #endif // ((defined __CUDA) || (defined __ROCM))
-
-    virtual void init(const int ik_in);
-
-    virtual void add(Operator* next);
 
 
     protected:
@@ -42,8 +87,10 @@ class Operator
     mutable bool in_place = false;
 
     //calculation type, only different type can be in main chain table 
-    int cal_type = 0;
+    enum calculation_type cal_type;
     Operator* next_op = nullptr;
+    Operator* next_sub_op = nullptr;
+    bool is_first_node = true;
 
     //if this Operator is first node in chain table, hpsi would not be empty
     mutable psi::Psi<FPTYPE>* hpsi = nullptr;

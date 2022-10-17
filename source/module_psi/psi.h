@@ -3,6 +3,7 @@
 //#incude "Inputs.h"
 //#include "Basis.h"
 //#include "Cell.h"
+
 #include "module_psi/include/types.h"
 #include "module_psi/include/memory.h"
 
@@ -12,7 +13,7 @@ namespace psi
 //structure for getting range of Psi
 //two display method: k index first or bands index first
 //only one k point with multi bands and one band with multi k-points are available for hPsi()
-struct Range 
+struct Range
 {
     //k_first = 0: Psi(nbands, nks, nbasis) ; 1: Psi(nks, nbands, nbasis)
     bool k_first;
@@ -20,7 +21,7 @@ struct Range
     size_t index_1;
     //range_1 is the begin of second index
     size_t range_1;
-    //range_2 is the end of second index 
+    //range_2 is the end of second index
     size_t range_2;
     //this is simple constructor for hPsi return
     Range(const size_t range_in);
@@ -59,7 +60,7 @@ public:
 
     const T* get_pointer() const;
     const T* get_pointer(const int& ibands) const;
-   
+
     // interface to get three dimension size
     const int& get_nk() const;
     const int& get_nbands() const;
@@ -73,21 +74,21 @@ public:
 
     //use operator "(ik, iband, ibasis)" to reach target element
     T& operator()(const int ik, const int ibands, const int ibasis);
-	const T& operator()(const int ik, const int ibands, const int ibasis) const;
+	  const T& operator()(const int ik, const int ibands, const int ibasis) const;
 
     //use operator "(iband, ibasis)" to reach target element for current k
     T& operator()(const int ibands, const int ibasis);
-	const T& operator()(const int ibands, const int ibasis) const;
+	  const T& operator()(const int ibands, const int ibasis) const;
 
     //use operator "(ibasis)" to reach target element for current k and current band
     T& operator()(const int ibasis);
-	const T& operator()(const int ibasis) const;
+	  const T& operator()(const int ibasis) const;
  
     /* //would be updated later
     int get_basis_type();
     int get_data_type();
     int get_hardware_type();*/
-    
+
     // for example : pass Psi from CPU to GPU, would be updated later
     //Psi& operator=(const Psi &p);
 
@@ -113,7 +114,6 @@ public:
 
     // solve Range: return(pointer of begin, number of bands or k-points)
     std::tuple<const T*, int> to_range(const Range& range) const;
-
     int npol = 1;
  
  private:   
@@ -121,6 +121,7 @@ public:
 
     AbacusDevice_t device = {}; // track the device type (CPU, GPU and SYCL are supported currented)
     Device * ctx = {}; // an context identifier for obtaining the device variable
+
     // dimensions
     int nk=1; // number of k points
     int nbands=1; // number of bands
@@ -141,16 +142,16 @@ public:
 
     mutable int psi_bias = 0; // psi_current = psi + psi_bias;
 /*    // control if the system has only gamma point
-    bool gamma_only; 
+    bool gamma_only;
 
     // control which basis for this wavefunction
     int basis_type;
-    
+
     // which hardware does this wavefunction located
     // 1: CPU, 2: GPU, 3: DCU
     int hardware_type;
-    
-    // method for parallelization 
+
+    // method for parallelization
     int parallel_type;
 //would be updated later */
     
@@ -163,11 +164,14 @@ public:
 //method for initial psi for each base, should be updated later
 template<typename T>
 void initialize(Psi<T> &psi);
-    /*    const bool &gamma_only, 
-        const int &basis_type, 
-        const int &data_type, 
-        const int &hardware_type, 
-        const int &parallel_type 
-    );*/
-} // end of namespace psi
+/*
+    const bool &gamma_only,
+    const int &basis_type,
+    const int &data_type,
+    const int &hardware_type,
+    const int &parallel_type
+);
+*/
+} //end of namespace psi
+
 #endif

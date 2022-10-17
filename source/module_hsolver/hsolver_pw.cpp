@@ -158,7 +158,7 @@ void HSolverPW::hamiltSolvePsiK(hamilt::Hamilt* hm, psi::Psi<std::complex<double
 
 void HSolverPW::update_precondition(std::vector<double> &h_diag, const int ik, const int npw)
 {
-    h_diag.resize(h_diag.size(), 1.0);
+    h_diag.assign(h_diag.size(), 1.0);
     int precondition_type = 2;
     const double tpiba2 = this->wfc_basis->tpiba2;
     
@@ -205,7 +205,7 @@ double HSolverPW::set_diagethr(const int istep, const int iter, const double drh
     {
         if (abs(this->diag_ethr - 1.0e-2) < 1.0e-10)
         {
-            if (GlobalC::pot.init_chg == "file")
+            if (GlobalC::CHR.init_chg == "file")
             {
                 //======================================================
                 // if you think that the starting potential is good

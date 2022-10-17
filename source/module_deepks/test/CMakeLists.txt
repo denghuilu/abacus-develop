@@ -8,8 +8,8 @@ target_link_libraries(
     test_deepks
     base cell symmetry md surchem xc_
     neighbor orb io relax gint lcao parallel mrrr pdiag pw ri driver esolver hsolver psi elecstate hamilt planewave
-    pthread
-    deepks
+    pthread genelpa
+    deepks rpa
     ${ABACUS_LINK_LIBRARIES}
 )
 

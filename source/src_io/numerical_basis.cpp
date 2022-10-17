@@ -553,12 +553,17 @@ void Numerical_Basis::output_k(
         ofs << "<WEIGHT_OF_KPOINTS>";
     }
 
+    // only half of nkstot should be output in "NSPIN == 2" case, k_up and k_down has same k infomation 
+    int nkstot = GlobalC::kv.nkstot;
+
     // (2)
-    for (int ik=0; ik<GlobalC::kv.nkstot; ik++)
+    for (int ik=0; ik<nkstot; ik++)
     {
         double kx, ky, kz, wknow;
 #ifdef __MPI
-        const int pool = GlobalC::Pkpoints.whichpool[ik];
+        //temprary restrict kpar=1 for NSPIN=2 case for generating_orbitals
+        int pool = 0;
+        if(GlobalV::NSPIN !=2 ) pool = GlobalC::Pkpoints.whichpool[ik];
         const int iknow = ik - GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL];
         if (GlobalV::RANK_IN_POOL==0)
         {
@@ -651,8 +656,10 @@ void Numerical_Basis::output_overlap_Q(
             overlap_Q[ik].getSize() * sizeof(std::complex<double>));
     }
 
+    // only half of nkstot should be output in "NSPIN == 2" case, k_up and k_down has same k infomation 
+    int nkstot = GlobalC::kv.nkstot;
     int count = 0;
-    for (int ik=0; ik<GlobalC::kv.nkstot; ik++)
+    for (int ik=0; ik<nkstot; ik++)
     {
         ModuleBase::ComplexArray Qtmp(overlap_Q[ik].getBound1(), overlap_Q[ik].getBound2(), overlap_Q[ik].getBound3());
         Qtmp.zero_out();
@@ -693,46 +700,53 @@ void Numerical_Basis::output_overlap_Sq(
         ofs.close();
     }
 
+    // only half of nkstot should be output in "NSPIN == 2" case, k_up and k_down has same k infomation 
+    int ispin = 1;
+    if(GlobalV::NSPIN == 2) ispin = 2;
+    int nkstot = GlobalC::kv.nkstot / ispin;
     int count = 0;
-    for (int ik=0; ik< GlobalC::kv.nkstot; ik++)
+    for(int is = 0; is<ispin; is++)
     {
-        if ( GlobalV::MY_POOL == GlobalC::Pkpoints.whichpool[ik] )
+        for (int ik=0; ik<nkstot; ik++)
         {
-            if ( GlobalV::RANK_IN_POOL == 0)
+            if ( GlobalV::MY_POOL == GlobalC::Pkpoints.whichpool[ik] )
             {
-                ofs.open(name.c_str(), ios::app);
-                const int ik_now = ik - GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL];
-
-                const int size = overlap_Sq[ik_now].getSize();
-                for (int i=0; i<size; i++)
+                if ( GlobalV::RANK_IN_POOL == 0)
                 {
-                    if (count%2==0) ofs << "\n";
-                    ofs << " " << overlap_Sq[ik_now].ptr[i].real() << " " << overlap_Sq[ik_now].ptr[i].imag();
-                    ++count;
+                    ofs.open(name.c_str(), ios::app);
+                    const int ik_now = ik - GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL] + is * nkstot;
+
+                    const int size = overlap_Sq[ik_now].getSize();
+                    for (int i=0; i<size; i++)
+                    {
+                        if (count%2==0) ofs << "\n";
+                        ofs << " " << overlap_Sq[ik_now].ptr[i].real() << " " << overlap_Sq[ik_now].ptr[i].imag();
+                        ++count;
+                    }
+
+                    ofs.close();
                 }
-
-                ofs.close();
+    #ifdef __MPI
+                MPI_Barrier(MPI_COMM_WORLD);
+    #endif
             }
-#ifdef __MPI
-            MPI_Barrier(MPI_COMM_WORLD);
-#endif
-        }
-        else
-        {
-#ifdef __MPI
-            MPI_Barrier(MPI_COMM_WORLD);
-#endif
-        }
+            else
+            {
+    #ifdef __MPI
+                MPI_Barrier(MPI_COMM_WORLD);
+    #endif
+            }
 
-        /*
-        if(MY_RANK==0)
-        for(int i=0; i< Sq_real[ik].getSize(); i++)
-        {
-        	if(i%2==0) ofs << "\n";
-        	ofs << " " << Sq_real[ik].ptr[i] << " " << Sq_imag[ik].ptr[i];
-        }
-        */
+            /*
+            if(MY_RANK==0)
+            for(int i=0; i< Sq_real[ik].getSize(); i++)
+            {
+                if(i%2==0) ofs << "\n";
+                ofs << " " << Sq_real[ik].ptr[i] << " " << Sq_imag[ik].ptr[i];
+            }
+            */
 
+        }
     }
     if (GlobalV::MY_RANK==0)
     {
