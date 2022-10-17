@@ -104,13 +104,14 @@ template <typename FPTYPE, typename Device> struct gemv_op
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 
 // Partially specialize functor for psi::GpuDevice.
-template <typename FPTYPE> struct zdot_real_op<FPTYPE, psi::DEVICE_GPU>
-{
-    FPTYPE operator()(const psi::DEVICE_GPU* d,
-                      const int& dim,
-                      const std::complex<FPTYPE>* psi_L,
-                      const std::complex<FPTYPE>* psi_R,
-                      const bool reduce = true);
+template <typename FPTYPE> 
+struct zdot_real_op<FPTYPE, psi::DEVICE_GPU> {
+  FPTYPE operator()(
+    const psi::DEVICE_GPU* d,
+    const int& dim,
+    const std::complex<FPTYPE>* psi_L,
+    const std::complex<FPTYPE>* psi_R,
+    const bool reduce = true);
 };
 
 // vector operator: result[i] = vector[i] / constant
