@@ -94,6 +94,10 @@ class DiagoCG : public DiagH
     using set_memory_op = psi::memory::set_memory_op<std::complex<FPTYPE>, Device>;
     using delete_memory_op = psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
     using resize_memory_op = psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
+    using hpsi_info = typename hamilt::Operator<std::complex<FPTYPE>, psi::DEVICE_CPU>::hpsi_info;
+#if ((defined __CUDA) || (defined __ROCM))
+    using hpsi_info_gpu = typename hamilt::Operator<std::complex<FPTYPE>, psi::DEVICE_GPU>::hpsi_info_gpu;
+#endif
 };
 
 } // namespace hsolver

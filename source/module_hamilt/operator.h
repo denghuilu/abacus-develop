@@ -38,7 +38,7 @@ class Operator
     // do H|psi> from input |psi> , 
 
     // output of hpsi would be first member of the returned tuple 
-    typedef std::tuple<const psi::Psi<FPTYPE>*, const psi::Range, FPTYPE*> hpsi_info;
+    typedef std::tuple<const psi::Psi<FPTYPE, Device>*, const psi::Range, FPTYPE*> hpsi_info;
     virtual hpsi_info hPsi(hpsi_info& input)const;
 
     virtual void init(const int ik_in);

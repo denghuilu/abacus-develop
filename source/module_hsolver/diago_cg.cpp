@@ -109,7 +109,6 @@ void DiagoCG<FPTYPE, Device>::diag_mock(hamilt::Hamilt *phm_in, psi::Psi<std::co
 
         //do hPsi, actually the result of hpsi stored in Operator,
         //the necessary of copying operation should be checked later
-        using hpsi_info = typename hamilt::Operator<std::complex<FPTYPE>, Device>::hpsi_info;
         hpsi_info cg_hpsi_in(this->phi_m, cg_hpsi_range, this->hphi);
         phm_in->ops->hPsi(cg_hpsi_in);
 
@@ -283,8 +282,7 @@ void DiagoCG<double, psi::DEVICE_GPU>::diag_mock(hamilt::Hamilt *phm_in, psi::Ps
 
         //do hPsi, actually the result of hpsi stored in Operator,
         //the necessary of copying operation should be checked later
-        using hpsi_info = typename hamilt::Operator<std::complex<double>, psi::DEVICE_GPU>::hpsi_info_gpu;
-        hpsi_info cg_hpsi_in(this->phi_m, cg_hpsi_range, this->hphi);
+        hpsi_info_gpu cg_hpsi_in(this->phi_m, cg_hpsi_range, this->hphi);
         phm_in->ops->hPsi_gpu(cg_hpsi_in);
 
         this->eigenvalue[m] = zdot_real_op()(this->ctx, this->dim, this->phi_m->get_pointer(), this->hphi, this->phi_m->get_device());
@@ -300,7 +298,7 @@ void DiagoCG<double, psi::DEVICE_GPU>::diag_mock(hamilt::Hamilt *phm_in, psi::Ps
             this->orthogonal_gradient(phm_in, phi, m);
             this->calculate_gamma_cg(iter, gg_last, cg_norm, theta);
             
-            hpsi_info cg_hpsi_in(this->cg, cg_hpsi_range, this->pphi);
+            hpsi_info_gpu cg_hpsi_in(this->cg, cg_hpsi_range, this->pphi);
             phm_in->ops->hPsi_gpu(cg_hpsi_in);
 
             phm_in->sPsi(this->cg->get_pointer(), this->scg, (size_t)this->dim);
@@ -369,7 +367,7 @@ void DiagoCG<double, psi::DEVICE_GPU>::diag_mock(hamilt::Hamilt *phm_in, psi::Ps
     ModuleBase::timer::tick("DiagoCG", "diag_once");
     return;
 } // end subroutine ccgdiagg
-#endif
+#endif // ((defined __CUDA) || (defined __ROCM))
 
 template<typename FPTYPE, typename Device>
 void DiagoCG<FPTYPE, Device>::calculate_gradient()
