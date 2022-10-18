@@ -48,19 +48,19 @@ void HSolverPW::initDiagh()
     }
     else if (this->method == "dav")
     {
-        DiagoDavid::PW_DIAG_NDIM = GlobalV::PW_DIAG_NDIM;
+        DiagoDavid<double>::PW_DIAG_NDIM = GlobalV::PW_DIAG_NDIM;
         if (pdiagh != nullptr)
         {
             if (pdiagh->method != this->method)
             {
                 delete[] pdiagh;
-                pdiagh = new DiagoDavid( precondition.data());
+                pdiagh = new DiagoDavid<double>( precondition.data());
                 pdiagh->method = this->method;
             }
         }
         else
         {
-            pdiagh = new DiagoDavid( precondition.data());
+            pdiagh = new DiagoDavid<double>( precondition.data());
             pdiagh->method = this->method;
         }
     }
@@ -122,7 +122,7 @@ void HSolverPW::endDiagh()
     }
     if(this->method == "dav")
     {
-        delete (DiagoDavid*)pdiagh;
+        delete (DiagoDavid<double>*)pdiagh;
         pdiagh = nullptr;
     }
     //psi only should be initialed once for PW

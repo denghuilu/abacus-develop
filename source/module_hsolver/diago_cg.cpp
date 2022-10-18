@@ -46,7 +46,10 @@ void DiagoCG<FPTYPE, Device>::diag_mock(hamilt::Hamilt *phm_in, psi::Psi<std::co
     this->dmx = phi.get_nbasis();
     this->n_band = phi.get_nbands();
     this->eigenvalue = eigenvalue_in;
-    ModuleBase::GlobalFunc::ZEROS(this->eigenvalue, this->n_band);
+
+    // haozhihan replace ZEROS 
+    psi::memory::set_memory_op<FPTYPE, Device>()(this->ctx, this->eigenvalue, 0, this->n_band);
+    // ModuleBase::GlobalFunc::ZEROS(this->eigenvalue, this->n_band);
 
     /// record for how many loops in cg convergence
     FPTYPE avg = 0.0;
@@ -96,7 +99,9 @@ void DiagoCG<FPTYPE, Device>::diag_mock(hamilt::Hamilt *phm_in, psi::Psi<std::co
         {
             const std::complex<FPTYPE>* psi_m_in = &(phi(m, 0));
             auto pphi_m = this->phi_m->get_pointer();
-            ModuleBase::GlobalFunc::COPYARRAY(psi_m_in, pphi_m, this->dim);
+            // haozhihan replace COPY_ARRAY
+            psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, Device>()(this->ctx, this->ctx, pphi_m, psi_m_in, this->dim);
+            // ModuleBase::GlobalFunc::COPYARRAY(psi_m_in, pphi_m, this->dim);
         }
         phm_in->sPsi(this->phi_m->get_pointer(), this->sphi, (size_t)this->dim); // sphi = S|psi(m)>
         this->schmit_orth(m, phi);
@@ -104,7 +109,6 @@ void DiagoCG<FPTYPE, Device>::diag_mock(hamilt::Hamilt *phm_in, psi::Psi<std::co
 
         //do hPsi, actually the result of hpsi stored in Operator,
         //the necessary of copying operation should be checked later
-        using hpsi_info = typename hamilt::Operator<std::complex<FPTYPE>, Device>::hpsi_info;
         hpsi_info cg_hpsi_in(this->phi_m, cg_hpsi_range, this->hphi);
         phm_in->ops->hPsi(cg_hpsi_in);
 
@@ -137,7 +141,9 @@ void DiagoCG<FPTYPE, Device>::diag_mock(hamilt::Hamilt *phm_in, psi::Psi<std::co
         } // end iter
 
         std::complex<FPTYPE>* psi_temp = &(phi(m, 0));
-        ModuleBase::GlobalFunc::COPYARRAY(this->phi_m->get_pointer(), psi_temp, this->dim);
+        // haozhihan replace COPY_ARRAY
+        psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, Device>()(this->ctx, this->ctx, psi_temp, this->phi_m->get_pointer(), this->dim);
+        // ModuleBase::GlobalFunc::COPYARRAY(this->phi_m->get_pointer(), psi_temp, this->dim);
 
         if (!converged)
         {
@@ -164,20 +170,27 @@ void DiagoCG<FPTYPE, Device>::diag_mock(hamilt::Hamilt *phm_in, psi::Psi<std::co
 
                 // last calculated eigenvalue should be in the i-th position: reorder
                 FPTYPE e0 = eigenvalue[m];
-                ModuleBase::GlobalFunc::COPYARRAY(psi_temp, pphi, this->dim);
+                // haozhihan replace COPY_ARRAY
+                psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, Device>()(this->ctx, this->ctx, pphi, psi_temp, this->dim);
+                // ModuleBase::GlobalFunc::COPYARRAY(psi_temp, pphi, this->dim);
 
                 for (int j = m; j >= i + 1; j--)
                 {
                     eigenvalue[j] = eigenvalue[j - 1];
                     std::complex<FPTYPE>* phi_j = &phi(j, 0);
                     std::complex<FPTYPE>* phi_j1 = &phi(j-1, 0);
-                    ModuleBase::GlobalFunc::COPYARRAY(phi_j1, phi_j, this->dim);
+                    // haozhihan replace COPY_ARRAY
+                    psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, Device>()(this->ctx, this->ctx, phi_j, phi_j1, this->dim);
+                    // ModuleBase::GlobalFunc::COPYARRAY(phi_j1, phi_j, this->dim);
                 }
 
                 eigenvalue[i] = e0;
                 // dcopy(pphi, phi, i);
                 std::complex<FPTYPE>* phi_pointer = &phi(i, 0);
-                ModuleBase::GlobalFunc::COPYARRAY(pphi, phi_pointer, this->dim);
+                // haozhihan replace COPY_ARRAY
+                psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, Device>()(this->ctx, this->ctx, phi_pointer, pphi, this->dim);
+                // ModuleBase::GlobalFunc::COPYARRAY(pphi, phi_pointer, this->dim);
+
                 // this procedure should be good if only a few inversions occur,
                 // extremely inefficient if eigenvectors are often in bad order
                 // (but this should not happen)
@@ -269,8 +282,7 @@ void DiagoCG<double, psi::DEVICE_GPU>::diag_mock(hamilt::Hamilt *phm_in, psi::Ps
 
         //do hPsi, actually the result of hpsi stored in Operator,
         //the necessary of copying operation should be checked later
-        using hpsi_info = typename hamilt::Operator<std::complex<double>, psi::DEVICE_GPU>::hpsi_info_gpu;
-        hpsi_info cg_hpsi_in(this->phi_m, cg_hpsi_range, this->hphi);
+        hpsi_info_gpu cg_hpsi_in(this->phi_m, cg_hpsi_range, this->hphi);
         phm_in->ops->hPsi_gpu(cg_hpsi_in);
 
         this->eigenvalue[m] = zdot_real_op()(this->ctx, this->dim, this->phi_m->get_pointer(), this->hphi, this->phi_m->get_device());
@@ -286,7 +298,7 @@ void DiagoCG<double, psi::DEVICE_GPU>::diag_mock(hamilt::Hamilt *phm_in, psi::Ps
             this->orthogonal_gradient(phm_in, phi, m);
             this->calculate_gamma_cg(iter, gg_last, cg_norm, theta);
             
-            hpsi_info cg_hpsi_in(this->cg, cg_hpsi_range, this->pphi);
+            hpsi_info_gpu cg_hpsi_in(this->cg, cg_hpsi_range, this->pphi);
             phm_in->ops->hPsi_gpu(cg_hpsi_in);
 
             phm_in->sPsi(this->cg->get_pointer(), this->scg, (size_t)this->dim);
@@ -355,7 +367,7 @@ void DiagoCG<double, psi::DEVICE_GPU>::diag_mock(hamilt::Hamilt *phm_in, psi::Ps
     ModuleBase::timer::tick("DiagoCG", "diag_once");
     return;
 } // end subroutine ccgdiagg
-#endif
+#endif // ((defined __CUDA) || (defined __ROCM))
 
 template<typename FPTYPE, typename Device>
 void DiagoCG<FPTYPE, Device>::calculate_gradient()
@@ -364,13 +376,18 @@ void DiagoCG<FPTYPE, Device>::calculate_gradient()
         ModuleBase::TITLE("DiagoCG", "calculate_gradient");
     // ModuleBase::timer::tick("DiagoCG","grad");
 
-    for (int i = 0; i < this->dim; i++)
-    {
-        //(2) PH|psi>
-        this->gradient[i] = this->hphi[i] / this->precondition[i];
-        //(3) PS|psi>
-        this->pphi[i] = this->sphi[i] / this->precondition[i];
-    }
+    // for (int i = 0; i < this->dim; i++)
+    // {
+    //     //(2) PH|psi>
+    //     this->gradient[i] = this->hphi[i] / this->precondition[i];
+    //     //(3) PS|psi>
+    //     this->pphi[i] = this->sphi[i] / this->precondition[i];
+    // }
+    // haozhihan replace this 2022-10-6
+    vector_div_vector_op<FPTYPE, Device>()(this->ctx, this->dim, this->gradient, this->hphi, this->precondition);
+    vector_div_vector_op<FPTYPE, Device>()(this->ctx, this->dim, this->pphi, this->sphi, this->precondition);
+
+
 
     // Update lambda !
     // (4) <psi|SPH|psi >
@@ -380,15 +397,19 @@ void DiagoCG<FPTYPE, Device>::calculate_gradient()
     const FPTYPE lambda = eh / es;
 
     // Update g!
-    for (int i = 0; i < this->dim; i++)
-    {
-        //               <psi|SPH|psi>
-        // (6) PH|psi> - ------------- * PS |psi>
-        //               <psi|SPS|psi>
-        //
-        // So here we get the gradient.
-        this->gradient[i] -= lambda * this->pphi[i];
-    }
+    // for (int i = 0; i < this->dim; i++)
+    // {
+    //     //               <psi|SPH|psi>
+    //     // (6) PH|psi> - ------------- * PS |psi>
+    //     //               <psi|SPS|psi>
+    //     //
+    //     // So here we get the gradient.
+    //     this->gradient[i] -= lambda * this->pphi[i];
+    // }
+    // haozhihan replace this 2022-10-6
+    constantvector_addORsub_constantVector_op<FPTYPE, Device>()(this->ctx, this->dim, this->gradient, this->gradient, 1.0, this->pphi, (-lambda));
+
+
     // ModuleBase::timer::tick("DiagoCG","grad");
     return;
 }
@@ -401,21 +422,35 @@ void DiagoCG<FPTYPE, Device>::orthogonal_gradient(hamilt::Hamilt *phm_in, const 
     // ModuleBase::timer::tick("DiagoCG","orth_grad");
 
     phm_in->sPsi(this->gradient, this->scg, (size_t)this->dim);
-    int inc = 1;
+    // int inc = 1;
+    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    // haozhihan replace 2022-10-07
+    gemv_op<FPTYPE, Device>()(this->ctx,
+                            'C',
+                            this->dim,
+                            m,
+                            &ModuleBase::ONE,
+                            eigenfunction.get_pointer(),
+                            this->dmx,
+                            this->scg,
+                            1,
+                            &ModuleBase::ZERO,
+                            this->lagrange,
+                            1);
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // qianrui replace 2021-3-15
-    char trans = 'C';
-    zgemv_(&trans,
-           &(this->dim),
-           &m,
-           &ModuleBase::ONE,
-           eigenfunction.get_pointer(),
-           &(this->dmx),
-           this->scg,
-           &inc,
-           &ModuleBase::ZERO,
-           this->lagrange,
-           &inc);
+    // char trans = 'C';
+    // zgemv_(&trans,
+    //        &(this->dim),
+    //        &m,
+    //        &ModuleBase::ONE,
+    //        eigenfunction.get_pointer(),
+    //        &(this->dmx),
+    //        this->scg,
+    //        &inc,
+    //        &ModuleBase::ZERO,
+    //        this->lagrange,
+    //        &inc);
     //======================================================================
     /*for (int i=0; i<m; i++)
     {
@@ -431,30 +466,56 @@ void DiagoCG<FPTYPE, Device>::orthogonal_gradient(hamilt::Hamilt *phm_in, const 
 
     // (3) orthogonal |g> and |scg> to all states (0~m-1)
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    // haozhihan replace 2022-10-07
+    gemv_op<FPTYPE, Device>()(this->ctx,
+                            'N',
+                            this->dim,
+                            m,
+                            &ModuleBase::NEG_ONE,
+                            eigenfunction.get_pointer(),
+                            this->dmx,
+                            this->lagrange,
+                            1,
+                            &ModuleBase::ONE,
+                            this->gradient,
+                            1);
+    gemv_op<FPTYPE, Device>()(this->ctx,
+                            'N',
+                            this->dim,
+                            m,
+                            &ModuleBase::NEG_ONE,
+                            eigenfunction.get_pointer(),
+                            this->dmx,
+                            this->lagrange,
+                            1,
+                            &ModuleBase::ONE,
+                            this->scg,
+                            1);
+    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // qianrui replace 2021-3-15
-    char trans2 = 'N';
-    zgemv_(&trans2,
-           &(this->dim),
-           &m,
-           &ModuleBase::NEG_ONE,
-           eigenfunction.get_pointer(),
-           &(this->dmx),
-           this->lagrange,
-           &inc,
-           &ModuleBase::ONE,
-           this->gradient,
-           &inc);
-    zgemv_(&trans2,
-           &(this->dim),
-           &m,
-           &ModuleBase::NEG_ONE,
-           eigenfunction.get_pointer(),
-           &(this->dmx),
-           this->lagrange,
-           &inc,
-           &ModuleBase::ONE,
-           this->scg,
-           &inc);
+    // char trans2 = 'N';
+    // zgemv_(&trans2,
+    //        &(this->dim),
+    //        &m,
+    //        &ModuleBase::NEG_ONE,
+    //        eigenfunction.get_pointer(),
+    //        &(this->dmx),
+    //        this->lagrange,
+    //        &inc,
+    //        &ModuleBase::ONE,
+    //        this->gradient,
+    //        &inc);
+    // zgemv_(&trans2,
+    //        &(this->dim),
+    //        &m,
+    //        &ModuleBase::NEG_ONE,
+    //        eigenfunction.get_pointer(),
+    //        &(this->dmx),
+    //        this->lagrange,
+    //        &inc,
+    //        &ModuleBase::ONE,
+    //        this->scg,
+    //        &inc);
     //======================================================================
     /*for (int i=0; i<m; i++)
     {
@@ -494,10 +555,12 @@ void DiagoCG<FPTYPE, Device>::calculate_gamma_cg(const int iter, FPTYPE &gg_last
     // firstly, for now, calculate: gg_now
     // secondly, prepare for the next iteration: gg_inter
     // |g0> = P | scg >
-    for (int i = 0; i < this->dim; i++)
-    {
-        this->g0[i] = this->precondition[i] * this->scg[i];
-    }
+    // for (int i = 0; i < this->dim; i++)
+    // {
+    //     this->g0[i] = this->precondition[i] * this->scg[i];
+    // }
+    // haozhihan replace this 2022-10-6
+    vector_mul_vector_op<FPTYPE, Device>()(this->ctx, this->dim, this->g0, this->scg, this->precondition);
 
     // (3) Update gg_now!
     // gg_now = < g|P|scg > = < g|g0 >
@@ -509,7 +572,10 @@ void DiagoCG<FPTYPE, Device>::calculate_gamma_cg(const int iter, FPTYPE &gg_last
         gg_last = gg_now;
         // (50) cg direction first value : |g>
         // |cg> = |g>
-        ModuleBase::GlobalFunc::COPYARRAY(this->gradient, pcg, this->dim);
+
+        // haozhihan replace COPY_ARRAY
+        psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, Device>()(this->ctx, this->ctx, pcg, this->gradient, this->dim);
+        // ModuleBase::GlobalFunc::COPYARRAY(this->gradient, pcg, this->dim);
     }
     else
     {
@@ -521,15 +587,20 @@ void DiagoCG<FPTYPE, Device>::calculate_gamma_cg(const int iter, FPTYPE &gg_last
         gg_last = gg_now;
 
         // (6) Update cg direction !(need gamma and |go> ):
-        for (int i = 0; i < this->dim; i++)
-        {
-            pcg[i] = gamma * pcg[i] + this->gradient[i];
-        }
+        // for (int i = 0; i < this->dim; i++)
+        // {
+        //     pcg[i] = gamma * pcg[i] + this->gradient[i];
+        // }
+        // haozhihan replace this 2022-10-6
+        constantvector_addORsub_constantVector_op<FPTYPE, Device>()(this->ctx, this->dim, pcg, pcg, gamma, this->gradient, 1.0);
 
         const FPTYPE norma = gamma * cg_norm * sin(theta);
         std::complex<FPTYPE> znorma(norma * -1, 0.0);
-        const int one = 1;
-        zaxpy_(&this->dim, &znorma, pphi_m, &one, pcg, &one);
+
+        // haozhihan replace this 2022-10-6
+        axpy_op<FPTYPE, Device>()(this->ctx, this->dim, &znorma, pphi_m, 1, pcg, 1);
+        // const int one = 1;
+        // zaxpy_(&this->dim, &znorma, pphi_m, &one, pcg, &one);
         /*for (int i = 0; i < this->dim; i++)
         {
             pcg[i] -= norma * pphi_m[i];
@@ -581,10 +652,14 @@ bool DiagoCG<FPTYPE, Device>::update_psi(FPTYPE &cg_norm, FPTYPE &theta, FPTYPE 
     //	std::cout << "\n overlap = "  << this->ddot(dim, phi_m, phi_m);
 
     auto pcg = this->cg->get_pointer();
-    for (int i = 0; i < this->dim; i++)
-    {
-        phi_m_pointer[i] = phi_m_pointer[i] * cost + sint_norm * pcg[i];
-    }
+    // for (int i = 0; i < this->dim; i++)
+    // {
+    //     phi_m_pointer[i] = phi_m_pointer[i] * cost + sint_norm * pcg[i];
+    // }
+    
+    // haozhihan replace this 2022-10-6
+    constantvector_addORsub_constantVector_op<FPTYPE, Device>()(this->ctx, this->dim, phi_m_pointer, phi_m_pointer, cost, pcg, sint_norm);
+
 
     //	std::cout << "\n overlap2 = "  << this->ddot(dim, phi_m, phi_m);
 
@@ -595,11 +670,16 @@ bool DiagoCG<FPTYPE, Device>::update_psi(FPTYPE &cg_norm, FPTYPE &theta, FPTYPE 
     }
     else
     {
-        for (int i = 0; i < this->dim; i++)
-        {
-            this->sphi[i] = this->sphi[i] * cost + sint_norm * this->scg[i];
-            this->hphi[i] = this->hphi[i] * cost + sint_norm * this->pphi[i];
-        }
+        // for (int i = 0; i < this->dim; i++)
+        // {
+        //     this->sphi[i] = this->sphi[i] * cost + sint_norm * this->scg[i];
+        //     this->hphi[i] = this->hphi[i] * cost + sint_norm * this->pphi[i];
+        // }
+
+        // haozhihan replace this 2022-10-6
+        constantvector_addORsub_constantVector_op<FPTYPE, Device>()(this->ctx, this->dim, this->sphi, this->sphi, cost, this->scg, sint_norm);
+        constantvector_addORsub_constantVector_op<FPTYPE, Device>()(this->ctx, this->dim, this->hphi, this->hphi, cost, this->pphi, sint_norm);
+
         // ModuleBase::timer::tick("DiagoCG","update");
         return 0;
     }
@@ -623,21 +703,36 @@ void DiagoCG<FPTYPE, Device>::schmit_orth(
     std::vector<std::complex<FPTYPE>> lagrange_so(m + 1, ModuleBase::ZERO);
 
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    // qianrui replace 2021-3-15
+    // haozhihan replace 2022-10-6
     int inc = 1;
-    int mp1 = m + 1;
-    char trans = 'C';
-    zgemv_(&trans,
-           &(this->dim),
-           &mp1,
-           &ModuleBase::ONE,
-           psi.get_pointer(),
-           &(this->dmx),
-           this->sphi,
-           &inc,
-           &ModuleBase::ZERO,
-           lagrange_so.data(),
-           &inc);
+    gemv_op<FPTYPE, Device>()(this->ctx,
+                            'C',
+                            this->dim,
+                            (m + 1),
+                            &ModuleBase::ONE,
+                            psi.get_pointer(),
+                            this->dmx,
+                            this->sphi,
+                            inc,
+                            &ModuleBase::ZERO,
+                            lagrange_so.data(),
+                            inc);
+    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    // qianrui replace 2021-3-15
+    // int inc = 1;
+    // int mp1 = m + 1;
+    // char trans = 'C';
+    // zgemv_(&trans,
+    //        &(this->dim),
+    //        &mp1,
+    //        &ModuleBase::ONE,
+    //        psi.get_pointer(),
+    //        &(this->dmx),
+    //        this->sphi,
+    //        &inc,
+    //        &ModuleBase::ZERO,
+    //        lagrange_so.data(),
+    //        &inc);
     //======================================================================
     /*for (int j = 0; j <= m; j++)
     {
@@ -654,19 +749,34 @@ void DiagoCG<FPTYPE, Device>::schmit_orth(
     FPTYPE psi_norm = lagrange_so[m].real();
 
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    // haozhihan replace 2022-10-6
+    gemv_op<FPTYPE, Device>()(this->ctx,
+                            'N',
+                            this->dim,
+                            m,
+                            &ModuleBase::NEG_ONE,
+                            psi.get_pointer(),
+                            this->dmx,
+                            lagrange_so.data(),
+                            inc,
+                            &ModuleBase::ONE,
+                            this->phi_m->get_pointer(),
+                            inc);
+    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // qianrui replace 2021-3-15
-    char trans2 = 'N';
-    zgemv_(&trans2,
-           &(this->dim),
-           &m,
-           &ModuleBase::NEG_ONE,
-           psi.get_pointer(),
-           &(this->dmx),
-           lagrange_so.data(),
-           &inc,
-           &ModuleBase::ONE,
-           this->phi_m->get_pointer(),
-           &inc);
+    // char trans2 = 'N';
+    // zgemv_(&trans2,
+    //        &(this->dim),
+    //        &m,
+    //        &ModuleBase::NEG_ONE,
+    //        psi.get_pointer(),
+    //        &(this->dmx),
+    //        lagrange_so.data(),
+    //        &inc,
+    //        &ModuleBase::ONE,
+    //        this->phi_m->get_pointer(),
+    //        &inc);
+
     psi_norm -= hsolver::zdot_real_op<FPTYPE, Device>()(this->ctx, m, lagrange_so.data(), lagrange_so.data(), false);
     //======================================================================
     /*for (int j = 0; j < m; j++)
@@ -695,10 +805,15 @@ void DiagoCG<FPTYPE, Device>::schmit_orth(
     psi_norm = sqrt(psi_norm);
 
     auto pphi_m = this->phi_m->get_pointer();
-    for (int ig = 0; ig < this->dim; ig++)
-    {
-        pphi_m[ig] /= psi_norm;
-    }
+    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    // haozhihan replace 2022-10-6
+    vector_div_constant_op<FPTYPE, Device>()(this->ctx, this->dim, pphi_m, pphi_m, psi_norm);
+    // scal_op<FPTYPE, Device>()(this->ctx, this->dim, &psi_norm, pphi_m, 1);
+    //======================================================================
+    // for (int ig = 0; ig < this->dim; ig++)
+    // {
+    //     pphi_m[ig] /= psi_norm;
+    // }
 
     // ModuleBase::timer::tick("DiagoCG","schmit_orth");
     return;
