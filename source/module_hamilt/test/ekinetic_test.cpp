@@ -77,11 +77,9 @@ TEST_F(TestModuleHamiltEkinetic, ekinetic_pw_op_gpu)
   resize_memory_complex_double_op()(gpu_ctx, psi_dev, psi.size());
   std::vector<std::complex<double> > hpsi(expected_hpsi.size(), std::complex<double>(0.0, 0.0));
   resize_memory_complex_double_op()(gpu_ctx, hpsi_dev, hpsi.size());
-  std::cerr << "I'm here in 1!" << std::endl;
   syncmem_cd_h2d_op()(gpu_ctx, cpu_ctx, hpsi_dev, hpsi.data(), hpsi.size());
   syncmem_d_h2d_op()(gpu_ctx, cpu_ctx, gk2_dev, gk2.data(), gk2.size());
   syncmem_cd_h2d_op()(gpu_ctx, cpu_ctx, psi_dev, psi.data(), psi.size());
-  std::cerr << "I'm here in 2!" << std::endl;
   // ekinetic_cpu_op()(cpu_ctx, band, dim, dim, tpiba2, gk2.data(), hpsi.data(), psi.data());
   ekinetic_gpu_op()(gpu_ctx, band, dim, dim, tpiba2, gk2_dev, hpsi_dev, psi_dev);
   syncmem_cd_d2h_op()(cpu_ctx, gpu_ctx, hpsi.data(), hpsi_dev, hpsi.size());

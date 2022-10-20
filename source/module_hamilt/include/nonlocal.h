@@ -14,14 +14,14 @@ struct nonlocal_pw_op {
       const int& l3,
       int& sum,
       int& iat,
-      const int& current_spin,
+      const int& spin,
       const int& nkb,
       const int& deeq_x,
       const int& deeq_y,
       const int& deeq_z,
+      const FPTYPE* deeq,
       std::complex<FPTYPE>* ps,
-      const std::complex<FPTYPE>* becp,
-      const FPTYPE* deeq);
+      const std::complex<FPTYPE>* becp);
 };
                       
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
@@ -35,14 +35,14 @@ struct nonlocal_pw_op<FPTYPE, psi::DEVICE_GPU> {
       const int& l3,
       int& sum,
       int& iat,
-      const int& current_spin,
+      const int& spin,
       const int& nkb,
       const int& deeq_x,
       const int& deeq_y,
       const int& deeq_z,
+      const FPTYPE* deeq,
       std::complex<FPTYPE>* ps,
-      const std::complex<FPTYPE>* becp,
-      const FPTYPE* deeq);
+      const std::complex<FPTYPE>* becp);
 };
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 } // namespace hamilt
