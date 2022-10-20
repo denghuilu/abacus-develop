@@ -490,7 +490,7 @@ void DiagoDavid<double, psi::DEVICE_GPU>::diag_mock(hamilt::Hamilt* phm_in, psi:
         this->notconv = 0;
         for (int m = 0; m < nband; m++)
         {
-            convflag[m] = (abs(eigenvalue[m] - eigenvalue_in[m]) < DiagoIterAssist::PW_DIAG_THR);
+            convflag[m] = (abs(eigenvalue[m] - eigenvalue_in[m]) < DiagoIterAssist<double, psi::DEVICE_GPU>::PW_DIAG_THR);
 
             if (!convflag[m])
             {
@@ -502,7 +502,7 @@ void DiagoDavid<double, psi::DEVICE_GPU>::diag_mock(hamilt::Hamilt* phm_in, psi:
         }
 
         ModuleBase::timer::tick("DiagoDavid", "check_update");
-        if (!this->notconv || (nbase + this->notconv > nbase_x) || (dav_iter == DiagoIterAssist::PW_DIAG_NMAX))
+        if (!this->notconv || (nbase + this->notconv > nbase_x) || (dav_iter == DiagoIterAssist<double, psi::DEVICE_GPU>::PW_DIAG_NMAX))
         {
             ModuleBase::timer::tick("DiagoDavid", "last");
 
@@ -534,7 +534,7 @@ void DiagoDavid<double, psi::DEVICE_GPU>::diag_mock(hamilt::Hamilt* phm_in, psi:
                 }
             }*/
 
-            if (!this->notconv || (dav_iter == DiagoIterAssist::PW_DIAG_NMAX))
+            if (!this->notconv || (dav_iter == DiagoIterAssist<double, psi::DEVICE_GPU>::PW_DIAG_NMAX))
             {
                 // overall convergence or last iteration: exit the iteration
 
@@ -555,7 +555,7 @@ void DiagoDavid<double, psi::DEVICE_GPU>::diag_mock(hamilt::Hamilt* phm_in, psi:
 
     } while (1);
 
-    DiagoIterAssist::avg_iter += static_cast<double>(dav_iter);
+    DiagoIterAssist<double, psi::DEVICE_GPU>::avg_iter += static_cast<double>(dav_iter);
 
     ModuleBase::timer::tick("DiagoDavid", "diag_mock");
     return;
@@ -687,7 +687,7 @@ void DiagoDavid<FPTYPE, Device>::diag_mock(hamilt::Hamilt* phm_in, psi::Psi<std:
         this->notconv = 0;
         for (int m = 0; m < nband; m++)
         {
-            convflag[m] = (abs(eigenvalue[m] - eigenvalue_in[m]) < DiagoIterAssist::PW_DIAG_THR);
+            convflag[m] = (abs(eigenvalue[m] - eigenvalue_in[m]) < DiagoIterAssist<FPTYPE, Device>::PW_DIAG_THR);
 
             if (!convflag[m])
             {
@@ -699,7 +699,7 @@ void DiagoDavid<FPTYPE, Device>::diag_mock(hamilt::Hamilt* phm_in, psi::Psi<std:
         }
 
         ModuleBase::timer::tick("DiagoDavid", "check_update");
-        if (!this->notconv || (nbase + this->notconv > nbase_x) || (dav_iter == DiagoIterAssist::PW_DIAG_NMAX))
+        if (!this->notconv || (nbase + this->notconv > nbase_x) || (dav_iter == DiagoIterAssist<FPTYPE, Device>::PW_DIAG_NMAX))
         {
             ModuleBase::timer::tick("DiagoDavid", "last");
 
@@ -731,7 +731,7 @@ void DiagoDavid<FPTYPE, Device>::diag_mock(hamilt::Hamilt* phm_in, psi::Psi<std:
                 }
             }*/
 
-            if (!this->notconv || (dav_iter == DiagoIterAssist::PW_DIAG_NMAX))
+            if (!this->notconv || (dav_iter == DiagoIterAssist<FPTYPE, Device>::PW_DIAG_NMAX))
             {
                 // overall convergence or last iteration: exit the iteration
 
@@ -752,7 +752,7 @@ void DiagoDavid<FPTYPE, Device>::diag_mock(hamilt::Hamilt* phm_in, psi::Psi<std:
 
     } while (1);
 
-    DiagoIterAssist::avg_iter += static_cast<double>(dav_iter);
+    DiagoIterAssist<FPTYPE, Device>::avg_iter += static_cast<double>(dav_iter);
 
     ModuleBase::timer::tick("DiagoDavid", "diag_mock");
     return;
@@ -1359,7 +1359,7 @@ void DiagoDavid<FPTYPE, Device>::diag(hamilt::Hamilt *phm_in, psi::Psi<std::comp
     {
         this->diag_mock(phm_in, psi, eigenvalue_in);
         ++ntry;
-    } while (DiagoIterAssist::test_exit_cond(ntry, this->notconv));
+    } while (DiagoIterAssist<FPTYPE, Device>::test_exit_cond(ntry, this->notconv));
 
     if (notconv > max(5, psi.get_nbands() / 4))
     {

@@ -63,7 +63,7 @@ class Operator
     bool is_first_node = true;
 
     //if this Operator is first node in chain table, hpsi would not be empty
-    mutable psi::Psi<FPTYPE>* hpsi = nullptr;
+    mutable psi::Psi<FPTYPE, Device>* hpsi = nullptr;
 
     /*This function would analyze hpsi_info and choose how to arrange hpsi storage
     In hpsi_info, if the third parameter hpsi_pointer is set, which indicates memory of hpsi is arranged by developer;
