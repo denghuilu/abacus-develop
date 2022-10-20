@@ -23,7 +23,7 @@ __global__ void ekinetic_pw(
 }
 
 template <typename FPTYPE> 
-void ekinetic_pw_op<FPTYPE, psi::DEVICE_GPU>::operator() (
+void hamilt::ekinetic_pw_op<FPTYPE, psi::DEVICE_GPU>::operator() (
       const psi::DEVICE_GPU* dev,
       const int& nband,
       const int& npw,

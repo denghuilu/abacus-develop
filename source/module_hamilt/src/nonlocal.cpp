@@ -6,7 +6,7 @@
 using namespace hamilt; 
 
 template <typename FPTYPE> 
-struct nonlocal_pw_op<FPTYPE, psi::DEVICE_CPU> {
+struct hamilt::nonlocal_pw_op<FPTYPE, psi::DEVICE_CPU> {
   void operator() (
       const psi::DEVICE_CPU* dev,
       const int& l1,

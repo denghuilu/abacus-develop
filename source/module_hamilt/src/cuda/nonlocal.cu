@@ -4,7 +4,7 @@
 using namespace hamilt; 
 
 template <typename FPTYPE> 
-void nonlocal_pw_op<FPTYPE, psi::DEVICE_GPU>::operator() (
+void hamilt::nonlocal_pw_op<FPTYPE, psi::DEVICE_GPU>::operator() (
       const psi::DEVICE_GPU* dev,
       const int& l1,
       const int& l2,
