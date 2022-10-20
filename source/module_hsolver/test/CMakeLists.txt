@@ -7,6 +7,7 @@ AddTest(
           ../../src_parallel/parallel_reduce.cpp
           ../../src_parallel/parallel_global.cpp ../../module_pw/test/test_tool.cpp
           ../../module_hamilt/operator.cpp
+          ../../module_hamilt/ks_pw/operator_pw.cpp
           ../src/math_kernel.cpp
 )
 AddTest(
@@ -16,6 +17,7 @@ AddTest(
           ../../src_parallel/parallel_reduce.cpp ../../src_parallel/parallel_global.cpp  ../../src_parallel/parallel_common.cpp
           ../../module_pw/test/test_tool.cpp
           ../../module_hamilt/operator.cpp
+          ../../module_hamilt/ks_pw/operator_pw.cpp
           ../src/math_kernel.cpp
 )
 AddTest(

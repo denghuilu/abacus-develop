@@ -97,12 +97,12 @@ FPTYPE* Operator<FPTYPE, Device>::get_hpsi(const hpsi_info& info) const
     else if(hpsi_pointer == psi_pointer)
     {
         this->in_place = true;
-        this->hpsi = new psi::Psi<FPTYPE>(std::get<0>(info)[0], 1, nbands_range);
+        this->hpsi = new psi::Psi<FPTYPE, Device>(std::get<0>(info)[0], 1, nbands_range);
     }
     else
     {
         this->in_place = false;
-        this->hpsi = new psi::Psi<FPTYPE>(hpsi_pointer, std::get<0>(info)[0], 1, nbands_range);
+        this->hpsi = new psi::Psi<FPTYPE, Device>(hpsi_pointer, std::get<0>(info)[0], 1, nbands_range);
     }
     
     hpsi_pointer = this->hpsi->get_pointer();
