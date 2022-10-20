@@ -79,7 +79,8 @@ void Nonlocal<FPTYPE, Device>::add_nonlocal_pp(std::complex<FPTYPE> *hpsi_in, co
                 this->ucell->atoms[it].na, m, nproj, // four loop size
                 sum, iat, current_spin, nkb,   // additional index params
                 this->ppcell->deeq.getBound2(), this->ppcell->deeq.getBound3(), this->ppcell->deeq.getBound4(), // realArray operator()
-                this->ps, this->becp, this->ppcell->deeq.ptr); // array of data
+                this->ppcell->deeq.ptr, // array of data
+                this->ps, this->becp); //  array of data
             // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             // for (int ia = 0; ia < this->ucell->atoms[it].na; ia++)
             // {
