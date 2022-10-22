@@ -57,6 +57,9 @@ void Veff<FPTYPE, Device>::act(
         }
         else
         {
+            #if ((defined __CUDA) || (defined __ROCM))
+                ModuleBase::WARNING_QUIT("Veff act()", "GPU's implementation was not supported when this->npol != 1");
+            #endif
             std::complex<FPTYPE> *porter1 = new std::complex<FPTYPE>[wfcpw->nmaxgr];
             // fft to real space and doing things.
             wfcpw->recip2real(tmpsi_in, porter, this->ik);

@@ -1,6 +1,5 @@
 #include <vector>
 #include <complex>
-#include <iostream>
 #include <gtest/gtest.h>
 #include "module_psi/include/memory.h"
 #include "module_hamilt/include/ekinetic.h"
@@ -71,8 +70,8 @@ TEST_F(TestModuleHamiltEkinetic, ekinetic_pw_op_cpu)
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 TEST_F(TestModuleHamiltEkinetic, ekinetic_pw_op_gpu)
 {
-  double* gk2_dev = NULL;
-  std::complex<double>* hpsi_dev = NULL, * psi_dev = NULL;
+  double* gk2_dev = nullptr;
+  std::complex<double>* hpsi_dev = nullptr, * psi_dev = nullptr;
   resize_memory_double_op()(gpu_ctx, gk2_dev, gk2.size());
   resize_memory_complex_double_op()(gpu_ctx, psi_dev, psi.size());
   std::vector<std::complex<double> > hpsi(expected_hpsi.size(), std::complex<double>(0.0, 0.0));

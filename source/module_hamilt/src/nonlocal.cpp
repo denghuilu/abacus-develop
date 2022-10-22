@@ -1,7 +1,5 @@
 #include "module_hamilt/include/nonlocal.h"
 
-#include <iomanip>
-#include <iostream>
 
 using namespace hamilt; 
 

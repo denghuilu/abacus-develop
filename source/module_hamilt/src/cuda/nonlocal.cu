@@ -8,7 +8,6 @@ using namespace hamilt;
 
 template <typename FPTYPE>
 __global__ void nonlocal_pw(
-    const int l1,
     const int l2,
     const int l3,
     const int sum,
@@ -55,7 +54,7 @@ void hamilt::nonlocal_pw_op<FPTYPE, psi::DEVICE_GPU>::operator() (
   // denghui implement 20221019
   // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
   nonlocal_pw<FPTYPE><<<l1 * l2, THREADS_PER_BLOCK>>>(
-    l1, l2, l3, // loop size
+    l2, l3, // loop size
     sum, iat, spin, nkb,   // control params
     deeq_x, deeq_y, deeq_z, deeq,  // deeq realArray operator()
     reinterpret_cast<thrust::complex<FPTYPE>*>(ps), // array of data

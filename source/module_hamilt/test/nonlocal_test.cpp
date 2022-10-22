@@ -1,6 +1,5 @@
 #include <vector>
 #include <complex>
-#include <iostream>
 #include <gtest/gtest.h>
 #include "module_psi/include/memory.h"
 #include "module_hamilt/include/nonlocal.h"

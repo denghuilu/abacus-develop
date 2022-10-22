@@ -1,8 +1,6 @@
 #include "nonlocal_pw.h"
 
 #include "module_base/blas_connector.h"
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
 #include "module_base/timer.h"
 #include "src_parallel/parallel_reduce.h"
 #include "module_base/tool_quit.h"
@@ -105,6 +103,9 @@ void Nonlocal<FPTYPE, Device>::add_nonlocal_pp(std::complex<FPTYPE> *hpsi_in, co
     }
     else
     {
+        #if ((defined __CUDA) || (defined __ROCM))
+            ModuleBase::WARNING_QUIT("Ekinetic add_nonlocal_pp()", "GPU's implementation was not supported when this->npol != 1");
+        #endif
         for (int it = 0; it < this->ucell->ntype; it++)
         {
             int psind = 0;
@@ -216,9 +217,9 @@ void Nonlocal<FPTYPE, Device>::add_nonlocal_pp(std::complex<FPTYPE> *hpsi_in, co
 template<typename FPTYPE, typename Device>
 void Nonlocal<FPTYPE, Device>::act
 (
-    const psi::Psi<std::complex<FPTYPE>, Device>* psi_in, 
-    const int n_npwx, 
-    const std::complex<FPTYPE>* tmpsi_in, 
+    const psi::Psi<std::complex<FPTYPE>, Device>* psi_in,
+    const int n_npwx,
+    const std::complex<FPTYPE>* tmpsi_in,
     std::complex<FPTYPE>* tmhpsi)const
 {
     ModuleBase::timer::tick("Operator", "NonlocalPW");

@@ -1,7 +1,5 @@
 #include "module_hamilt/include/ekinetic.h"
 
-#include <iomanip>
-#include <iostream>
 
 using namespace hamilt; 
 

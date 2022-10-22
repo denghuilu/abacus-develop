@@ -3,7 +3,7 @@
 #include "module_base/timer.h"
 #include "module_base/tool_quit.h"
 
-using namespace hamilt;
+using hamilt::Ekinetic;
 
 template<typename FPTYPE, typename Device>
 Ekinetic<FPTYPE, Device>::Ekinetic(
