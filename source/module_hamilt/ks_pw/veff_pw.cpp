@@ -1,7 +1,6 @@
 #include "veff_pw.h"
 
 #include "module_base/timer.h"
-#include "src_pw/global.h"
 #include "module_base/tool_quit.h"
 
 using namespace hamilt;
