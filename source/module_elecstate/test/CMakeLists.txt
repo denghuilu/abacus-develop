@@ -13,11 +13,12 @@ if(ENABLE_LCAO)
             ../../module_elecstate/elecstate_pw.cpp ../../module_elecstate/elecstate.cpp
   )
 
+
   install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
   
   AddTest(
     TARGET EState_psiToRho_lcao
-    LIBS ${math_libs} ELPA::ELPA base orb cell neighbor planewave
+    LIBS ${math_libs} ELPA::ELPA base orb cell neighbor planewave psi
     SOURCES elecstate_lcao_test.cpp ../elecstate_lcao.cpp ../dm2d_to_grid.cpp
               ../../src_parallel/parallel_global.cpp ../../src_parallel/parallel_common.cpp ../../src_parallel/parallel_reduce.cpp 
               ../../src_lcao/local_orbital_charge.cpp ../../src_lcao/DM_gamma.cpp ../../src_lcao/DM_k.cpp 

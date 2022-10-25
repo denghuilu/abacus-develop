@@ -1,5 +1,6 @@
 add_subdirectory(ks_pw)
 add_subdirectory(ks_lcao)
+
 list(APPEND objects
     hamilt_pw.cpp
     ks_pw/ekinetic_pw.cpp
@@ -29,4 +30,3 @@ add_library(
     OBJECT
     ${objects}
 )
-
