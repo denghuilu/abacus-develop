@@ -1,16 +1,15 @@
 #include "nonlocal_pw.h"
 
 #include "module_base/blas_connector.h"
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
 #include "module_base/timer.h"
 #include "src_parallel/parallel_reduce.h"
 #include "module_base/tool_quit.h"
 
-using namespace hamilt;
+using hamilt::Nonlocal;
+using hamilt::OperatorPW;
 
 template<typename FPTYPE, typename Device>
-Nonlocal<FPTYPE, Device>::Nonlocal(
+Nonlocal<OperatorPW<FPTYPE, Device>>::Nonlocal(
     const int* isk_in,
     const pseudopot_cell_vnl* ppcell_in,
     const UnitCell_pseudo* ucell_in
@@ -27,13 +26,13 @@ Nonlocal<FPTYPE, Device>::Nonlocal(
 }
 
 template<typename FPTYPE, typename Device>
-Nonlocal<FPTYPE, Device>::~Nonlocal() {
+Nonlocal<OperatorPW<FPTYPE, Device>>::~Nonlocal() {
     delete_memory_op()(this->ctx, this->ps);
     delete_memory_op()(this->ctx, this->becp);
 }
 
 template<typename FPTYPE, typename Device>
-void Nonlocal<FPTYPE, Device>::init(const int ik_in)
+void Nonlocal<OperatorPW<FPTYPE, Device>>::init(const int ik_in)
 {
     this->ik = ik_in;
     // Calculate nonlocal pseudopotential vkb
@@ -52,7 +51,7 @@ void Nonlocal<FPTYPE, Device>::init(const int ik_in)
 // this function sum up each non-local pseudopotential located on each atom,
 //--------------------------------------------------------------------------
 template<typename FPTYPE, typename Device>
-void Nonlocal<FPTYPE, Device>::add_nonlocal_pp(std::complex<FPTYPE> *hpsi_in, const std::complex<FPTYPE> *becp, const int m) const
+void Nonlocal<OperatorPW<FPTYPE, Device>>::add_nonlocal_pp(std::complex<FPTYPE> *hpsi_in, const std::complex<FPTYPE> *becp, const int m) const
 {
     ModuleBase::timer::tick("Nonlocal", "add_nonlocal_pp");
 
@@ -214,7 +213,7 @@ void Nonlocal<FPTYPE, Device>::add_nonlocal_pp(std::complex<FPTYPE> *hpsi_in, co
 }
 
 template<typename FPTYPE, typename Device>
-void Nonlocal<FPTYPE, Device>::act
+void Nonlocal<OperatorPW<FPTYPE, Device>>::act
 (
     const psi::Psi<std::complex<FPTYPE>, Device>* psi_in, 
     const int n_npwx, 
@@ -311,8 +310,8 @@ void Nonlocal<FPTYPE, Device>::act
 }
 
 namespace hamilt{
-template class Nonlocal<double, psi::DEVICE_CPU>;
+template class Nonlocal<OperatorPW<double, psi::DEVICE_CPU>>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class Nonlocal<double, psi::DEVICE_GPU>;
+template class Nonlocal<OperatorPW<double, psi::DEVICE_GPU>>;
 #endif
 } // namespace hamilt

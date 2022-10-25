@@ -20,17 +20,20 @@ AddTest(
           ../../module_hamilt/ks_pw/operator_pw.cpp
           ../src/math_kernel.cpp
 )
-AddTest(
-  TARGET HSolver_LCAO
-  LIBS ${math_libs} ELPA::ELPA base genelpa psi
-  SOURCES diago_lcao_test.cpp ../diago_elpa.cpp ../diago_blas.cpp ../../src_parallel/parallel_global.cpp 
-          ../../src_parallel/parallel_common.cpp ../../src_parallel/parallel_reduce.cpp
-)
+
+if(ENABLE_LCAO)
+  AddTest(
+    TARGET HSolver_LCAO
+    LIBS ${math_libs} ELPA::ELPA base genelpa psi
+    SOURCES diago_lcao_test.cpp ../diago_elpa.cpp ../diago_blas.cpp ../../src_parallel/parallel_global.cpp 
+            ../../src_parallel/parallel_common.cpp ../../src_parallel/parallel_reduce.cpp
+  )
+endif()
 
 if (USE_CUDA)
 AddTest(
   TARGET Hsolver_UTs
-  LIBS ${math_libs} ELPA::ELPA base cublas
+  LIBS ${math_libs} base cublas
   SOURCES math_kernel_test.cpp ../../src_parallel/parallel_global.cpp 
           ../../src_parallel/parallel_common.cpp  ../../src_parallel/parallel_reduce.cpp
           ../../module_hsolver/src/math_kernel.cpp
@@ -40,7 +43,7 @@ AddTest(
 else()
 AddTest(
   TARGET Hsolver_UTs
-  LIBS ${math_libs} ELPA::ELPA base
+  LIBS ${math_libs} base
   SOURCES math_kernel_test.cpp ../../src_parallel/parallel_global.cpp 
           ../../src_parallel/parallel_common.cpp  ../../src_parallel/parallel_reduce.cpp
           ../../module_hsolver/src/math_kernel.cpp
@@ -68,7 +71,9 @@ add_test(NAME HSolver_dav_parallel
       COMMAND ${BASH} diago_david_parallel_test.sh
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     ) 
-add_test(NAME HSolver_LCAO_parallel
-      COMMAND ${BASH} diago_lcao_parallel_test.sh
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    )   
+if(ENABLE_LCAO)
+  add_test(NAME HSolver_LCAO_parallel
+        COMMAND ${BASH} diago_lcao_parallel_test.sh
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      )
+endif()   
