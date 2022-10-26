@@ -14,9 +14,9 @@ namespace hamilt {
  #ifndef NONLOCALTEMPLATE_H
  #define NONLOCALTEMPLATE_H
 
-// template<class T> class Nonlocal : public T {};
-template<typename FPTYPE, typename Device = psi::DEVICE_CPU>
-class Nonlocal : public OperatorPW<FPTYPE, Device> {};
+template<class T> class Nonlocal : public T {};
+//template<typename FPTYPE, typename Device = psi::DEVICE_CPU>
+//class Nonlocal : public OperatorPW<FPTYPE, Device> {};
 
 
  #endif
@@ -56,6 +56,7 @@ class Nonlocal<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
     mutable std::complex<FPTYPE>* becp = nullptr;
     mutable std::complex<FPTYPE> *ps = nullptr;
     Device* ctx = {};
+    FPTYPE * deeq = nullptr;
     // using nonlocal_op = nonlocal_pw_op<FPTYPE, Device>;
     using gemv_op = hsolver::gemv_op<FPTYPE, Device>;
     using gemm_op = hsolver::gemm_op<FPTYPE, Device>;

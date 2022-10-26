@@ -42,6 +42,7 @@ class Veff<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
     const ModuleBase::matrix* veff = nullptr;
 
     ModulePW::PW_Basis_K* wfcpw = nullptr;
+    Device *ctx = {};
 };
 
 } // namespace hamilt

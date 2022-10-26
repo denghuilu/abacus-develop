@@ -2,6 +2,7 @@
 #define PWBASISK_H
 
 #include "pw_basis.h"
+#include "module_psi/psi.h"
 namespace ModulePW
 {
 
@@ -98,6 +99,12 @@ public:
     void real2recip(const std::complex<double>* in, std::complex<double>* out, const int ik, const bool add = false, const double factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)
     void recip2real(const std::complex<double>* in, double* out, const int ik, const bool add = false, const double factor = 1.0); //in:(nz, ns)  ; out(nplane,nx*ny)
     void recip2real(const std::complex<double>* in, std::complex<double> * out, const int ik, const bool add = false, const double factor = 1.0); //in:(nz, ns)  ; out(nplane,nx*ny)
+
+    void real_to_recip(const psi::DEVICE_CPU *dev, const std::complex<double> * in, std::complex<double> * out, const int ik, const bool add = false, const double factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)
+    void real_to_recip(const psi::DEVICE_GPU *dev, const std::complex<double> * in, std::complex<double> * out, const int ik, const bool add = false, const double factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)
+    void recip_to_real(const psi::DEVICE_CPU *dev, const std::complex<double> * in, std::complex<double> * out, const int ik, const bool add = false, const double factor = 1.0); //in:(nz, ns)  ; out(nplane,nx*ny)
+    void recip_to_real(const psi::DEVICE_GPU *dev, const std::complex<double> * in, std::complex<double> * out, const int ik, const bool add = false, const double factor = 1.0); //in:(nz, ns)  ; out(nplane,nx*ny)
+
 
 #ifdef __MIX_PRECISION
     void real2recip(const float* in, std::complex<float>* out, const int ik, const bool add = false, const float factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)

@@ -42,7 +42,8 @@ void Veff<OperatorPW<FPTYPE, Device>>::act(
     {
         if (this->npol == 1)
         {
-            wfcpw->recip2real(tmpsi_in, porter, this->ik);
+            // wfcpw->recip2real(tmpsi_in, porter, this->ik);
+            wfcpw->recip_to_real(this->ctx, tmpsi_in, porter, this->ik);
             // NOTICE: when MPI threads are larger than number of Z grids
             // veff would contain nothing, and nothing should be done in real space
             // but the 3DFFT can not be skipped, it will cause hanging
@@ -54,7 +55,8 @@ void Veff<OperatorPW<FPTYPE, Device>>::act(
                     porter[ir] *= current_veff[ir];
                 }
             }
-            wfcpw->real2recip(porter, tmhpsi, this->ik, true);
+            // wfcpw->real2recip(porter, tmhpsi, this->ik, true);
+            wfcpw->real_to_recip(this->ctx, porter, tmhpsi, this->ik, true);
         }
         else
         {

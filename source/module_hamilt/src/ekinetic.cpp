@@ -1,9 +1,6 @@
 #include "module_hamilt/include/ekinetic.h"
 
-#include <iomanip>
-#include <iostream>
-
-using namespace hamilt; 
+using namespace hamilt;
 
 template <typename FPTYPE> 
 struct hamilt::ekinetic_pw_op<FPTYPE, psi::DEVICE_CPU> {
