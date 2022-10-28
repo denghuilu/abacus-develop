@@ -161,7 +161,17 @@ void FFT :: initplan()
 		}
 	}
 
-	
+	this->plan3dforward = fftw_plan_dft_3d(
+        this->nx, this->ny, this->nz,
+        reinterpret_cast<fftw_complex *>(d_auxr),
+        reinterpret_cast<fftw_complex *>(d_auxr),
+        FFTW_FORWARD, FFTW_MEASURE);
+
+    this->plan3dbackward = fftw_plan_dft_3d(
+        this->nx, this->ny, this->nz,
+        reinterpret_cast<fftw_complex *>(d_auxr),
+        reinterpret_cast<fftw_complex *>(d_auxr),
+        FFTW_BACKWARD, FFTW_MEASURE);
 
 	destroyp = false;
 }
@@ -290,6 +300,8 @@ void FFT:: cleanFFT()
 			fftw_destroy_plan(planybac);
 		}
 	}
+    fftw_destroy_plan(plan3dforward);
+    fftw_destroy_plan(plan3dbackward);
 	destroyp = true;
 	return;
 }
@@ -454,6 +466,22 @@ void FFT::fftxyc2r(std::complex<double>* & in, double* & out)
 		}
 	}
 	return;
+}
+
+void FFT::fft3D_forward(std::complex<double> *&in, std::complex<double> *&out)
+{
+    fftw_execute_dft(
+        this->plan3dforward,
+        reinterpret_cast<fftw_complex *>(in),
+        reinterpret_cast<fftw_complex *>(out));
+}
+
+void FFT::fft3D_backward(std::complex<double> *&in, std::complex<double> *&out)
+{
+    fftw_execute_dft(
+        this->plan3dbackward,
+        reinterpret_cast<fftw_complex *>(in),
+        reinterpret_cast<fftw_complex *>(out));
 }
 
 

@@ -104,6 +104,7 @@ public:
     int *istot2ixy=nullptr; // istot2ixy[is]: iy + ix * ny of is^th stick among all sticks.
     int *is2fftixy=nullptr; // is2fftixy[is]: iy + ix * ny of is^th stick among sticks on current proc.
     int *fftixy2ip=nullptr; // fftixy2ip[iy + ix * fftny]: ip of proc which contains stick on (ix, iy). if no stick: -1
+    int *ig2ixyz=nullptr; // 3d fft, map ig to box index.
     int nst=0; //num. of sticks in current proc.
     int *nst_per=nullptr;// nst on each core
     int nstnz=0; // nst * nz
@@ -222,6 +223,9 @@ protected:
     void create_maps(
         int* st_length2D  // the number of planewaves that belong to the stick located on (x, y), stored in 2d x-y plane.
     );
+
+    void get_ig2ixyz();
+
 
 //===============================================
 //                  FFT

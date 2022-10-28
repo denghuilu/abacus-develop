@@ -192,30 +192,22 @@ void PW_Basis_K::real_to_recip(const psi::DEVICE_GPU * ctx, const std::complex<d
 {
     ModuleBase::timer::tick(this->classname, "real_to_recip gpu");
     assert(this->gamma_only == false);
+    for(int ir = 0 ; ir < this->nrxx ; ++ir) {
+        this->ft.auxr[ir] = in[ir];
+    }
 
-    // for(int ir = 0 ; ir < this->nrxx ; ++ir)
-    // {
-    //     this->ft.auxr[ir] = in[ir];
-    // }
-    // set_box_op<std::complex<double>, psi::DEVICE_GPU>()(ctx, in, out, this->box_index);
-    this->ft.fftxyfor(ft.auxr,ft.auxr);
+    this->ft.fft3D_forward(this->ft.auxr, this->ft.auxg);
 
-    this->gatherp_scatters(this->ft.auxr, this->ft.auxg);
-
-    this->ft.fftzfor(ft.auxg,ft.auxg);
-
-    // const int startig = ik*this->npwk_max;
-    // const int npwk = this->npwk[ik];
-    // if(add)
-    // for(int igl = 0 ; igl < npwk ; ++igl)
-    // {
-    //     out[igl] += factor / double(this->nxyz) * this->ft.auxg[this->igl2isz_k[igl+startig]];
-    // }
-    // else
-    // for(int igl = 0 ; igl < npwk ; ++igl)
-    // {
-    //     out[igl] = this->ft.auxg[this->igl2isz_k[igl+startig]] / double(this->nxyz);
-//    }
+    if(add) {
+        for(int ig = 0 ; ig < this->npw ; ++ig) {
+            out[ig] += factor / static_cast<double>(this->nxyz) * this->ft.auxg[this->ig2ixyz[ig]];
+        }
+    }
+    else {
+        for(int ig = 0 ; ig < this->npw ; ++ig) {
+            out[ig] = this->ft.auxg[this->ig2ixyz[ig]] / static_cast<double>(this->nxyz);
+        }
+    }
     ModuleBase::timer::tick(this->classname, "real_to_recip gpu");
 }
 
@@ -230,30 +222,24 @@ void PW_Basis_K::recip_to_real(const psi::DEVICE_GPU * /*dev*/, const std::compl
 {
     ModuleBase::timer::tick(this->classname, "recip_to_real gpu");
     assert(this->gamma_only == false);
-    ModuleBase::GlobalFunc::ZEROS(ft.auxg, this->nst * this->nz);
 
-    const int startig = ik*this->npwk_max;
-    const int npwk = this->npwk[ik];
-    for(int igl = 0 ; igl < npwk ; ++igl)
+    for(int ig = 0 ; ig < this->npw ; ++ig)
     {
-        this->ft.auxg[this->igl2isz_k[igl+startig]] = in[igl];
+        this->ft.auxg[this->ig2ixyz[ig]] = in[ig];
     }
-    this->ft.fftzbac(ft.auxg, ft.auxg);
+    //auxg should be "auxg = new complex<double>[nxyz]“
+    this->ft.fft3D_backward(this->ft.auxg, this->ft.auxr);
 
-    this->gathers_scatterp(this->ft.auxg,this->ft.auxr);
-
-    this->ft.fftxybac(ft.auxr,ft.auxr);
-
-    if(add)
-        for(int ir = 0 ; ir < this->nrxx ; ++ir)
-        {
+    if(add) {
+        for(int ir = 0 ; ir < this->nrxx ; ++ir) {
             out[ir] += factor * this->ft.auxr[ir];
         }
-    else
-        for(int ir = 0 ; ir < this->nrxx ; ++ir)
-        {
+    }
+    else {
+        for(int ir = 0 ; ir < this->nrxx ; ++ir) {
             out[ir] = this->ft.auxr[ir];
         }
+    }
     ModuleBase::timer::tick(this->classname, "recip_to_real gpu");
 }
 

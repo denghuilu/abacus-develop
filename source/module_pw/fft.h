@@ -45,6 +45,8 @@ public:
 	void fftxybac(std::complex<double>* & in, std::complex<double>* & out);
 	void fftxyr2c(double * &in, std::complex<double>* & out);
 	void fftxyc2r(std::complex<double>* & in, double* & out);
+    void fft3D_forward(std::complex<double>* & in, std::complex<double>* & out);
+    void fft3D_backward(std::complex<double>* & in, std::complex<double>* & out);
 
 #ifdef __MIX_PRECISION
 	void cleanfFFT();
@@ -77,7 +79,8 @@ public:
 	int ns=0; //number of sticks
 	int nplane=0; //number of x-y planes
 	int nproc=1; // number of proc.
-	std::complex<double> *auxg=nullptr, *auxr=nullptr; //fft space
+    std::complex<double> *auxg=nullptr, *auxr=nullptr; //fft space
+    std::complex<double> *d_auxg=nullptr, *d_auxr=nullptr; //fft space for gpu device
 	double *r_rspace=nullptr; //real number space for r, [nplane * nx *ny]
 #ifdef __MIX_PRECISION
 	std::complex<float> *auxfg=nullptr, *auxfr=nullptr; //fft space,
@@ -102,6 +105,8 @@ private:
 	fftw_plan planxc2r;
 	fftw_plan planyr2c;
 	fftw_plan planyc2r;
+    fftw_plan plan3dforward;
+    fftw_plan plan3dbackward;
 #ifdef __MIX_PRECISION
 	bool destroypf=true;
 	fftwf_plan planfzfor;

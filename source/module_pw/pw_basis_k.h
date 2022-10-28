@@ -82,9 +82,10 @@ public:
 
     int *igl2isz_k=nullptr; //[npwk_max*nks] map (igl,ik) to (is,iz) 
     int *igl2ig_k=nullptr;//[npwk_max*nks] map (igl,ik) to ig
-
+    int *ig2ixyz_k=nullptr;
     double *gk2=nullptr; // modulus (G+K)^2 of G vectors [npwk_max*nks]
 
+    void get_ig2ixyz_k();
     //collect gdirect, gcar, gg
     void collect_local_pw();
 

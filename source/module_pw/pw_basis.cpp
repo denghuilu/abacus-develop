@@ -17,6 +17,7 @@ PW_Basis:: ~PW_Basis()
     delete[] istot2ixy;
     delete[] is2fftixy;
     delete[] fftixy2ip;
+    delete[] ig2ixyz;
     delete[] nst_per;
     delete[] npw_per;
     delete[] gdirect;
@@ -213,5 +214,21 @@ void PW_Basis::getfftixy2is(int * fftixy2is)
     }
 }
 
-
+void PW_Basis::get_ig2ixyz()
+{
+    this->ig2ixyz = new int [this->npw];
+    assert(gamma_only == false); //We only finish non-gamma_only fft on GPU temperarily.
+    for(int ig = 0 ; ig < this->npw ; ++ig)
+    {
+        int isz = this->ig2isz[ig];
+        int iz = isz % this->nz;
+        int is = isz / this->nz;
+        int ixy = this->is2fftixy[is];
+        int iy = ixy % this->ny;
+        int ix = ixy / this->ny;
+        ig2ixyz[ig] = iz + iy * nz + ix * ny * nz;
+    }
 }
+
+
+}  // namespace ModulePW
