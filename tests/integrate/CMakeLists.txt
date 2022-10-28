@@ -13,7 +13,7 @@ else()
         COMMAND ${BASH} Autotest.sh -a ${ABACUS_BIN_PATH} -n 4
         WORKING_DIRECTORY ${ABACUS_TEST_DIR}/integrate
     )
-    set_tests_properties(integrated_test PROPERTIES TIMEOUT 2000)
+    set_tests_properties(integrated_test PROPERTIES TIMEOUT 30000)
     add_executable(sum_ENV_H2 ${ABACUS_TEST_DIR}/integrate/tools/sum_ENV_H2.cpp)
     install(TARGETS sum_ENV_H2 DESTINATION ${ABACUS_TEST_DIR}/integrate/tools/)
     add_executable(sum_BAND_CHG_H2 ${ABACUS_TEST_DIR}/integrate/tools/sum_BAND_CHG_H2.cpp)

@@ -11,7 +11,7 @@ struct set_box_op<FPTYPE, psi::DEVICE_CPU> {
         FPTYPE* out,
         const int* box_index)
     {
-
+        
     }
 };
 

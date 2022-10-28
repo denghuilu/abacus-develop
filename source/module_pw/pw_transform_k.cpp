@@ -222,13 +222,14 @@ void PW_Basis_K::recip_to_real(const psi::DEVICE_GPU * /*dev*/, const std::compl
 {
     ModuleBase::timer::tick(this->classname, "recip_to_real gpu");
     assert(this->gamma_only == false);
-
-    for(int ig = 0 ; ig < this->npw ; ++ig)
+    ModuleBase::GlobalFunc::ZEROS(ft.auxr, this->nxyz);
+    const int npw_k = this->npwk[ik];
+    for(int ig = 0; ig < npw_k; ++ig)
     {
-        this->ft.auxg[this->ig2ixyz[ig]] = in[ig];
+        this->ft.auxr[this->ig2ixyz[ig]] = in[ig];
     }
     //auxg should be "auxg = new complex<double>[nxyz]“
-    this->ft.fft3D_backward(this->ft.auxg, this->ft.auxr);
+    this->ft.fft3D_backward(this->ft.auxr, this->ft.auxr);
 
     if(add) {
         for(int ir = 0 ; ir < this->nrxx ; ++ir) {
