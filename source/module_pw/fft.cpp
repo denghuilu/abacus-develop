@@ -163,14 +163,14 @@ void FFT :: initplan()
 
 	this->plan3dforward = fftw_plan_dft_3d(
         this->nx, this->ny, this->nz,
-        reinterpret_cast<fftw_complex *>(d_auxr),
-        reinterpret_cast<fftw_complex *>(d_auxr),
+        reinterpret_cast<fftw_complex *>(auxr),
+        reinterpret_cast<fftw_complex *>(auxr),
         FFTW_FORWARD, FFTW_MEASURE);
 
     this->plan3dbackward = fftw_plan_dft_3d(
         this->nx, this->ny, this->nz,
-        reinterpret_cast<fftw_complex *>(d_auxr),
-        reinterpret_cast<fftw_complex *>(d_auxr),
+        reinterpret_cast<fftw_complex *>(auxr),
+        reinterpret_cast<fftw_complex *>(auxr),
         FFTW_BACKWARD, FFTW_MEASURE);
 
 	destroyp = false;
