@@ -2,9 +2,7 @@
 #include "thrust/complex.h"
 #include <cuda_runtime.h>
 
-using ModulePW::set_3d_fft_box_op;
-using ModulePW::set_recip_to_real_output_op;
-using ModulePW::set_real_to_recip_output_op;
+namespace ModulePW{
 
 #define THREADS_PER_BLOCK 256
 
@@ -117,9 +115,9 @@ void set_real_to_recip_output_op<FPTYPE, psi::DEVICE_GPU>::operator()(
         reinterpret_cast<thrust::complex<FPTYPE>*>(out));
 }
 
-namespace ModulePW{
 template struct set_3d_fft_box_op<double, psi::DEVICE_GPU>;
 template struct set_recip_to_real_output_op<double, psi::DEVICE_GPU>;
 template struct set_real_to_recip_output_op<double, psi::DEVICE_GPU>;
-}
+
+}  // namespace ModulePW
 

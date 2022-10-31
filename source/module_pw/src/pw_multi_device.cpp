@@ -1,9 +1,6 @@
 #include "module_pw/include/pw_multi_device.h"
-#include <iostream>
 
-using ModulePW::set_3d_fft_box_op;
-using ModulePW::set_recip_to_real_output_op;
-using ModulePW::set_real_to_recip_output_op;
+namespace ModulePW {
 
 template <typename FPTYPE>
 struct set_3d_fft_box_op<FPTYPE, psi::DEVICE_CPU> {
@@ -70,9 +67,9 @@ struct set_real_to_recip_output_op<FPTYPE, psi::DEVICE_CPU> {
     }
 };
 
-namespace ModulePW{
 template struct set_3d_fft_box_op<double, psi::DEVICE_CPU>;
 template struct set_recip_to_real_output_op<double, psi::DEVICE_CPU>;
 template struct set_real_to_recip_output_op<double, psi::DEVICE_CPU>;
-}
+
+}  // namespace ModulePW
 
