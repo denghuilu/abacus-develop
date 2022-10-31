@@ -96,6 +96,7 @@ add_library(
   ../../module_pw/pw_init.cpp
   ../../module_pw/pw_transform.cpp
   ../../module_pw/pw_transform_k.cpp
+  ../../module_pw/src/pw_multi_device.cpp
 )
 
 if(ENABLE_COVERAGE)
