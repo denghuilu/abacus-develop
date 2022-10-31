@@ -11,9 +11,9 @@ using ModulePW::set_real_to_recip_output_op;
 template<class FPTYPE>
 __global__ void set_3d_fft_box(
     const int npwk,
+    const int* box_index,
     const thrust::complex<FPTYPE>* in,
-    thrust::complex<FPTYPE>* out,
-    const int* box_index)
+    thrust::complex<FPTYPE>* out)
 {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if(idx < npwk)
@@ -65,16 +65,16 @@ template <typename FPTYPE>
 void set_3d_fft_box_op<FPTYPE, psi::DEVICE_GPU>::operator()(
     const psi::DEVICE_GPU*  /*dev*/,
     const int npwk,
+    const int* box_index,
     const std::complex<FPTYPE>* in,
-    std::complex<FPTYPE>* out,
-    const int* box_index)
+    std::complex<FPTYPE>* out)
 {
     const int block = (npwk + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     set_3d_fft_box<double><<<block, THREADS_PER_BLOCK>>>(
         npwk,
+        box_index,
         reinterpret_cast<const thrust::complex<FPTYPE>*>(in),
-        reinterpret_cast<thrust::complex<FPTYPE>*>(out),
-        box_index);
+        reinterpret_cast<thrust::complex<FPTYPE>*>(out));
 }
 
 template <typename FPTYPE>

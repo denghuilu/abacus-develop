@@ -10,9 +10,9 @@ struct set_3d_fft_box_op<FPTYPE, psi::DEVICE_CPU> {
     void operator() (
         const psi::DEVICE_CPU* /*dev*/,
         const int npwk,
+        const int* box_index,
         const std::complex<FPTYPE>* in,
-        std::complex<FPTYPE>* out,
-        const int* box_index)
+        std::complex<FPTYPE>* out)
     {
         for(int ig = 0; ig < npwk; ++ig)
         {

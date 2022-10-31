@@ -201,16 +201,17 @@ void PW_Basis_K::real_to_recip(const psi::DEVICE_GPU * ctx, const std::complex<d
     //     this->ft.auxr[ir] = in[ir];
     // }
     // psi::DEVICE_CPU *cpu_ctx = {};
-    // psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_GPU, psi::DEVICE_CPU>()(
-    //     ctx, cpu_ctx,
+     psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_GPU, psi::DEVICE_GPU>()(
+         ctx, ctx,
+         this->ft.auxr_3d, in,
+         this->nrxx);
+    // psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_GPU, psi::DEVICE_GPU>()(
+    //     ctx, ctx,
     //     this->ft.auxr_3d, in,
     //     this->nrxx);
-    psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_GPU, psi::DEVICE_GPU>()(
-        ctx, ctx,
-        this->ft.auxr_3d, in,
-        this->nrxx);
-
+    // cudaMemcpy(this->ft.auxr_3d, this->ft.auxr, sizeof(std::complex<double>) * this->nxyz, cudaMemcpyHostToDevice);
     this->ft.fft3D_forward(this->ft.auxr_3d, this->ft.auxr_3d);
+    // cudaMemcpy(this->ft.auxr, this->ft.auxr_3d, sizeof(std::complex<double>) * this->nxyz, cudaMemcpyDeviceToHost);
 
     const int startig = ik*this->npwk_max;
     const int npw_k = this->npwk[ik];
@@ -240,9 +241,8 @@ void PW_Basis_K::recip_to_real(const psi::DEVICE_GPU * ctx, const std::complex<d
     assert(this->gamma_only == false);
     assert(this->poolnproc == 1);
     // ModuleBase::GlobalFunc::ZEROS(ft.auxr_3d, this->nxyz);
-    psi::DEVICE_CPU *cpu_ctx = {};
-    psi::memory::set_memory_op<std::complex<double>, psi::DEVICE_CPU>()(
-        cpu_ctx, this->ft.auxr, 0, this->nxyz);
+    psi::memory::set_memory_op<std::complex<double>, psi::DEVICE_GPU>()(
+        ctx, this->ft.auxr_3d, 0, this->nxyz);
 
     const int startig = ik*this->npwk_max;
     const int npw_k = this->npwk[ik];
@@ -256,12 +256,12 @@ void PW_Basis_K::recip_to_real(const psi::DEVICE_GPU * ctx, const std::complex<d
     // cudaMemcpy(d_in, in, sizeof(std::complex<double>) * this->nxyz, cudaMemcpyHostToDevice);
     // set_3d_fft_box_op<double, psi::DEVICE_GPU>()(
     //     ctx, npw_k, d_in, this->ft.auxr_3d, this->ig2ixyz_k + startig);
-    set_3d_fft_box_op<double, psi::DEVICE_CPU>()(
-        cpu_ctx, npw_k, in, this->ft.auxr, this->ig2ixyz_k_ + startig);
+    set_3d_fft_box_op<double, psi::DEVICE_GPU>()(
+        ctx, npw_k, this->ig2ixyz_k + startig, in, this->ft.auxr_3d);
     //auxg should be "auxg = new complex<double>[nxyz]“
-    cudaMemcpy(this->ft.auxr_3d, this->ft.auxr, sizeof(std::complex<double>) * this->nxyz, cudaMemcpyHostToDevice);
+    // cudaMemcpy(this->ft.auxr_3d, this->ft.auxr, sizeof(std::complex<double>) * this->nxyz, cudaMemcpyHostToDevice);
     this->ft.fft3D_backward(this->ft.auxr_3d, this->ft.auxr_3d);
-    cudaMemcpy(this->ft.auxr, this->ft.auxr_3d, sizeof(std::complex<double>) * this->nxyz, cudaMemcpyDeviceToHost);
+    // cudaMemcpy(this->ft.auxr, this->ft.auxr_3d, sizeof(std::complex<double>) * this->nxyz, cudaMemcpyDeviceToHost);
 
     // if(add) {
     //     for(int ir = 0 ; ir < this->nrxx ; ++ir) {
@@ -276,8 +276,8 @@ void PW_Basis_K::recip_to_real(const psi::DEVICE_GPU * ctx, const std::complex<d
     // std::complex<double> * d_out = nullptr;
     // cudaMalloc(reinterpret_cast<void**>(&d_out), sizeof(std::complex<double>) * this->nxyz);
     // cudaMemcpy(d_out, out, sizeof(std::complex<double>) * this->nxyz, cudaMemcpyHostToDevice);
-    set_recip_to_real_output_op<double, psi::DEVICE_CPU>()(
-        cpu_ctx, this->nrxx, add, factor, this->ft.auxr, out);
+    set_recip_to_real_output_op<double, psi::DEVICE_GPU>()(
+        ctx, this->nrxx, add, factor, this->ft.auxr_3d, out);
     // cudaMemcpy(out, d_out, sizeof(std::complex<double>) * this->nxyz, cudaMemcpyDeviceToHost);
     // cudaFree(d_in);
     // cudaFree(d_out);

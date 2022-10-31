@@ -9,7 +9,7 @@ using hamilt::veff_pw_op;
 
 template <typename FPTYPE>
 __global__ void veff_pw(
-    const int& size,
+    const int size,
     thrust::complex<FPTYPE>* out,
     const FPTYPE* in)
 {

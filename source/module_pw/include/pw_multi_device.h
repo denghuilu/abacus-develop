@@ -7,12 +7,19 @@
 namespace ModulePW {
 template <typename FPTYPE, typename Device>
 struct set_3d_fft_box_op {
+    /// @brief Set the 3D fft box for fft transfrom between the recip and real space.
+    /// To map the 1D psi(1D continuous array) to 3D box psi(fft box)
+    /// @param dev - which device this function runs on
+    /// @param npwk - number of planwaves
+    /// @param box_index - the mapping function of 1D to 3D
+    /// @param in - input psi within a 1D array(in recip space)
+    /// @return out - output psi within the 3D box(in recip space)
     void operator() (
         const Device* dev,
         const int npwk,
+        const int* box_index,
         const std::complex<FPTYPE>* in,
-        std::complex<FPTYPE>* out,
-        const int* box_index);
+        std::complex<FPTYPE>* out);
 };
 
 template <typename FPTYPE, typename Device>
@@ -46,9 +53,9 @@ struct set_3d_fft_box_op<FPTYPE, psi::DEVICE_GPU> {
     void operator() (
         const psi::DEVICE_GPU* dev,
         const int npwk,
+        const int* box_index,
         const std::complex<FPTYPE>* in,
-        std::complex<FPTYPE>* out,
-        const int* box_index);
+        std::complex<FPTYPE>* out);
 };
 
 template <typename FPTYPE>

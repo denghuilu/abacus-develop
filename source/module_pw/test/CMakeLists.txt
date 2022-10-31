@@ -17,24 +17,24 @@ AddTest(
 )
 
 if (USE_CUDA)
-    AddTest(
-            TARGET pw_uts
-            LIBS ${math_libs} psi
-            SOURCES
-            ../../module_base/tool_quit.cpp ../../module_base/global_variable.cpp
-            ../src/pw_multi_device.cpp
-            ../src/cuda/pw_multi_device.cu
-            pw_multi_device_test.cpp
-    )
+AddTest(
+    TARGET PW_UTs
+    LIBS ${math_libs} psi
+    SOURCES
+    ../../module_base/tool_quit.cpp ../../module_base/global_variable.cpp
+    ../src/pw_multi_device.cpp
+    ../src/cuda/pw_multi_device.cu
+    pw_multi_device_test.cpp
+)
 else()
-    AddTest(
-            TARGET pw_uts
-            LIBS ${math_libs} psi
-            SOURCES
-            ../../module_base/tool_quit.cpp ../../module_base/global_variable.cpp
-            ../src/pw_multi_device.cpp
-            pw_multi_device_test.cpp
-    )
+AddTest(
+    TARGET PW_UTs
+    LIBS ${math_libs} psi
+    SOURCES
+    ../../module_base/tool_quit.cpp ../../module_base/global_variable.cpp
+    ../src/pw_multi_device.cpp
+    pw_multi_device_test.cpp
+)
 endif()
 
 add_test(NAME pw_test_parallel
