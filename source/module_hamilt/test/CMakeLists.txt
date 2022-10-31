@@ -1,5 +1,4 @@
 if (USE_CUDA)
-set(CMAKE_CUDA_FLAGS ${CMAKE_CUDA_FLAGS} "-g -G --generate-line-info")
 AddTest(
   TARGET Hamilt_UTs
   LIBS ${math_libs}
