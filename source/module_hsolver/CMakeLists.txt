@@ -18,7 +18,10 @@ if(ENABLE_LCAO)
 endif()
 
 if (USE_CUDA)
-  list(APPEND objects src/cuda/math_kernel.cu)
+  list(APPEND objects 
+      src/cuda/math_kernel.cu
+      src/cuda/dngvd_op.cu
+  )
 elseif(USE_ROCM)
   list(APPEND objects src/rocm/math_kernel.cu)
 endif()
