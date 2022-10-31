@@ -3,7 +3,7 @@
 #include <thrust/complex.h>
 #include "cuda_runtime.h"
 
-using hamilt::veff_pw_op;
+namespace hamilt{
 
 #define THREADS_PER_BLOCK 256
 
@@ -38,6 +38,6 @@ void veff_pw_op<FPTYPE, psi::DEVICE_GPU>::operator() (
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 }
 
-namespace hamilt{
 template struct veff_pw_op<double, psi::DEVICE_GPU>;
-}
+
+}  // namespace hamilt

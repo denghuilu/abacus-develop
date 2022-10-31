@@ -1,6 +1,6 @@
 #include "module_hamilt/include/veff.h"
 
-using hamilt::veff_pw_op;
+namespace hamilt{
 
 template <typename FPTYPE>
 struct veff_pw_op<FPTYPE, psi::DEVICE_CPU> {
@@ -17,7 +17,7 @@ struct veff_pw_op<FPTYPE, psi::DEVICE_CPU> {
     }
 };
 
-namespace hamilt{
 template struct veff_pw_op<double, psi::DEVICE_CPU>;
-}
+
+}  // namespace hamilt
 
