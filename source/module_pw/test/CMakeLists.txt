@@ -17,6 +17,7 @@ AddTest(
 )
 
 if (USE_CUDA)
+target_link_libraries(pw_test cufft)
 AddTest(
     TARGET PW_UTs
     LIBS ${math_libs} psi

@@ -65,7 +65,7 @@ class TestModulePWPWMultiDevice : public ::testing::Test
 TEST_F(TestModulePWPWMultiDevice, set_3d_fft_box_op_cpu)
 {
     std::vector<std::complex<double>> res(out_1.size(), std::complex<double>{0, 0});
-    set_3d_fft_box_cpu_op()(cpu_ctx, this->npwk, in_1.data(), res.data(), box_index.data());
+    set_3d_fft_box_cpu_op()(cpu_ctx, this->npwk, box_index.data(), in_1.data(), res.data());
     for (int ii = 0; ii < this->nxyz; ii++) {
         EXPECT_LT(fabs(res[ii] - out_1[ii]), 1e-12);
     }
@@ -102,7 +102,7 @@ TEST_F(TestModulePWPWMultiDevice, set_3d_fft_box_op_gpu)
     synchronize_memory_complex_h2d_op()(gpu_ctx, cpu_ctx, d_res, res.data(), res.size());
     synchronize_memory_complex_h2d_op()(gpu_ctx, cpu_ctx, d_in_1, in_1.data(), in_1.size());
 
-    set_3d_fft_box_gpu_op()(gpu_ctx, this->npwk, d_in_1, d_res, d_box_index);
+    set_3d_fft_box_gpu_op()(gpu_ctx, this->npwk, d_box_index, d_in_1, d_res);
 
     synchronize_memory_complex_d2h_op()(cpu_ctx, gpu_ctx, res.data(), d_res, res.size());
 
