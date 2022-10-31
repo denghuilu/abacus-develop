@@ -85,24 +85,26 @@ void DiagoDavid<FPTYPE, Device>::diag_mock(hamilt::Hamilt* phm_in, psi::Psi<std:
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     
     
-    // std::vector<FPTYPE> eigenvalue(this->nbase_x); // the lowest N eigenvalues of hc
+    // the lowest N eigenvalues of hc
     psi::memory::resize_memory_op<FPTYPE, Device>()(this->ctx, this->eigenvalue, this->nbase_x);
     psi::memory::set_memory_op<FPTYPE, Device>()(this->ctx, this->eigenvalue, 0, this->nbase_x);
 
-    std::vector<bool> convflag(this->n_band, false); // convflag[m] = true if the m th band is convergent
-    std::vector<int> unconv(this->n_band); // unconv[m] store the number of the m th unconvergent band
-
-
+    // convflag[m] = true if the m th band is convergent
+    std::vector<bool> convflag(this->n_band, false);
+    // unconv[m] store the number of the m th unconvergent band
+    std::vector<int> unconv(this->n_band);
 
     int nbase = 0; // the dimension of the reduced basis set
+    
     this->notconv = this->n_band; // the number of the unconvergent bands
+    
     for (int m = 0; m < this->n_band; m++)
         unconv[m] = m;
 
     ModuleBase::timer::tick("DiagoDavid", "first");
     
     // orthogonalise the initial trial psi(0~nband-1)
-    //plan for SchmitOrth
+    // plan for SchmitOrth
     
     // ModuleBase::ComplexMatrix lagrange_matrix(this->n_band, this->n_band);
     resize_memory_op()(this->ctx, this->lagrange_matrix, this->n_band * this->n_band);
