@@ -5,6 +5,7 @@ list(APPEND objects
     hsolver_pw_sdft.cpp
     diago_iter_assist.cpp
     src/math_kernel.cpp
+    src/dngvd_op.cpp
 )
 
 if(ENABLE_LCAO)

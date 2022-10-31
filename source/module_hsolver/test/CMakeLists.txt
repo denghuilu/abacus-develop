@@ -19,6 +19,7 @@ AddTest(
           ../../module_hamilt/operator.cpp
           ../../module_hamilt/ks_pw/operator_pw.cpp
           ../src/math_kernel.cpp
+          ../src/dngvd_op.cpp
 )
 
 if(ENABLE_LCAO)
@@ -46,6 +47,7 @@ AddTest(
   LIBS ${math_libs} base
   SOURCES math_kernel_test.cpp ../../src_parallel/parallel_global.cpp 
           ../../src_parallel/parallel_common.cpp  ../../src_parallel/parallel_reduce.cpp
+          ../../module_psi/src/memory.cpp
           ../../module_hsolver/src/math_kernel.cpp
 )
 endif()
