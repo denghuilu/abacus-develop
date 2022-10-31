@@ -175,6 +175,18 @@ void constantvector_addORsub_constantVector_op<FPTYPE, psi::DEVICE_GPU>::operato
     constantvector_addORsub_constantVector_kernel<FPTYPE><<<block, thread>>>(dim, result_tmp, vector1_tmp,constant1, vector2_tmp, constant2);
 }
 
+
+template <typename FPTYPE>
+void matrixTranspose_op<FPTYPE, psi::DEVICE_GPU>::operator()(
+    const psi::DEVICE_GPU* d,
+    const int& row,
+    const int& col,
+    std::complex<FPTYPE>* matrix)
+{
+    // TODO
+    return;
+}
+
 template <> 
 void axpy_op<float, psi::DEVICE_GPU>::operator()(
     const psi::DEVICE_GPU* d,
@@ -371,6 +383,6 @@ template struct vector_div_constant_op<double, psi::DEVICE_GPU>;
 template struct vector_mul_vector_op<double, psi::DEVICE_GPU>;
 template struct vector_div_vector_op<double, psi::DEVICE_GPU>;
 template struct constantvector_addORsub_constantVector_op<double, psi::DEVICE_GPU>;
-
+template struct matrixTranspose_op<double, psi::DEVICE_GPU>;
 
 }

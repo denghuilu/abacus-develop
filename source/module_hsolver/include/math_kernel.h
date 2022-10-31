@@ -6,6 +6,7 @@
 #include "module_base/blas_connector.h"
 #include "module_psi/psi.h"
 #include "src_parallel/parallel_reduce.h"
+#include "module_psi/include/memory.h"
 
 namespace hsolver
 {
@@ -121,6 +122,14 @@ template <typename FPTYPE, typename Device> struct gemm_op
                     const int& ldc);
 };
 
+template <typename FPTYPE, typename Device> struct matrixTranspose_op
+{
+    void operator()(const Device* d,
+                    const int& row,
+                    const int& col,
+                    std::complex<FPTYPE>* matrix);
+};
+
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 
 // Partially specialize functor for psi::GpuDevice.
@@ -175,6 +184,15 @@ template <typename FPTYPE> struct constantvector_addORsub_constantVector_op<FPTY
                     const std::complex<FPTYPE>* vector2,
                     const FPTYPE constant2);
 };
+
+template <typename FPTYPE> struct matrixTranspose_op<FPTYPE, psi::DEVICE_GPU>
+{
+    void operator()(const psi::DEVICE_GPU* d,
+                    const int& row,
+                    const int& col,
+                    std::complex<FPTYPE>* matrix);
+};
+
 
 void createBLAShandle();
 void destoryBLAShandle();
