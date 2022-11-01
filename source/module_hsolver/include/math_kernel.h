@@ -127,7 +127,8 @@ template <typename FPTYPE, typename Device> struct matrixTranspose_op
     void operator()(const Device* d,
                     const int& row,
                     const int& col,
-                    std::complex<FPTYPE>* matrix);
+                    const std::complex<FPTYPE>* input_matrix,
+                    std::complex<FPTYPE>* output_matrix);
 };
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
@@ -183,14 +184,6 @@ template <typename FPTYPE> struct constantvector_addORsub_constantVector_op<FPTY
                     const FPTYPE constant1,
                     const std::complex<FPTYPE>* vector2,
                     const FPTYPE constant2);
-};
-
-template <typename FPTYPE> struct matrixTranspose_op<FPTYPE, psi::DEVICE_GPU>
-{
-    void operator()(const psi::DEVICE_GPU* d,
-                    const int& row,
-                    const int& col,
-                    std::complex<FPTYPE>* matrix);
 };
 
 

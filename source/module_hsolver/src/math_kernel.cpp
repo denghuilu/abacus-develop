@@ -213,7 +213,8 @@ template <typename FPTYPE> struct matrixTranspose_op<FPTYPE, psi::DEVICE_CPU>
     void operator()(const psi::DEVICE_CPU* d,
                     const int& row,
                     const int& col,
-                    std::complex<FPTYPE>* matrix)
+                    const std::complex<FPTYPE>* input_matrix,
+                    std::complex<FPTYPE>* output_matrix)
     {
         std::complex<FPTYPE>* temp = nullptr;
         psi::memory::resize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU>()(d, temp, row * col);
@@ -221,12 +222,12 @@ template <typename FPTYPE> struct matrixTranspose_op<FPTYPE, psi::DEVICE_CPU>
         {
             for (int j = 0; j < col; j++)
             {
-                temp[j * row + i] = matrix[i * col + j];
+                temp[j * row + i] = input_matrix[i * col + j];
             }
         }
         for (int i = 0; i < row * col; i++)
         {
-            matrix[i] = temp[i];
+            output_matrix[i] = temp[i];
         }
         psi::memory::delete_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU>()(d, temp);
     }
