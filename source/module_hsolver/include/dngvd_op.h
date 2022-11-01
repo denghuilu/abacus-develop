@@ -5,6 +5,7 @@
 
 #include "module_base/lapack_connector.h"
 #include "module_psi/include/memory.h"
+#include "module_hsolver/include/math_kernel.h"
 
 
 namespace hsolver

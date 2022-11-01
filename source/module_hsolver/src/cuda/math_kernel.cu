@@ -368,7 +368,7 @@ void matrixTranspose_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_G
                                                              const int& row,
                                                              const int& col,
                                                              const std::complex<double>* input_matrix,
-                                                             std::complex<double>* output_matrix);
+                                                             std::complex<double>* output_matrix)
 {
     double2 ONE, ZERO;
     ONE.x = 1.0;
@@ -383,7 +383,7 @@ void matrixTranspose_op<float, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GP
                                                             const int& row,
                                                             const int& col,
                                                             const std::complex<float>* input_matrix,
-                                                            std::complex<float>* output_matrix);
+                                                            std::complex<float>* output_matrix)
 {
     float2 ONE, ZERO;
     ONE.x = 1.0;
