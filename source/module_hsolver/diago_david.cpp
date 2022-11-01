@@ -104,12 +104,12 @@ void DiagoDavid<FPTYPE, Device>::diag_mock(hamilt::Hamilt* phm_in, psi::Psi<std:
     ModuleBase::timer::tick("DiagoDavid", "first");
     
     // orthogonalise the initial trial psi(0~nband-1)
-    // plan for SchmitOrth
     
     // ModuleBase::ComplexMatrix lagrange_matrix(this->n_band, this->n_band);
     resize_memory_op()(this->ctx, this->lagrange_matrix, this->n_band * this->n_band);
     set_memory_op()(this->ctx, this->lagrange_matrix, 0, this->n_band * this->n_band);
     
+    // plan for SchmitOrth
     std::vector<int> pre_matrix_mm_m(this->n_band, 0);
     std::vector<int> pre_matrix_mv_m(this->n_band, 1);
     this->planSchmitOrth(this->n_band, pre_matrix_mm_m.data(), pre_matrix_mv_m.data());
@@ -214,7 +214,8 @@ void DiagoDavid<FPTYPE, Device>::diag_mock(hamilt::Hamilt* phm_in, psi::Psi<std:
             ModuleBase::timer::tick("DiagoDavid", "last");
 
             // updata eigenvectors of Hamiltonian
-            ModuleBase::GlobalFunc::ZEROS(psi.get_pointer(), psi.get_nbands() * psi.get_nbasis());
+            // ModuleBase::GlobalFunc::ZEROS(psi.get_pointer(), psi.get_nbands() * psi.get_nbasis());
+            set_memory_op()(this->ctx, psi.get_pointer(), 0, psi.get_nbands() * psi.get_nbasis());
             //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             // haozhihan repalce 2022-10-18
             gemm_op<FPTYPE, Device>()(
