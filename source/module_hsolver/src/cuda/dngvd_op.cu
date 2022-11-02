@@ -18,12 +18,12 @@ void dngvd_op<double, psi::DEVICE_GPU>::operator()(
         std::complex<double>* V)
 {
     createBLAShandle();
-    matrixTranspose_op<double, psi::DEVICE_GPU>()(d, row, col, A, A);
-    matrixTranspose_op<double, psi::DEVICE_GPU>()(d, row, col, B, B);
-    // init A_eigenvectors and all_W 
-    double2* A_eigenvectors;
+    // init A_eigenvectors, transpose_B and all_W 
+    double2 *A_eigenvectors, *transpose_B;
     cudaMalloc ((void**)&A_eigenvectors, sizeof(double2) * row * col);
-    cudaMemcpy(A_eigenvectors, A, sizeof(double2) * row * col, cudaMemcpyDeviceToDevice);
+    cudaMalloc ((void**)&transpose_B, sizeof(double2) * row * col);
+    matrixTranspose_op<double, psi::DEVICE_GPU>()(d, row, col, A, (std::complex<double>*)A_eigenvectors);
+    matrixTranspose_op<double, psi::DEVICE_GPU>()(d, row, col, B, (std::complex<double>*)transpose_B);
     double* all_W ;
     cudaMalloc ((void**)&all_W, sizeof(double) * row);
 
@@ -43,7 +43,7 @@ void dngvd_op<double, psi::DEVICE_GPU>::operator()(
         row,
         A_eigenvectors,
         col,
-        (double2*)B,
+        transpose_B,
         col,
         all_W,
         &lwork);
@@ -61,7 +61,7 @@ void dngvd_op<double, psi::DEVICE_GPU>::operator()(
         row,
         A_eigenvectors,
         col,
-        (double2*)B,
+        transpose_B,
         col,
         all_W,
         d_work,
@@ -72,7 +72,7 @@ void dngvd_op<double, psi::DEVICE_GPU>::operator()(
 
     // get eigenvalues and eigenvectors.  only m !
     cudaMemcpy(W, all_W, sizeof(double)*m, cudaMemcpyDeviceToDevice);
-    matrixTranspose_op<double, psi::DEVICE_GPU>()(d, row, col, A_eigenvectors, A_eigenvectors);
+    matrixTranspose_op<double, psi::DEVICE_GPU>()(d, row, col, (std::complex<double>*)A_eigenvectors, (std::complex<double>*)A_eigenvectors);
     cudaMemcpy(V, A_eigenvectors, sizeof(std::complex<double>)*col*m, cudaMemcpyDeviceToDevice);
     // free the buffer
     cudaFree(d_work);
