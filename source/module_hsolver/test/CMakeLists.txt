@@ -9,6 +9,7 @@ AddTest(
           ../../module_hamilt/operator.cpp
           ../../module_hamilt/ks_pw/operator_pw.cpp
           ../src/math_kernel.cpp
+          ../src/dngvd_op.cpp
 )
 AddTest(
   TARGET HSolver_dav
