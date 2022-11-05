@@ -708,7 +708,7 @@ if(GlobalV::MY_RANK == 0)
     assert(ldh >= max(1, n));
 
 
-    dngvd_op<FPTYPE, Device>()(
+    dngvx_op<FPTYPE, Device>()(
         this->ctx,
         this->nbase_x,
         n,

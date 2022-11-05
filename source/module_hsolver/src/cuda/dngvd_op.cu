@@ -7,7 +7,7 @@
 namespace hsolver {
 
 template <>
-void dngvd_op<double, psi::DEVICE_GPU>::operator()(
+void dngvx_op<double, psi::DEVICE_GPU>::operator()(
         const psi::DEVICE_GPU* d,
         const int row,
         const int col,

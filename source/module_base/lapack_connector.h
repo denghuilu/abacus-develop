@@ -238,6 +238,31 @@ public:
         delete[] aux;
         delete[] bux;
     }
+    // wrap function of fortran lapack routine zhegv.
+    static inline
+    void zhegv(	const int itype, const char jobz, const char uplo, const int n, std::complex<double>* a,
+                const int lda, const std::complex<double>* b, const int ldb, double* w, std::complex<double>* work,
+                int lwork, double* rwork, int info, int ld_real)
+    {	// Transpose the std::complex matrix to the fortran-form real-std::complex array.
+        std::complex<double>* aux = LapackConnector::transpose(a, n, lda, ld_real);
+        std::complex<double>* bux = LapackConnector::transpose(b, n, ldb, ld_real);
+
+        // call the fortran routine
+        zhegv_(&itype, &jobz, &uplo, &n, aux, &lda, bux, &ldb, w, work, &lwork, rwork, &info);
+        // Transpose the fortran-form real-std::complex array to the std::complex matrix.
+        // LapackConnector::transpose(aux, a, n, lda);
+        // LapackConnector::transpose(bux, b, n, ldb);
+        for (int i = 0; i < n; ++i)
+        {
+            for (int j = 0; j < lda; ++j)
+            {
+                a[j * ld_real + i] = aux[i*lda+j];
+            }
+        }
+        // free the memory.
+        delete[] aux;
+        delete[] bux;
+    }
 
     // wrap function of fortran lapack routine zheev.
     static inline
@@ -267,7 +292,6 @@ public:
         delete[] zux;
 
     }
-
     // wrap function of fortran lapack routine zheev.
     static inline
     void zhegvx( const int itype, const char jobz, const char range, const char uplo,
