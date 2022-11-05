@@ -16,13 +16,19 @@ Nonlocal<OperatorPW<FPTYPE, Device>>::Nonlocal(
     const UnitCell_pseudo* ucell_in
 )
 {
+    this->classname = "Nonlocal";
     this->cal_type = pw_nonlocal;
     this->isk = isk_in;
     this->ppcell = ppcell_in;
     this->ucell = ucell_in;
-    this->deeq = psi::device::get_device_type<Device>(this->ctx) == psi::GpuDevice ?
-            this->ppcell->d_deeq :  // for GpuDevice
-            this->ppcell->deeq.ptr; // for CpuDevice
+    if (psi::device::get_device_type<Device>(this->ctx) == psi::GpuDevice) {
+        this->deeq = this->ppcell->d_deeq;
+        resize_memory_op()(this->ctx, this->vkb, this->ppcell->vkb.size);
+    }
+    else {
+        this->deeq = this->ppcell->deeq.ptr;
+        this->vkb = this->ppcell->vkb.c;
+    }
     if( this->isk == nullptr || this->ppcell == nullptr || this->ucell == nullptr)
     {
         ModuleBase::WARNING_QUIT("NonlocalPW", "Constuctor of Operator::NonlocalPW is failed, please check your code!");
@@ -162,7 +168,7 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::add_nonlocal_pp(std::complex<FPTYPE> 
                   this->npw,
                   this->ppcell->nkb,
                   &ModuleBase::ONE,
-                  this->ppcell->vkb.c,
+                  this->vkb,
                   this->ppcell->vkb.nc,
                   this->ps,
                   inc,
@@ -194,7 +200,7 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::add_nonlocal_pp(std::complex<FPTYPE> 
             npm,
             this->ppcell->nkb,
             &ModuleBase::ONE,
-            this->ppcell->vkb.c,
+            this->vkb,
             this->ppcell->vkb.nc,
             this->ps,
             npm,
@@ -232,6 +238,9 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::act
     this->max_npw = psi_in->get_nbasis() / psi_in->npol;
     this->npol = psi_in->npol;
 
+    if (psi::device::get_device_type<Device>(this->ctx) == psi::GpuDevice) {
+        syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, this->vkb, this->ppcell->vkb.c, this->ppcell->vkb.size);
+    }
     if (this->ppcell->nkb > 0)
     {
         //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -251,7 +260,7 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::act
                       this->npw,
                       nkb,
                       &ModuleBase::ONE,
-                      this->ppcell->vkb.c,
+                      this->vkb,
                       this->ppcell->vkb.nc,
                       tmpsi_in,
                       inc,
@@ -284,7 +293,7 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::act
                 npm,
                 this->npw,
                 &ModuleBase::ONE,
-                this->ppcell->vkb.c,
+                this->vkb,
                 this->ppcell->vkb.nc,
                 tmpsi_in,
                 this->max_npw,
@@ -316,9 +325,35 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::act
     ModuleBase::timer::tick("Operator", "NonlocalPW");
 }
 
+template<typename FPTYPE, typename Device>
+template<typename T_in, typename Device_in>
+hamilt::Nonlocal<OperatorPW<FPTYPE, Device>>::Nonlocal(const Nonlocal<OperatorPW<T_in, Device_in>> *nonlocal)
+{
+    this->classname = "Nonlocal";
+    this->cal_type = pw_nonlocal;
+    this->ik = nonlocal->get_ik();
+    this->isk = nonlocal->get_isk();
+    this->ppcell = nonlocal->get_ppcell();
+    this->ucell = nonlocal->get_ucell();
+    if (psi::device::get_device_type<Device>(this->ctx) == psi::GpuDevice) {
+        this->deeq = this->ppcell->d_deeq;
+        resize_memory_op()(this->ctx, this->vkb, this->ppcell->vkb.size);
+    }
+    else {
+        this->deeq = this->ppcell->deeq.ptr;
+        this->vkb = this->ppcell->vkb.c;
+    }
+    if( this->isk == nullptr || this->ppcell == nullptr || this->ucell == nullptr)
+    {
+        ModuleBase::WARNING_QUIT("NonlocalPW", "Constuctor of Operator::NonlocalPW is failed, please check your code!");
+    }
+}
+
 namespace hamilt{
 template class Nonlocal<OperatorPW<double, psi::DEVICE_CPU>>;
 #if ((defined __CUDA) || (defined __ROCM))
 template class Nonlocal<OperatorPW<double, psi::DEVICE_GPU>>;
+template Nonlocal<OperatorPW<double, psi::DEVICE_CPU>>::Nonlocal(const Nonlocal<OperatorPW<double, psi::DEVICE_GPU>> *nonlocal);
+template Nonlocal<OperatorPW<double, psi::DEVICE_GPU>>::Nonlocal(const Nonlocal<OperatorPW<double, psi::DEVICE_CPU>> *nonlocal);
 #endif
 } // namespace hamilt
