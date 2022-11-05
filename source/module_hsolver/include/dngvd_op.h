@@ -16,7 +16,7 @@ namespace hsolver
 template <typename FPTYPE, typename Device>
 struct dngvx_op
 {
-    /// @brief DNGVX computes selected eigenvalues and corresponding eigenvectors of
+    /// @brief DNGVX computes the first m eigenvalues ​​and their corresponding eigenvectors of
     /// a complex generalized Hermitian-definite eigenproblem
     ///
     /// Input Parameters
