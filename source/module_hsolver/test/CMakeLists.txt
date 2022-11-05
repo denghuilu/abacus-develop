@@ -43,6 +43,20 @@ AddTest(
           ../../module_psi/src/cuda/memory.cu
           ../src/cuda/math_kernel.cu
 )
+AddTest(
+  TARGET Dngvd_UTs
+  LIBS ${math_libs} base cublas cusolver
+  SOURCES math_dngvd_test.cpp 
+          ../../src_parallel/parallel_global.cpp 
+          ../../src_parallel/parallel_common.cpp  ../../src_parallel/parallel_reduce.cpp
+          ../../module_psi/src/memory_psi.cpp
+          ../../module_psi/src/cuda/memory.cu
+          ../../module_hsolver/src/math_kernel.cpp
+          ../src/cuda/math_kernel.cu
+          ../../module_hsolver/src/dngvd_op.cpp
+          ../src/cuda/dngvd_op.cu
+
+)
 else()
 AddTest(
   TARGET Hsolver_UTs
