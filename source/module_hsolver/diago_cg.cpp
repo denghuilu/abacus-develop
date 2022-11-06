@@ -222,8 +222,6 @@ void DiagoCG<FPTYPE, Device>::calculate_gradient()
     if (this->test_cg == 1) {
         ModuleBase::TITLE("DiagoCG", "calculate_gradient");
     }
-    // ModuleBase::timer::tick("DiagoCG","grad");
-
     // for (int i = 0; i < this->dim; i++)
     // {
     //     //(2) PH|psi>
@@ -231,7 +229,8 @@ void DiagoCG<FPTYPE, Device>::calculate_gradient()
     //     //(3) PS|psi>
     //     this->pphi[i] = this->sphi[i] / this->precondition[i];
     // }
-    // haozhihan replace this 2022-10-6
+    // denghui replace this at 20221106
+    // TODO: use GPU precondition to initialize CG class
     if (this->device == psi::GpuDevice) {
         vector_div_vector_op<FPTYPE, Device>()(this->ctx, this->dim, this->gradient, this->hphi, this->d_precondition);
         vector_div_vector_op<FPTYPE, Device>()(this->ctx, this->dim, this->pphi, this->sphi, this->d_precondition);
@@ -240,7 +239,6 @@ void DiagoCG<FPTYPE, Device>::calculate_gradient()
         vector_div_vector_op<FPTYPE, Device>()(this->ctx, this->dim, this->gradient, this->hphi, this->precondition);
         vector_div_vector_op<FPTYPE, Device>()(this->ctx, this->dim, this->pphi, this->sphi, this->precondition);
     }
-
 
     // Update lambda !
     // (4) <psi|SPH|psi >
@@ -261,9 +259,6 @@ void DiagoCG<FPTYPE, Device>::calculate_gradient()
     // }
     // haozhihan replace this 2022-10-6
     constantvector_addORsub_constantVector_op<FPTYPE, Device>()(this->ctx, this->dim, this->gradient, this->gradient, 1.0, this->pphi, (-lambda));
-
-
-    // ModuleBase::timer::tick("DiagoCG","grad");
 }
 
 template<typename FPTYPE, typename Device>
@@ -380,9 +375,6 @@ void DiagoCG<FPTYPE, Device>::orthogonal_gradient(hamilt::Hamilt<FPTYPE, Device>
         }
     }*/
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-    // ModuleBase::timer::tick("DiagoCG","orth_grad");
-    return;
 }
 
 template<typename FPTYPE, typename Device>
@@ -391,7 +383,6 @@ void DiagoCG<FPTYPE, Device>::calculate_gamma_cg(const int iter, FPTYPE &gg_last
     if (test_cg == 1) {
         ModuleBase::TITLE("DiagoCG", "calculate_gamma_cg");
     }
-    // ModuleBase::timer::tick("DiagoCG","gamma_cg");
     auto pcg = this->cg->get_pointer();
     auto pphi_m = this->phi_m->get_pointer();
     FPTYPE gg_inter;
@@ -413,7 +404,8 @@ void DiagoCG<FPTYPE, Device>::calculate_gamma_cg(const int iter, FPTYPE &gg_last
     // {
     //     this->g0[i] = this->precondition[i] * this->scg[i];
     // }
-    // haozhihan replace this 2022-10-6
+    // denghui replace this 20221106
+    // TODO: use GPU precondition instead
     if (this->device == psi::GpuDevice) {
         vector_mul_vector_op<FPTYPE, Device>()(this->ctx, this->dim, this->g0, this->scg, this->d_precondition);
     }
@@ -431,7 +423,6 @@ void DiagoCG<FPTYPE, Device>::calculate_gamma_cg(const int iter, FPTYPE &gg_last
         gg_last = gg_now;
         // (50) cg direction first value : |g>
         // |cg> = |g>
-
         // haozhihan replace COPY_ARRAY
         psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, Device>()(this->ctx, this->ctx, pcg, this->gradient, this->dim);
         // ModuleBase::GlobalFunc::COPYARRAY(this->gradient, pcg, this->dim);
@@ -465,7 +456,6 @@ void DiagoCG<FPTYPE, Device>::calculate_gamma_cg(const int iter, FPTYPE &gg_last
             pcg[i] -= norma * pphi_m[i];
         }*/
     }
-    // ModuleBase::timer::tick("DiagoCG","gamma_cg");
 }
 
 template<typename FPTYPE, typename Device>
@@ -473,7 +463,6 @@ bool DiagoCG<FPTYPE, Device>::update_psi(FPTYPE &cg_norm, FPTYPE &theta, FPTYPE 
 {
     if (test_cg == 1)
         ModuleBase::TITLE("DiagoCG", "update_psi");
-    // ModuleBase::timer::tick("DiagoCG","update");
     cg_norm = sqrt(hsolver::zdot_real_op<FPTYPE, Device>()(this->ctx, this->dim, this->cg->get_pointer(), this->scg));
 
     if (cg_norm < 1.0e-10)
