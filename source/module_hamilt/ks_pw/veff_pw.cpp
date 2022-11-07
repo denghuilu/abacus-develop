@@ -23,7 +23,7 @@ Veff<OperatorPW<FPTYPE, Device>>::Veff(
     if (this->npol != 1) {
         resize_memory_op()(this->ctx, this->porter1, this->wfcpw->nmaxgr);
     }
-    if (this->isk == nullptr || this->veff == nullptr || this->wfcpw == nullptr) {
+    if (this->isk == nullptr || veff_in == nullptr || this->wfcpw == nullptr) {
         ModuleBase::WARNING_QUIT("VeffPW", "Constuctor of Operator::VeffPW is failed, please check your code!");
     }
 }
