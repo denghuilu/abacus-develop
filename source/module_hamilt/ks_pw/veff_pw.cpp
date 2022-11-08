@@ -23,9 +23,9 @@ Veff<OperatorPW<FPTYPE, Device>>::Veff(
     this->veff_col = veff_in[0].nc;
     this->veff_row = veff_in[0].nr;
     this->wfcpw = wfcpw_in;
-    resize_memory_op()(this->ctx, this->porter, this->wfcpw->nmaxgr);
+    resize_memory_complex_op()(this->ctx, this->porter, this->wfcpw->nmaxgr);
     if (this->npol != 1) {
-        resize_memory_op()(this->ctx, this->porter1, this->wfcpw->nmaxgr);
+        resize_memory_complex_op()(this->ctx, this->porter1, this->wfcpw->nmaxgr);
     }
     if (this->isk == nullptr || this->wfcpw == nullptr) {
         ModuleBase::WARNING_QUIT("VeffPW", "Constuctor of Operator::VeffPW is failed, please check your code!");

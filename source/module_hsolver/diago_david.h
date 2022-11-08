@@ -24,7 +24,7 @@ class DiagoDavid : public DiagH<FPTYPE, Device>
     ~DiagoDavid();
 
     // this is the override function diag() for CG method
-    void diag(hamilt::Hamilt<FPTYPE, Device>* phm_in, psi::Psi<std::complex<FPTYPE>, Device>& phi, FPTYPE* eigenvalue_in);
+    void diag(hamilt::Hamilt<double>* phm_in, psi::Psi<std::complex<FPTYPE>, Device>& phi, FPTYPE* eigenvalue_in);
 
     static int PW_DIAG_NDIM;
 
@@ -66,7 +66,7 @@ class DiagoDavid : public DiagH<FPTYPE, Device>
     Device* ctx = {};
 
 
-    void cal_grad(hamilt::Hamilt<FPTYPE, Device>* phm_in,
+    void cal_grad(hamilt::Hamilt<double>* phm_in,
                   const int& npw,
                   const int& nbase,
                   const int& notconv,
@@ -120,7 +120,7 @@ class DiagoDavid : public DiagH<FPTYPE, Device>
                      FPTYPE* e,
                      std::complex<FPTYPE>* vc);
 
-    void diag_mock(hamilt::Hamilt<FPTYPE, Device>* phm_in, psi::Psi<std::complex<FPTYPE>, Device>& psi, FPTYPE* eigenvalue_in);
+    void diag_mock(hamilt::Hamilt<double>* phm_in, psi::Psi<std::complex<FPTYPE>, Device>& psi, FPTYPE* eigenvalue_in);
 
 
     using set_memory_op = psi::memory::set_memory_op<std::complex<FPTYPE>, Device>;
