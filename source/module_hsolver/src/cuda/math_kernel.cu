@@ -1,5 +1,6 @@
 #include "module_hsolver/include/math_kernel.h"
 #include "module_psi/psi.h"
+#include "module_psi/include/memory.h"
 
 #include <thrust/complex.h>
 #include <thrust/inner_product.h>
@@ -363,6 +364,24 @@ void gemm_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
     cublasZgemm(diag_handle, cutransA, cutransB, m, n ,k, (double2*)alpha, (double2*)a , lda, (double2*)b, ldb, (double2*)beta, (double2*)c, ldc);
 }
 
+
+template <typename FPTYPE>
+__global__ void matrix_transpose_kernel(
+        const int row,
+        const int col,
+        const thrust::complex<FPTYPE>* in,
+        thrust::complex<FPTYPE>* out) 
+{
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i < row)
+    {
+        for (int j = 0; j < col; j++)
+        {
+            out[j * row + i] = in[i * col + j];
+        }
+    }
+}
+
 template <>
 void matrixTranspose_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
                                                              const int& row,
@@ -370,28 +389,43 @@ void matrixTranspose_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_G
                                                              const std::complex<double>* input_matrix,
                                                              std::complex<double>* output_matrix)
 {
-    double2 ONE, ZERO;
-    ONE.x = 1.0;
-    ONE.y = 0.0;
-	ZERO.x = ZERO.y = 0.0;
-    // use 'geam' API todo transpose.
-    cublasZgeam(diag_handle, CUBLAS_OP_T, CUBLAS_OP_N, row, col, &ONE, (double2*)input_matrix, col, &ZERO, (double2*)input_matrix, col, (double2*)output_matrix, col);
+    std::complex<double>* device_temp = nullptr;
+    psi::memory::resize_memory_op<std::complex<double>, psi::DEVICE_GPU>()(d, device_temp, row * col);
+
+    if (row == col)
+    {
+        double2 ONE, ZERO;
+        ONE.x = 1.0;
+        ONE.y = 0.0;
+        ZERO.x = ZERO.y = 0.0;
+
+        // use 'geam' API todo transpose.
+        cublasZgeam(diag_handle, CUBLAS_OP_T, CUBLAS_OP_N, col, row, &ONE, (double2*)input_matrix, col, &ZERO, (double2*)input_matrix, col, (double2*)device_temp, col);
+    } else
+    {
+        int thread = 1024;
+        int block = (row + col + thread - 1) / thread;
+        matrix_transpose_kernel<double><<<block, thread>>>(row, col, (thrust::complex<double>*)input_matrix, (thrust::complex<double>*)device_temp);
+    }
+    
+    psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_GPU, psi::DEVICE_GPU>()(d, d, output_matrix, device_temp, row * col);
+    
 }
 
-template <>
-void matrixTranspose_op<float, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
-                                                            const int& row,
-                                                            const int& col,
-                                                            const std::complex<float>* input_matrix,
-                                                            std::complex<float>* output_matrix)
-{
-    float2 ONE, ZERO;
-    ONE.x = 1.0;
-    ONE.y = 0.0;
-	ZERO.x = ZERO.y = 0.0;
-    // use 'geam' API todo transpose.
-    cublasCgeam(diag_handle, CUBLAS_OP_T, CUBLAS_OP_N, row, col, &ONE, (float2*)input_matrix, col, &ZERO, (float2*)input_matrix, col, (float2*)output_matrix, col);
-}
+// template <>
+// void matrixTranspose_op<float, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
+//                                                             const int& row,
+//                                                             const int& col,
+//                                                             const std::complex<float>* input_matrix,
+//                                                             std::complex<float>* output_matrix)
+// {
+//     float2 ONE, ZERO;
+//     ONE.x = 1.0;
+//     ONE.y = 0.0;
+// 	ZERO.x = ZERO.y = 0.0;
+//     // use 'geam' API todo transpose.
+//     cublasCgeam(diag_handle, CUBLAS_OP_T, CUBLAS_OP_N, row, col, &ONE, (float2*)input_matrix, col, &ZERO, (float2*)input_matrix, col, (float2*)output_matrix, col);
+// }
 
 
 // Explicitly instantiate functors for the types of functor registered.
@@ -400,5 +434,6 @@ template struct vector_div_constant_op<double, psi::DEVICE_GPU>;
 template struct vector_mul_vector_op<double, psi::DEVICE_GPU>;
 template struct vector_div_vector_op<double, psi::DEVICE_GPU>;
 template struct constantvector_addORsub_constantVector_op<double, psi::DEVICE_GPU>;
+// template struct matrixTranspose_op<double, psi::DEVICE_GPU>;
 
 }

@@ -546,14 +546,10 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_LAPACK(
     const int nstart,
     const int nbands,
     const std::complex<FPTYPE>* hcc,
-    // const ModuleBase::ComplexMatrix &hc,
     const std::complex<FPTYPE>* scc,
-    // const ModuleBase::ComplexMatrix &sc,
     const int ldh, // nstart
     FPTYPE *e,
-    std::complex<FPTYPE>* vcc
-    // ModuleBase::ComplexMatrix &hvec
-    )
+    std::complex<FPTYPE>* vcc)
 {
     ModuleBase::TITLE("DiagoIterAssist", "diagH_LAPACK_notINinit");
     ModuleBase::timer::tick("DiagoIterAssist", "diagH_LAPACK_notINinit");
