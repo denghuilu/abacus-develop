@@ -58,10 +58,10 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace(
     std::complex<FPTYPE>* vcc = nullptr;
     psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>()(ctx, hcc, nstart * nstart);
     psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>()(ctx, scc, nstart * nstart);
-    psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>()(ctx, vcc, nstart * n_band);
+    psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>()(ctx, vcc, nstart * nstart);
     psi::memory::set_memory_op<std::complex<FPTYPE>, Device>()(ctx, hcc, 0, nstart * nstart);
     psi::memory::set_memory_op<std::complex<FPTYPE>, Device>()(ctx, scc, 0, nstart * nstart);
-    psi::memory::set_memory_op<std::complex<FPTYPE>, Device>()(ctx, vcc, 0, nstart * n_band);
+    psi::memory::set_memory_op<std::complex<FPTYPE>, Device>()(ctx, vcc, 0, nstart * nstart);
 
     const int dmin = psi.get_current_nbas();
     const int dmax = psi.get_nbasis();
