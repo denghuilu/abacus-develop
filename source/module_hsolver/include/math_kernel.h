@@ -131,6 +131,16 @@ template <typename FPTYPE, typename Device> struct matrixTranspose_op
                     std::complex<FPTYPE>* output_matrix);
 };
 
+template <typename FPTYPE, typename Device> struct matrixSetToAnother
+{
+    void operator()(const Device* d,
+                    const int& n,
+                    const std::complex<FPTYPE>* A,
+                    const int& LDA,
+                    std::complex<FPTYPE>* B,
+                    const int& LDB);
+};
+
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 
 // Partially specialize functor for psi::GpuDevice.
@@ -184,6 +194,16 @@ template <typename FPTYPE> struct constantvector_addORsub_constantVector_op<FPTY
                     const FPTYPE constant1,
                     const std::complex<FPTYPE>* vector2,
                     const FPTYPE constant2);
+};
+
+template <typename FPTYPE> struct matrixSetToAnother<FPTYPE, psi::DEVICE_GPU>
+{
+    void operator()(const psi::DEVICE_GPU* d,
+                    const int& n,
+                    const std::complex<FPTYPE>* A,
+                    const int& LDA,
+                    std::complex<FPTYPE>* B,
+                    const int& LDB);
 };
 
 

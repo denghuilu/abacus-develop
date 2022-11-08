@@ -225,16 +225,16 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace(
             evctemp,
             dmin
         );
-        // TODO Need to support GPU
-        for (int ib = 0; ib < n_band; ib++)
-        {
-            for (int ig = 0; ig < dmin; ig++)
-            {
-                evc(ib, ig) = evctemp[ib * dmin + ig];
-                // evc(ib, ig) = evctmp(ib, ig);
-            }
-        }
-        // TODO
+
+        matrixSetToAnother<FPTYPE, Device>()(ctx, n_band, evctemp, dmin, evc.get_pointer(), dmax);
+        // for (int ib = 0; ib < n_band; ib++)
+        // {
+        //     for (int ig = 0; ig < dmin; ig++)
+        //     {
+        //         evc(ib, ig) = evctemp[ib * dmin + ig];
+        //         // evc(ib, ig) = evctmp(ib, ig);
+        //     }
+        // }
         psi::memory::delete_memory_op<std::complex<double>, Device>()(ctx, evctemp);
     }
 

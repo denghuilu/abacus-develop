@@ -233,6 +233,26 @@ template <typename FPTYPE> struct matrixTranspose_op<FPTYPE, psi::DEVICE_CPU>
     }
 };
 
+template <typename FPTYPE> struct matrixSetToAnother<FPTYPE, psi::DEVICE_CPU>
+{
+    void operator()(const psi::DEVICE_CPU* d,
+                    const int& n,
+                    const std::complex<FPTYPE>* A,
+                    const int& LDA,
+                    std::complex<FPTYPE>* B,
+                    const int& LDB)
+    {
+        for (int i = 0; i < n; i++)
+        {
+            for (int j = 0; j < LDA; j++)
+            {
+                B[i * LDB + j] = A[i * LDA + j];
+            }
+        }
+    }
+};
+
+
 
 // Explicitly instantiate functors for the types of functor registered.
 template struct zdot_real_op<double, psi::DEVICE_CPU>;
@@ -242,6 +262,7 @@ template struct vector_div_vector_op<double, psi::DEVICE_CPU>;
 template struct constantvector_addORsub_constantVector_op<double, psi::DEVICE_CPU>;
 
 template struct matrixTranspose_op<double, psi::DEVICE_CPU>;
+template struct matrixSetToAnother<double, psi::DEVICE_CPU>;
 
 
 } // namespace hsolver
