@@ -10,15 +10,20 @@
 namespace hsolver {
 
 
-static cublasHandle_t diag_handle;
+static cublasHandle_t diag_handle = nullptr;
 
 
 void createBLAShandle(){
-    cublasCreate(&diag_handle);
+    if (diag_handle == nullptr) {
+        cublasCreate(&diag_handle);
+    }
 }
 
 void destoryBLAShandle(){
-    cublasDestroy(diag_handle);
+    if (diag_handle != nullptr) {
+        cublasDestroy(diag_handle);
+        diag_handle = nullptr;
+    }
 }
 
 // Define the CUDA kernel:

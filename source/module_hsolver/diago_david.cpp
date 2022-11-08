@@ -66,6 +66,7 @@ void DiagoDavid<FPTYPE, Device>::diag_mock(hamilt::Hamilt* phm_in, psi::Psi<std:
     resize_memory_op()(this->ctx, this->hphi, this->nbase_x * this->dim);
     set_memory_op()(this->ctx, this->hphi, 0, this->nbase_x * this->dim);
 
+
     // ModuleBase::ComplexMatrix sp(nbase_x, this->dim); // the Product of S and psi in the reduced basis set
     resize_memory_op()(this->ctx, this->sphi, this->nbase_x * this->dim);
     set_memory_op()(this->ctx, this->sphi, 0, this->nbase_x * this->dim);
@@ -1218,7 +1219,7 @@ void DiagoDavid<double, psi::DEVICE_GPU>::diag_mock(hamilt::Hamilt* phm_in, psi:
 
 
 template<typename FPTYPE, typename Device>
-void DiagoDavid<FPTYPE, Device>::diag(hamilt::Hamilt *phm_in, psi::Psi<std::complex<FPTYPE>, Device> &psi, FPTYPE* eigenvalue_in)
+void DiagoDavid<FPTYPE, Device>::diag(hamilt::Hamilt<FPTYPE, Device> *phm_in, psi::Psi<std::complex<FPTYPE>, Device> &psi, FPTYPE* eigenvalue_in)
 {
     /// record the times of trying iterative diagonalization
     int ntry = 0;

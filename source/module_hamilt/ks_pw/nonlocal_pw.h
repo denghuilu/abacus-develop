@@ -27,6 +27,9 @@ class Nonlocal<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
     public:
     Nonlocal(const int* isk_in,const pseudopot_cell_vnl* ppcell_in,const UnitCell_pseudo* ucell_in);
 
+    template<typename T_in, typename Device_in = Device>
+    explicit Nonlocal(const Nonlocal<OperatorPW<T_in, Device_in>>* nonlocal);
+
     virtual ~Nonlocal();
 
     virtual void init(const int ik_in)override;
@@ -37,6 +40,10 @@ class Nonlocal<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
         const std::complex<FPTYPE>* tmpsi_in, 
         std::complex<FPTYPE>* tmhpsi
     )const override;
+
+    const int *get_isk() const {return this->isk;}
+    const pseudopot_cell_vnl *get_ppcell() const {return this->ppcell;}
+    const UnitCell_pseudo *get_ucell() const {return this->ucell;}
 
     private:
     void add_nonlocal_pp(std::complex<FPTYPE> *hpsi_in, const std::complex<FPTYPE> *becp, const int m) const;
@@ -53,9 +60,11 @@ class Nonlocal<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
 
     const UnitCell_pseudo* ucell = nullptr;
 
-    mutable std::complex<FPTYPE>* becp = nullptr;
     mutable std::complex<FPTYPE> *ps = nullptr;
+    mutable std::complex<FPTYPE> *vkb = nullptr;
+    mutable std::complex<FPTYPE> *becp = nullptr;
     Device* ctx = {};
+    psi::DEVICE_CPU* cpu_ctx = {};
     FPTYPE * deeq = nullptr;
     // using nonlocal_op = nonlocal_pw_op<FPTYPE, Device>;
     using gemv_op = hsolver::gemv_op<FPTYPE, Device>;
@@ -64,6 +73,7 @@ class Nonlocal<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
     using set_memory_op = psi::memory::set_memory_op<std::complex<FPTYPE>, Device>;
     using resize_memory_op = psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
     using delete_memory_op = psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
+    using syncmem_complex_h2d_op = psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, psi::DEVICE_CPU>;
 };
 
 } // namespace hamilt
