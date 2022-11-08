@@ -39,6 +39,9 @@ template<typename FPTYPE, typename Device>
 Nonlocal<OperatorPW<FPTYPE, Device>>::~Nonlocal() {
     delete_memory_op()(this->ctx, this->ps);
     delete_memory_op()(this->ctx, this->becp);
+    if (psi::device::get_device_type<Device>(this->ctx) == psi::GpuDevice) {
+        delete_memory_op()(this->ctx, this->vkb);
+    }
 }
 
 template<typename FPTYPE, typename Device>

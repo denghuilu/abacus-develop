@@ -126,8 +126,8 @@ void HSolverPW::endDiagh()
         delete (DiagoCG<double>*)pdiagh;
         pdiagh = nullptr;
         #if defined(__CUDA) || defined(__ROCM)
-        gpu_diagh = nullptr;
         delete (DiagoCG<double, psi::DEVICE_GPU>*)gpu_diagh;
+        gpu_diagh = nullptr;
         #endif
     }
     if(this->method == "dav")
@@ -195,6 +195,7 @@ void HSolverPW::hamiltSolvePsiK(hamilt::Hamilt<double>* hm, psi::Psi<std::comple
          psi.get_pointer() - psi.get_psi_bias(),
          gpu_psi.get_pointer() - gpu_psi.get_psi_bias(),
          psi.size());
+    delete reinterpret_cast<hamilt::HamiltPW<double, psi::DEVICE_GPU>*>(d_phm_in);
 #else
     pdiagh->diag(hm, psi, eigenvalue);
 #endif

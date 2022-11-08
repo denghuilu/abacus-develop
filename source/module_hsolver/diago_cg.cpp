@@ -696,6 +696,7 @@ void DiagoCG<FPTYPE, Device>::diag(hamilt::Hamilt<FPTYPE, Device> *phm_in, psi::
                     psi.get_pointer() - psi.get_psi_bias(),
                     cpu_psi.get_pointer() - cpu_psi.get_psi_bias(),
                     psi.size());
+            delete reinterpret_cast<hamilt::HamiltPW<FPTYPE, psi::DEVICE_CPU>*>(h_phm_in);
             #else
             DiagoIterAssist<FPTYPE>::diagH_subspace(phm_in, psi, psi, eigenvalue_in);
             #endif

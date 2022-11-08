@@ -23,9 +23,7 @@ Veff<OperatorPW<FPTYPE, Device>>::Veff(
     this->veff_row = veff_in[0].nr;
     this->wfcpw = wfcpw_in;
     resize_memory_complex_op()(this->ctx, this->porter, this->wfcpw->nmaxgr);
-    if (this->npol != 1) {
-        resize_memory_complex_op()(this->ctx, this->porter1, this->wfcpw->nmaxgr);
-    }
+    resize_memory_complex_op()(this->ctx, this->porter1, this->wfcpw->nmaxgr);
     if (this->isk == nullptr || veff_in == nullptr || this->wfcpw == nullptr) {
         ModuleBase::WARNING_QUIT("VeffPW", "Constuctor of Operator::VeffPW is failed, please check your code!");
     }
@@ -38,9 +36,7 @@ template<typename FPTYPE, typename Device>
 Veff<OperatorPW<FPTYPE, Device>>::~Veff()
 {
     delete_memory_complex_op()(this->ctx, this->porter);
-    if (this->npol != 1) {
-        delete_memory_complex_op()(this->ctx, this->porter1);
-    }
+    delete_memory_complex_op()(this->ctx, this->porter1);
     if (psi::device::get_device_type<Device>(this->ctx) == psi::GpuDevice) {
         delete_memory_double_op()(this->ctx, this->d_veff);
     }
@@ -139,6 +135,7 @@ hamilt::Veff<OperatorPW<FPTYPE, Device>>::Veff(const Veff<OperatorPW<T_in, Devic
     this->veff_col = veff->get_veff_col();
     this->veff_row = veff->get_veff_row();
     this->wfcpw = veff->get_wfcpw();
+    this->npol = veff->get_npol();
     resize_memory_complex_op()(this->ctx, this->porter, this->wfcpw->nmaxgr);
     if (this->npol != 1) {
         resize_memory_complex_op()(this->ctx, this->porter1, this->wfcpw->nmaxgr);
