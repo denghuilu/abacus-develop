@@ -80,8 +80,6 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace(
     psi::Range all_bands_range(1, psi.get_current_k(), 0, psi.get_nbands()-1);
     hpsi_info hpsi_in(&psi, all_bands_range, hphi);
     pHamilt->ops->hPsi(hpsi_in);
-    //use aux as a data pointer for hpsi
-    const std::complex<FPTYPE> *aux = hphi;
 
     gemm_op<FPTYPE, Device>()(
         ctx,
@@ -93,7 +91,7 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace(
         &ModuleBase::ONE,
         ppsi,
         dmax,
-        aux,
+        hphi,
         dmax,
         &ModuleBase::ZERO,
         hcc,
@@ -237,7 +235,13 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace(
             }
         }
         // TODO
+        psi::memory::delete_memory_op<std::complex<double>, Device>()(ctx, evctemp);
     }
+
+    psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>()(ctx, hcc);
+    psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>()(ctx, scc);
+    psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>()(ctx, vcc);
+    psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>()(ctx, hphi);
 
     ModuleBase::timer::tick("DiagoIterAssist", "diagH_subspace");
     return;
