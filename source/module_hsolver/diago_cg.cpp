@@ -684,8 +684,8 @@ void DiagoCG<FPTYPE, Device>::diag(hamilt::Hamilt<FPTYPE, Device> *phm_in, psi::
         if(DiagoIterAssist<FPTYPE>::need_subspace || ntry > 0)
         {
             #if defined(__CUDA) || defined(__ROCM)
+            // DiagoIterAssist<FPTYPE, Device>::diagH_subspace(phm_in, psi, psi, eigenvalue_in);
             psi::Psi<std::complex<FPTYPE>, psi::DEVICE_CPU> cpu_psi = psi;
-            // hamilt::Hamilt<FPTYPE>* h_phm_in = new hamilt::HamiltPW<FPTYPE>(reinterpret_cast<hamilt::HamiltPW<FPTYPE>*>(phm_in));
             hamilt::Hamilt<FPTYPE, psi::DEVICE_CPU>* h_phm_in =
                     new hamilt::HamiltPW<FPTYPE, psi::DEVICE_CPU>(
                             reinterpret_cast<hamilt::HamiltPW<FPTYPE, psi::DEVICE_GPU>*>(phm_in));

@@ -53,7 +53,7 @@ class DiagoIterAssist
 
     static bool test_exit_cond(const int &ntry, const int &notconv);
 
-    using hpsi_info = typename hamilt::Operator<std::complex<FPTYPE>, psi::DEVICE_CPU>::hpsi_info;
+    using hpsi_info = typename hamilt::Operator<std::complex<FPTYPE>, Device>::hpsi_info;
 };
 
 } // namespace hsolver
