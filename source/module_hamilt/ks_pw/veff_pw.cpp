@@ -19,12 +19,15 @@ Veff<OperatorPW<FPTYPE, Device>>::Veff(
     // this->veff = veff_in;
     // TODO: add an GPU veff array
     this->veff = veff_in[0].c;
+    //note: "veff = nullptr" means that this core does not treat potential but still treats wf. 
     this->veff_col = veff_in[0].nc;
     this->veff_row = veff_in[0].nr;
     this->wfcpw = wfcpw_in;
     resize_memory_complex_op()(this->ctx, this->porter, this->wfcpw->nmaxgr);
-    resize_memory_complex_op()(this->ctx, this->porter1, this->wfcpw->nmaxgr);
-    if (this->isk == nullptr || veff_in == nullptr || this->wfcpw == nullptr) {
+    if (this->npol != 1) {
+        resize_memory_complex_op()(this->ctx, this->porter1, this->wfcpw->nmaxgr);
+    }
+    if (this->isk == nullptr || this->wfcpw == nullptr) {
         ModuleBase::WARNING_QUIT("VeffPW", "Constuctor of Operator::VeffPW is failed, please check your code!");
     }
     if (psi::device::get_device_type<Device>(this->ctx) == psi::GpuDevice) {

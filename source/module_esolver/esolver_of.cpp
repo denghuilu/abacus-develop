@@ -39,14 +39,14 @@ void ESolver_OF::Init(Input &inp, UnitCell_pseudo &ucell)
 
     GlobalC::CHR.cal_nelec();
 
-	if(ucell.atoms[0].xc_func=="HSE"||ucell.atoms[0].xc_func=="PBE0")
+	if(ucell.atoms[0].ncpp.xc_func=="HSE"||ucell.atoms[0].ncpp.xc_func=="PBE0")
 	{
         ModuleBase::WARNING_QUIT("esolver_of", "Hybrid functionals are not supported by OFDFT.");
 		// XC_Functional::set_xc_type("pbe");
 	}
 	else
 	{
-		XC_Functional::set_xc_type(ucell.atoms[0].xc_func);
+		XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
 	}
 
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
@@ -994,7 +994,8 @@ void ESolver_OF::cal_Energy(double& etot)
 void ESolver_OF::cal_Force(ModuleBase::matrix& force)
 {
     Forces ff;
-    ff.init(force);
+    ModuleBase::matrix placeholder_wg;//using a placeholder for this template interface, would be refactor later
+    ff.init(force, placeholder_wg);
 }
 
 void ESolver_OF::cal_Stress(ModuleBase::matrix& stress)
@@ -1034,7 +1035,8 @@ void ESolver_OF::cal_Stress(ModuleBase::matrix& stress)
     }
 
     OF_Stress_PW ss;
-    ss.cal_stress(stress, kinetic_stress);
+    ModuleBase::matrix placeholder_wg;//using a placeholder for this template interface, would be refactor later
+    ss.cal_stress(stress, placeholder_wg, kinetic_stress);
 }
 
 // Calculated kinetic potential and plus it to &rpot, return (rpot + kietic potential) * 2 * pphiInpt
