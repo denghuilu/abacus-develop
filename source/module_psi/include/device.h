@@ -3,6 +3,7 @@
 #ifndef MODULE_PSI_DEVICE_H_
 #define MODULE_PSI_DEVICE_H_
 
+#include <string>
 #include <iostream>
 #include "module_psi/include/types.h"
 
@@ -10,6 +11,10 @@ namespace psi{
 namespace device {
 
 template<typename Device> AbacusDevice_t get_device_type (const Device* dev);
+
+template<typename Device> void print_device_info (const Device* dev, std::ofstream& ofs_device) {return;}
+
+template<typename Device> void record_device_memory (const Device* dev, std::ofstream& ofs_device, std::string str, size_t size) {return;}
 
 } // end of namespace device
 } // end of namespace psi
