@@ -160,6 +160,7 @@ void Psi<T, Device>::resize(
     this->nbasis = nbasis_in;
     this->current_nbasis = nbasis_in;
     this->psi_current = this->psi;
+    // GlobalV::ofs_device << "allocated xxx MB memory for psi" << std::endl;
 }
 
 template<typename T, typename Device>
