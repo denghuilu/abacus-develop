@@ -84,6 +84,10 @@ void dngvx_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
     cudaMemcpy(V, A_eigenvectors, sizeof(std::complex<double>)*col*m, cudaMemcpyDeviceToDevice);
 
     matrixTranspose_op<double, psi::DEVICE_GPU>()(d, col, row, V, V);
+
+    int info_gpu;
+    cudaMemcpy(&info_gpu, devInfo, sizeof(int), cudaMemcpyDeviceToHost);
+    assert(0 == info_gpu);
     
     // free the buffer
     cudaFree(d_work);
@@ -112,10 +116,8 @@ void dngv_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
     
     // transpose A to A_eigenvectors
     matrixTranspose_op<double, psi::DEVICE_GPU>()(d, row, col, A, (std::complex<double>*)A_eigenvectors);
-    matrixTranspose_op<double, psi::DEVICE_GPU>()(d, row, col, (std::complex<double>*) A_eigenvectors, (std::complex<double>*)A_eigenvectors);
     // transpose B to transpose_B
     matrixTranspose_op<double, psi::DEVICE_GPU>()(d, row, col, B, (std::complex<double>*)transpose_B);
-    matrixTranspose_op<double, psi::DEVICE_GPU>()(d, row, col, (std::complex<double>*) transpose_B, (std::complex<double>*)transpose_B);
     
     // init all_W
     double* all_W;
@@ -167,6 +169,10 @@ void dngv_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
     // get all eigenvalues and eigenvectors.
     cudaMemcpy(W, all_W, sizeof(double) * row, cudaMemcpyDeviceToDevice);
     matrixTranspose_op<double, psi::DEVICE_GPU>()(d, row, col, (std::complex<double>*)A_eigenvectors, V);
+
+    int info_gpu;
+    cudaMemcpy(&info_gpu, devInfo, sizeof(int), cudaMemcpyDeviceToHost);
+    assert(0 == info_gpu);
 
     // free the buffer
     cudaFree(d_work);

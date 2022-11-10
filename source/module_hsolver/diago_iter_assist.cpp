@@ -409,10 +409,10 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace_init(
 // by nstart states psi (atomic or random wavefunctions).
 // Produces on output n_band eigenvectors (n_band <= nstart) in evc.
 //----------------------------------------------------------------------
-template<>
-void DiagoIterAssist<double, psi::DEVICE_GPU>::diagH_subspace(hamilt::Hamilt<double, psi::DEVICE_GPU>* pHamilt, const psi::Psi<std::complex<double>, psi::DEVICE_GPU> &psi, psi::Psi<std::complex<double>, psi::DEVICE_GPU> &evc, double *en, int n_band) {
-    ModuleBase::WARNING_QUIT("DiagoIterAssist::diagH_subspace","GPU's implementation is not supported currently!");
-}
+// template<>
+// void DiagoIterAssist<double, psi::DEVICE_GPU>::diagH_subspace(hamilt::Hamilt<double, psi::DEVICE_GPU>* pHamilt, const psi::Psi<std::complex<double>, psi::DEVICE_GPU> &psi, psi::Psi<std::complex<double>, psi::DEVICE_GPU> &evc, double *en, int n_band) {
+//     ModuleBase::WARNING_QUIT("DiagoIterAssist::diagH_subspace","GPU's implementation is not supported currently!");
+// }
 
 template<>
 void DiagoIterAssist<double, psi::DEVICE_GPU>::diagH_subspace_init(hamilt::Hamilt<double, psi::DEVICE_GPU>* pHamilt, const ModuleBase::ComplexMatrix &psi, psi::Psi<std::complex<double>, psi::DEVICE_GPU> &evc, double *en) {
@@ -559,22 +559,54 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_LAPACK(
     ModuleBase::timer::tick("DiagoIterAssist", "diagH_LAPACK_notINinit");
 
     Device* ctx = {};
+    const psi::DEVICE_CPU * cpu_ctx = {};
+    const psi::DEVICE_GPU * gpu_ctx = {};
     const bool all_eigenvalues = (nstart == nbands);
+
+    std::complex<FPTYPE>* cpu_hcc = nullptr;
+    psi::memory::resize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU>()(cpu_ctx, cpu_hcc, nstart * nstart);
+    psi::memory::synchronize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU, psi::DEVICE_GPU>()(
+        cpu_ctx,
+        gpu_ctx,
+        cpu_hcc,
+        hcc,
+        nstart * nstart
+    );
+
+    std::complex<FPTYPE>* cpu_scc = nullptr;
+    psi::memory::resize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU>()(cpu_ctx, cpu_scc, nstart * nstart);
+    psi::memory::synchronize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU, psi::DEVICE_GPU>()(
+        cpu_ctx,
+        gpu_ctx,
+        cpu_scc,
+        scc,
+        nstart * nstart
+    );
+
+    std::complex<FPTYPE>* cpu_vcc = nullptr;
+    psi::memory::resize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU>()(cpu_ctx, cpu_vcc, nstart * nstart);
+    psi::memory::synchronize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU, psi::DEVICE_GPU>()(
+        cpu_ctx,
+        gpu_ctx,
+        cpu_vcc,
+        vcc,
+        nstart * nstart
+    );
 
     if (all_eigenvalues)
     {
         //===========================
         // calculate all eigenvalues
         //===========================
-        
-        dngv_op<FPTYPE, Device>()(
-            ctx,
+
+        dngv_op<FPTYPE, psi::DEVICE_CPU>()(
+            cpu_ctx,
             nstart,
             ldh,
-            hcc,
-            scc,
+            cpu_hcc,
+            cpu_scc,
             e,
-            vcc
+            cpu_vcc
         );
     }
     else
@@ -583,17 +615,31 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_LAPACK(
         // calculate only m lowest eigenvalues
         //=====================================
 
-        dngvx_op<FPTYPE, Device>()(
-            ctx,
+        dngvx_op<FPTYPE, psi::DEVICE_CPU>()(
+            cpu_ctx,
             nstart,
             ldh,
-            hcc,
-            scc,
+            cpu_hcc,
+            cpu_scc,
             nbands,
             e,
-            vcc
+            cpu_vcc
         );
     }
+
+    psi::memory::synchronize_memory_op<std::complex<FPTYPE>, psi::DEVICE_GPU, psi::DEVICE_CPU>()(
+        gpu_ctx,
+        cpu_ctx,
+        vcc,
+        cpu_vcc,
+        nstart * nstart
+    );
+
+
+    psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>()(ctx, cpu_hcc);
+    psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>()(ctx, cpu_scc);
+    psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>()(ctx, cpu_vcc);
+
 
     ModuleBase::timer::tick("DiagoIterAssist", "diagH_LAPACK_notINinit");
     return;
