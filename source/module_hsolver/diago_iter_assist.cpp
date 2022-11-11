@@ -558,10 +558,14 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_LAPACK(
     ModuleBase::TITLE("DiagoIterAssist", "diagH_LAPACK_notINinit");
     ModuleBase::timer::tick("DiagoIterAssist", "diagH_LAPACK_notINinit");
 
-    Device* ctx = {};
-    const psi::DEVICE_CPU * cpu_ctx = {};
-    const psi::DEVICE_GPU * gpu_ctx = {};
+    const psi::DEVICE_CPU * cpu_ctx = {};   
+    
     const bool all_eigenvalues = (nstart == nbands);
+
+#if defined(__CUDA) || defined(__ROCM)
+
+
+    const psi::DEVICE_GPU * gpu_ctx = {};
 
     std::complex<FPTYPE>* cpu_hcc = nullptr;
     psi::memory::resize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU>()(cpu_ctx, cpu_hcc, nstart * nstart);
@@ -585,13 +589,13 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_LAPACK(
 
     std::complex<FPTYPE>* cpu_vcc = nullptr;
     psi::memory::resize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU>()(cpu_ctx, cpu_vcc, nstart * nstart);
-    psi::memory::synchronize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU, psi::DEVICE_GPU>()(
-        cpu_ctx,
-        gpu_ctx,
-        cpu_vcc,
-        vcc,
-        nstart * nstart
-    );
+    // psi::memory::synchronize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU, psi::DEVICE_GPU>()(
+    //     cpu_ctx,
+    //     gpu_ctx,
+    //     cpu_vcc,
+    //     vcc,
+    //     nstart * nstart
+    // );
 
     if (all_eigenvalues)
     {
@@ -636,9 +640,43 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_LAPACK(
     );
 
 
-    psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>()(ctx, cpu_hcc);
-    psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>()(ctx, cpu_scc);
-    psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>()(ctx, cpu_vcc);
+    psi::memory::delete_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU>()(cpu_ctx, cpu_hcc);
+    psi::memory::delete_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU>()(cpu_ctx, cpu_scc);
+    psi::memory::delete_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU>()(cpu_ctx, cpu_vcc);
+
+#else
+    if (all_eigenvalues)
+    {
+        //===========================
+        // calculate all eigenvalues
+        //===========================
+        dngv_op<FPTYPE, Device>()(
+            cpu_ctx,
+            nstart,
+            ldh,
+            hcc,
+            scc,
+            e,
+            vcc
+        );
+    }
+    else
+    {
+        //=====================================
+        // calculate only m lowest eigenvalues
+        //=====================================
+        dngvx_op<FPTYPE, Device>()(
+            cpu_ctx,
+            nstart,
+            ldh,
+            hcc,
+            scc,
+            nbands,
+            e,
+            vcc
+        );
+    }
+#endif
 
 
     ModuleBase::timer::tick("DiagoIterAssist", "diagH_LAPACK_notINinit");
