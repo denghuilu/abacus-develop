@@ -12,7 +12,7 @@ AddTest(
 else()
 AddTest(
   TARGET Module_Psi_UTs
-  LIBS ${math_libs}
+  LIBS ${math_libs} base
   SOURCES memory_test.cpp device_test.cpp
           ../src/memory_psi.cpp
           ../src/device.cpp
