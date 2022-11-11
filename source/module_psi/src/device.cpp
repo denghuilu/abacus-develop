@@ -6,7 +6,7 @@
 #include "module_psi/psi.h"
 #include "module_psi/include/types.h"
 #include "module_psi/include/device.h"
-#include "module_base/global_function.h"
+#include "module_base/tool_quit.h"
 
 #if defined(__CUDA)
 #include <cuda_runtime.h>

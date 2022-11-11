@@ -3,7 +3,6 @@
 #ifndef MODULE_PSI_DEVICE_H_
 #define MODULE_PSI_DEVICE_H_
 
-#include <string>
 #include <iostream>
 #include "module_psi/include/types.h"
 
