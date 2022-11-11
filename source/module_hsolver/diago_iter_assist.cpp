@@ -255,7 +255,7 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace_init(
     FPTYPE *en)
 {
     ModuleBase::TITLE("DiagoIterAssist", "diagH_subspace_init");
-    ModuleBase::timer::tick("DiagoIterAssist", "diagH_subspace");
+    ModuleBase::timer::tick("DiagoIterAssist", "diagH_subspace_init");
 
     // two case:
     // 1. pw base: nstart = n_band, psi(nbands * npwx)
@@ -399,7 +399,7 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace_init(
         }
     }
 
-    ModuleBase::timer::tick("DiagoIterAssist", "diagH_subspace");
+    ModuleBase::timer::tick("DiagoIterAssist", "diagH_subspace_init");
     return;
 }
 
