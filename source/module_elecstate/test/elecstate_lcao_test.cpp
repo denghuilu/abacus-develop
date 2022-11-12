@@ -58,7 +58,7 @@ namespace GlobalC
     energy en;
     Structure_Factor sf;
     K_Vectors kv;
-    UnitCell_pseudo ucell;
+    UnitCell ucell;
     pseudopot_cell_vnl ppcell;
     ModulePW::PW_Basis* rhopw;
     ModulePW::PW_Basis_Big *bigpw = static_cast<ModulePW::PW_Basis_Big*>(rhopw);
@@ -96,13 +96,7 @@ namespace WF_Local
 }
 
 //mock the unrelated functions in charge.cpp
-#include "src_pw/use_fft.h"
 #include "src_pw/occupy.h"
-namespace GlobalC {Use_FFT UFFT;}
-Use_FFT::Use_FFT(){}
-Use_FFT::~Use_FFT(){}
-void Use_FFT::ToRealSpace(const int &is, const ModuleBase::ComplexMatrix &vg, double *vr, ModulePW::PW_Basis* rho_basis) {return;}
-void Use_FFT::ToRealSpace(const std::complex<double> *vg, double *vr, ModulePW::PW_Basis* rho_basis) {return;};
 bool Occupy::use_gaussian_broadening = false;
 bool Occupy::use_tetrahedron_method = false;
 double Magnetism::get_nelup(void) {return 0;}

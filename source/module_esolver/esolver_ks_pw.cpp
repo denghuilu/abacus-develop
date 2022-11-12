@@ -11,12 +11,12 @@
 #include "../src_pw/symmetry_rho.h"
 #include "../src_io/print_info.h"
 #include "../src_pw/H_Ewald_pw.h"
-#include "../src_pw/electrons.h"
 #include "../src_pw/occupy.h"
 #include "../src_io/chi0_standard.h"
 #include "../src_io/chi0_hilbert.h"
 #include "../src_io/epsilon0_pwscf.h"
 #include "../src_io/epsilon0_vasp.h"
+#include "../module_relax/relax_old/variable_cell.h"    // liuyu 2022-11-07
 //-----force-------------------
 #include "../src_pw/forces.h"
 //-----stress------------------
@@ -64,7 +64,7 @@ namespace ModuleESolver
         }
     }
 
-    void ESolver_KS_PW::Init_GlobalC(Input& inp, UnitCell_pseudo& cell)
+    void ESolver_KS_PW::Init_GlobalC(Input& inp, UnitCell& cell)
     {
         this->psi = GlobalC::wf.allocate(GlobalC::kv.nks);
 
@@ -82,7 +82,8 @@ namespace ModuleESolver
         // init hamiltonian
         // only allocate in the beginning of ELEC LOOP!
         //=====================
-        GlobalC::hm.hpw.allocate(GlobalC::wf.npwx, GlobalV::NPOL, GlobalC::ppcell.nkb, GlobalC::rhopw->nrxx);
+        //not used anymore
+        //GlobalC::hm.hpw.allocate(GlobalC::wf.npwx, GlobalV::NPOL, GlobalC::ppcell.nkb, GlobalC::rhopw->nrxx);
 
         //=================================
         // initalize local pseudopotential
@@ -122,14 +123,14 @@ namespace ModuleESolver
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT BASIS");
     }
 
-    void ESolver_KS_PW::Init(Input& inp, UnitCell_pseudo& ucell)
+    void ESolver_KS_PW::Init(Input& inp, UnitCell& ucell)
     {
         ESolver_KS::Init(inp,ucell);
 
         //init ElecState,
         if(this->pelec == nullptr)
         {
-            this->pelec = new elecstate::ElecStatePW( GlobalC::wfcpw, (Charge*)(&(GlobalC::CHR)), (K_Vectors*)(&(GlobalC::kv)), GlobalV::NBANDS);
+            this->pelec = new elecstate::ElecStatePW( GlobalC::wfcpw, &(GlobalC::CHR), (K_Vectors*)(&(GlobalC::kv)), GlobalV::NBANDS);
         }
         //init HSolver
         if(this->phsol == nullptr)
@@ -152,13 +153,28 @@ namespace ModuleESolver
     {
         ModuleBase::TITLE("ESolver_KS_PW", "beforescf");
 
+        // Temporary, md and relax will merge later   liuyu add 2022-11-07
+        if(GlobalV::CALCULATION == "md" && istep)
+        {
+            CE.update_istep();
+            CE.save_pos_next(GlobalC::ucell);
+            CE.extrapolate_charge();
+
+            if(GlobalC::ucell.cell_parameter_updated)
+            {
+                Variable_Cell::init_after_vc();
+            }
+
+            GlobalC::pot.init_pot(istep, GlobalC::sf.strucFac);
+        }
+
         if(GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax")
         {
             if(GlobalC::ucell.ionic_position_updated)
             {
                 GlobalV::ofs_running << " Setup the extrapolated charge." << std::endl;
                 // charge extrapolation if istep>0.
-                CE.update_istep(istep);
+                CE.update_istep();
                 CE.update_all_pos(GlobalC::ucell);
                 CE.extrapolate_charge();
                 CE.save_pos_next(GlobalC::ucell);
@@ -249,15 +265,7 @@ namespace ModuleESolver
     void ESolver_KS_PW::eachiterinit(const int istep, const int iter)
     {
         // mohan add 2010-07-16
-        if (iter == 1) GlobalC::CHR.set_new_e_iteration(true);
-        else GlobalC::CHR.set_new_e_iteration(false);
-
-        if (GlobalV::FINAL_SCF && iter == 1)
-        {
-            GlobalC::CHR.irstep = 0;
-            GlobalC::CHR.idstep = 0;
-            GlobalC::CHR.totstep = 0;
-        }
+        if (iter == 1) GlobalC::CHR_MIX.reset(GlobalV::FINAL_SCF);
 
         // mohan move harris functional to here, 2012-06-05
         // use 'rho(in)' and 'v_h and v_xc'(in)
@@ -414,6 +422,9 @@ namespace ModuleESolver
 
     void ESolver_KS_PW::afterscf(const int istep)
     {
+        // Temporary liuyu add 2022-11-07
+        CE.update_all_pos(GlobalC::ucell);
+
 #ifdef __LCAO
         if (GlobalC::chi0_hilbert.epsilon)                 // pengfei 2016-11-23
         {
@@ -628,6 +639,10 @@ namespace ModuleESolver
             //std::cout << "\n Output Spillage Information : " << std::endl;
             // calculate spillage value.
 #ifdef __LCAO
+//We are not goint to support lcao_in_paw until
+//the obsolete GlobalC::hm is replaced by the 
+//refactored moeules (psi, hamilt, etc.)
+/*
             if ( winput::out_spillage == 3)
             {
                 GlobalV::BASIS_TYPE="pw"; 
@@ -649,6 +664,7 @@ namespace ModuleESolver
                 //Spillage sp;
                 //sp.get_both(GlobalV::NBANDS, GlobalV::NLOCAL, GlobalC::wf.wanf2, GlobalC::wf.evc);
             }
+*/
 #endif
 
             // output overlap

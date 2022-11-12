@@ -64,7 +64,7 @@ class Veff<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
     FPTYPE *d_veff = nullptr;
     std::complex<FPTYPE> *porter = nullptr;
     std::complex<FPTYPE> *porter1 = nullptr;
-
+    psi::AbacusDevice_t device = {};
     using veff_op = veff_pw_op<FPTYPE, Device>;
 
     using resize_memory_double_op = psi::memory::resize_memory_op<FPTYPE, Device>;

@@ -68,6 +68,27 @@ void Input_Conv::Convert(void)
     }
     GlobalV::fixed_atoms = INPUT.fixed_atoms;
 
+    if(INPUT.calculation=="relax" || INPUT.calculation=="cell-relax")
+    {
+        if(INPUT.fixed_ibrav && !INPUT.relax_new)
+        {
+            ModuleBase::WARNING_QUIT("Input_Conv","fixed_ibrav only available for relax_new = 1");
+        }
+        if(INPUT.latname=="none" && INPUT.fixed_ibrav)
+        {
+            ModuleBase::WARNING_QUIT("Input_Conv","to use fixed_ibrav, latname must be provided");
+        }
+        if(INPUT.calculation == "relax" && INPUT.fixed_atoms)
+        {
+            ModuleBase::WARNING_QUIT("Input_Conv","fixed_atoms is not meant to be used for calculation = relax");
+        }
+        if(INPUT.relax_new && INPUT.relax_method!="cg")
+        {
+            ModuleBase::WARNING_QUIT("Input_Conv","only CG has been implemented for relax_new");
+        }
+        GlobalV::fixed_atoms = INPUT.fixed_atoms;
+    }
+
     GlobalV::KSPACING = INPUT.kspacing;
     GlobalV::MIN_DIST_COEF = INPUT.min_dist_coef;
     GlobalV::NBANDS = INPUT.nbands;
@@ -467,7 +488,7 @@ void Input_Conv::Convert(void)
     //----------------------------------------------------------
     // charge mixing(3/3)
     //----------------------------------------------------------
-    GlobalC::CHR.set_mixing(INPUT.mixing_mode,
+    GlobalC::CHR_MIX.set_mixing(INPUT.mixing_mode,
                             INPUT.mixing_beta,
                             INPUT.mixing_ndim,
                             INPUT.mixing_gg0); // mohan modify 2014-09-27, add mixing_gg0

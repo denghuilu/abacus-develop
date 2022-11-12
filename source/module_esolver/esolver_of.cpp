@@ -13,7 +13,6 @@
 #include "../src_pw/symmetry_rho.h"
 #include "../src_io/print_info.h"
 #include "../src_pw/H_Ewald_pw.h"
-#include "../src_pw/electrons.h"
 //-----force-------------------
 #include "../src_pw/forces.h"
 //-----stress------------------
@@ -21,11 +20,12 @@
 //---------------------------------------------------
 #include "module_elecstate/elecstate_pw.h"
 #include "module_hamilt/hamilt_pw.h"
+#include "module_relax/relax_old/variable_cell.h"    // liuyu 2022-11-07
 
 namespace ModuleESolver
 {
 
-void ESolver_OF::Init(Input &inp, UnitCell_pseudo &ucell)
+void ESolver_OF::Init(Input &inp, UnitCell &ucell)
 {
     ESolver_FP::Init(inp, ucell);
 
@@ -202,13 +202,16 @@ void ESolver_OF::Init(Input &inp, UnitCell_pseudo &ucell)
     this->vw.set_para(this->nrxx, this->dV, GlobalV::of_vw_weight);
     this->wt.set_para(this->nrxx, this->dV, GlobalV::of_wt_alpha, GlobalV::of_wt_beta, this->nelec[0], GlobalV::of_tf_weight, GlobalV::of_vw_weight, GlobalV::of_read_kernel, GlobalV::of_kernel_file, this->pw_rho);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT KEDF");
+
+    // Initialize charge extrapolation
+    CE.Init_CE();
 }
 
-void ESolver_OF::Run(int istep, UnitCell_pseudo& ucell)
+void ESolver_OF::Run(int istep, UnitCell& ucell)
 {
     ModuleBase::timer::tick("ESolver_OF", "Run");
     // get Ewald energy, initial rho and phi if necessary
-    this->beforeOpt();
+    this->beforeOpt(istep);
     this->iter = 0;
 
     while(true)
@@ -242,8 +245,23 @@ void ESolver_OF::Run(int istep, UnitCell_pseudo& ucell)
 // 
 // Calculate ewald energy, initialize the rho, phi, theta
 // 
-void ESolver_OF::beforeOpt()
+void ESolver_OF::beforeOpt(const int istep)
 {
+    // Temporary, md and relax will merge later   liuyu add 2022-11-07
+    if(GlobalV::CALCULATION == "md" && istep)
+    {
+        CE.update_istep();
+        CE.save_pos_next(GlobalC::ucell);
+        CE.extrapolate_charge();
+
+        if(GlobalC::ucell.cell_parameter_updated)
+        {
+            Variable_Cell::init_after_vc();
+        }
+
+        GlobalC::pot.init_pot(istep, GlobalC::sf.strucFac);
+    }
+
     //calculate ewald energy
     H_Ewald_pw::compute_ewald(GlobalC::ucell, this->pw_rho);
 
@@ -829,6 +847,9 @@ void ESolver_OF::printInfo()
 
 void ESolver_OF::afterOpt()
 {
+    // Temporary liuyu add 2022-11-07
+    CE.update_all_pos(GlobalC::ucell);
+
     if (this->conv)
     {
         GlobalV::ofs_running << "\n charge density convergence is achieved" << std::endl;
