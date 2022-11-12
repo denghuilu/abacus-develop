@@ -129,6 +129,9 @@ void ElecStatePW<FPTYPE, Device>::rhoBandK(const psi::Psi<std::complex<FPTYPE>, 
     // if (GlobalV::NSPIN == 4)
     //     wfcr_another_spin.resize(this->charge->nrxx);
 
+    if (!this->init_rho) {
+        this->init_rho_data();
+    }
     int ik = psi.get_current_k();
     int npw = psi.get_current_nbas();
     int current_spin = 0;
