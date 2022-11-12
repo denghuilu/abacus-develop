@@ -43,7 +43,7 @@ class Nonlocal<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
 
     const int *get_isk() const {return this->isk;}
     const pseudopot_cell_vnl *get_ppcell() const {return this->ppcell;}
-    const UnitCell_pseudo *get_ucell() const {return this->ucell;}
+    const UnitCell *get_ucell() const {return this->ucell;}
 
     private:
     void add_nonlocal_pp(std::complex<FPTYPE> *hpsi_in, const std::complex<FPTYPE> *becp, const int m) const;

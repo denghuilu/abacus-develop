@@ -40,6 +40,7 @@ class Veff<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
     FPTYPE *get_veff() const {return this->veff;}
     int get_veff_col() const {return this->veff_col;}
     int get_veff_row() const {return this->veff_row;}
+    int get_npol() const {return this->npol;}
     const int *get_isk() const {return isk;}
     ModulePW::PW_Basis_K* get_wfcpw() const {return this->wfcpw;}
 
