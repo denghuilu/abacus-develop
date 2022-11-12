@@ -146,6 +146,7 @@ hamilt::Veff<OperatorPW<FPTYPE, Device>>::Veff(const Veff<OperatorPW<T_in, Devic
     this->veff_row = veff->get_veff_row();
     this->wfcpw = veff->get_wfcpw();
     this->npol = veff->get_npol();
+    this->device = psi::device::get_device_type<Device>(this->ctx);
     resize_memory_complex_op()(this->ctx, this->porter, this->wfcpw->nmaxgr);
     if (this->npol != 1) {
         resize_memory_complex_op()(this->ctx, this->porter1, this->wfcpw->nmaxgr);
