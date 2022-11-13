@@ -75,6 +75,8 @@ void dngvx_op<double, psi::DEVICE_CPU>::operator()(
                             info,
                             row);
 
+    assert(0 == info);
+
     delete[] work;
     delete[] rwork;
     delete[] iwork;
@@ -126,6 +128,8 @@ void dngv_op<double, psi::DEVICE_CPU>::operator()(
         V[i] = A[i];
     }
     LapackConnector::zhegv(1, 'V', 'U', col, V, col, B, col, W, work, lwork, rwork, info, row);
+
+    assert(0 == info);
 
     delete[] rwork;
     delete[] work;
