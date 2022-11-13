@@ -40,7 +40,7 @@ class Veff<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
     FPTYPE *get_veff() const {return this->veff;}
     int get_veff_col() const {return this->veff_col;}
     int get_veff_row() const {return this->veff_row;}
-    int get_npol() const {return npol;}
+    int get_npol() const {return this->npol;}
     const int *get_isk() const {return isk;}
     ModulePW::PW_Basis_K* get_wfcpw() const {return this->wfcpw;}
 
@@ -64,7 +64,7 @@ class Veff<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
     FPTYPE *d_veff = nullptr;
     std::complex<FPTYPE> *porter = nullptr;
     std::complex<FPTYPE> *porter1 = nullptr;
-
+    psi::AbacusDevice_t device = {};
     using veff_op = veff_pw_op<FPTYPE, Device>;
 
     using resize_memory_double_op = psi::memory::resize_memory_op<FPTYPE, Device>;
