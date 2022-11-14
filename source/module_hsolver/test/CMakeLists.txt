@@ -38,6 +38,7 @@ AddTest(
   LIBS ${math_libs} base cublas
   SOURCES math_kernel_test.cpp ../../src_parallel/parallel_global.cpp 
           ../../src_parallel/parallel_common.cpp  ../../src_parallel/parallel_reduce.cpp
+          ../../module_psi/src/memory_psi.cpp
           ../../module_hsolver/src/math_kernel.cpp
           ../../module_psi/src/cuda/memory.cu
           ../src/cuda/math_kernel.cu
@@ -62,6 +63,7 @@ AddTest(
   LIBS ${math_libs} base
   SOURCES math_kernel_test.cpp ../../src_parallel/parallel_global.cpp 
           ../../src_parallel/parallel_common.cpp  ../../src_parallel/parallel_reduce.cpp
+          ../../module_psi/src/memory_psi.cpp
           ../src/math_kernel.cpp
 )
 endif()
