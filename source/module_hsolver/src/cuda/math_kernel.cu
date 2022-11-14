@@ -189,7 +189,7 @@ void axpy_op<float, psi::DEVICE_GPU>::operator()(
     std::complex<float> *Y,
     const int& incY)
 {
-    cublasCaxpy(diag_handle, N, (float2*)alpha, (float2*)X, incX, (float2*)Y, incY);
+    cublasErrcheck(cublasCaxpy(diag_handle, N, (float2*)alpha, (float2*)X, incX, (float2*)Y, incY));
 }
 
 template <> 
