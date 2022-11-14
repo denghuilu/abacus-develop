@@ -302,11 +302,6 @@ T& Psi<T, Device>::operator()(const int ik, const int ibands, const int ibasis)
     assert(ik >= 0 && ik < this->nk);
 	assert(ibands >= 0 && ibands < this->nbands);	
     assert(ibasis >= 0 && ibasis < this->nbasis);
-    // if (this->device != CpuDevice) {
-    //     #if ((defined __CUDA) || (defined __ROCM))
-    //     ModuleBase::WARNING_QUIT("Psi operator ()", "GPU psi cannot fetch value by an overloaded operator ()!");
-    //     #endif
-    // }
 	return this->psi[(ik * this->nbands + ibands) * this->nbasis + ibasis];
 }
 
@@ -316,11 +311,6 @@ const T& Psi<T, Device>::operator()(const int ik, const int ibands, const int ib
     assert(ik >= 0 && ik < this->nk);
 	assert(ibands >= 0 && ibands < this->nbands);	
     assert(ibasis >= 0 && ibasis < this->nbasis);
-    // if (this->device != CpuDevice) {
-    //     #if ((defined __CUDA) || (defined __ROCM))
-    //     ModuleBase::WARNING_QUIT("Psi operator ()", "GPU psi cannot fetch value by an overloaded operator ()!");
-    //     #endif
-    // }
 	return this->psi[(ik * this->nbands + ibands) * this->nbasis + ibasis];
 }
 
@@ -330,11 +320,6 @@ T& Psi<T, Device>::operator()(const int ibands, const int ibasis)
     assert(this->current_b == 0);
 	assert(ibands >= 0 && ibands < this->nbands);	
     assert(ibasis >= 0 && ibasis < this->nbasis);
-    // if (this->device != CpuDevice) {
-    //     #if ((defined __CUDA) || (defined __ROCM))
-    //     ModuleBase::WARNING_QUIT("Psi operator ()", "GPU psi cannot fetch value by an overloaded operator ()!");
-    //     #endif
-    // }
 	return this->psi_current[ibands * this->nbasis + ibasis];
 }
 
@@ -344,11 +329,6 @@ const T& Psi<T, Device>::operator()(const int ibands, const int ibasis) const
     assert(this->current_b==0);
 	assert(ibands >= 0 && ibands < this->nbands);	
     assert(ibasis >= 0 && ibasis < this->nbasis);
-    // if (this->device != CpuDevice) {
-    //     #if ((defined __CUDA) || (defined __ROCM))
-    //     ModuleBase::WARNING_QUIT("Psi operator ()", "GPU psi cannot fetch value by an overloaded operator ()!");
-    //     #endif
-    // }
 	return this->psi_current[ibands * this->nbasis + ibasis];
 }
 
@@ -356,11 +336,6 @@ template<typename T, typename Device>
 T& Psi<T, Device>::operator()(const int ibasis)
 {	
     assert(ibasis >= 0 && ibasis < this->nbasis);
-    // if (this->device != CpuDevice) {
-    //     #if ((defined __CUDA) || (defined __ROCM))
-    //     ModuleBase::WARNING_QUIT("Psi operator ()", "GPU psi cannot fetch value by an overloaded operator ()!");
-    //     #endif
-    // }
 	return this->psi_current[this->current_b * this->nbasis + ibasis];
 }
 
@@ -368,11 +343,6 @@ template<typename T, typename Device>
 const T& Psi<T, Device>::operator()(const int ibasis) const
 {	
     assert(ibasis >= 0 && ibasis < this->nbasis);
-    // if (this->device != CpuDevice) {
-    //     #if ((defined __CUDA) || (defined __ROCM))
-    //     ModuleBase::WARNING_QUIT("Psi operator ()", "GPU psi cannot fetch value by an overloaded operator ()!");
-    //     #endif
-    // }
 	return this->psi_current[this->current_b * this->nbasis + ibasis];
 }
 
