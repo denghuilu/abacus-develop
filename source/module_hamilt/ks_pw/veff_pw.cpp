@@ -161,9 +161,11 @@ hamilt::Veff<OperatorPW<FPTYPE, Device>>::Veff(const Veff<OperatorPW<T_in, Devic
 
 namespace hamilt{
 template class Veff<OperatorPW<double, psi::DEVICE_CPU>>;
+template Veff<OperatorPW<double, psi::DEVICE_CPU>>::Veff(const Veff<OperatorPW<double, psi::DEVICE_CPU>> *veff);
 #if ((defined __CUDA) || (defined __ROCM))
 template class Veff<OperatorPW<double, psi::DEVICE_GPU>>;
 template Veff<OperatorPW<double, psi::DEVICE_CPU>>::Veff(const Veff<OperatorPW<double, psi::DEVICE_GPU>> *veff);
 template Veff<OperatorPW<double, psi::DEVICE_GPU>>::Veff(const Veff<OperatorPW<double, psi::DEVICE_CPU>> *veff);
+template Veff<OperatorPW<double, psi::DEVICE_GPU>>::Veff(const Veff<OperatorPW<double, psi::DEVICE_GPU>> *veff);
 #endif
 } // namespace hamilt

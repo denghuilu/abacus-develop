@@ -19,9 +19,6 @@ DiagoCG<FPTYPE, Device>::DiagoCG(const FPTYPE* precondition_in)
     test_cg = 0;
     reorder = false;
     this->device = psi::device::get_device_type<Device>(this->ctx);
-#if defined(__CUDA) || defined(__ROCM)
-    hsolver::createBLAShandle();
-#endif
 }
 
 template<typename FPTYPE, typename Device>
@@ -35,9 +32,6 @@ DiagoCG<FPTYPE, Device>::~DiagoCG() {
     delete_memory_complex_op()(this->ctx, this->gradient);
     delete_memory_complex_op()(this->ctx, this->g0);
     delete_memory_complex_op()(this->ctx, this->lagrange);
-#if defined(__CUDA) || defined(__ROCM)
-    hsolver::destoryBLAShandle();
-#endif
 }
 
 template<typename FPTYPE, typename Device>
@@ -688,7 +682,7 @@ void DiagoCG<FPTYPE, Device>::diag(hamilt::Hamilt<FPTYPE, Device> *phm_in, psi::
             // hamilt::Hamilt<FPTYPE>* h_phm_in = new hamilt::HamiltPW<FPTYPE>(reinterpret_cast<hamilt::HamiltPW<FPTYPE>*>(phm_in));
             hamilt::Hamilt<FPTYPE, psi::DEVICE_CPU>* h_phm_in =
                     new hamilt::HamiltPW<FPTYPE, psi::DEVICE_CPU>(
-                            reinterpret_cast<hamilt::HamiltPW<FPTYPE, psi::DEVICE_GPU>*>(phm_in));
+                            reinterpret_cast<hamilt::HamiltPW<FPTYPE, Device>*>(phm_in));
             DiagoIterAssist<FPTYPE>::diagH_subspace(h_phm_in, cpu_psi, cpu_psi, eigenvalue_in);
             psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, psi::DEVICE_CPU>()(
                     psi.get_device(),

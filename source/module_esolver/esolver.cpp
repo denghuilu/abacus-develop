@@ -92,7 +92,12 @@ namespace ModuleESolver
         //initialize the corresponding Esolver child class
         if (esolver_type == "ksdft_pw")
         {
-            p_esolver = new ESolver_KS_PW();
+            if (GlobalV::device_flag == "gpu") {
+                p_esolver = new ESolver_KS_PW<double, psi::DEVICE_GPU>();
+            }
+            else {
+                p_esolver = new ESolver_KS_PW<double, psi::DEVICE_CPU>();
+            }
         }
 #ifdef __LCAO
         else if (esolver_type == "ksdft_lcao")
