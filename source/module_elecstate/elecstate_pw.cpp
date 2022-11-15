@@ -13,7 +13,7 @@ template<typename FPTYPE, typename Device>
 ElecStatePW<FPTYPE, Device>::ElecStatePW(ModulePW::PW_Basis_K *wfc_basis_in, Charge* chg_in, K_Vectors *pkv_in, int nbands_in) : basis(wfc_basis_in)  
 {
     this->classname = "ElecStatePW";
-    init(chg_in, pkv_in, pkv_in->nks, nbands_in);
+    this->init(chg_in, pkv_in, pkv_in->nks, nbands_in);
 }
 
 template<typename FPTYPE, typename Device>
@@ -87,6 +87,15 @@ void ElecStatePW<FPTYPE, Device>::psiToRho(const psi::Psi<std::complex<FPTYPE>, 
         psi.fix_k(ik);
         this->updateRhoK(psi);
     }
+    if (psi::device::get_device_type<Device>(this->ctx) == psi::GpuDevice) {
+        for (int ii = 0; ii < GlobalV::NSPIN; ii++)
+            syncmem_var_d2h_op()(
+                this->cpu_ctx, 
+                this->ctx,
+                this->charge->rho[ii],
+                this->rho[ii],
+                this->charge->nrxx);
+    }
     this->parallelK();
     ModuleBase::timer::tick("ElecStatePW", "psiToRho");
 }
@@ -106,7 +115,7 @@ template<typename FPTYPE, typename Device>
 void ElecStatePW<FPTYPE, Device>::parallelK()
 {
 #ifdef __MPI
-    charge->rho_mpi();
+    this->charge->rho_mpi();
     if(GlobalV::ESOLVER_TYPE == "sdft") //qinarui add it 2021-7-21
 	{
 		this->eband /= GlobalV::NPROC_IN_POOL;

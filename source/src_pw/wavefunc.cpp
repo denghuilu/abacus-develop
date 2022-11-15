@@ -6,6 +6,7 @@
 #include "../module_base/memory.h"
 #include "../module_base/timer.h"
 #include "module_hsolver/diago_iter_assist.h"
+#include "module_hamilt/hamilt_pw.h"
 
 wavefunc::wavefunc()
 {
@@ -290,6 +291,29 @@ void wavefunc::diago_PAO_in_pw_k2(const int &ik, psi::Psi<std::complex<double>> 
 		}
 	}
 }
+
+void wavefunc::diago_PAO_in_pw_k2_device(const psi::DEVICE_CPU* ctx, const int &ik, psi::Psi<std::complex<double>, psi::DEVICE_CPU> &wvf, hamilt::Hamilt<double, psi::DEVICE_CPU>* phm_in)
+{
+	this->diago_PAO_in_pw_k2(ik, wvf, phm_in);
+}
+
+#if ((defined __CUDA) || (defined __ROCM))
+void wavefunc::diago_PAO_in_pw_k2_device(const psi::DEVICE_GPU* ctx, const int &ik, psi::Psi<std::complex<double>, psi::DEVICE_GPU> &wvf, hamilt::Hamilt<double, psi::DEVICE_GPU>* phm_in)
+{
+	psi::Psi<std::complex<double>, psi::DEVICE_CPU> host_wvf = wvf;
+  hamilt::Hamilt<double, psi::DEVICE_CPU>* h_phm_in =
+          new hamilt::HamiltPW<double, psi::DEVICE_CPU>(
+                  reinterpret_cast<hamilt::HamiltPW<double, psi::DEVICE_GPU>*>(phm_in));
+  this->diago_PAO_in_pw_k2(ik, host_wvf, h_phm_in);
+  psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_GPU, psi::DEVICE_CPU>()(
+          wvf.get_device(),
+          host_wvf.get_device(),
+          wvf.get_pointer() - wvf.get_psi_bias(),
+          host_wvf.get_pointer() - host_wvf.get_psi_bias(),
+          wvf.size());
+  delete reinterpret_cast<hamilt::HamiltPW<double, psi::DEVICE_CPU>*>(h_phm_in);
+}
+#endif
 
 void wavefunc::wfcinit_k(psi::Psi<std::complex<double>>* psi_in)
 {

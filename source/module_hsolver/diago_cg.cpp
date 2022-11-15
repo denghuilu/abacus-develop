@@ -19,9 +19,6 @@ DiagoCG<FPTYPE, Device>::DiagoCG(const FPTYPE* precondition_in)
     test_cg = 0;
     reorder = false;
     this->device = psi::device::get_device_type<Device>(this->ctx);
-#if defined(__CUDA) || defined(__ROCM)
-    hsolver::createBLAShandle();
-#endif
 }
 
 template<typename FPTYPE, typename Device>
@@ -35,9 +32,6 @@ DiagoCG<FPTYPE, Device>::~DiagoCG() {
     delete_memory_complex_op()(this->ctx, this->gradient);
     delete_memory_complex_op()(this->ctx, this->g0);
     delete_memory_complex_op()(this->ctx, this->lagrange);
-#if defined(__CUDA) || defined(__ROCM)
-    hsolver::destoryBLAShandle();
-#endif
 }
 
 template<typename FPTYPE, typename Device>
