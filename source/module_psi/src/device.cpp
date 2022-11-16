@@ -365,7 +365,7 @@ std::string str = "gpu";
 }
 
 int get_device_kpar(const int& kpar) {
-#if __MPI
+#if __MPI && (__CUDA || __ROCM)
     int temp_nproc;
     MPI_Comm_size(MPI_COMM_WORLD, &temp_nproc);
     if (temp_nproc != kpar)

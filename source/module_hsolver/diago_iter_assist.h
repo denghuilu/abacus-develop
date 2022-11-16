@@ -53,7 +53,15 @@ class DiagoIterAssist
 
     static bool test_exit_cond(const int &ntry, const int &notconv);
 
+  private:
+    constexpr static const Device * ctx = {};
+    constexpr static const psi::DEVICE_CPU * cpu_ctx = {};
+    constexpr static const psi::DEVICE_GPU * gpu_ctx = {};
+
     using hpsi_info = typename hamilt::Operator<std::complex<FPTYPE>, Device>::hpsi_info;
+    using delmem_var_op = psi::memory::delete_memory_op<FPTYPE, psi::DEVICE_GPU>;
+    using syncmem_var_h2d_op = psi::memory::synchronize_memory_op<FPTYPE, psi::DEVICE_GPU, psi::DEVICE_CPU>;
+    using syncmem_var_d2h_op = psi::memory::synchronize_memory_op<FPTYPE, psi::DEVICE_CPU, psi::DEVICE_GPU>;
 };
 
 } // namespace hsolver

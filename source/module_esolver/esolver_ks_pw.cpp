@@ -46,9 +46,11 @@ namespace ModuleESolver
         this->classname = "ESolver_KS_PW";
         this->basisname = "PW";
         this->device = psi::device::get_device_type<Device>(this->ctx);
+    #if ((defined __CUDA) || (defined __ROCM))
         if (this->device == psi::GpuDevice) {
             hsolver::createBLAShandle();
         }
+    #endif
     }
 
     template<typename FPTYPE, typename Device>
@@ -71,10 +73,12 @@ namespace ModuleESolver
             delete (hamilt::HamiltPW<FPTYPE, Device>*)this->p_hamilt;
             this->p_hamilt = nullptr;
         }
+    #if ((defined __CUDA) || (defined __ROCM))
         if (this->device == psi::GpuDevice) {
             delete (psi::Psi<std::complex<FPTYPE>, Device>*)this->kspw_psi;
             hsolver::destoryBLAShandle();
         }
+    #endif
     }
 
     template<typename FPTYPE, typename Device>
@@ -241,7 +245,7 @@ namespace ModuleESolver
         Symmetry_rho srho;
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            srho.begin(is, *(pelec->charge), GlobalC::rhopw, GlobalC::Pgrid, GlobalC::symm);
+            srho.begin(is, *(this->pelec->charge), GlobalC::rhopw, GlobalC::Pgrid, GlobalC::symm);
         }
     } 
 
@@ -293,7 +297,7 @@ namespace ModuleESolver
         // prepared fox mixing.
         if(GlobalV::MY_STOGROUP == 0)
 	    {
-            pelec->charge->save_rho_before_sum_band();
+            this->pelec->charge->save_rho_before_sum_band();
         }
     }
 
@@ -355,7 +359,7 @@ namespace ModuleESolver
         Symmetry_rho srho;
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            srho.begin(is, *(pelec->charge), GlobalC::rhopw, GlobalC::Pgrid, GlobalC::symm);
+            srho.begin(is, *(this->pelec->charge), GlobalC::rhopw, GlobalC::Pgrid, GlobalC::symm);
         }
 
         // compute magnetization, only for LSDA(spin==2)
@@ -375,7 +379,7 @@ namespace ModuleESolver
         if (!this->conv_elec)
         {
             // not converged yet, calculate new potential from mixed charge density
-            GlobalC::pot.vr = GlobalC::pot.v_of_rho(pelec->charge);
+            GlobalC::pot.vr = GlobalC::pot.v_of_rho(this->pelec->charge);
             // because <T+V(ionic)> = <eband+deband> are calculated after sum
             // band, using output charge density.
             // but E_Hartree and Exc(GlobalC::en.etxc) are calculated in v_of_rho above,
@@ -393,7 +397,7 @@ namespace ModuleESolver
                 }
             }
             // the new potential V(PL)+V(H)+V(xc)
-            GlobalC::pot.vr = GlobalC::pot.v_of_rho(pelec->charge);
+            GlobalC::pot.vr = GlobalC::pot.v_of_rho(this->pelec->charge);
             //std::cout<<"Exc = "<<GlobalC::en.etxc<<std::endl;
             //( vnew used later for scf correction to the forces )
             GlobalC::pot.vnew = GlobalC::pot.vr - GlobalC::pot.vnew;
@@ -420,16 +424,16 @@ namespace ModuleESolver
 
         if (print)
         {
-            if (pelec->charge->out_chg > 0)
+            if (this->pelec->charge->out_chg > 0)
             {
                 for (int is = 0; is < GlobalV::NSPIN; is++)
                 {
                     std::stringstream ssc;
                     std::stringstream ss1;
                     ssc << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_CHG";
-                    pelec->charge->write_rho(pelec->charge->rho_save[is], is, iter, ssc.str(), 3);//mohan add 2007-10-17
+                    this->pelec->charge->write_rho(this->pelec->charge->rho_save[is], is, iter, ssc.str(), 3);//mohan add 2007-10-17
                     ss1 << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_CHG.cube";
-                    pelec->charge->write_rho_cube(pelec->charge->rho_save[is], is, ss1.str(), 3);
+                    this->pelec->charge->write_rho_cube(this->pelec->charge->rho_save[is], is, ss1.str(), 3);
                 }
             }
             //output wavefunctions
@@ -490,8 +494,8 @@ namespace ModuleESolver
             std::stringstream ss1;
             ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG";
             ss1 << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
-            pelec->charge->write_rho(pelec->charge->rho_save[is], is, 0, ssc.str());//mohan add 2007-10-17
-            pelec->charge->write_rho_cube(pelec->charge->rho_save[is], is, ss1.str(), 3);
+            this->pelec->charge->write_rho(this->pelec->charge->rho_save[is], is, 0, ssc.str());//mohan add 2007-10-17
+            this->pelec->charge->write_rho_cube(this->pelec->charge->rho_save[is], is, ss1.str(), 3);
         }
         if (this->conv_elec)
         {

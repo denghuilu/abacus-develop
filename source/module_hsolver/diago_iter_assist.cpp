@@ -9,6 +9,7 @@
 #include "src_parallel/parallel_reduce.h"
 #include "module_hsolver/include/math_kernel.h"
 #include "module_hsolver/include/dngvd_op.h"
+#include "module_psi/include/device.h"
 
 using namespace hsolver;
 
@@ -132,10 +133,6 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace(
 
     // after generation of H and S matrix, diag them
     DiagoIterAssist::diagH_LAPACK(nstart, n_band, hcc, scc, nstart, en, vcc);
-
-#if defined(__CUDA) || defined(__ROCM)
-    hsolver::createBLAShandle();
-#endif
 
     //=======================
     // diagonize the H-matrix
@@ -370,23 +367,6 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace_init(
     return;
 }
 
-#if ((defined __CUDA) || (defined __ROCM))
-//----------------------------------------------------------------------
-// Hamiltonian diagonalization in the subspace spanned
-// by nstart states psi (atomic or random wavefunctions).
-// Produces on output n_band eigenvectors (n_band <= nstart) in evc.
-//----------------------------------------------------------------------
-// template<>
-// void DiagoIterAssist<double, psi::DEVICE_GPU>::diagH_subspace(hamilt::Hamilt<double, psi::DEVICE_GPU>* pHamilt, const psi::Psi<std::complex<double>, psi::DEVICE_GPU> &psi, psi::Psi<std::complex<double>, psi::DEVICE_GPU> &evc, double *en, int n_band) {
-//     ModuleBase::WARNING_QUIT("DiagoIterAssist::diagH_subspace","GPU's implementation is not supported currently!");
-// }
-
-template<>
-void DiagoIterAssist<double, psi::DEVICE_GPU>::diagH_subspace_init(hamilt::Hamilt<double, psi::DEVICE_GPU>* pHamilt, const ModuleBase::ComplexMatrix &psi, psi::Psi<std::complex<double>, psi::DEVICE_GPU> &evc, double *en) {
-    ModuleBase::WARNING_QUIT("DiagoIterAssist::diagH_subspace_init","GPU's implementation is not supported currently!");
-}
-#endif
-
 template<typename FPTYPE, typename Device>
 void DiagoIterAssist<FPTYPE, Device>::diagH_LAPACK(
     const int nstart,
@@ -525,70 +505,40 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_LAPACK(
     ModuleBase::TITLE("DiagoIterAssist", "LAPACK_subspace");
     ModuleBase::timer::tick("DiagoIterAssist", "LAPACK_subspace");
 
-    Device* ctx = {};
-    
     const bool all_eigenvalues = (nstart == nbands);
 
-#if defined(__CUDA) || defined(__ROCM)
-    const psi::DEVICE_CPU * cpu_ctx = {};
-    const psi::DEVICE_GPU * gpu_ctx = {};
+    FPTYPE * res = e, *e_gpu = nullptr; 
+#if ((defined __CUDA) || (defined __ROCM))
+    if (psi::device::get_device_type<Device>(ctx) == psi::GpuDevice) {
+        psi::memory::resize_memory_op<FPTYPE, psi::DEVICE_GPU>()(gpu_ctx, e_gpu, nbands);
+        // set e in CPU value to e_gpu
+        syncmem_var_h2d_op()(gpu_ctx, cpu_ctx, e_gpu, e, nbands);
+        res = e_gpu;
+    }
+#endif
 
-    FPTYPE* e_gpu = nullptr;
-    psi::memory::resize_memory_op<FPTYPE, psi::DEVICE_GPU>()(gpu_ctx, e_gpu, nbands);
-    // set e in CPU value to e_gpu
-    psi::memory::synchronize_memory_op<FPTYPE, psi::DEVICE_GPU, psi::DEVICE_CPU>()(
-        gpu_ctx,
-        cpu_ctx,
-        e_gpu,
-        e,
-        nbands
-    );
-
-    if (all_eigenvalues)
-    {
+    if (all_eigenvalues) {
         //===========================
         // calculate all eigenvalues
         //===========================
-        dngv_op<FPTYPE, Device>()(ctx, nstart, ldh, hcc, scc, e_gpu, vcc);
+        dngv_op<FPTYPE, Device>()(ctx, nstart, ldh, hcc, scc, res, vcc);
     }
-    else
-    {
+    else {
         //=====================================
         // calculate only m lowest eigenvalues
         //=====================================
-        dngvx_op<FPTYPE, Device>()(ctx, nstart, ldh, hcc, scc, nbands, e_gpu, vcc);
+        dngvx_op<FPTYPE, Device>()(ctx, nstart, ldh, hcc, scc, nbands, res, vcc);
     }
 
-    // set e_gpu value to e in CPU
-    psi::memory::synchronize_memory_op<FPTYPE, psi::DEVICE_CPU, psi::DEVICE_GPU>()(
-        cpu_ctx,
-        gpu_ctx,
-        e,
-        e_gpu,
-        nbands
-    );
-    psi::memory::delete_memory_op<FPTYPE, psi::DEVICE_GPU>()(gpu_ctx, e_gpu);
-#else
-
-    if (all_eigenvalues)
-    {
-        //===========================
-        // calculate all eigenvalues
-        //===========================
-        dngv_op<FPTYPE, Device>()(ctx, nstart, ldh, hcc, scc, e, vcc);
+#if ((defined __CUDA) || (defined __ROCM))
+    if (psi::device::get_device_type<Device>(ctx) == psi::GpuDevice) {
+        // set e_gpu value to e in CPU
+        syncmem_var_d2h_op()(cpu_ctx, gpu_ctx, e, res, nbands);
+        delmem_var_op()(gpu_ctx, e_gpu);
     }
-    else
-    {
-        //=====================================
-        // calculate only m lowest eigenvalues
-        //=====================================
-        dngvx_op<FPTYPE, Device>()(ctx, nstart, ldh, hcc, scc, nbands, e, vcc);
-    }
-
 #endif
 
     ModuleBase::timer::tick("DiagoIterAssist", "LAPACK_subspace");
-    return;
 }
 
 template<typename FPTYPE, typename Device>
