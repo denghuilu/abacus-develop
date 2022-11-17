@@ -138,6 +138,9 @@ namespace ModuleESolver
             GlobalC::wf.wfcinit(this->psi);
         }
 
+        // denghui added 20221116
+        this->init_kspw_psi();
+
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT BASIS");
     }
 
@@ -326,16 +329,7 @@ namespace ModuleESolver
 
             hsolver::DiagoIterAssist<FPTYPE>::PW_DIAG_THR = ethr; 
             hsolver::DiagoIterAssist<FPTYPE>::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
-            this->init_kspw_psi();
             this->phsol->solve(this->p_hamilt, this->kspw_psi[0], this->pelec, GlobalV::KS_SOLVER);
-            if (this->device == psi::GpuDevice) {
-                syncmem_psi_op()(
-                    this->psi[0].get_device(),
-                    this->kspw_psi[0].get_device(),
-                    this->psi[0].get_pointer() - this->psi[0].get_psi_bias(),
-                    this->kspw_psi[0].get_pointer() - this->kspw_psi[0].get_psi_bias(),
-                    this->psi[0].size());
-            }
             // transform energy for print
             GlobalC::en.eband = this->pelec->eband;
             GlobalC::en.demet = this->pelec->demet;
@@ -519,6 +513,14 @@ namespace ModuleESolver
         if (GlobalV::OUT_LEVEL != "m")
         {
             this->print_eigenvalue(GlobalV::ofs_running);
+        }
+        if (this->device == psi::GpuDevice) {
+            syncmem_psi_op()(
+                this->psi[0].get_device(),
+                this->kspw_psi[0].get_device(),
+                this->psi[0].get_pointer() - this->psi[0].get_psi_bias(),
+                this->kspw_psi[0].get_pointer() - this->kspw_psi[0].get_psi_bias(),
+                this->psi[0].size());
         }
     }
 
@@ -733,16 +735,7 @@ namespace ModuleESolver
         {
             hsolver::DiagoIterAssist<FPTYPE, Device>::need_subspace = false;
             hsolver::DiagoIterAssist<FPTYPE, Device>::PW_DIAG_THR = ethr; 
-            this->init_kspw_psi();
             this->phsol->solve(this->p_hamilt, this->kspw_psi[0], this->pelec, GlobalV::KS_SOLVER, true);
-            if (this->device == psi::GpuDevice) {
-                syncmem_psi_op()(
-                    this->psi[0].get_device(),
-                    this->kspw_psi[0].get_device(),
-                    this->psi[0].get_pointer() - this->psi[0].get_psi_bias(),
-                    this->kspw_psi[0].get_pointer() - this->kspw_psi[0].get_psi_bias(),
-                    this->psi[0].size());
-            }
         }
         else
         {

@@ -37,9 +37,12 @@ class Potential
 
     double *vr_eff1;
     double *vofk_eff1;
-#ifdef __CUDA
-    double *d_vr_eff1;
-#endif
+    //==========================================================
+    // denghui added at 20221116 for GPU vr_eff calculations
+    //==========================================================
+    double *d_vr_eff = nullptr;
+    double *d_vr_eff1 = nullptr;
+
     double *vltot;
     int out_pot; // mohan add 2011-02-28
 
@@ -82,6 +85,11 @@ class Potential
 
     double *vextold;
 
+    psi::DEVICE_CPU * cpu_ctx = {};
+    psi::DEVICE_GPU * gpu_ctx = {};
+    using resmem_var_op = psi::memory::resize_memory_op<double, psi::DEVICE_GPU>;
+    using delmem_var_op = psi::memory::delete_memory_op<double, psi::DEVICE_GPU>;
+    using syncmem_var_h2d_op = psi::memory::synchronize_memory_op<double, psi::DEVICE_GPU, psi::DEVICE_CPU>;
 };
 
 #endif // POTENTIAL_H

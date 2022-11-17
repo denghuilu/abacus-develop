@@ -269,10 +269,16 @@ void wavefunc::diago_PAO_in_pw_k2(const int &ik, psi::Psi<std::complex<double>> 
 	{
 		if(phm_in!= nullptr)
 		{
+			// hsolver::DiagoIterAssist<double>::diagH_subspace_init(phm_in,
+      //                          wfcatom,
+      //                          wvf,
+      //                          etatom.data());
 			hsolver::DiagoIterAssist<double>::diagH_subspace_init(phm_in,
-                               wfcatom,
-                               wvf,
-                               etatom.data());
+                         wfcatom.c,
+				   							 wfcatom.nr,
+				   							 wfcatom.nc,
+                         wvf,
+                         etatom.data());
 			return;
 		}
 		else
@@ -300,18 +306,79 @@ void wavefunc::diago_PAO_in_pw_k2_device(const psi::DEVICE_CPU* ctx, const int &
 #if ((defined __CUDA) || (defined __ROCM))
 void wavefunc::diago_PAO_in_pw_k2_device(const psi::DEVICE_GPU* ctx, const int &ik, psi::Psi<std::complex<double>, psi::DEVICE_GPU> &wvf, hamilt::Hamilt<double, psi::DEVICE_GPU>* phm_in)
 {
-	psi::Psi<std::complex<double>, psi::DEVICE_CPU> host_wvf = wvf;
-  hamilt::Hamilt<double, psi::DEVICE_CPU>* h_phm_in =
-          new hamilt::HamiltPW<double, psi::DEVICE_CPU>(
-                  reinterpret_cast<hamilt::HamiltPW<double, psi::DEVICE_GPU>*>(phm_in));
-  this->diago_PAO_in_pw_k2(ik, host_wvf, h_phm_in);
-  psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_GPU, psi::DEVICE_CPU>()(
-          wvf.get_device(),
-          host_wvf.get_device(),
-          wvf.get_pointer() - wvf.get_psi_bias(),
-          host_wvf.get_pointer() - host_wvf.get_psi_bias(),
-          wvf.size());
-  delete reinterpret_cast<hamilt::HamiltPW<double, psi::DEVICE_CPU>*>(h_phm_in);
+	ModuleBase::TITLE("wavefunc","diago_PAO_in_pw_k2");
+	// (6) Prepare for atmoic orbitals or random orbitals
+	const int starting_nw = this->get_starting_nw();
+	if(starting_nw == 0) return;
+	assert(starting_nw > 0);
+
+	const int nbasis = wvf.get_nbasis();
+	const int nbands = wvf.get_nbands();
+	const int current_nbasis = GlobalC::kv.ngk[ik];
+
+	ModuleBase::ComplexMatrix wfcatom(starting_nw, nbasis);//added by zhengdy-soc
+	if(GlobalV::test_wf)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "starting_nw", starting_nw);
+	if(init_wfc.substr(0,6)=="atomic")
+	{
+		this->atomic_wfc(ik, current_nbasis, GlobalC::ucell.lmax_ppwf, wfcatom, GlobalC::ppcell.tab_at, GlobalV::NQX, GlobalV::DQ);
+		if( init_wfc == "atomic+random" && starting_nw == GlobalC::ucell.natomwfc )//added by qianrui 2021-5-16
+		{
+			this->atomicrandom(wfcatom,0,starting_nw,ik, GlobalC::wfcpw);
+		}
+
+		//====================================================
+		// If not enough atomic wfc are available, complete
+		// with random wfcs
+		//====================================================
+		this->random(wfcatom, GlobalC::ucell.natomwfc, nbands, ik, GlobalC::wfcpw);
+	}
+	else if(init_wfc=="random")
+	{
+		this->random(wfcatom,0,nbands,ik, GlobalC::wfcpw);
+	}
+
+	// (7) Diago with cg method.
+	std::vector<double> etatom(starting_nw, 0.0);
+	//if(GlobalV::DIAGO_TYPE == "cg") xiaohui modify 2013-09-02
+	if(GlobalV::KS_SOLVER=="cg") //xiaohui add 2013-09-02
+	{
+		if(phm_in!= nullptr)
+		{
+			// hsolver::DiagoIterAssist<double>::diagH_subspace_init(phm_in,
+      //                          wfcatom,
+      //                          wvf,
+      //                          etatom.data());
+			std::complex<double> *d_wfcatom = nullptr;
+			psi::DEVICE_CPU * cpu_ctx = {};
+			psi::DEVICE_GPU * gpu_ctx = {};
+			resmem_complex_op()(gpu_ctx, d_wfcatom, wfcatom.nr * wfcatom.nc);
+			syncmem_complex_h2d_op()(gpu_ctx, cpu_ctx, d_wfcatom, wfcatom.c, wfcatom.nr * wfcatom.nc);
+			hsolver::DiagoIterAssist<double, psi::DEVICE_GPU>::diagH_subspace_init(
+												 phm_in,
+                         d_wfcatom,
+				   							 wfcatom.nr,
+				   							 wfcatom.nc,
+                         wvf,
+                         etatom.data());
+			delmem_complex_op()(gpu_ctx, d_wfcatom);
+			return;
+		}
+		else
+		{
+			//this diagonalization method is obsoleted now
+			//GlobalC::hm.diagH_subspace(ik ,starting_nw, nbands, wfcatom, wfcatom, etatom.data());
+		}
+	}
+
+	assert(nbands <= wfcatom.nr);
+	for (int ib=0; ib<nbands; ib++)
+	{
+		for (int ig=0; ig<nbasis; ig++)
+		{
+			wvf(ib, ig) = wfcatom(ib, ig);
+		}
+	}
+
 }
 #endif
 
@@ -323,9 +390,9 @@ void wavefunc::wfcinit_k(psi::Psi<std::complex<double>>* psi_in)
 	{
 		this->irindex = new int [GlobalC::wfcpw->fftnxy];
 		GlobalC::wfcpw->getfftixy2is(this->irindex);
-        #if defined(__CUDA) || defined(__UT_USE_CUDA)
-        GlobalC::wfcpw->get_ig2ixyz_k();
-        #endif
+    #if defined(__CUDA) || defined(__UT_USE_CUDA)
+    GlobalC::wfcpw->get_ig2ixyz_k();
+    #endif
 	}
 	if(GlobalV::CALCULATION=="nscf")
 	{

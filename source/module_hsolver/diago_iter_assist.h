@@ -33,6 +33,14 @@ class DiagoIterAssist
         psi::Psi<std::complex<FPTYPE>, Device> &evc,
         FPTYPE *en);
 
+    static void diagH_subspace_init(
+        hamilt::Hamilt<FPTYPE, Device>* pHamilt,
+        const std::complex<FPTYPE>* psi,
+        int psi_nr,
+        int psi_nc,
+        psi::Psi<std::complex<FPTYPE>, Device> &evc,
+        FPTYPE *en);
+
     static void diagH_LAPACK(
         const int nstart,
         const int nbands,

@@ -45,6 +45,7 @@ HamiltPW<FPTYPE, Device>::HamiltPW()
         Operator<std::complex<FPTYPE>, Device>* veff = new Veff<OperatorPW<FPTYPE, Device>>(
             isk,
             &(GlobalC::pot.vr_eff),
+            GlobalC::pot.d_vr_eff,
             GlobalC::wfcpw
         );
         if(this->ops == nullptr)

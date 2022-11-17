@@ -30,7 +30,7 @@ Potential::~Potential()
     delete[] vr_eff1;
     delete[] vofk_eff1;
 #ifdef __CUDA
-    cudaFree(d_vr_eff1);
+    if (GlobalV::device_flag == "gpu") {delmem_var_op()(this->gpu_ctx, d_vr_eff);}
 #endif
 }
 
@@ -67,7 +67,7 @@ void Potential::allocate(const int nrxx)
     else
         this->vr_eff1 = nullptr;
 #ifdef __CUDA
-    cudaMalloc((void **)&this->d_vr_eff1, nrxx * sizeof(double));
+    if (GlobalV::device_flag == "gpu") {resmem_var_op()(this->gpu_ctx, d_vr_eff, GlobalV::NSPIN * nrxx);}
 #endif
     ModuleBase::Memory::record("Potential", "vr_eff1", nrxx, "double");
 
@@ -177,6 +177,9 @@ void Potential::init_pot(const int &istep, // number of ionic steps
     this->set_vr_eff();
 #endif
 
+#ifdef __CUDA
+    if (GlobalV::device_flag == "gpu") {syncmem_var_h2d_op()(this->gpu_ctx, this->cpu_ctx, d_vr_eff, this->vr_eff.c, GlobalV::NSPIN * GlobalC::rhopw->nrxx);}
+#endif
     // plots
     // figure::picture(this->vr_eff1,GlobalC::rhopw->nx,GlobalC::rhopw->ny,GlobalC::rhopw->nz);
     ModuleBase::timer::tick("Potential", "init_pot");
@@ -337,6 +340,9 @@ void Potential::set_vr_eff(void)
             }
         }
     }
+#ifdef __CUDA
+    if (GlobalV::device_flag == "gpu") {syncmem_var_h2d_op()(this->gpu_ctx, this->cpu_ctx, d_vr_eff, this->vr_eff.c, GlobalV::NSPIN * GlobalC::rhopw->nrxx);}
+#endif
 
     ModuleBase::timer::tick("Potential", "set_vr_eff");
     return;

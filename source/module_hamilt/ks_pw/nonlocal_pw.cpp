@@ -49,6 +49,7 @@ Nonlocal<OperatorPW<FPTYPE, Device>>::~Nonlocal() {
 template<typename FPTYPE, typename Device>
 void Nonlocal<OperatorPW<FPTYPE, Device>>::init(const int ik_in)
 {
+    ModuleBase::timer::tick("Nonlocal", "getvnl");
     this->ik = ik_in;
     // Calculate nonlocal pseudopotential vkb
 	if(this->ppcell->nkb > 0) //xiaohui add 2013-09-02. Attention...
@@ -60,6 +61,11 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::init(const int ik_in)
     {
         this->next_op->init(ik_in);
     }
+
+    if (psi::device::get_device_type<Device>(this->ctx) == psi::GpuDevice) {
+        syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, this->vkb, this->ppcell->vkb.c, this->ppcell->vkb.size);
+    }
+    ModuleBase::timer::tick("Nonlocal", "getvnl");
 }
 
 //--------------------------------------------------------------------------
@@ -245,9 +251,6 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::act
     this->max_npw = psi_in->get_nbasis() / psi_in->npol;
     this->npol = psi_in->npol;
 
-    if (psi::device::get_device_type<Device>(this->ctx) == psi::GpuDevice) {
-        syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, this->vkb, this->ppcell->vkb.c, this->ppcell->vkb.size);
-    }
     if (this->ppcell->nkb > 0)
     {
         //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<

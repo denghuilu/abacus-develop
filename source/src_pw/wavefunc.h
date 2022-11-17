@@ -62,6 +62,10 @@ class wavefunc : public WF_atomic
 
     ModuleBase::Vector3<int> ***R;
     int ** Rmax;
+
+    using resmem_complex_op = psi::memory::resize_memory_op<std::complex<double>, psi::DEVICE_GPU>;
+    using delmem_complex_op = psi::memory::delete_memory_op<std::complex<double>, psi::DEVICE_GPU>;
+    using syncmem_complex_h2d_op = psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_GPU, psi::DEVICE_CPU>;
 };
 
 #endif //wavefunc
