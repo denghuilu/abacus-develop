@@ -564,6 +564,10 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace_init(
         psi::memory::delete_memory_op<std::complex<double>, Device>()(ctx, evctemp);
     }
 
+    psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>()(ctx, hcc);
+    psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>()(ctx, scc);
+    psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>()(ctx, vcc);
+    psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>()(ctx, hpsi);
     ModuleBase::timer::tick("DiagoIterAssist", "diagH_subspace");
 }
 
