@@ -72,7 +72,7 @@ HamiltPW<FPTYPE, Device>::HamiltPW(elecstate::Potential* pot_in)
             pot_in->pot_register(pot_register_in);
             Operator<std::complex<FPTYPE>, Device>* veff = new Veff<OperatorPW<FPTYPE, Device>>(
                 isk,
-                pot_in->get_effective_v(0),
+                pot_in->get_effective_v_data(),
                 pot_in->get_effective_v().nr,
                 pot_in->get_effective_v().nc,
                 GlobalC::wfcpw
@@ -208,8 +208,6 @@ template class HamiltPW<double, psi::DEVICE_CPU>;
 template HamiltPW<double, psi::DEVICE_CPU>::HamiltPW(const HamiltPW<double, psi::DEVICE_CPU> *hamilt);
 #if ((defined __CUDA) || (defined __ROCM))
 template class HamiltPW<double, psi::DEVICE_GPU>;
-template HamiltPW<double, psi::DEVICE_CPU>::HamiltPW(const HamiltPW<double, psi::DEVICE_GPU> *hamilt);
-template HamiltPW<double, psi::DEVICE_GPU>::HamiltPW(const HamiltPW<double, psi::DEVICE_CPU> *hamilt);
 template HamiltPW<double, psi::DEVICE_GPU>::HamiltPW(const HamiltPW<double, psi::DEVICE_GPU> *hamilt);
 #endif
 
