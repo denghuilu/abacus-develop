@@ -272,6 +272,8 @@ extern std::string of_kernel_file; // The name of WT kernel file.
 // device flags
 //==========================================================
 extern std::string device_flag;
+extern std::string chg_extrap;
+extern int out_pot;
 
 } // namespace GlobalV
 #endif

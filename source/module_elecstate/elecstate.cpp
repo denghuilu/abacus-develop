@@ -17,9 +17,25 @@ const double* ElecState::getRho(int spin) const
     return &(this->charge->rho[spin][0]);
 }
 
+void ElecState::fixed_weights(const double * const ocp_kb)
+{
+    for (int ik = 0; ik < this->wg.nr; ik++)
+    {
+        for (int ib = 0; ib < this->wg.nc; ib++)
+        {
+            this->wg(ik, ib) = ocp_kb[ik * this->wg.nc + ib];
+        }
+    }
+    this->skip_weights = true;
+}
+
 void ElecState::calculate_weights()
 {
     ModuleBase::TITLE("ElecState", "calculate_weights");
+    if(this->skip_weights)
+    {
+        return;
+    }
 
     // for test
     //	std::cout << " gaussian_broadening = " << use_gaussian_broadening << std::endl;
@@ -257,6 +273,28 @@ void ElecState::print_band(const int& ik, const int& printe, const int& iter)
 		}
 	}
 	return;
+}
+
+void ElecState::init_scf(const int istep, const ModuleBase::ComplexMatrix& strucfac)
+{
+    //---------Charge part-----------------
+    // core correction potential.
+    this->charge->set_rho_core(strucfac);
+
+    //--------------------------------------------------------------------
+    // (2) other effective potentials need charge density,
+    // choose charge density from ionic step 0.
+    //--------------------------------------------------------------------
+    if (istep == 0)
+    {
+        this->charge->init_rho();
+    }
+
+    // renormalize the charge density
+    this->charge->renormalize_rho();
+
+    //---------Potential part--------------
+    this->pot->init_pot(istep, this->charge);
 }
 
 } // namespace elecstate
