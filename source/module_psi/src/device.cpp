@@ -1,9 +1,6 @@
 
-#include <stdio.h>
-#include <complex>
-#include <fstream>
 #include <iostream>
-#include "module_psi/psi.h"
+#include <cstring>
 #include "module_psi/include/types.h"
 #include "module_psi/include/device.h"
 #include "module_base/tool_quit.h"
