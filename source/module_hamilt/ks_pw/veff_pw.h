@@ -22,7 +22,7 @@ template<typename FPTYPE, typename Device>
 class Veff<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
 {
   public:
-    Veff(const int* isk_in, const ModuleBase::matrix* veff_in, const FPTYPE* d_veff_in, ModulePW::PW_Basis_K* wfcpw_in);
+    Veff(const int* isk_in, const FPTYPE* veff_in, const int veff_row, const int veff_col, ModulePW::PW_Basis_K* wfcpw_in);
 
     template<typename T_in, typename Device_in = Device>
     explicit Veff(const Veff<OperatorPW<T_in, Device_in>>* veff);
@@ -37,8 +37,7 @@ class Veff<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
     )const override;
 
     // denghui added for copy constructor at 20221105
-    const FPTYPE *get_d_veff() const {return this->d_veff;}
-    const FPTYPE *get_h_veff() const {return this->h_veff;}
+    const FPTYPE *get_veff() const {return this->veff;}
     int get_veff_col() const {return this->veff_col;}
     int get_veff_row() const {return this->veff_row;}
     int get_npol() const {return this->npol;}

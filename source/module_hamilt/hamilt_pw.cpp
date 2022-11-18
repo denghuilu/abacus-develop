@@ -72,7 +72,9 @@ HamiltPW<FPTYPE, Device>::HamiltPW(elecstate::Potential* pot_in)
             pot_in->pot_register(pot_register_in);
             Operator<std::complex<FPTYPE>, Device>* veff = new Veff<OperatorPW<FPTYPE, Device>>(
                 isk,
-                &(pot_in->get_effective_v()),
+                pot_in->get_effective_v(0),
+                pot_in->get_effective_v().nr,
+                pot_in->get_effective_v().nc,
                 GlobalC::wfcpw
             );
             if(this->ops == nullptr)
