@@ -41,6 +41,7 @@ the developments and applications of novel machine-learning-assisted DFT methods
    advanced/elec_properties/index
    advanced/interface/index
    advanced/input_files/index
+   advanced/acceleration/index
 
 .. toctree::
    :maxdepth: 2
