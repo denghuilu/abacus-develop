@@ -48,15 +48,10 @@ namespace ModuleESolver
         // After all ESolver, HSolver are constructed, Class Electrons and Threshold_Elec should be deleted.
         void print_eigenvalue(std::ofstream& ofs);
         
-        void init_kspw_psi();
-        
-        bool init_device_psi = false;
-        psi::Psi<std::complex<FPTYPE>, Device>* kspw_psi = nullptr;
-
         Device * ctx = {};
         psi::AbacusDevice_t device = {};
-
-        using syncmem_psi_op = psi::memory::synchronize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU, Device>;
+        psi::Psi<std::complex<FPTYPE>, Device>* kspw_psi = nullptr;
+        using syncmem_complex_d2h_op = psi::memory::synchronize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU, Device>;
     };
-}
+}  // namespace ModuleESolver
 #endif

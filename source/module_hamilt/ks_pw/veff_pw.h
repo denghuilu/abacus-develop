@@ -66,12 +66,9 @@ class Veff<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
     psi::AbacusDevice_t device = {};
     using veff_op = veff_pw_op<FPTYPE, Device>;
 
-    using resize_memory_double_op = psi::memory::resize_memory_op<FPTYPE, Device>;
-    using delete_memory_double_op = psi::memory::delete_memory_op<FPTYPE, Device>;
 
-    using resize_memory_complex_op = psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
-    using delete_memory_complex_op = psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
-    using syncmem_double_h2d_op = psi::memory::synchronize_memory_op<FPTYPE, Device, psi::DEVICE_CPU>;
+    using resmem_complex_op = psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
+    using delmem_complex_op = psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
 };
 
 } // namespace hamilt

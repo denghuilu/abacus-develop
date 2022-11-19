@@ -45,12 +45,14 @@ class ElecStatePW : public ElecState
     std::complex<FPTYPE> *wfcr = nullptr, *wfcr_another_spin = nullptr;
 
     using elecstate_pw_op = elecstate::elecstate_pw_op<FPTYPE, Device>;
-    using set_memory_var_op = psi::memory::set_memory_op<FPTYPE, Device>;
+
+    using setmem_var_op = psi::memory::set_memory_op<FPTYPE, Device>;
+    using resmem_var_op = psi::memory::resize_memory_op<FPTYPE, Device>;
+    using delmem_var_op = psi::memory::delete_memory_op<FPTYPE, Device>;
     using syncmem_var_d2h_op = psi::memory::synchronize_memory_op<FPTYPE, psi::DEVICE_CPU, Device>;
-    using resize_memory_var_op = psi::memory::resize_memory_op<FPTYPE, Device>;
-    using delete_memory_var_op = psi::memory::delete_memory_op<FPTYPE, Device>;
-    using resize_memory_complex_op = psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
-    using delete_memory_complex_op = psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
+
+    using resmem_complex_op = psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
+    using delmem_complex_op = psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
 };
 
 } // namespace elecstate

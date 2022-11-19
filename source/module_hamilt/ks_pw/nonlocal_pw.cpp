@@ -24,7 +24,7 @@ Nonlocal<OperatorPW<FPTYPE, Device>>::Nonlocal(
     if (psi::device::get_device_type<Device>(this->ctx) == psi::GpuDevice) {
         this->deeq = this->ppcell->d_deeq;
         this->deeq_nc = this->ppcell->d_deeq_nc;
-        resize_memory_op()(this->ctx, this->vkb, this->ppcell->vkb.size);
+        resmem_complex_op()(this->ctx, this->vkb, this->ppcell->vkb.size);
     }
     else {
         this->deeq = this->ppcell->deeq.ptr;
@@ -39,10 +39,10 @@ Nonlocal<OperatorPW<FPTYPE, Device>>::Nonlocal(
 
 template<typename FPTYPE, typename Device>
 Nonlocal<OperatorPW<FPTYPE, Device>>::~Nonlocal() {
-    delete_memory_op()(this->ctx, this->ps);
-    delete_memory_op()(this->ctx, this->becp);
+    delmem_complex_op()(this->ctx, this->ps);
+    delmem_complex_op()(this->ctx, this->becp);
     if (psi::device::get_device_type<Device>(this->ctx) == psi::GpuDevice) {
-        delete_memory_op()(this->ctx, this->vkb);
+        delmem_complex_op()(this->ctx, this->vkb);
     }
 }
 
@@ -81,8 +81,8 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::add_nonlocal_pp(std::complex<FPTYPE> 
 
     // std::complex<FPTYPE> *ps = new std::complex<FPTYPE>[nkb * m];
     // ModuleBase::GlobalFunc::ZEROS(ps, m * nkb);
-    resize_memory_op()(this->ctx, this->ps, nkb * m);
-    set_memory_op()(this->ctx, this->ps, 0, nkb * m);
+    resmem_complex_op()(this->ctx, this->ps, nkb * m);
+    setmem_complex_op()(this->ctx, this->ps, 0, nkb * m);
 
     int sum = 0;
     int iat = 0;
@@ -176,29 +176,19 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::add_nonlocal_pp(std::complex<FPTYPE> 
         int inc = 1;
         // denghui replace 2022-10-20
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        gemv_op()(this->ctx,
-                  transa,
-                  this->npw,
-                  this->ppcell->nkb,
-                  &ModuleBase::ONE,
-                  this->vkb,
-                  this->ppcell->vkb.nc,
-                  this->ps,
-                  inc,
-                  &ModuleBase::ONE,
-                  hpsi_in,
-                  inc);
-        // zgemv_(&transa,
-        //        &this->npw,
-        //        &(this->ppcell->nkb),
-        //        &ModuleBase::ONE,
-        //        this->ppcell->vkb.c,
-        //        &this->ppcell->vkb.nc,
-        //        ps,
-        //        &inc,
-        //        &ModuleBase::ONE,
-        //        hpsi_in,
-        //        &inc);
+        gemv_op()(
+            this->ctx,
+            transa,
+            this->npw,
+            this->ppcell->nkb,
+            &ModuleBase::ONE,
+            this->vkb,
+            this->ppcell->vkb.nc,
+            this->ps,
+            inc,
+            &ModuleBase::ONE,
+            hpsi_in,
+            inc);
     }
     else
     {
@@ -221,19 +211,6 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::add_nonlocal_pp(std::complex<FPTYPE> 
             hpsi_in,
             this->max_npw
         );
-        // zgemm_(&transa,
-        //        &transb,
-        //        &this->npw,
-        //        &npm,
-        //        &(this->ppcell->nkb),
-        //        &ModuleBase::ONE,
-        //        this->ppcell->vkb.c,
-        //        &this->ppcell->vkb.nc,
-        //        ps,
-        //        &npm,
-        //        &ModuleBase::ONE,
-        //        hpsi_in,
-        //        &this->max_npw);
     }
     ModuleBase::timer::tick("Nonlocal", "add_nonlocal_pp");
 }
@@ -256,7 +233,7 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::act
         //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         // qianrui optimize 2021-3-31
         int nkb = this->ppcell->nkb;
-        resize_memory_op()(this->ctx, this->becp, n_npwx * nkb);
+        resmem_complex_op()(this->ctx, this->becp, n_npwx * nkb);
         // ModuleBase::ComplexMatrix becp(n_npwx, nkb, false);
         char transa = 'C';
         char transb = 'N';
@@ -265,30 +242,19 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::act
             int inc = 1;
             // denghui replace 2022-10-20
             // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-            gemv_op()(this->ctx,
-                      transa,
-                      this->npw,
-                      nkb,
-                      &ModuleBase::ONE,
-                      this->vkb,
-                      this->ppcell->vkb.nc,
-                      tmpsi_in,
-                      inc,
-                      &ModuleBase::ZERO,
-                      this->becp,
-                      inc);
-            // zgemv_(&transa,
-            //        &this->npw,
-            //        &nkb,
-            //        &ModuleBase::ONE,
-            //        this->ppcell->vkb.c,
-            //        &this->ppcell->vkb.nc,
-            //        tmpsi_in,
-            //        &inc,
-            //        &ModuleBase::ZERO,
-            //        this->becp,
-            //        &inc);
-
+            gemv_op()(
+                this->ctx,
+                transa,
+                this->npw,
+                nkb,
+                &ModuleBase::ONE,
+                this->vkb,
+                this->ppcell->vkb.nc,
+                tmpsi_in,
+                inc,
+                &ModuleBase::ZERO,
+                this->becp,
+                inc);
         }
         else
         {
@@ -311,21 +277,6 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::act
                 this->becp,
                 nkb
             );
-            //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-            // zgemm_(&transa,
-            //        &transb,
-            //        &nkb,
-            //        &npm,
-            //        &this->npw,
-            //        &ModuleBase::ONE,
-            //        this->ppcell->vkb.c,
-            //        &this->ppcell->vkb.nc,
-            //        tmpsi_in,
-            //        &this->max_npw,
-            //        &ModuleBase::ZERO,
-            //        becp,
-            //        &nkb);
-            //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         }
 
         Parallel_Reduce::reduce_complex_double_pool(becp, nkb * n_npwx);
@@ -347,7 +298,7 @@ hamilt::Nonlocal<OperatorPW<FPTYPE, Device>>::Nonlocal(const Nonlocal<OperatorPW
     this->ucell = nonlocal->get_ucell();
     if (psi::device::get_device_type<Device>(this->ctx) == psi::GpuDevice) {
         this->deeq = this->ppcell->d_deeq;
-        resize_memory_op()(this->ctx, this->vkb, this->ppcell->vkb.size);
+        resmem_complex_op()(this->ctx, this->vkb, this->ppcell->vkb.size);
     }
     else {
         this->deeq = this->ppcell->deeq.ptr;

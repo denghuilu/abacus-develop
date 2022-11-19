@@ -23,8 +23,8 @@ Veff<OperatorPW<FPTYPE, Device>>::Veff(
     this->veff_row = veff_row;
     this->veff_col = veff_col;
     this->wfcpw = wfcpw_in;
-    resize_memory_complex_op()(this->ctx, this->porter, this->wfcpw->nmaxgr);
-    resize_memory_complex_op()(this->ctx, this->porter1, this->wfcpw->nmaxgr);
+    resmem_complex_op()(this->ctx, this->porter, this->wfcpw->nmaxgr);
+    resmem_complex_op()(this->ctx, this->porter1, this->wfcpw->nmaxgr);
     if (this->isk == nullptr || this->wfcpw == nullptr) {
         ModuleBase::WARNING_QUIT("VeffPW", "Constuctor of Operator::VeffPW is failed, please check your code!");
     }
@@ -33,8 +33,8 @@ Veff<OperatorPW<FPTYPE, Device>>::Veff(
 template<typename FPTYPE, typename Device>
 Veff<OperatorPW<FPTYPE, Device>>::~Veff()
 {
-    delete_memory_complex_op()(this->ctx, this->porter);
-    delete_memory_complex_op()(this->ctx, this->porter1);
+    delmem_complex_op()(this->ctx, this->porter);
+    delmem_complex_op()(this->ctx, this->porter1);
 }
 
 template<typename FPTYPE, typename Device>
@@ -43,7 +43,7 @@ void Veff<OperatorPW<FPTYPE, Device>>::act(
     const int n_npwx, 
     const std::complex<FPTYPE>* tmpsi_in, 
     std::complex<FPTYPE>* tmhpsi
-)const  
+)const
 {
     ModuleBase::timer::tick("Operator", "VeffPW");
 
@@ -63,12 +63,12 @@ void Veff<OperatorPW<FPTYPE, Device>>::act(
             // but the 3DFFT can not be skipped, it will cause hanging
             if(this->veff_col != 0)
             {
+                veff_op()(this->ctx, this->veff_col, this->porter, this->veff + current_spin * this->veff_col);
                 // const FPTYPE* current_veff = &(this->veff[0](current_spin, 0));
                 // for (int ir = 0; ir < this->veff->nc; ++ir)
                 // {
                 //     porter[ir] *= current_veff[ir];
                 // }
-                veff_op()(this->ctx, this->veff_col, this->porter, this->veff + current_spin * this->veff_col);
             }
             // wfcpw->real2recip(porter, tmhpsi, this->ik, true);
             wfcpw->real_to_recip(this->ctx, this->porter, tmhpsi, this->ik, true);
@@ -122,8 +122,8 @@ hamilt::Veff<OperatorPW<FPTYPE, Device>>::Veff(const Veff<OperatorPW<T_in, Devic
     this->veff_row = veff->get_veff_row();
     this->wfcpw = veff->get_wfcpw();
     this->npol = veff->get_npol();
-    resize_memory_complex_op()(this->ctx, this->porter, this->wfcpw->nmaxgr);
-    resize_memory_complex_op()(this->ctx, this->porter1, this->wfcpw->nmaxgr);
+    resmem_complex_op()(this->ctx, this->porter, this->wfcpw->nmaxgr);
+    resmem_complex_op()(this->ctx, this->porter1, this->wfcpw->nmaxgr);
     this->veff = veff->get_veff();
     if (this->isk == nullptr || this->veff == nullptr || this->wfcpw == nullptr) {
         ModuleBase::WARNING_QUIT("VeffPW", "Constuctor of Operator::VeffPW is failed, please check your code!");

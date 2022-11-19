@@ -4,10 +4,6 @@
 
 //--------------temporary----------------------------
 #include "../src_pw/global.h"
-#include "../module_base/global_function.h"
-#include "../module_symmetry/symmetry.h"
-#include "../src_pw/pw_complement.h"
-#include "../src_pw/structure_factor.h"
 #include "../src_pw/symmetry_rho.h"
 #include "../src_io/print_info.h"
 #include "../src_pw/H_Ewald_pw.h"
@@ -59,23 +55,23 @@ namespace ModuleESolver
         //delete HSolver and ElecState
         if(this->phsol != nullptr)
         {
-            delete (hsolver::HSolverPW<FPTYPE, Device>*)this->phsol;
+            delete reinterpret_cast<hsolver::HSolverPW<FPTYPE, Device>*>(this->phsol);
             this->phsol = nullptr;
         }
         if(this->pelec != nullptr)
         {
-            delete (elecstate::ElecStatePW<FPTYPE, Device>*)this->pelec;
+            delete reinterpret_cast<elecstate::ElecStatePW<FPTYPE, Device>*>(this->pelec);
             this->pelec = nullptr;
         }
         //delete Hamilt
         if(this->p_hamilt != nullptr)
         {
-            delete (hamilt::HamiltPW<FPTYPE, Device>*)this->p_hamilt;
+            delete reinterpret_cast<hamilt::HamiltPW<FPTYPE, Device>*>(this->p_hamilt);
             this->p_hamilt = nullptr;
         }
     #if ((defined __CUDA) || (defined __ROCM))
         if (this->device == psi::GpuDevice) {
-            delete (psi::Psi<std::complex<FPTYPE>, Device>*)this->kspw_psi;
+            delete reinterpret_cast<psi::Psi<std::complex<FPTYPE>, Device>*>(this->kspw_psi);
             hsolver::destoryBLAShandle();
         }
     #endif
@@ -133,7 +129,9 @@ namespace ModuleESolver
         }
 
         // denghui added 20221116
-        this->init_kspw_psi();
+        this->kspw_psi = this->device == psi::GpuDevice ?
+                         new psi::Psi<std::complex<FPTYPE>, Device>(this->psi[0]) :
+                         reinterpret_cast<psi::Psi<std::complex<FPTYPE>, Device>*> (this->psi);
 
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT BASIS");
     }
@@ -231,7 +229,7 @@ namespace ModuleESolver
         //delete Hamilt if not first scf
         if(this->p_hamilt != nullptr)
         {
-            delete (hamilt::HamiltPW<FPTYPE, Device>*)this->p_hamilt;
+            delete reinterpret_cast<hamilt::HamiltPW<FPTYPE, Device>*>(this->p_hamilt);
             this->p_hamilt = nullptr;
         }
         //allocate HamiltPW
@@ -437,10 +435,7 @@ namespace ModuleESolver
                 WF_io::write_wfc(ssw.str(), this->psi[0], &GlobalC::kv, GlobalC::wfcpw);
                 //ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"write wave functions into file WAVEFUNC.dat");
             }
-
         }
-
-
     }
 
     template<typename FPTYPE, typename Device>
@@ -512,7 +507,7 @@ namespace ModuleESolver
             this->print_eigenvalue(GlobalV::ofs_running);
         }
         if (this->device == psi::GpuDevice) {
-            syncmem_psi_op()(
+            syncmem_complex_d2h_op()(
                 this->psi[0].get_device(),
                 this->kspw_psi[0].get_device(),
                 this->psi[0].get_pointer() - this->psi[0].get_psi_bias(),
@@ -805,16 +800,6 @@ namespace ModuleESolver
 
         ModuleBase::timer::tick("ESolver_KS_PW","nscf");
         return;
-    }
-
-    template<typename FPTYPE, typename Device>
-    void ESolver_KS_PW<FPTYPE, Device>::init_kspw_psi() 
-    {
-        if (this->init_device_psi) {return;}
-        this->kspw_psi = this->device == psi::GpuDevice ?
-            new psi::Psi<std::complex<FPTYPE>, Device>(this->psi[0]) :
-            reinterpret_cast<psi::Psi<std::complex<FPTYPE>, Device>*> (this->psi);
-        this->init_device_psi = true;
     }
 
 template class ESolver_KS_PW<double, psi::DEVICE_CPU>;

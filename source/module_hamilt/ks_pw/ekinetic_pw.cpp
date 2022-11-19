@@ -24,8 +24,8 @@ Ekinetic<OperatorPW<FPTYPE, Device>>::Ekinetic(
   this->device = psi::device::get_device_type<Device>(this->ctx);
 #if ((defined __CUDA) || (defined __ROCM))
   if (this->device == psi::GpuDevice) {
-    resize_memory_op()(this->ctx, this->_gk2, this->gk2_row * this->gk2_col);
-    synchronize_memory_op()(this->ctx, this->cpu_ctx, this->_gk2, gk2_in, this->gk2_row * this->gk2_col);  
+    resmem_var_op()(this->ctx, this->_gk2, this->gk2_row * this->gk2_col);
+    syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, this->_gk2, gk2_in, this->gk2_row * this->gk2_col);
     this->gk2 = this->_gk2;
   }
 #endif
@@ -38,7 +38,7 @@ template<typename FPTYPE, typename Device>
 Ekinetic<OperatorPW<FPTYPE, Device>>::~Ekinetic() {
 #if ((defined __CUDA) || (defined __ROCM))
   if (this->device == psi::GpuDevice) {
-    delete_memory_op()(this->ctx, this->_gk2);
+    delmem_var_op()(this->ctx, this->_gk2);
   }
 #endif // __CUDA || __ROCM
 }
@@ -83,7 +83,7 @@ hamilt::Ekinetic<OperatorPW<FPTYPE, Device>>::Ekinetic(const Ekinetic<OperatorPW
     this->device = psi::device::get_device_type<Device>(this->ctx);
 #if ((defined __CUDA) || (defined __ROCM))
     if (this->device == psi::GpuDevice) {
-      resize_memory_op()(this->ctx, this->_gk2, this->gk2_row * this->gk2_col);
+      resmem_var_op()(this->ctx, this->_gk2, this->gk2_row * this->gk2_col);
       psi::memory::synchronize_memory_op<FPTYPE, Device, Device_in>()(
           this->ctx, ekinetic->get_ctx(),
           this->_gk2, ekinetic->get_gk2(),
