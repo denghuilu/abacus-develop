@@ -1,7 +1,6 @@
 # CUDA GPU implementations
 
 In ABACUS, we provide the option to use the GPU devices to accelerate the performance.
-The GPU implementation was developed by *Denghui Lu* and *Haozhi Han* while at Peking University and other collaborators.
 And it has the following general features:
 
 - **Full gpu implementations**: During the SCF progress, `Psi`, `Hamilt`, `Hsolver`, and `DiagCG` classes are stored or calculated by the GPU devices.
