@@ -7,6 +7,7 @@ This section describes various methods for improving ABACUS performance for diff
 Accelerated versions of CUDA GPU implementations have been added to ABACUS, which will typically run faster than the standard non-accelerated versions. This requires appropriate hardware to be present on your system, e.g. NVIDIA GPUs.
 
 .. toctree::
-    :maxdepth: 1
-    cuda
-    benchmark
+   :maxdepth: 2
+
+   cuda
+   benchmark
