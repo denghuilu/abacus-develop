@@ -1,4 +1,4 @@
-# CUDA GPU implementations
+# CUDA GPU Implementations
 
 In ABACUS, we provide the option to use the GPU devices to accelerate the performance.
 And it has the following general features:

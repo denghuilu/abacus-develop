@@ -1,5 +1,5 @@
 =================================================
-Accelerate performance
+Accelerate Performance
 =================================================
 
 This section describes various methods for improving ABACUS performance for different classes of problems running on different kinds of devices.
@@ -10,4 +10,3 @@ Accelerated versions of CUDA GPU implementations have been added to ABACUS, whic
    :maxdepth: 2
 
    cuda
-   benchmark
