@@ -151,7 +151,7 @@ namespace ModuleESolver
         //init ElecState,
         if(this->pelec == nullptr)
         {
-            this->pelec = new elecstate::ElecStatePW<FPTYPE, Device>( GlobalC::wfcpw, &(chr), (K_Vectors*)(&(GlobalC::kv)), GlobalV::NBANDS);
+            this->pelec = new elecstate::ElecStatePW<FPTYPE, Device>( GlobalC::wfcpw, &(this->chr), (K_Vectors*)(&(GlobalC::kv)), GlobalV::NBANDS);
         }
 
         // Inititlize the charge density.
@@ -190,7 +190,7 @@ namespace ModuleESolver
         {
             this->CE.update_istep();
             this->CE.save_pos_next(GlobalC::ucell);
-            this->CE.extrapolate_charge(pelec->charge);
+            this->CE.extrapolate_charge(this->pelec->charge);
 
             if(GlobalC::ucell.cell_parameter_updated)
             {
@@ -208,7 +208,7 @@ namespace ModuleESolver
                 // charge extrapolation if istep>0.
                 this->CE.update_istep();
                 this->CE.update_all_pos(GlobalC::ucell);
-                this->CE.extrapolate_charge(pelec->charge);
+                this->CE.extrapolate_charge(this->pelec->charge);
                 this->CE.save_pos_next(GlobalC::ucell);
 
                 GlobalV::ofs_running << " Setup the Vl+Vh+Vxc according to new structure factor and new charge." << std::endl;
@@ -372,7 +372,7 @@ namespace ModuleESolver
         }
 
         // compute magnetization, only for LSDA(spin==2)
-        GlobalC::ucell.magnet.compute_magnetization(pelec->charge);
+        GlobalC::ucell.magnet.compute_magnetization(this->pelec->charge);
         // deband is calculated from "output" charge density calculated
         // in sum_band
         // need 'rho(out)' and 'vr (v_h(in) and v_xc(in))'
@@ -500,7 +500,7 @@ namespace ModuleESolver
 			std::stringstream ssp_ave;
 			ssp << GlobalV::global_out_dir << "ElecStaticPot";
 			ssp_ave << GlobalV::global_out_dir << "ElecStaticPot_AVE";
-			this->pelec->pot->write_elecstat_pot(ssp.str(), ssp_ave.str(), GlobalC::rhopw, pelec->charge); //output 'Hartree + local pseudopot'
+			this->pelec->pot->write_elecstat_pot(ssp.str(), ssp_ave.str(), GlobalC::rhopw, this->pelec->charge); //output 'Hartree + local pseudopot'
 		}
 
         if (GlobalV::OUT_LEVEL != "m")
@@ -633,7 +633,7 @@ namespace ModuleESolver
     void ESolver_KS_PW<FPTYPE, Device>::cal_Force(ModuleBase::matrix& force)
     {
         Forces ff;
-        ff.init(force, this->pelec->wg, pelec->charge, this->psi);
+        ff.init(force, this->pelec->wg, this->pelec->charge, this->psi);
     }
 
     template<typename FPTYPE, typename Device>
