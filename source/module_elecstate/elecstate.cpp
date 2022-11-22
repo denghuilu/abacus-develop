@@ -37,10 +37,6 @@ void ElecState::calculate_weights()
         return;
     }
 
-    // for test
-    //	std::cout << " gaussian_broadening = " << use_gaussian_broadening << std::endl;
-    //	std::cout << " tetrahedron_method = " << use_tetrahedron_method << std::endl;
-    //	std::cout << " fixed_occupations = " << fixed_occupations << std::endl;
     double** ekb_tmp = new double*[this->ekb.nr];
     for (int i = 0; i < this->ekb.nr; ++i)
     {
@@ -55,7 +51,7 @@ void ElecState::calculate_weights()
         return;
     }
 
-    if (!Occupy::use_gaussian_broadening && !Occupy::use_tetrahedron_method && !Occupy::fixed_occupations)
+    if (!Occupy::use_gaussian_broadening && !Occupy::fixed_occupations)
     {
         if (GlobalV::TWO_EFERMI)
         {
@@ -85,17 +81,13 @@ void ElecState::calculate_weights()
             Occupy::iweights(nks,
                              this->klist->wk,
                              nbands,
-                             this->charge->nelec,
+                             GlobalV::nelec,
                              ekb_tmp,
                              this->ef,
                              this->wg,
                              -1,
                              this->klist->isk);
         }
-    }
-    else if (Occupy::use_tetrahedron_method)
-    {
-        ModuleBase::WARNING_QUIT("calculate_weights", "not implemented yet,coming soon!");
     }
     else if (Occupy::use_gaussian_broadening)
     {
@@ -135,7 +127,7 @@ void ElecState::calculate_weights()
             Occupy::gweights(nks,
                              this->klist->wk,
                              nbands,
-                             this->charge->nelec,
+                             GlobalV::nelec,
                              Occupy::gaussian_parameter,
                              Occupy::gaussian_type,
                              ekb_tmp,
