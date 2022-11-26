@@ -423,6 +423,7 @@ target_link_libraries(${ABACUS_BIN_NAME}
     psi
     esolver
     vdw
+    device
 )
 
 if(ENABLE_LCAO)
