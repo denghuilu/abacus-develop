@@ -50,9 +50,6 @@ AddTest(
           ../../src_parallel/parallel_global.cpp
           ../../src_parallel/parallel_common.cpp  ../../src_parallel/parallel_reduce.cpp
 )
-if (USE_CUDA)
-  target_link_libraries(Dngvd_UTs cusolver cublas)
-endif()
 
 install(FILES H-KPoints-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES H-GammaOnly-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
