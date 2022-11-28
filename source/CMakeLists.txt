@@ -59,7 +59,7 @@ if(USE_CUDA)
   )
 endif()
 
-add_library(device OBJECT ${device_srcs})
+add_library(device OBJECT ${device_srcs} module_tensor/tensor.cpp module_tensor/allocator_gpu.cpp module_tensor/allocator_cpu.cpp module_tensor/allocator.cpp module_tensor/tensor_buffer.cpp module_tensor/tensor_shape.cpp module_tensor/tensor_slice.cpp)
 
 if(USE_CUDA)
   target_link_libraries(device cusolver cublas cufft)
