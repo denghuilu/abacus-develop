@@ -5,7 +5,8 @@
 #include "global.h"
 
 //calculate the nonlocal pseudopotential stress in PW
-void Stress_Func::stress_nl(ModuleBase::matrix& sigma, const ModuleBase::matrix& wg, const psi::Psi<complex<double>>* psi_in)
+template <typename FPTYPE, typename Device>
+void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma, const ModuleBase::matrix& wg, const psi::Psi<complex<FPTYPE>, Device>* psi_in)
 {
 	ModuleBase::TITLE("Stress_Func","stres_nl");
 	ModuleBase::timer::tick("Stress_Func","stres_nl");
@@ -16,7 +17,7 @@ void Stress_Func::stress_nl(ModuleBase::matrix& sigma, const ModuleBase::matrix&
 		ModuleBase::timer::tick("Stress_Func","stres_nl");
 		return;
 	}
-	double sigmanlc[3][3];
+	FPTYPE sigmanlc[3][3];
 	for(int l=0;l<3;l++)
 	{
 		for(int m=0;m<3;m++)
@@ -51,7 +52,7 @@ void Stress_Func::stress_nl(ModuleBase::matrix& sigma, const ModuleBase::matrix&
 		// vkb: Beta(nkb,npw)
 		// becp(nkb,nbnd): <Beta(nkb,npw)|psi(nbnd,npw)>
         becp.zero_out();
-		const std::complex<double>* ppsi=nullptr;
+		const std::complex<FPTYPE>* ppsi=nullptr;
 		if(psi_in!=nullptr)
 		{
 			ppsi = &(psi_in[0](ik, 0, 0));
@@ -93,8 +94,8 @@ void Stress_Func::stress_nl(ModuleBase::matrix& sigma, const ModuleBase::matrix&
 		}
         get_dvnl2(vkb2, ik);
 
-        ModuleBase::Vector3<double> qvec;
-        double* qvec0[3];
+        ModuleBase::Vector3<FPTYPE> qvec;
+        FPTYPE* qvec0[3];
 		qvec0[0] = &(qvec.x);
 		qvec0[1] = &(qvec.y);
 		qvec0[2] = &(qvec.z);
@@ -107,12 +108,12 @@ void Stress_Func::stress_nl(ModuleBase::matrix& sigma, const ModuleBase::matrix&
 				vkb1.zero_out();
 				for (int i = 0; i < nkb; i++) 
 				{
-					std::complex<double>* pvkb0i = &vkb0[ipol](i, 0);
-					std::complex<double>* pvkb0j = &vkb0[jpol](i, 0);
-					std::complex<double>* pvkb1 = &vkb1(i, 0);
+					std::complex<FPTYPE>* pvkb0i = &vkb0[ipol](i, 0);
+					std::complex<FPTYPE>* pvkb0j = &vkb0[jpol](i, 0);
+					std::complex<FPTYPE>* pvkb1 = &vkb1(i, 0);
 					// third term of dbecp_noevc
-					//std::complex<double>* pvkb = &vkb2(i,0);
-					//std::complex<double>* pdbecp_noevc = &dbecp_noevc(i, 0);
+					//std::complex<FPTYPE>* pvkb = &vkb2(i,0);
+					//std::complex<FPTYPE>* pdbecp_noevc = &dbecp_noevc(i, 0);
 					for (int ig = 0; ig < npw; ig++) 
 					{
 						qvec = GlobalC::wfcpw->getgpluskcar(ik, ig);
@@ -126,8 +127,8 @@ void Stress_Func::stress_nl(ModuleBase::matrix& sigma, const ModuleBase::matrix&
 				ModuleBase::ComplexMatrix dbecp_noevc(nkb, GlobalC::wf.npwx, true);
 				for (int i = 0; i < nkb; i++) 
 				{
-					std::complex<double>* pdbecp_noevc = &dbecp_noevc(i, 0);
-					std::complex<double>* pvkb = &vkb1(i, 0);
+					std::complex<FPTYPE>* pdbecp_noevc = &dbecp_noevc(i, 0);
+					std::complex<FPTYPE>* pvkb = &vkb1(i, 0);
 					// first term
 					for (int ig = 0; ig < npw;ig++) 
 					{
@@ -147,7 +148,7 @@ void Stress_Func::stress_nl(ModuleBase::matrix& sigma, const ModuleBase::matrix&
 					for (int ig = 0; ig < npw;ig++) 
 					{
 						qvec =	GlobalC::wfcpw->getgpluskcar(ik, ig);
-						double qm1;
+						FPTYPE qm1;
 						if(qvec.norm2() > 1e-16) qm1 = 1.0 / qvec.norm(); 
 						else qm1 = 0; 
 						pdbecp_noevc[ig] -= 2.0 * pvkb[ig] * qvec0[ipol][0] * 
@@ -175,13 +176,13 @@ void Stress_Func::stress_nl(ModuleBase::matrix& sigma, const ModuleBase::matrix&
 				//              Parallel_Reduce::reduce_complex_double_pool(
 				//              dbecp.ptr, dbecp.ndata);
 
-				//              double *cf = new
-				//              double[GlobalC::ucell.nat*3];
+				//              FPTYPE *cf = new
+				//              FPTYPE[GlobalC::ucell.nat*3];
 				//              ModuleBase::GlobalFunc::ZEROS(cf,
 				//              GlobalC::ucell.nat);
 				for (int ib=0; ib<nbands_occ; ib++)
 				{
-					double fac = wg(ik, ib) * 1.0;
+					FPTYPE fac = wg(ik, ib) * 1.0;
 					int iat = 0;
 					int sum = 0;
 					for (int it=0; it<GlobalC::ucell.ntype; it++)
@@ -197,13 +198,13 @@ void Stress_Func::stress_nl(ModuleBase::matrix& sigma, const ModuleBase::matrix&
 									{
 										continue;
 									}
-									double ps = GlobalC::ppcell.deeq(GlobalV::CURRENT_SPIN, iat, ip1, ip2) ;
+									FPTYPE ps = GlobalC::ppcell.deeq(GlobalV::CURRENT_SPIN, iat, ip1, ip2) ;
 									const int inkb1 = sum + ip1;
 									const int inkb2 = sum + ip2;
 									//out<<"\n ps = "<<ps;
 
 								
-									const double dbb = ( conj( dbecp( ib, inkb1) ) * becp( ib, inkb2) ).real();
+									const FPTYPE dbb = ( conj( dbecp( ib, inkb1) ) * becp( ib, inkb2) ).real();
 									sigmanlc[ipol][ jpol] -= ps * fac * dbb;
 								}
 							 
@@ -257,8 +258,9 @@ void Stress_Func::stress_nl(ModuleBase::matrix& sigma, const ModuleBase::matrix&
 	ModuleBase::timer::tick("Stress_Func","stres_nl");
 	return;
 }
- 
-void Stress_Func::get_dvnl1
+
+template <typename FPTYPE, typename Device>
+void Stress_Func<FPTYPE, Device>::get_dvnl1
 (
 	ModuleBase::ComplexMatrix &vkb,
 	const int ik,
@@ -278,11 +280,11 @@ void Stress_Func::get_dvnl1
 	int ig, ia, nb, ih;
 	ModuleBase::matrix vkb1(nhm, npw);
 	vkb1.zero_out();
-	double *vq = new double[npw];
+	FPTYPE *vq = new FPTYPE[npw];
 	const int x1= (lmaxkb + 1)*(lmaxkb + 1);
 
 	ModuleBase::matrix dylm(x1, npw);
-	ModuleBase::Vector3<double> *gk = new ModuleBase::Vector3<double>[npw];
+	ModuleBase::Vector3<FPTYPE> *gk = new ModuleBase::Vector3<FPTYPE>[npw];
 	for (ig = 0;ig < npw;ig++)
 	{
 		gk[ig] = GlobalC::wf.get_1qvec_cartesian(ik, ig);
@@ -305,7 +307,7 @@ void Stress_Func::get_dvnl1
 			if(GlobalV::test_pp>1) ModuleBase::GlobalFunc::OUT("ib",nb);
 			for (ig = 0;ig < npw;ig++)
 			{
-				const double gnorm = gk[ig].norm() * GlobalC::ucell.tpiba;
+				const FPTYPE gnorm = gk[ig].norm() * GlobalC::ucell.tpiba;
 
 				//cout << "\n gk[ig] = " << gk[ig].x << " " << gk[ig].y << " " << gk[ig].z;
 				//cout << "\n gk.norm = " << gnorm;
@@ -336,10 +338,10 @@ void Stress_Func::get_dvnl1
 		// now add the structure factor and factor (-i)^l
 		for (ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
 		{
-			std::complex<double> *sk = GlobalC::wf.get_sk(ik, it, ia,GlobalC::wfcpw);
+			std::complex<FPTYPE> *sk = GlobalC::wf.get_sk(ik, it, ia,GlobalC::wfcpw);
 			for (ih = 0;ih < nh;ih++)
 			{
-				std::complex<double> pref = pow( ModuleBase::NEG_IMAG_UNIT, GlobalC::ppcell.nhtol(it, ih));      //?
+				std::complex<FPTYPE> pref = pow( ModuleBase::NEG_IMAG_UNIT, GlobalC::ppcell.nhtol(it, ih));      //?
 				for (ig = 0;ig < npw;ig++)
 				{
 					vkb(jkb, ig) = vkb1(ih, ig) * sk [ig] * pref;
@@ -354,7 +356,8 @@ void Stress_Func::get_dvnl1
 	return;
 }//end get_dvnl1
 
-void Stress_Func::get_dvnl2(ModuleBase::ComplexMatrix &vkb,
+template <typename FPTYPE, typename Device>
+void Stress_Func<FPTYPE, Device>::get_dvnl2(ModuleBase::ComplexMatrix &vkb,
 		const int ik)
 {
 	if(GlobalV::test_pp) ModuleBase::TITLE("Stress","get_dvnl2");
@@ -370,11 +373,11 @@ void Stress_Func::get_dvnl2(ModuleBase::ComplexMatrix &vkb,
 	const int nhm = GlobalC::ppcell.nhm;
 	int ig, ia, nb, ih;
 	ModuleBase::matrix vkb1(nhm, npw);
-	double *vq = new double[npw];
+	FPTYPE *vq = new FPTYPE[npw];
 	const int x1= (lmaxkb + 1)*(lmaxkb + 1);
 
 	ModuleBase::matrix ylm(x1, npw);
-	ModuleBase::Vector3<double> *gk = new ModuleBase::Vector3<double>[npw];
+	ModuleBase::Vector3<FPTYPE> *gk = new ModuleBase::Vector3<FPTYPE>[npw];
 	for (ig = 0;ig < npw;ig++)
 	{
 		gk[ig] = GlobalC::wf.get_1qvec_cartesian(ik, ig);
@@ -396,7 +399,7 @@ void Stress_Func::get_dvnl2(ModuleBase::ComplexMatrix &vkb,
 			if(GlobalV::test_pp>1) ModuleBase::GlobalFunc::OUT("ib",nb);
 			for (ig = 0;ig < npw;ig++)
 			{
-				const double gnorm = gk[ig].norm() * GlobalC::ucell.tpiba;
+				const FPTYPE gnorm = gk[ig].norm() * GlobalC::ucell.tpiba;
 	//cout << "\n gk[ig] = " << gk[ig].x << " " << gk[ig].y << " " << gk[ig].z;
 	//cout << "\n gk.norm = " << gnorm;
 				vq [ig] = Polynomial_Interpolation_nl(
@@ -422,10 +425,10 @@ void Stress_Func::get_dvnl2(ModuleBase::ComplexMatrix &vkb,
 		// now add the structure factor and factor (-i)^l
 		for (ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
 		{
-			std::complex<double> *sk = GlobalC::wf.get_sk(ik, it, ia,GlobalC::wfcpw);
+			std::complex<FPTYPE> *sk = GlobalC::wf.get_sk(ik, it, ia,GlobalC::wfcpw);
 			for (ih = 0;ih < nh;ih++)
 			{
-				std::complex<double> pref = pow( ModuleBase::NEG_IMAG_UNIT, GlobalC::ppcell.nhtol(it, ih));      //?
+				std::complex<FPTYPE> pref = pow( ModuleBase::NEG_IMAG_UNIT, GlobalC::ppcell.nhtol(it, ih));      //?
 				for (ig = 0;ig < npw;ig++)
 				{
 					vkb(jkb, ig) = vkb1(ih, ig) * sk [ig] * pref;
@@ -444,27 +447,26 @@ void Stress_Func::get_dvnl2(ModuleBase::ComplexMatrix &vkb,
 }
 
 
-
-
-double Stress_Func::Polynomial_Interpolation_nl
+template <typename FPTYPE, typename Device>
+FPTYPE Stress_Func<FPTYPE, Device>::Polynomial_Interpolation_nl
 (
     const ModuleBase::realArray &table,
     const int &dim1,
     const int &dim2,
-    const double &table_interval,
-    const double &x                             // input value
+    const FPTYPE &table_interval,
+    const FPTYPE &x                             // input value
 )
 {
 
 	assert(table_interval>0.0);
-	const double position = x  / table_interval;
+	const FPTYPE position = x  / table_interval;
 	const int iq = static_cast<int>(position);
 
-	const double x0 = position - static_cast<double>(iq);
-	const double x1 = 1.0 - x0;
-	const double x2 = 2.0 - x0;
-	const double x3 = 3.0 - x0;
-	const double y=
+	const FPTYPE x0 = position - static_cast<FPTYPE>(iq);
+	const FPTYPE x1 = 1.0 - x0;
+	const FPTYPE x2 = 2.0 - x0;
+	const FPTYPE x3 = 3.0 - x0;
+	const FPTYPE y=
 			( table(dim1, dim2, iq)   * (-x2*x3-x1*x3-x1*x2) / 6.0 +
 			table(dim1, dim2, iq+1) * (+x2*x3-x0*x3-x0*x2) / 2.0 -
 			table(dim1, dim2, iq+2) * (+x1*x3-x0*x3-x0*x1) / 2.0 +
@@ -474,10 +476,11 @@ double Stress_Func::Polynomial_Interpolation_nl
 	return y;
 }
 
-void Stress_Func::dylmr2 (
+template <typename FPTYPE, typename Device>
+void Stress_Func<FPTYPE, Device>::dylmr2 (
 	const int nylm,
 	const int ngy,
-	ModuleBase::Vector3<double> *gk,
+	ModuleBase::Vector3<FPTYPE> *gk,
 	ModuleBase::matrix &dylm,
 	const int ipol)
 {
@@ -491,7 +494,7 @@ void Stress_Func::dylmr2 (
   // number of spherical harmonics
   // the number of g vectors to compute
   // desired polarization
-  //double g (3, ngy), gg (ngy), dylm (ngy, nylm)
+  //FPTYPE g (3, ngy), gg (ngy), dylm (ngy, nylm)
   // the coordinates of g vectors
   // the moduli of g vectors
   // the spherical harmonics derivatives
@@ -500,8 +503,8 @@ void Stress_Func::dylmr2 (
 	// counter on g vectors
 	// counter on l,m component
 
-	const double delta = 1e-6;
-	double *dg, *dgi;
+	const FPTYPE delta = 1e-6;
+	FPTYPE *dg, *dgi;
 
 	ModuleBase::matrix ylmaux;
 	// dg is the finite increment for numerical derivation:
@@ -510,11 +513,11 @@ void Stress_Func::dylmr2 (
 	// gx = g +/- dg
 
 
-	ModuleBase::Vector3<double> *gx = new ModuleBase::Vector3<double> [ngy];
+	ModuleBase::Vector3<FPTYPE> *gx = new ModuleBase::Vector3<FPTYPE> [ngy];
 	 
 
-	dg = new double [ngy];
-	dgi = new double [ngy];
+	dg = new FPTYPE [ngy];
+	dgi = new FPTYPE [ngy];
 
 	ylmaux.create (nylm, ngy);
 
@@ -589,3 +592,8 @@ void Stress_Func::dylmr2 (
 
 	return;
 }
+
+template class Stress_Func<double, psi::DEVICE_CPU>;
+#if ((defined __CUDA) || (defined __ROCM))
+template class Stress_Func<double, psi::DEVICE_GPU>;
+#endif

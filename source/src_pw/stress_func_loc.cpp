@@ -4,27 +4,28 @@
 #include "global.h"
 
 //calculate local pseudopotential stress in PW or VL_dVL stress in LCAO
-void Stress_Func::stress_loc(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_basis, const bool is_pw, const Charge* const chr)
+template<typename FPTYPE, typename Device>
+void Stress_Func<FPTYPE, Device>::stress_loc(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_basis, const bool is_pw, const Charge* const chr)
 {
     ModuleBase::TITLE("Stress_Func","stress_loc");
     ModuleBase::timer::tick("Stress_Func","stress_loc");
 
-    double *dvloc = new double[rho_basis->npw];
-    double evloc=0.0;
-	double fact=1.0;
+    FPTYPE *dvloc = new FPTYPE[rho_basis->npw];
+    FPTYPE evloc=0.0;
+	FPTYPE fact=1.0;
 
 	if (INPUT.gamma_only && is_pw) fact=2.0;
 
     
 
-	std::complex<double> *aux = new std::complex<double> [rho_basis->nmaxgr];
+	std::complex<FPTYPE> *aux = new std::complex<FPTYPE> [rho_basis->nmaxgr];
 
 	ModuleBase::GlobalFunc::ZEROS( aux, rho_basis->nrxx );
 	for(int is=0; is<GlobalV::NSPIN; is++)
 	{
 		for (int ir=0; ir<rho_basis->nrxx; ir++)
 		{
-			aux[ir] += std::complex<double>(chr->rho[is][ir], 0.0 );
+			aux[ir] += std::complex<FPTYPE>(chr->rho[is][ir], 0.0 );
 		}
 	}
 	rho_basis->real2recip(aux,aux);
@@ -104,14 +105,15 @@ void Stress_Func::stress_loc(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_
 	return;
 }
 
-void Stress_Func::dvloc_of_g 
+template<typename FPTYPE, typename Device>
+void Stress_Func<FPTYPE, Device>::dvloc_of_g
 (
 const int& msh,
-const double* rab,
-const double* r,
-const double* vloc_at,
-const double& zp,
-double*  dvloc,
+const FPTYPE* rab,
+const FPTYPE* r,
+const FPTYPE* vloc_at,
+const FPTYPE& zp,
+FPTYPE*  dvloc,
 ModulePW::PW_Basis* rho_basis
 )
 {
@@ -121,19 +123,19 @@ ModulePW::PW_Basis* rho_basis
   //
 
   //
-  //double  dvloc[ngl];
+  //FPTYPE  dvloc[ngl];
   // the fourier transform dVloc/dG
   //
-	double vlcp=0;
-	double  *aux, *aux1;
+	FPTYPE vlcp=0;
+	FPTYPE  *aux, *aux1;
 
 	int igl0;
 	// counter on erf functions or gaussians
 	// counter on g shells vectors
 	// first shell with g != 0
 
-	aux = new double[msh];
-	aux1 = new double[msh];
+	aux = new FPTYPE[msh];
+	aux1 = new FPTYPE[msh];
 	ModuleBase::GlobalFunc::ZEROS(aux, msh);
 	ModuleBase::GlobalFunc::ZEROS(aux1, msh);
 
@@ -162,9 +164,9 @@ ModulePW::PW_Basis* rho_basis
 	}
 	for(int igl = igl0;igl< rho_basis->ngg;igl++)
 	{
-		const double g2 = rho_basis->gg_uniq[igl];
-		const double gx = sqrt (g2 * GlobalC::ucell.tpiba2);
-		const double gx2 = g2 * GlobalC::ucell.tpiba2;
+		const FPTYPE g2 = rho_basis->gg_uniq[igl];
+		const FPTYPE gx = sqrt (g2 * GlobalC::ucell.tpiba2);
+		const FPTYPE gx2 = g2 * GlobalC::ucell.tpiba2;
 		//
 		//    and here we perform the integral, after multiplying for the |G|
 		//    dependent  part
@@ -179,7 +181,7 @@ ModulePW::PW_Basis* rho_basis
 		// DV(g^2)/Dg^2 = (DV(g)/Dg)/2g
 		vlcp *= ModuleBase::FOUR_PI / GlobalC::ucell.omega / 2.0 / gx;
 		// subtract the long-range term
-		double g2a = gx2 / 4.0;
+		FPTYPE g2a = gx2 / 4.0;
 		vlcp += ModuleBase::FOUR_PI / GlobalC::ucell.omega * zp * ModuleBase::e2 * exp ( - g2a) * (g2a + 1) / pow(gx2 , 2);
 		dvloc [igl] = vlcp;
 	}
@@ -189,10 +191,11 @@ ModulePW::PW_Basis* rho_basis
 	return;
 }
 
-void Stress_Func::dvloc_coul 
+template<typename FPTYPE, typename Device>
+void Stress_Func<FPTYPE, Device>::dvloc_coul
 (
-const double& zp,
-double* dvloc,
+const FPTYPE& zp,
+FPTYPE* dvloc,
 ModulePW::PW_Basis* rho_basis
 )
 {
@@ -225,3 +228,8 @@ ModulePW::PW_Basis* rho_basis
 	
 	return;
 }
+
+template class Stress_Func<double, psi::DEVICE_CPU>;
+#if ((defined __CUDA) || (defined __ROCM))
+template class Stress_Func<double, psi::DEVICE_GPU>;
+#endif

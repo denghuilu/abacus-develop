@@ -592,7 +592,7 @@ namespace ModuleESolver
     template<typename FPTYPE, typename Device>
     void ESolver_KS_PW<FPTYPE, Device>::cal_Stress(ModuleBase::matrix& stress)
     {
-        Stress_PW ss(this->pelec);
+        Stress_PW<FPTYPE> ss(this->pelec);
         ss.cal_stress(stress, this->psi);
 
         //external stress
