@@ -5,7 +5,7 @@
 
 //calculate the Pulay term of mGGA stress correction in PW
 template<typename FPTYPE, typename Device>
-void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma, const ModuleBase::matrix& wg, const ModuleBase::matrix& v_ofk, const Charge* const chr, const psi::Psi<complex<FPTYPE>, Device>* psi_in)
+void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma, const ModuleBase::matrix& wg, const ModuleBase::matrix& v_ofk, const Charge* const chr, const psi::Psi<complex<FPTYPE>>* psi_in)
 {
 	ModuleBase::timer::tick("Stress_Func","stress_mgga");
 

@@ -12,6 +12,7 @@
 #include "module_psi/psi.h"
 #include "charge.h"
 #include "module_hsolver/include/math_kernel.h"
+#include "src_pw/include/stress_multi_device.h"
 
 
 //-------------------------------------------------------------------
@@ -59,7 +60,7 @@ class Stress_Func
 
 //stress functions
 // 1) the stress from the electron kinetic energy
-	void stress_kin(ModuleBase::matrix& sigma, const ModuleBase::matrix& wg, const psi::Psi<complex<FPTYPE>, Device>* psi_in=nullptr);  //electron kinetic part in PW basis
+	void stress_kin(ModuleBase::matrix& sigma, const ModuleBase::matrix& wg, const psi::Psi<complex<FPTYPE>>* psi_in=nullptr);  //electron kinetic part in PW basis
 
 // 2) the stress from the Hartree term
 	void stress_har(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_basis, const bool is_pw, const Charge* const chr);  //hartree part in PW or LCAO basis
@@ -95,7 +96,7 @@ class Stress_Func
 
 // 6) the stress from the exchange-correlation functional term
 	void stress_gga(ModuleBase::matrix& sigma, const Charge* const chr);			//gga part in both PW and LCAO basis
-	void stress_mgga(ModuleBase::matrix& sigma, const ModuleBase::matrix& wg, const ModuleBase::matrix& v_ofk, const Charge* const chr, const psi::Psi<complex<FPTYPE>, Device>* psi_in=nullptr);			//gga part in PW basis
+	void stress_mgga(ModuleBase::matrix& sigma, const ModuleBase::matrix& wg, const ModuleBase::matrix& v_ofk, const Charge* const chr, const psi::Psi<complex<FPTYPE>>* psi_in=nullptr);			//gga part in PW basis
 
 // 7) the stress from the non-local pseudopotentials
 	void stress_nl(ModuleBase::matrix& sigma, const ModuleBase::matrix& wg, const psi::Psi<complex<FPTYPE>, Device>* psi_in=nullptr);			//nonlocal part in PW basis
@@ -134,6 +135,8 @@ private:
     psi::DEVICE_CPU * cpu_ctx = {};
     psi::AbacusDevice_t device = {};
     using gemm_op = hsolver::gemm_op<FPTYPE, Device>;
+    using cal_stress_nl_op = src_pw::cal_stress_nl_op<FPTYPE, Device>;
+    using cal_dbecp_noevc_nl_op = src_pw::cal_dbecp_noevc_nl_op<FPTYPE, Device>;
 
     using resmem_complex_op = psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
     using resmem_complex_h_op = psi::memory::resize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU>;

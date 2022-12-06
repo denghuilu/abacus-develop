@@ -125,7 +125,7 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma, const Mod
         ///only occupied band should be calculated.
         ///
         int nbands_occ = GlobalV::NBANDS;
-        while(d_wg[ik * wg_nc + nbands_occ - 1] < ModuleBase::threshold_wg) {
+        while(wg(ik, nbands_occ - 1) < ModuleBase::threshold_wg) {
             nbands_occ--;
         }
         int npm = GlobalV::NPOL * nbands_occ;
@@ -177,40 +177,23 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma, const Mod
 			{
                 setmem_complex_op()(this->ctx, vkb1, 0, nkb * GlobalC::wf.npwx);
                 setmem_complex_op()(this->ctx, dbecp_noevc, 0, nkb * GlobalC::wf.npwx);
-				for (int i = 0; i < nkb; i++)
-				{
-					std::complex<FPTYPE>* pvkb0i = _vkb0[ipol] + i * GlobalC::wf.npwx;
-					std::complex<FPTYPE>* pvkb0j = _vkb0[jpol] + i * GlobalC::wf.npwx;
-					std::complex<FPTYPE>* pvkb = nullptr;
-                    std::complex<FPTYPE>* pdbecp_noevc = dbecp_noevc + i * GlobalC::wf.npwx;
-
-                    // third term of dbecp_noevc
-					//std::complex<FPTYPE>* pvkb = &vkb2(i,0);
-					//std::complex<FPTYPE>* pdbecp_noevc = &dbecp_noevc(i, 0);
-					for (int ig = 0; ig < npw; ig++) 
-					{
-                        pvkb = vkb1 + i * GlobalC::wf.npwx;
-                        qvec[ipol] = gcar[(ik * GlobalC::wfcpw->npwk_max + ig) * 3 + ipol] + kvec_c[ik * 3 + ipol];
-                        qvec[jpol] = gcar[(ik * GlobalC::wfcpw->npwk_max + ig) * 3 + jpol] + kvec_c[ik * 3 + jpol];
-						pvkb[ig] += 0.5 * qvec[ipol] * pvkb0j[ig] +
-									 0.5 * qvec[jpol] * pvkb0i[ig];
-
-                        pdbecp_noevc[ig] -= 2.0 * pvkb[ig];
-
-                        if (ipol == jpol) {
-                            pvkb = vkb + i * GlobalC::wf.npwx;
-                            pdbecp_noevc[ig] -= pvkb[ig];
-                        }
-                        pvkb = pvkb2 + i * GlobalC::wf.npwx;
-                        for (int ii = 0; ii < 3; ii++) {
-                            qvec[ii] = gcar[(ik * GlobalC::wfcpw->npwk_max + ig) * 3 + ii] + kvec_c[ik * 3 + ii];
-                        }
-                        FPTYPE qvec_norm2 = qvec[0] * qvec[0] + qvec[1] * qvec[1] + qvec[2] * qvec[2];
-                        FPTYPE qm1 = qvec_norm2 > 1e-16 ? 1.0 / sqrt(qvec_norm2) : 0;
-                        pdbecp_noevc[ig] -= 2.0 * pvkb[ig] * qvec[ipol] *
-                                            qvec[jpol] * qm1 *	GlobalC::ucell.tpiba;
-					} // end ig
-				}//end nkb
+                cal_dbecp_noevc_nl_op()(
+                    this->ctx,
+                    ipol,
+                    jpol,
+                    nkb,
+                    npw,
+                    GlobalC::wf.npwx,
+                    ik,
+                    GlobalC::ucell.tpiba,
+                    gcar,
+                    kvec_c,
+                    _vkb0[ipol],
+                    _vkb0[jpol],
+                    vkb,
+                    vkb1,
+                    pvkb2,
+                    dbecp_noevc);
                 gemm_op()(
                     this->ctx,
                     transa,
@@ -233,43 +216,32 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma, const Mod
 				//              Parallel_Reduce::reduce_complex_double_pool(
 				//              dbecp.ptr, dbecp.ndata);
 
-				//              FPTYPE *cf = new
-				//              FPTYPE[GlobalC::ucell.nat*3];
-				//              ModuleBase::GlobalFunc::ZEROS(cf,
-				//              GlobalC::ucell.nat);
-				for (int ib=0; ib<nbands_occ; ib++)
-				{
-					FPTYPE fac = d_wg[ik * wg_nc + ib] * 1.0;
-					int iat = 0;
-					int sum = 0;
-					for (int it=0; it<GlobalC::ucell.ntype; it++)
-					{
-						const int Nprojs = GlobalC::ucell.atoms[it].ncpp.nh;
-						for (int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
-						{
-							for (int ip1=0; ip1<Nprojs; ip1++)
-							{
-								for(int ip2=0; ip2<Nprojs; ip2++)
-								{
-									if(!GlobalC::ppcell.multi_proj && ip1 != ip2) 
-									{
-										continue;
-									}
-									FPTYPE ps = deeq[((GlobalV::CURRENT_SPIN * GlobalC::ppcell.deeq.getBound2() + iat) * GlobalC::ppcell.deeq.getBound3() + ip1) * GlobalC::ppcell.deeq.getBound4() + ip2];
-									const int inkb1 = sum + ip1;
-									const int inkb2 = sum + ip2;
-									//out<<"\n ps = "<<ps;
+                //              FPTYPE *cf = new
+                //              FPTYPE[GlobalC::ucell.nat*3];
+                //              ModuleBase::GlobalFunc::ZEROS(cf,
+                //              GlobalC::ucell.nat);
+                cal_stress_nl_op()(
+                    this->ctx,
+                    GlobalC::ppcell.multi_proj,
+                    ipol,
+                    jpol,
+                    nkb,
+                    nbands_occ,
+                    GlobalC::ucell.ntype,
+                    GlobalV::CURRENT_SPIN,
+                    wg_nc,
+                    ik,
+                    GlobalC::ppcell.deeq.getBound2(),
+                    GlobalC::ppcell.deeq.getBound3(),
+                    GlobalC::ppcell.deeq.getBound4(),
+                    atom_nh,
+                    atom_na,
+                    d_wg,
+                    deeq,
+                    becp,
+                    dbecp,
+                    stress);
 
-								
-									const FPTYPE dbb = ( conj( dbecp[ ib * nkb + inkb1] ) * becp[ ib * nkb + inkb2] ).real();
-									stress[ipol * 3 + jpol] -= ps * fac * dbb;
-								}
-							}//end ip
-							++iat;        
-							sum+=Nprojs;
-						}//ia
-					} //end it
-				} //end band
             }//end jpol
 		}//end ipol
 	}// end ik

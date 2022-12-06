@@ -4,7 +4,7 @@
 
 //calculate the kinetic stress in PW base
 template<typename FPTYPE, typename Device>
-void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma, const ModuleBase::matrix& wg, const psi::Psi<complex<FPTYPE>, Device>* psi_in)
+void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma, const ModuleBase::matrix& wg, const psi::Psi<complex<FPTYPE>>* psi_in)
 {
     ModuleBase::TITLE("Stress_Func","stress_kin");
 	ModuleBase::timer::tick("Stress_Func","stress_kin");

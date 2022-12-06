@@ -4,7 +4,7 @@
 #include "module_vdw/vdw.h"
 
 template <typename FPTYPE, typename Device>
-void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot, const psi::Psi<complex<FPTYPE>, Device>* psi_in)
+void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot, const psi::Psi<complex<FPTYPE>>* psi_in, const psi::Psi<complex<FPTYPE>, Device>* d_psi_in)
 {
 	ModuleBase::TITLE("Stress_PW","cal_stress");
 	ModuleBase::timer::tick("Stress_PW","cal_stress");    
@@ -78,7 +78,7 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot, const p
     this->stress_cc(sigmaxcc, GlobalC::rhopw, 1, pelec->charge);
    
     //nonlocal
-	this->stress_nl(sigmanl, this->pelec->wg, psi_in);
+	this->stress_nl(sigmanl, this->pelec->wg, d_psi_in);
 
 	//vdw term
 	stress_vdw(sigmavdw);
