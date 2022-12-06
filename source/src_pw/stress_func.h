@@ -11,6 +11,8 @@
 #include "../module_pw/pw_basis.h"
 #include "module_psi/psi.h"
 #include "charge.h"
+#include "module_hsolver/include/math_kernel.h"
+
 
 //-------------------------------------------------------------------
 // mohan reconstruction note: 2021-02-07
@@ -126,6 +128,32 @@ class Stress_Func
 	
 	static FPTYPE stress_invalid_threshold_ev;
     static FPTYPE output_acc;
+
+private:
+    Device * ctx = {};
+    psi::DEVICE_CPU * cpu_ctx = {};
+    psi::AbacusDevice_t device = {};
+    using gemm_op = hsolver::gemm_op<FPTYPE, Device>;
+
+    using resmem_complex_op = psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
+    using resmem_complex_h_op = psi::memory::resize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU>;
+    using setmem_complex_op = psi::memory::set_memory_op<std::complex<FPTYPE>, Device>;
+    using delmem_complex_op = psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
+    using delmem_complex_h_op = psi::memory::delete_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU>;
+    using syncmem_complex_h2d_op = psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, psi::DEVICE_CPU>;
+    using syncmem_complex_d2h_op = psi::memory::synchronize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU, Device>;
+
+    using resmem_var_op = psi::memory::resize_memory_op<FPTYPE, Device>;
+    using resmem_var_h_op = psi::memory::resize_memory_op<FPTYPE, psi::DEVICE_CPU>;
+    using setmem_var_op = psi::memory::set_memory_op<FPTYPE, Device>;
+    using delmem_var_op = psi::memory::delete_memory_op<FPTYPE, Device>;
+    using delmem_var_h_op = psi::memory::delete_memory_op<FPTYPE, psi::DEVICE_CPU>;
+    using syncmem_var_h2d_op = psi::memory::synchronize_memory_op<FPTYPE, Device, psi::DEVICE_CPU>;
+    using syncmem_var_d2h_op = psi::memory::synchronize_memory_op<FPTYPE, psi::DEVICE_CPU, Device>;
+
+    using resmem_int_op = psi::memory::resize_memory_op<int, Device>;
+    using delmem_int_op = psi::memory::delete_memory_op<int, Device>;
+    using syncmem_int_h2d_op = psi::memory::synchronize_memory_op<int, Device, psi::DEVICE_CPU>;
 
 };
 
