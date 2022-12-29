@@ -3,7 +3,7 @@
 
 #include "elecstate.h"
 #include "module_pw/pw_basis_k.h"
-#include "module_elecstate/include/elecstate_multi_device.h"
+#include "module_elecstate/kernels/elecstate_op.h"
 
 namespace elecstate
 {
