@@ -1,8 +1,8 @@
 #include <vector>
 #include <complex>
 #include <gtest/gtest.h>
-#include "module_psi/include/memory.h"
-#include "module_hamilt/include/meta.h"
+#include "module_psi/kernels/memory_op.h"
+#include "module_hamilt/kernels/meta_op.h"
 
 class TestModuleHamiltMeta : public ::testing::Test
 {

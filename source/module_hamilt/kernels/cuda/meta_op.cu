@@ -1,4 +1,4 @@
-#include "module_hamilt/include/meta.h"
+#include "module_hamilt/kernels/meta_op.h"
 
 #include <complex>
 
