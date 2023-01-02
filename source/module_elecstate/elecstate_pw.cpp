@@ -32,7 +32,7 @@ ElecStatePW<FPTYPE, Device>::~ElecStatePW()
 template<typename FPTYPE, typename Device>
 void ElecStatePW<FPTYPE, Device>::init_rho_data() 
 {
-    if (psi::device::get_device_type<Device>(this->ctx) == psi::GpuDevice) {
+    if (GlobalV::device_flag == "gpu" || GlobalV::precision_flag == "single") {
         this->rho = new FPTYPE*[this->charge->nspin];
         resmem_var_op()(this->ctx, this->rho_data, this->charge->nspin * this->charge->nrxx);
         for (int ii = 0; ii < this->charge->nspin; ii++) {
@@ -47,9 +47,9 @@ void ElecStatePW<FPTYPE, Device>::init_rho_data()
         }
     }
     else {
-        this->rho = this->charge->rho;
+        this->rho = reinterpret_cast<FPTYPE **>(this->charge->rho);
         if (XC_Functional::get_func_type() == 3) {
-            this->kin_r = this->charge->kin_r;
+            this->kin_r = reinterpret_cast<FPTYPE **>(this->charge->kin_r);
         }
     }
     resmem_complex_op()(this->ctx, this->wfcr, this->basis->nmaxgr);
@@ -89,9 +89,9 @@ void ElecStatePW<FPTYPE, Device>::psiToRho(const psi::Psi<std::complex<FPTYPE>, 
     }
     if (psi::device::get_device_type<Device>(this->ctx) == psi::GpuDevice) {
         for (int ii = 0; ii < GlobalV::NSPIN; ii++) {
-            syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, this->charge->rho[ii], this->rho[ii], this->charge->nrxx);
+            castmem_var_d2h_op()(cpu_ctx, this->ctx, this->charge->rho[ii], this->rho[ii], this->charge->nrxx);
             if (XC_Functional::get_func_type() == 3) {
-                syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, this->charge->kin_r[ii], this->kin_r[ii], this->charge->nrxx);
+                castmem_var_d2h_op()(cpu_ctx, this->ctx, this->charge->kin_r[ii], this->kin_r[ii], this->charge->nrxx);
             }
         }
     }
@@ -205,8 +205,10 @@ void ElecStatePW<FPTYPE, Device>::rhoBandK(const psi::Psi<std::complex<FPTYPE>, 
     }
 }
 
+template class ElecStatePW<float, psi::DEVICE_CPU>;
 template class ElecStatePW<double, psi::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
+template class ElecStatePW<float, psi::DEVICE_GPU>;
 template class ElecStatePW<double, psi::DEVICE_GPU>;
 #endif 
 
