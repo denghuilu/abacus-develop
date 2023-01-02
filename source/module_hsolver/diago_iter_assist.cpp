@@ -80,12 +80,12 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace(
         nstart,
         nstart,
         dmin,
-        &ModuleBase::ONE,
+        reinterpret_cast<const std::complex<FPTYPE> *>(&ModuleBase::ONE),
         ppsi,
         dmax,
         hphi,
         dmax,
-        &ModuleBase::ZERO,
+        reinterpret_cast<const std::complex<FPTYPE> *>(&ModuleBase::ZERO),
         hcc,
         nstart
     );
@@ -97,12 +97,12 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace(
         nstart,
         nstart,
         dmin,
-        &ModuleBase::ONE,
+        reinterpret_cast<const std::complex<FPTYPE> *>(&ModuleBase::ONE),
         ppsi,
         dmax,
         ppsi,
         dmax,
-        &ModuleBase::ZERO,
+        reinterpret_cast<const std::complex<FPTYPE> *>(&ModuleBase::ZERO),
         scc,
         nstart
     );
@@ -137,12 +137,12 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace(
             dmax,
             n_band,
             nstart,
-            &ModuleBase::ONE,
+            reinterpret_cast<const std::complex<FPTYPE> *>(&ModuleBase::ONE),
             ppsi, // dmax * nstart
             dmax,
             vcc,  // nstart * n_band
             nstart,
-            &ModuleBase::ZERO,
+            reinterpret_cast<const std::complex<FPTYPE> *>(&ModuleBase::ZERO),
             evc.get_pointer(),
             dmax
         );
@@ -163,12 +163,12 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace(
             dmin,
             n_band,
             nstart,
-            &ModuleBase::ONE,
+            reinterpret_cast<const std::complex<FPTYPE> *>(&ModuleBase::ONE),
             ppsi, // dmin * nstart
             dmax,
             vcc,  // nstart * n_band
             nstart,
-            &ModuleBase::ZERO,
+            reinterpret_cast<const std::complex<FPTYPE> *>(&ModuleBase::ZERO),
             evctemp,
             dmin
         );
@@ -256,12 +256,12 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace_init(
         nstart,
         nstart,
         dmin,
-        &ModuleBase::ONE,
+        reinterpret_cast<const std::complex<FPTYPE> *>(&ModuleBase::ONE),
         ppsi,
         dmax,
         hpsi,
         dmax,
-        &ModuleBase::ZERO,
+        reinterpret_cast<const std::complex<FPTYPE> *>(&ModuleBase::ZERO),
         hcc,
         nstart
     );
@@ -273,12 +273,12 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace_init(
         nstart,
         nstart,
         dmin,
-        &ModuleBase::ONE,
+        reinterpret_cast<const std::complex<FPTYPE> *>(&ModuleBase::ONE),
         ppsi,
         dmax,
         ppsi,
         dmax,
-        &ModuleBase::ZERO,
+        reinterpret_cast<const std::complex<FPTYPE> *>(&ModuleBase::ZERO),
         scc,
         nstart
     );
@@ -326,12 +326,12 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace_init(
             dmax,
             n_band,
             nstart,
-            &ModuleBase::ONE,
+            reinterpret_cast<const std::complex<FPTYPE> *>(&ModuleBase::ONE),
             ppsi, // dmax * nstart
             dmax,
             vcc,  // nstart * n_band
             nstart,
-            &ModuleBase::ZERO,
+            reinterpret_cast<const std::complex<FPTYPE> *>(&ModuleBase::ZERO),
             evc.get_pointer(),
             dmax
         );
@@ -352,12 +352,12 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace_init(
             dmin,
             n_band,
             nstart,
-            &ModuleBase::ONE,
+            reinterpret_cast<const std::complex<FPTYPE> *>(&ModuleBase::ONE),
             ppsi, // dmin * nstart
             dmax,
             vcc,  // nstart * n_band
             nstart,
-            &ModuleBase::ZERO,
+            reinterpret_cast<const std::complex<FPTYPE> *>(&ModuleBase::ZERO),
             evctemp,
             dmin
         );
@@ -451,9 +451,10 @@ bool DiagoIterAssist<FPTYPE, Device>::test_exit_cond(const int &ntry, const int 
 }
 
 
-
+template class DiagoIterAssist<float, psi::DEVICE_CPU>;
 template class DiagoIterAssist<double, psi::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
+template class DiagoIterAssist<float, psi::DEVICE_GPU>;
 template class DiagoIterAssist<double, psi::DEVICE_GPU>;
 #endif
 } // namespace hsolver

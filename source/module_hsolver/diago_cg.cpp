@@ -262,12 +262,12 @@ void DiagoCG<FPTYPE, Device>::orthogonal_gradient(hamilt::Hamilt<FPTYPE, Device>
         'C',
         this->dim,
         m,
-        &ModuleBase::ONE,
+        reinterpret_cast<const std::complex<FPTYPE> *>(&ModuleBase::ONE),
         eigenfunction.get_pointer(),
         this->dmx,
         this->scg,
         1,
-        &ModuleBase::ZERO,
+        reinterpret_cast<const std::complex<FPTYPE> *>(&ModuleBase::ZERO),
         this->lagrange,
         1);
 
@@ -281,12 +281,12 @@ void DiagoCG<FPTYPE, Device>::orthogonal_gradient(hamilt::Hamilt<FPTYPE, Device>
         'N',
         this->dim,
         m,
-        &ModuleBase::NEG_ONE,
+        reinterpret_cast<const std::complex<FPTYPE> *>(&ModuleBase::NEG_ONE),
         eigenfunction.get_pointer(),
         this->dmx,
         this->lagrange,
         1,
-        &ModuleBase::ONE,
+        reinterpret_cast<const std::complex<FPTYPE> *>(&ModuleBase::ONE),
         this->gradient,
         1);
 
@@ -295,12 +295,12 @@ void DiagoCG<FPTYPE, Device>::orthogonal_gradient(hamilt::Hamilt<FPTYPE, Device>
         'N',
         this->dim,
         m,
-        &ModuleBase::NEG_ONE,
+        reinterpret_cast<const std::complex<FPTYPE> *>(&ModuleBase::NEG_ONE),
         eigenfunction.get_pointer(),
         this->dmx,
         this->lagrange,
         1,
-        &ModuleBase::ONE,
+        reinterpret_cast<const std::complex<FPTYPE> *>(&ModuleBase::ONE),
         this->scg,
         1);
 }
@@ -479,12 +479,12 @@ void DiagoCG<FPTYPE, Device>::schmit_orth(
         'C',
         this->dim,
         (m + 1),
-        &ModuleBase::ONE,
+        reinterpret_cast<const std::complex<FPTYPE> *>(&ModuleBase::ONE),
         psi.get_pointer(),
         this->dmx,
         this->sphi,
         inc,
-        &ModuleBase::ZERO,
+        reinterpret_cast<const std::complex<FPTYPE> *>(&ModuleBase::ZERO),
         lagrange_so,
         inc);
 
@@ -502,12 +502,12 @@ void DiagoCG<FPTYPE, Device>::schmit_orth(
         'N',
         this->dim,
         m,
-        &ModuleBase::NEG_ONE,
+        reinterpret_cast<const std::complex<FPTYPE> *>(&ModuleBase::NEG_ONE),
         psi.get_pointer(),
         this->dmx,
         lagrange_so,
         inc,
-        &ModuleBase::ONE,
+        reinterpret_cast<const std::complex<FPTYPE> *>(&ModuleBase::ONE),
         this->phi_m->get_pointer(),
         inc);
 
@@ -584,9 +584,11 @@ void DiagoCG<FPTYPE, Device>::diag(hamilt::Hamilt<FPTYPE, Device> *phm_in, psi::
     }
 }
 
-namespace hsolver{
+namespace hsolver {
+template class DiagoCG<float, psi::DEVICE_CPU>;
 template class DiagoCG<double, psi::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
+template class DiagoCG<float, psi::DEVICE_GPU>;
 template class DiagoCG<double, psi::DEVICE_GPU>;
 #endif 
 } // namespace hsolver
