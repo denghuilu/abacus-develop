@@ -68,12 +68,14 @@ namespace ModuleESolver
             this->p_hamilt = nullptr;
         }
         if (this->device == psi::GpuDevice) {
+        #if defined(__CUDA) || defined(__ROCM)
             hsolver::destoryBLAShandle();
             hsolver::destoryCUSOLVERhandle();
+        #endif
             delete reinterpret_cast<psi::Psi<std::complex<FPTYPE>, Device>*>(this->kspw_psi);
-            if (GlobalV::precision_flag == "single") {
-                delete reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->__kspw_psi);
-            }
+        }
+        if (GlobalV::precision_flag == "single") {
+            delete reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->__kspw_psi);
         }
     }
 

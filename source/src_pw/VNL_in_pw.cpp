@@ -335,8 +335,8 @@ void pseudopot_cell_vnl::getvnl(Device * ctx, const int &ik, std::complex<FPTYPE
     using syncmem_int_op = psi::memory::synchronize_memory_op<int, Device, psi::DEVICE_CPU>;
     using resmem_var_op = psi::memory::resize_memory_op<FPTYPE, Device>;
     using delmem_var_op = psi::memory::delete_memory_op<FPTYPE, Device>;
-    using castmem_2s_h2d_op = psi::memory::cast_memory_op<FPTYPE, double, Device, psi::DEVICE_CPU>;
-    using castmem_2s_h2h_op = psi::memory::cast_memory_op<FPTYPE, double, psi::DEVICE_CPU, psi::DEVICE_CPU>;
+    using castmem_var_h2d_op = psi::memory::cast_memory_op<FPTYPE, double, Device, psi::DEVICE_CPU>;
+    using castmem_var_h2h_op = psi::memory::cast_memory_op<FPTYPE, double, psi::DEVICE_CPU, psi::DEVICE_CPU>;
     using resmem_complex_op = psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
     using delmem_complex_op = psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
 
@@ -379,13 +379,19 @@ void pseudopot_cell_vnl::getvnl(Device * ctx, const int &ik, std::complex<FPTYPE
         syncmem_int_op()(ctx, cpu_ctx, atom_na, h_atom_na, GlobalC::ucell.ntype);
 
         resmem_var_op()(ctx, gk, npw * 3);
-        castmem_2s_h2d_op()(ctx, cpu_ctx, gk, reinterpret_cast<double *>(_gk), npw * 3);
+        castmem_var_h2d_op()(ctx, cpu_ctx, gk, reinterpret_cast<double *>(_gk), npw * 3);
     }
     else {
         atom_nh = h_atom_nh;
         atom_nb = h_atom_nb;
         atom_na = h_atom_na;
-        castmem_2s_h2h_op()(cpu_ctx, cpu_ctx, gk, reinterpret_cast<double *>(_gk), npw * 3);
+        if (GlobalV::precision_flag == "single") {
+            resmem_var_op()(ctx, gk, npw * 3);
+            castmem_var_h2h_op()(cpu_ctx, cpu_ctx, gk, reinterpret_cast<double *>(_gk), npw * 3);
+        }
+        else {
+            gk = reinterpret_cast<FPTYPE *>(_gk);
+        }
     }
 
     ModuleBase::YlmReal::Ylm_Real(ctx, x1, npw, gk, ylm);
