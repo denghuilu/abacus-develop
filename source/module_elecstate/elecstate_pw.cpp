@@ -194,7 +194,7 @@ void ElecStatePW<FPTYPE, Device>::rhoBandK(const psi::Psi<std::complex<FPTYPE>, 
                 {
                     setmem_complex_op()(this->ctx, this->wfcr, 0,  this->charge->nrxx);
 
-                    meta_op()(this->ctx, ik, j, npw, this->basis->npwk_max, GlobalC::ucell.tpiba, this->basis->template get_gcar_data<FPTYPE>(this->ctx), this->basis->template get_kvec_c_data<FPTYPE>(this->ctx), &psi(ibnd, 0), this->wfcr);
+                    meta_op()(this->ctx, ik, j, npw, this->basis->npwk_max, GlobalC::ucell.tpiba, this->basis->template get_gcar_data<FPTYPE>(), this->basis->template get_kvec_c_data<FPTYPE>(), &psi(ibnd, 0), this->wfcr);
 
                     this->basis->recip_to_real(this->ctx, this->wfcr, this->wfcr, ik);
 
