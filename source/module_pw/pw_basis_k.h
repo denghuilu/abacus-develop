@@ -88,6 +88,7 @@ public:
 
     double *gk2=nullptr; // modulus (G+K)^2 of G vectors [npwk_max*nks]
 
+    float * s_gcar = nullptr, * s_kvec_c = nullptr;
     double * d_gcar = nullptr, * d_kvec_c = nullptr;
     //collect gdirect, gcar, gg
     void collect_local_pw();
@@ -131,11 +132,11 @@ public:
     //get igl2ig_k or igk(ik,ig) in older ABACUS
     int& getigl2ig(const int ik, const int igl) const;
 
-    template <typename FPTYPE, typename Device>
-    FPTYPE * get_gcar_data(const Device *ctx) const;
+    template <typename FPTYPE>
+    FPTYPE * get_gcar_data() const;
 
-    template <typename FPTYPE, typename Device>
-    FPTYPE * get_kvec_c_data(const Device *ctx) const;
+    template <typename FPTYPE>
+    FPTYPE * get_kvec_c_data() const;
 };
 
 }

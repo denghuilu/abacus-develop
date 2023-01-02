@@ -63,7 +63,7 @@ void Meta<OperatorPW<FPTYPE, Device>>::act(
     {
         for (int j = 0; j < 3; j++)
         {
-            meta_op()(this->ctx, this->ik, j, npw, this->wfcpw->npwk_max, this->tpiba, wfcpw->get_gcar_data<FPTYPE>(this->ctx), wfcpw->get_kvec_c_data<FPTYPE>(this->ctx), tmpsi_in, this->porter);
+            meta_op()(this->ctx, this->ik, j, npw, this->wfcpw->npwk_max, this->tpiba, wfcpw->get_gcar_data<FPTYPE>(), wfcpw->get_kvec_c_data<FPTYPE>(), tmpsi_in, this->porter);
             wfcpw->recip_to_real(this->ctx, this->porter, this->porter, this->ik);
 
             if(this->vk_col != 0) {
@@ -71,7 +71,7 @@ void Meta<OperatorPW<FPTYPE, Device>>::act(
             }
 
             wfcpw->real_to_recip(this->ctx, this->porter, this->porter, this->ik);
-            meta_op()(this->ctx, this->ik, j, npw, this->wfcpw->npwk_max, this->tpiba, wfcpw->get_gcar_data<FPTYPE>(this->ctx), wfcpw->get_kvec_c_data<FPTYPE>(this->ctx), this->porter, tmhpsi, true);
+            meta_op()(this->ctx, this->ik, j, npw, this->wfcpw->npwk_max, this->tpiba, wfcpw->get_gcar_data<FPTYPE>(), wfcpw->get_kvec_c_data<FPTYPE>(), this->porter, tmhpsi, true);
 
         } // x,y,z directions
         tmhpsi += this->max_npw;
