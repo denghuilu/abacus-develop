@@ -21,16 +21,9 @@ Nonlocal<OperatorPW<FPTYPE, Device>>::Nonlocal(
     this->isk = isk_in;
     this->ppcell = ppcell_in;
     this->ucell = ucell_in;
-    if (psi::device::get_device_type<Device>(this->ctx) == psi::GpuDevice) {
-        this->deeq = this->ppcell->d_deeq;
-        this->deeq_nc = this->ppcell->d_deeq_nc;
-        this->vkb = this->ppcell->d_vkb;
-    }
-    else {
-        this->deeq = this->ppcell->deeq.ptr;
-        this->deeq_nc = this->ppcell->deeq_nc.ptr;
-        this->vkb = this->ppcell->vkb.c;
-    }
+    this->deeq = this->ppcell->d_deeq;
+    this->deeq_nc = this->ppcell->template get_deeq_nc_data<FPTYPE>();
+    this->vkb = this->ppcell->template get_vkb_data<FPTYPE>();
     if( this->isk == nullptr || this->ppcell == nullptr || this->ucell == nullptr)
     {
         ModuleBase::WARNING_QUIT("NonlocalPW", "Constuctor of Operator::NonlocalPW is failed, please check your code!");
@@ -295,14 +288,9 @@ hamilt::Nonlocal<OperatorPW<FPTYPE, Device>>::Nonlocal(const Nonlocal<OperatorPW
     this->isk = nonlocal->get_isk();
     this->ppcell = nonlocal->get_ppcell();
     this->ucell = nonlocal->get_ucell();
-    if (psi::device::get_device_type<Device>(this->ctx) == psi::GpuDevice) {
-        this->deeq = this->ppcell->d_deeq;
-        this->vkb = this->ppcell->d_vkb;
-    }
-    else {
-        this->deeq = this->ppcell->deeq.ptr;
-        this->vkb = this->ppcell->vkb.c;
-    }
+    this->deeq = this->ppcell->d_deeq;
+    this->deeq_nc = this->ppcell->template get_deeq_nc_data<FPTYPE>();
+    this->vkb = this->ppcell->template get_vkb_data<FPTYPE>();
     if( this->isk == nullptr || this->ppcell == nullptr || this->ucell == nullptr)
     {
         ModuleBase::WARNING_QUIT("NonlocalPW", "Constuctor of Operator::NonlocalPW is failed, please check your code!");

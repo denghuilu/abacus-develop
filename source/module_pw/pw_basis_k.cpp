@@ -20,20 +20,20 @@ PW_Basis_K::~PW_Basis_K()
     delete[] ig2ixyz_k_;
     if (GlobalV::device_flag == "gpu") {
         if (GlobalV::precision_flag == "single") {
-            delmem_sd_op()(this->gpu_ctx, this->s_kvec_c);
-            delmem_sd_op()(this->gpu_ctx, this->s_gcar);
+            delmem_sd_op()(gpu_ctx, this->s_kvec_c);
+            delmem_sd_op()(gpu_ctx, this->s_gcar);
         }
         else {
-            delmem_dd_op()(this->gpu_ctx, this->d_kvec_c);
-            delmem_dd_op()(this->gpu_ctx, this->d_gcar);
+            delmem_dd_op()(gpu_ctx, this->d_kvec_c);
+            delmem_dd_op()(gpu_ctx, this->d_gcar);
         }
-        delmem_int_op()(this->gpu_ctx, this->ig2ixyz_k);
-        delmem_int_op()(this->gpu_ctx, this->d_igl2isz_k);
+        delmem_int_op()(gpu_ctx, this->ig2ixyz_k);
+        delmem_int_op()(gpu_ctx, this->d_igl2isz_k);
     }
     else {
         if (GlobalV::precision_flag == "single") {
-            delmem_sh_op()(this->cpu_ctx, this->s_kvec_c);
-            delmem_sh_op()(this->cpu_ctx, this->s_gcar);
+            delmem_sh_op()(cpu_ctx, this->s_kvec_c);
+            delmem_sh_op()(cpu_ctx, this->s_gcar);
         }
         // There's no need to delete double pointers while in a CPU environment.
     }
@@ -84,18 +84,18 @@ void PW_Basis_K:: initparameters(
     this->distribution_type = distribution_type_in;
     if (GlobalV::device_flag == "gpu") {
         if (GlobalV::precision_flag == "single") {
-            resmem_sd_op()(this->gpu_ctx, this->s_kvec_c, this->nks * 3);
-            castmem_d2s_h2d_op()(this->gpu_ctx, this->cpu_ctx, this->s_kvec_c, reinterpret_cast<double *>(&this->kvec_c[0][0]), this->nks * 3);
+            resmem_sd_op()(gpu_ctx, this->s_kvec_c, this->nks * 3);
+            castmem_d2s_h2d_op()(gpu_ctx, cpu_ctx, this->s_kvec_c, reinterpret_cast<double *>(&this->kvec_c[0][0]), this->nks * 3);
         }
         else {
-            resmem_dd_op()(this->gpu_ctx, this->d_kvec_c, this->nks * 3);
-            syncmem_d2d_h2d_op()(this->gpu_ctx, this->cpu_ctx, this->d_kvec_c, reinterpret_cast<double *>(&this->kvec_c[0][0]), this->nks * 3);
+            resmem_dd_op()(gpu_ctx, this->d_kvec_c, this->nks * 3);
+            syncmem_d2d_h2d_op()(gpu_ctx, cpu_ctx, this->d_kvec_c, reinterpret_cast<double *>(&this->kvec_c[0][0]), this->nks * 3);
         }
     }
     else {
         if (GlobalV::precision_flag == "single") {
-            resmem_sh_op()(this->cpu_ctx, this->s_kvec_c, this->nks * 3);
-            castmem_d2s_h2h_op()(this->cpu_ctx, this->cpu_ctx, this->s_kvec_c, reinterpret_cast<double *>(&this->kvec_c[0][0]), this->nks * 3);
+            resmem_sh_op()(cpu_ctx, this->s_kvec_c, this->nks * 3);
+            castmem_d2s_h2h_op()(cpu_ctx, cpu_ctx, this->s_kvec_c, reinterpret_cast<double *>(&this->kvec_c[0][0]), this->nks * 3);
         }
         else {
             this->d_kvec_c = reinterpret_cast<double *>(&this->kvec_c[0][0]);
@@ -148,8 +148,8 @@ void PW_Basis_K::setupIndGk()
         }
     }
     if (GlobalV::device_flag == "gpu") {
-        resmem_int_op()(this->gpu_ctx, this->d_igl2isz_k, this->npwk_max * this->nks);
-        syncmem_int_h2d_op()(this->gpu_ctx, this->cpu_ctx, this->d_igl2isz_k, this->igl2isz_k, this->npwk_max * this->nks);
+        resmem_int_op()(gpu_ctx, this->d_igl2isz_k, this->npwk_max * this->nks);
+        syncmem_int_h2d_op()(gpu_ctx, cpu_ctx, this->d_igl2isz_k, this->igl2isz_k, this->npwk_max * this->nks);
     }
     return;
 }
@@ -206,18 +206,18 @@ void PW_Basis_K::collect_local_pw()
     }
     if (GlobalV::device_flag == "gpu") {
         if (GlobalV::precision_flag == "single") {
-            resmem_sd_op()(this->gpu_ctx, this->s_gcar, this->npwk_max * this->nks * 3);
-            castmem_d2s_h2d_op()(this->gpu_ctx, this->cpu_ctx, this->s_gcar, reinterpret_cast<double *>(&this->gcar[0][0]), this->npwk_max * this->nks * 3);
+            resmem_sd_op()(gpu_ctx, this->s_gcar, this->npwk_max * this->nks * 3);
+            castmem_d2s_h2d_op()(gpu_ctx, cpu_ctx, this->s_gcar, reinterpret_cast<double *>(&this->gcar[0][0]), this->npwk_max * this->nks * 3);
         }
         else {
-            resmem_dd_op()(this->gpu_ctx, this->d_gcar, this->npwk_max * this->nks * 3);
-            syncmem_d2d_h2d_op()(this->gpu_ctx, this->cpu_ctx, this->d_gcar, reinterpret_cast<double *>(&this->gcar[0][0]), this->npwk_max * this->nks * 3);
+            resmem_dd_op()(gpu_ctx, this->d_gcar, this->npwk_max * this->nks * 3);
+            syncmem_d2d_h2d_op()(gpu_ctx, cpu_ctx, this->d_gcar, reinterpret_cast<double *>(&this->gcar[0][0]), this->npwk_max * this->nks * 3);
         }
     }
     else {
         if (GlobalV::precision_flag == "single") {
-            resmem_sh_op()(this->cpu_ctx, this->s_gcar, this->npwk_max * this->nks * 3);
-            castmem_d2s_h2h_op()(this->cpu_ctx, this->cpu_ctx, this->s_gcar, reinterpret_cast<double *>(&this->gcar[0][0]), this->npwk_max * this->nks * 3);
+            resmem_sh_op()(cpu_ctx, this->s_gcar, this->npwk_max * this->nks * 3);
+            castmem_d2s_h2h_op()(cpu_ctx, cpu_ctx, this->s_gcar, reinterpret_cast<double *>(&this->gcar[0][0]), this->npwk_max * this->nks * 3);
         }
         else {
             this->d_gcar = reinterpret_cast<double *>(&this->gcar[0][0]);
@@ -297,8 +297,8 @@ void PW_Basis_K::get_ig2ixyz_k()
         }
     }
 #if defined(__CUDA) || defined (__ROCM)
-    resmem_int_op()(this->gpu_ctx, ig2ixyz_k, this->npwk_max * this->nks);
-    syncmem_int_h2d_op()(this->gpu_ctx, this->cpu_ctx, this->ig2ixyz_k, this->ig2ixyz_k_, this->npwk_max * this->nks);
+    resmem_int_op()(gpu_ctx, ig2ixyz_k, this->npwk_max * this->nks);
+    syncmem_int_h2d_op()(gpu_ctx, cpu_ctx, this->ig2ixyz_k, this->ig2ixyz_k_, this->npwk_max * this->nks);
 #endif
 }
 
