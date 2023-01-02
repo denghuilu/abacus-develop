@@ -296,10 +296,10 @@ void PW_Basis_K::get_ig2ixyz_k()
             ig2ixyz_k_[igl + ik * npwk_max] = iz + iy * nz + ix * ny * nz;
         }
     }
-#if defined(__CUDA) || defined (__ROCM)
-    resmem_int_op()(gpu_ctx, ig2ixyz_k, this->npwk_max * this->nks);
-    syncmem_int_h2d_op()(gpu_ctx, cpu_ctx, this->ig2ixyz_k, this->ig2ixyz_k_, this->npwk_max * this->nks);
-#endif
+    if (GlobalV::device_flag == "gpu") {
+        resmem_int_op()(gpu_ctx, ig2ixyz_k, this->npwk_max * this->nks);
+        syncmem_int_h2d_op()(gpu_ctx, cpu_ctx, this->ig2ixyz_k, this->ig2ixyz_k_, this->npwk_max * this->nks);
+    }
 }
 
 template <>
