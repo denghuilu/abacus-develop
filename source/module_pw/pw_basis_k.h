@@ -92,6 +92,8 @@ public:
     void collect_local_pw();
 
 private:
+    float  * s_gk2 = nullptr;
+    double * d_gk2 = nullptr; // modulus (G+K)^2 of G vectors [npwk_max*nks]
     //create igl2isz_k map array for fft
     void setupIndGk();
     //calculate G+K, it is a private function
@@ -123,11 +125,9 @@ public:
     //get igl2ig_k or igk(ik,ig) in older ABACUS
     int& getigl2ig(const int ik, const int igl) const;
 
-    template <typename FPTYPE>
-    FPTYPE * get_gcar_data() const;
-
-    template <typename FPTYPE>
-    FPTYPE * get_kvec_c_data() const;
+    template <typename FPTYPE> FPTYPE * get_gk2_data() const;
+    template <typename FPTYPE> FPTYPE * get_gcar_data() const;
+    template <typename FPTYPE> FPTYPE * get_kvec_c_data() const;
 
 private:
     float * s_gcar = nullptr, * s_kvec_c = nullptr;

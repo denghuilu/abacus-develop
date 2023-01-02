@@ -335,7 +335,8 @@ void pseudopot_cell_vnl::getvnl(Device * ctx, const int &ik, std::complex<FPTYPE
     using syncmem_int_op = psi::memory::synchronize_memory_op<int, Device, psi::DEVICE_CPU>;
     using resmem_var_op = psi::memory::resize_memory_op<FPTYPE, Device>;
     using delmem_var_op = psi::memory::delete_memory_op<FPTYPE, Device>;
-    using syncmem_var_op = psi::memory::synchronize_memory_op<FPTYPE, Device, psi::DEVICE_CPU>;
+    using castmem_2s_h2d_op = psi::memory::cast_memory_op<FPTYPE, double, Device, psi::DEVICE_CPU>;
+    using castmem_2s_h2h_op = psi::memory::cast_memory_op<FPTYPE, double, psi::DEVICE_CPU, psi::DEVICE_CPU>;
     using resmem_complex_op = psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
     using delmem_complex_op = psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
 
@@ -369,7 +370,7 @@ void pseudopot_cell_vnl::getvnl(Device * ctx, const int &ik, std::complex<FPTYPE
     {
         _gk[ig] = GlobalC::wf.get_1qvec_cartesian(ik, ig);
     }
-    if (psi::device::get_device_type<Device>(ctx) == psi::GpuDevice) {
+    if (GlobalV::device_flag == "gpu") {
         resmem_int_op()(ctx, atom_nh, GlobalC::ucell.ntype);
         resmem_int_op()(ctx, atom_nb, GlobalC::ucell.ntype);
         resmem_int_op()(ctx, atom_na, GlobalC::ucell.ntype);
@@ -378,37 +379,18 @@ void pseudopot_cell_vnl::getvnl(Device * ctx, const int &ik, std::complex<FPTYPE
         syncmem_int_op()(ctx, cpu_ctx, atom_na, h_atom_na, GlobalC::ucell.ntype);
 
         resmem_var_op()(ctx, gk, npw * 3);
-        syncmem_var_op()(ctx, cpu_ctx, gk, reinterpret_cast<double *>(_gk), npw * 3);
+        castmem_2s_h2d_op()(ctx, cpu_ctx, gk, reinterpret_cast<double *>(_gk), npw * 3);
     }
     else {
         atom_nh = h_atom_nh;
         atom_nb = h_atom_nb;
         atom_na = h_atom_na;
-        gk = reinterpret_cast<double *>(_gk);
+        castmem_2s_h2h_op()(cpu_ctx, cpu_ctx, gk, reinterpret_cast<double *>(_gk), npw * 3);
     }
-
-    // FPTYPE * d_ylm = nullptr;
-    // psi::memory::resize_memory_op<FPTYPE, psi::DEVICE_GPU>()(gpu_ctx, gk, npw * 3);
-    // psi::memory::synchronize_memory_op<FPTYPE, psi::DEVICE_GPU, psi::DEVICE_CPU>()
-    // (gpu_ctx, cpu_ctx, gk, reinterpret_cast<double *>(_gk), npw * 3);
-    // psi::memory::resize_memory_op<FPTYPE, psi::DEVICE_GPU>()(gpu_ctx, d_ylm, x1 * npw);
-    // ModuleBase::YlmReal::Ylm_Real(gpu_ctx, x1, npw, gk, d_ylm);
-    // psi::memory::synchronize_memory_op<FPTYPE, psi::DEVICE_CPU, psi::DEVICE_GPU>()
-    // (cpu_ctx, gpu_ctx, ylm, d_ylm, x1 * npw);
-    // psi::memory::delete_memory_op<FPTYPE, psi::DEVICE_GPU>()(gpu_ctx, d_ylm);
-    //
-    // std::complex<double> * sk = nullptr, * d_sk = nullptr;
-    // using resmem_complex_d_op = psi::memory::resize_memory_op<std::complex<double>, psi::DEVICE_GPU>;
-    // resmem_complex_op()(ctx, sk, GlobalC::ucell.nat * npw);
-    // resmem_complex_d_op()(gpu_ctx, d_sk, GlobalC::ucell.nat * npw);
-    // GlobalC::wf.get_sk(gpu_ctx, ik, GlobalC::wfcpw, d_sk);
-    // psi::memory::synchronize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU, psi::DEVICE_GPU>()
-    //         (cpu_ctx, gpu_ctx, sk, d_sk, GlobalC::ucell.nat * npw);
-    // psi::memory::delete_memory_op<std::complex<FPTYPE>, psi::DEVICE_GPU>()(gpu_ctx, d_sk);
 
     ModuleBase::YlmReal::Ylm_Real(ctx, x1, npw, gk, ylm);
 
-    std::complex<double> * sk = nullptr;
+    std::complex<FPTYPE> * sk = nullptr;
     resmem_complex_op()(ctx, sk, GlobalC::ucell.nat * npw);
     GlobalC::wf.get_sk(ctx, ik, GlobalC::wfcpw, sk);
 
@@ -417,7 +399,7 @@ void pseudopot_cell_vnl::getvnl(Device * ctx, const int &ik, std::complex<FPTYPE
         GlobalC::ucell.ntype,  npw, GlobalC::wf.npwx, this->nhm, GlobalV::NQX,
         this->tab.getBound2(), this->tab.getBound3(),
         atom_na, atom_nb, atom_nh,
-        GlobalV::DQ, GlobalC::ucell.tpiba, ModuleBase::NEG_IMAG_UNIT,
+        static_cast<FPTYPE>(GlobalV::DQ), static_cast<FPTYPE>(GlobalC::ucell.tpiba), static_cast<std::complex<FPTYPE>>(ModuleBase::NEG_IMAG_UNIT),
         gk, ylm, _indv, _nhtol, _nhtolm, _tab, vkb1, sk,
         vkb_in);
 
@@ -1044,7 +1026,9 @@ std::complex<double> * pseudopot_cell_vnl::get_deeq_nc_data() const
     return this->z_deeq_nc;
 }
 
+template void pseudopot_cell_vnl::getvnl<float, psi::DEVICE_CPU>(psi::DEVICE_CPU*, int const&, std::complex<float>*) const;
 template void pseudopot_cell_vnl::getvnl<double, psi::DEVICE_CPU>(psi::DEVICE_CPU*, int const&, std::complex<double>*) const;
 #if defined(__CUDA) || defined(__ROCM)
+template void pseudopot_cell_vnl::getvnl<float, psi::DEVICE_GPU>(psi::DEVICE_GPU*, int const&, std::complex<float>*) const;
 template void pseudopot_cell_vnl::getvnl<double, psi::DEVICE_GPU>(psi::DEVICE_GPU*, int const&, std::complex<double>*) const;
 #endif
