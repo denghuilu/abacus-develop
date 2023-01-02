@@ -119,9 +119,9 @@ void WF_igk::get_sk(Device * ctx, const int ik, ModulePW::PW_Basis_K* wfc_basis,
         syncmem_var_op()(ctx, cpu_ctx, atom_tau, h_atom_tau, GlobalC::ucell.nat * 3);
         syncmem_var_op()(ctx, cpu_ctx, kvec, reinterpret_cast<FPTYPE *>(GlobalC::kv.kvec_c.data()), GlobalC::kv.kvec_c.size() * 3);
 
-        eigts1 = GlobalC::sf.d_eigts1;
-        eigts2 = GlobalC::sf.d_eigts2;
-        eigts3 = GlobalC::sf.d_eigts3;
+        eigts1 = GlobalC::sf.get_eigts1_data<FPTYPE>();
+        eigts2 = GlobalC::sf.get_eigts2_data<FPTYPE>();
+        eigts3 = GlobalC::sf.get_eigts3_data<FPTYPE>();
         igl2isz = wfc_basis->d_igl2isz_k;
         is2fftixy = wfc_basis->d_is2fftixy;
     }

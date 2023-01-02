@@ -88,8 +88,6 @@ public:
 
     double *gk2=nullptr; // modulus (G+K)^2 of G vectors [npwk_max*nks]
 
-    float * s_gcar = nullptr, * s_kvec_c = nullptr;
-    double * d_gcar = nullptr, * d_kvec_c = nullptr;
     //collect gdirect, gcar, gg
     void collect_local_pw();
 
@@ -137,6 +135,10 @@ public:
 
     template <typename FPTYPE>
     FPTYPE * get_kvec_c_data() const;
+
+private:
+    float * s_gcar = nullptr, * s_kvec_c = nullptr;
+    double * d_gcar = nullptr, * d_kvec_c = nullptr;
 };
 
 }

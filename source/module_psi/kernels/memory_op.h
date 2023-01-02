@@ -197,4 +197,7 @@ using castmem_z2c_h2h_op = psi::memory::cast_memory_op<std::complex<float>, std:
 using castmem_z2c_h2d_op = psi::memory::cast_memory_op<std::complex<float>, std::complex<double>, psi::DEVICE_GPU, psi::DEVICE_CPU>;
 using castmem_z2c_d2h_op = psi::memory::cast_memory_op<std::complex<float>, std::complex<double>, psi::DEVICE_CPU, psi::DEVICE_GPU>;
 
+static psi::DEVICE_CPU * cpu_ctx = {};
+static psi::DEVICE_GPU * gpu_ctx = {};
+
 #endif // MODULE_PSI_MEMORY_H_
