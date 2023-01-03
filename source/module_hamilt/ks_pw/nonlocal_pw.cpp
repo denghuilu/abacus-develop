@@ -171,12 +171,12 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::add_nonlocal_pp(std::complex<FPTYPE> 
             transa,
             this->npw,
             this->ppcell->nkb,
-            reinterpret_cast<const std::complex<FPTYPE> *>(&ModuleBase::ONE),
+            &this->one,
             this->vkb,
             this->ppcell->vkb.nc,
             this->ps,
             inc,
-            reinterpret_cast<const std::complex<FPTYPE> *>(&ModuleBase::ONE),
+            &this->one,
             hpsi_in,
             inc);
     }
@@ -192,12 +192,12 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::add_nonlocal_pp(std::complex<FPTYPE> 
             this->npw,
             npm,
             this->ppcell->nkb,
-            reinterpret_cast<const std::complex<FPTYPE> *>(&ModuleBase::ONE),
+            &this->one,
             this->vkb,
             this->ppcell->vkb.nc,
             this->ps,
             npm,
-            reinterpret_cast<const std::complex<FPTYPE> *>(&ModuleBase::ONE),
+            &this->one,
             hpsi_in,
             this->max_npw
         );
@@ -239,12 +239,12 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::act
                 transa,
                 this->npw,
                 nkb,
-                reinterpret_cast<const std::complex<FPTYPE> *>(&ModuleBase::ONE),
+                &this->one,
                 this->vkb,
                 this->ppcell->vkb.nc,
                 tmpsi_in,
                 inc,
-                reinterpret_cast<const std::complex<FPTYPE> *>(&ModuleBase::ZERO),
+                &this->zero,
                 this->becp,
                 inc);
         }
@@ -260,12 +260,12 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::act
                 nkb,
                 npm,
                 this->npw,
-                reinterpret_cast<const std::complex<FPTYPE> *>(&ModuleBase::ONE),
+                &this->one,
                 this->vkb,
                 this->ppcell->vkb.nc,
                 tmpsi_in,
                 this->max_npw,
-                reinterpret_cast<const std::complex<FPTYPE> *>(&ModuleBase::ZERO),
+                &this->zero,
                 this->becp,
                 nkb
             );

@@ -20,6 +20,9 @@ template <typename FPTYPE, typename Device> DiagoDavid<FPTYPE, Device>::DiagoDav
     this->precondition = precondition_in;
 
     test_david = 2;
+    this->one = new std::complex<FPTYPE>(1.0, 0.0);
+    this->zero = new std::complex<FPTYPE>(0.0, 0.0);
+    this->neg_one = new std::complex<FPTYPE>(-1.0, 0.0);
     // 1: check which function is called and which step is executed
     // 2: check the eigenvalues of the result of each iteration
     // 3: check the eigenvalues and errors of the last result
@@ -35,12 +38,12 @@ template <typename FPTYPE, typename Device> DiagoDavid<FPTYPE, Device>::~DiagoDa
     delmem_complex_op()(this->ctx, this->vcc);
     delmem_complex_op()(this->ctx, this->lagrange_matrix);
     psi::memory::delete_memory_op<FPTYPE, psi::DEVICE_CPU>()(this->cpu_ctx, this->eigenvalue);
-#if defined(__CUDA) || defined(__ROCM)
-    if (this->device == psi::GpuDevice)
-    {
+    if (this->device == psi::GpuDevice) {
         delmem_var_op()(this->ctx, this->d_precondition);
     }
-#endif
+    delete this->one;
+    delete this->zero;
+    delete this->neg_one;
 }
 
 template <typename FPTYPE, typename Device>
@@ -212,12 +215,12 @@ void DiagoDavid<FPTYPE, Device>::diag_mock(hamilt::Hamilt<FPTYPE, Device>* phm_i
                                       this->dim,           // m: row of A,C
                                       this->n_band,        // n: col of B,C
                                       nbase,               // k: col of A, row of B
-                                      &this->one,
+                                      this->one,
                                       basis.get_pointer(), // A dim * nbase 
                                       this->dim,
                                       this->vcc,           // B nbase * n_band
                                       this->nbase_x,
-                                      &this->zero,
+                                      this->zero,
                                       psi.get_pointer(),   // C dim * n_band
                                       this->dmx
             );
@@ -322,12 +325,12 @@ void DiagoDavid<FPTYPE, Device>::cal_grad(hamilt::Hamilt<FPTYPE, Device>* phm_in
                               this->dim, // m: row of A,C
                               notconv, // n: col of B,C
                               nbase, // k: col of A, row of B
-                              &this->one, // alpha
+                              this->one, // alpha
                               hphi, // A dim * nbase
                               this->dim, // LDA: if(N) max(1,m) if(T) max(1,k)
                               vc_ev_vector, // B nbase * notconv
                               nbase, // LDB: if(N) max(1,k) if(T) max(1,n)
-                              &this->zero, // belta
+                              this->zero, // belta
                               &basis(nbase, 0), // C dim * notconv
                               this->dim // LDC: if(N) max(1, m)
     );
@@ -380,12 +383,12 @@ void DiagoDavid<FPTYPE, Device>::cal_grad(hamilt::Hamilt<FPTYPE, Device>* phm_in
                               this->dim, // m: row of A,C
                               notconv, // n: col of B,C
                               nbase, // k: col of A, row of B
-                              &this->one, // alpha
+                              this->one, // alpha
                               sphi, // A
                               this->dim, // LDA: if(N) max(1,m) if(T) max(1,k)
                               vc_ev_vector, // B
                               nbase, // LDB: if(N) max(1,k) if(T) max(1,n)
-                              &this->one, // belta
+                              this->one, // belta
                               &basis(nbase, 0), // C dim * notconv
                               this->dim // LDC: if(N) max(1, m)
     );
@@ -445,12 +448,12 @@ void DiagoDavid<FPTYPE, Device>::cal_grad(hamilt::Hamilt<FPTYPE, Device>* phm_in
                               nbase, // m: row of A,C
                               notconv, // n: col of B,C
                               this->dim, // k: col of A, row of B
-                              &this->one, // alpha
+                              this->one, // alpha
                               &basis(0, 0), // A
                               this->dim, // LDA: if(N) max(1,m) if(T) max(1,k)
                               &sphi[nbase * this->dim], // B
                               this->dim, // LDB: if(N) max(1,k) if(T) max(1,n)
-                              &this->zero, // belta
+                              this->zero, // belta
                               lagrange, // C
                               nbase + notconv // LDC: if(N) max(1, m)
     );
@@ -503,12 +506,12 @@ void DiagoDavid<FPTYPE, Device>::cal_elem(const int& dim,
                               notconv,
                               nbase + notconv,
                               this->dim,
-                              &this->one,
+                              this->one,
                               &basis(nbase, 0),   // this->dim * notconv
                               this->dim,
                               hphi,               // this->dim * (nbase + notconv)
                               this->dim,
-                              &this->zero,
+                              this->zero,
                               hcc + nbase,        // notconv * (nbase + notconv)
                               this->nbase_x);
 
@@ -518,12 +521,12 @@ void DiagoDavid<FPTYPE, Device>::cal_elem(const int& dim,
                               notconv,
                               nbase + notconv,
                               this->dim,
-                              &this->one,
+                              this->one,
                               &basis(nbase, 0),   // this->dim * notconv
                               this->dim,
                               sphi,               // this->dim * (nbase + notconv)
                               this->dim,
-                              &this->zero,
+                              this->zero,
                               scc + nbase,        // notconv * (nbase + notconv)
                               this->nbase_x);
 
@@ -652,12 +655,12 @@ void DiagoDavid<FPTYPE, Device>::refresh(const int& dim,
                               this->dim,            // m: row of A,C
                               nband,                // n: col of B,C
                               nbase,                // k: col of A, row of B
-                              &this->one,
+                              this->one,
                               this->hphi,           // A dim * nbase
                               this->dim,          
                               this->vcc,            // B nbase * nband
                               this->nbase_x, 
-                              &this->zero,
+                              this->zero,
                               basis.get_pointer(),  // C dim * nband
                               this->dim
     );
@@ -670,12 +673,12 @@ void DiagoDavid<FPTYPE, Device>::refresh(const int& dim,
                               this->dim,                // m: row of A,C
                               nband,                    // n: col of B,C
                               nbase,                    // k: col of A, row of B
-                              &this->one,
+                              this->one,
                               this->sphi,               // A dim * nbase
                               this->dim,
                               this->vcc,                // B nbase * nband
                               this->nbase_x,
-                              &this->zero,
+                              this->zero,
                               &basis(nband, 0),         // C dim * nband
                               this->dim
     );
@@ -734,8 +737,8 @@ void DiagoDavid<FPTYPE, Device>::refresh(const int& dim,
         for (int i = 0; i < nbase; i++)
         {
             hcc_cpu[i * this->nbase_x + i] = eigenvalue_in[i];
-            scc_cpu[i * this->nbase_x + i] = this->one;
-            vcc_cpu[i * this->nbase_x + i] = this->one;
+            scc_cpu[i * this->nbase_x + i] = this->one[0];
+            vcc_cpu[i * this->nbase_x + i] = this->one[0];
         }
 
         syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, hcc, hcc_cpu, this->nbase_x * this->nbase_x);
@@ -753,9 +756,9 @@ void DiagoDavid<FPTYPE, Device>::refresh(const int& dim,
         {
             hcc[i * this->nbase_x + i] = eigenvalue_in[i];
             // sc(i, i) = this->one;
-            scc[i * this->nbase_x + i] = this->one;
+            scc[i * this->nbase_x + i] = this->one[0];
             // vc(i, i) = this->one;
-            vcc[i * this->nbase_x + i] = this->one;
+            vcc[i * this->nbase_x + i] = this->one[0];
         }
     }
     ModuleBase::timer::tick("DiagoDavid", "refresh");
@@ -801,12 +804,12 @@ void DiagoDavid<FPTYPE, Device>::SchmitOrth(const int& dim,
                                   mm_size, // m: row of A,C
                                   mm_size, // n: col of B,C
                                   this->dim, // k: col of A, row of B
-                                  &this->one, // alpha
+                                  this->one, // alpha
                                   &basis(m - mv_size + 1 - mm_size, 0), // A
                                   this->dim, // LDA: if(N) max(1,m) if(T) max(1,k)
                                   &sphi[m * this->dim], // B
                                   this->dim, // LDB: if(N) max(1,k) if(T) max(1,n)
-                                  &this->zero, // belta
+                                  this->zero, // belta
                                   &lagrange_m[m - mv_size + 1 - mm_size], // C
                                   nband // LDC: if(N) max(1, m)
         );
@@ -818,12 +821,12 @@ void DiagoDavid<FPTYPE, Device>::SchmitOrth(const int& dim,
                               'C',
                               this->dim,
                               mv_size,
-                              &this->one,
+                              this->one,
                               &basis(m - mv_size + 1, 0),
                               this->dim,
                               &sphi[m * this->dim],
                               1,
-                              &this->zero,
+                              this->zero,
                               &lagrange_m[m - mv_size + 1],
                               1);
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -841,12 +844,12 @@ void DiagoDavid<FPTYPE, Device>::SchmitOrth(const int& dim,
                               'N',
                               this->dim,
                               m,
-                              &this->neg_one,
+                              this->neg_one,
                               &basis(0, 0),
                               this->dim,
                               lagrange_m,
                               1,
-                              &this->one,
+                              this->one,
                               psi_m,
                               1);
 

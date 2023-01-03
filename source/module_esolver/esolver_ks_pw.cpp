@@ -131,7 +131,7 @@ namespace ModuleESolver
         }
 
         // denghui added 20221116
-        this->kspw_psi = this->device == psi::GpuDevice ?
+        this->kspw_psi = GlobalV::device_flag == "gpu" || GlobalV::precision_flag == "single" ?
                          new psi::Psi<std::complex<FPTYPE>, Device>(this->psi[0]) :
                          reinterpret_cast<psi::Psi<std::complex<FPTYPE>, Device>*> (this->psi);
 

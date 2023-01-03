@@ -183,7 +183,7 @@ void HSolverPW<FPTYPE, Device>::update_precondition(std::vector<FPTYPE> &h_diag,
 {
     h_diag.assign(h_diag.size(), 1.0);
     int precondition_type = 2;
-    const FPTYPE tpiba2 = this->wfc_basis->tpiba2;
+    const auto tpiba2 = static_cast<FPTYPE>(this->wfc_basis->tpiba2);
 
     //===========================================
     // Conjugate-Gradient diagonalization
@@ -194,7 +194,7 @@ void HSolverPW<FPTYPE, Device>::update_precondition(std::vector<FPTYPE> &h_diag,
     {
         for (int ig = 0; ig < npw; ig++)
         {
-            FPTYPE g2kin = this->wfc_basis->getgk2(ik,ig) * tpiba2;
+            FPTYPE g2kin = static_cast<FPTYPE>(this->wfc_basis->getgk2(ik,ig)) * tpiba2;
             h_diag[ig] = std::max(static_cast<FPTYPE>(1.0), g2kin);
         }
     }
@@ -202,7 +202,7 @@ void HSolverPW<FPTYPE, Device>::update_precondition(std::vector<FPTYPE> &h_diag,
     {
         for (int ig = 0; ig < npw; ig++)
         {
-            FPTYPE g2kin = this->wfc_basis->getgk2(ik,ig) * tpiba2;
+            FPTYPE g2kin = static_cast<FPTYPE>(this->wfc_basis->getgk2(ik,ig)) * tpiba2;
             h_diag[ig] = 1 + g2kin + sqrt(1 + (g2kin - 1) * (g2kin - 1));
         }
     }

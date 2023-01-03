@@ -6,8 +6,7 @@
 #include "module_base/timer.h"
 #include "module_psi/kernels/device.h"
 
-namespace elecstate
-{
+namespace elecstate {
 
 template<typename FPTYPE, typename Device>
 ElecStatePW<FPTYPE, Device>::ElecStatePW(ModulePW::PW_Basis_K *wfc_basis_in, Charge* chg_in, K_Vectors *pkv_in) : basis(wfc_basis_in)  
@@ -87,7 +86,7 @@ void ElecStatePW<FPTYPE, Device>::psiToRho(const psi::Psi<std::complex<FPTYPE>, 
         psi.fix_k(ik);
         this->updateRhoK(psi);
     }
-    if (psi::device::get_device_type<Device>(this->ctx) == psi::GpuDevice) {
+    if (GlobalV::device_flag == "gpu" || GlobalV::precision_flag == "single") {
         for (int ii = 0; ii < GlobalV::NSPIN; ii++) {
             castmem_var_d2h_op()(cpu_ctx, this->ctx, this->charge->rho[ii], this->rho[ii], this->charge->nrxx);
             if (XC_Functional::get_func_type() == 3) {

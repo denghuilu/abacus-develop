@@ -140,9 +140,7 @@ template <typename FPTYPE = double, typename Device = psi::DEVICE_CPU> class Dia
 
     using hpsi_info = typename hamilt::Operator<std::complex<FPTYPE>, Device>::hpsi_info;
 
-    std::complex<FPTYPE> one{1, 0};
-    std::complex<FPTYPE> zero{0, 0};
-    std::complex<FPTYPE> neg_one{-1, 0};
+    const std::complex<FPTYPE> * one = nullptr, * zero = nullptr, * neg_one = nullptr;
 };
 
 } // namespace hsolver

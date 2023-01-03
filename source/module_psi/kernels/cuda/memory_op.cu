@@ -29,8 +29,8 @@ __global__ void cast_memory(
 {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if(idx >= size) {return;}
-    thrust::complex<FPTYPE_out>* _out = reinterpret_cast<thrust::complex<FPTYPE_out>*>(out);
-    const thrust::complex<FPTYPE_in>* _in = reinterpret_cast<const thrust::complex<FPTYPE_in>*>(in);
+    auto* _out = reinterpret_cast<thrust::complex<FPTYPE_out>*>(out);
+    const auto* _in = reinterpret_cast<const thrust::complex<FPTYPE_in>*>(in);
     _out[idx] = static_cast<thrust::complex<FPTYPE_out>>(_in[idx]);
 }
 
