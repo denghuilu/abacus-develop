@@ -219,7 +219,7 @@ void HSolverPW<FPTYPE, Device>::update_precondition(std::vector<FPTYPE> &h_diag,
 template<typename FPTYPE, typename Device>
 FPTYPE HSolverPW<FPTYPE, Device>::cal_hsolerror()
 {
-    return this->diag_ethr * std::max(1.0, GlobalV::nelec);
+    return this->diag_ethr * static_cast<FPTYPE>(std::max(1.0, GlobalV::nelec));
 }
 
 template<typename FPTYPE, typename Device>

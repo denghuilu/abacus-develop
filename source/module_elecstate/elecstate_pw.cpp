@@ -159,7 +159,7 @@ void ElecStatePW<FPTYPE, Device>::rhoBandK(const psi::Psi<std::complex<FPTYPE>, 
 
             this->basis->recip_to_real(this->ctx, &psi(ibnd,npwx), this->wfcr_another_spin, ik);
 
-            const FPTYPE w1 = this->wg(ik, ibnd) / GlobalC::ucell.omega;
+            const auto w1 = static_cast<FPTYPE>(this->wg(ik, ibnd) / GlobalC::ucell.omega);
 
             // replaced by denghui at 20221110
             elecstate_pw_op()(this->ctx, GlobalV::DOMAG, GlobalV::DOMAG_Z, this->charge->nrxx, w1, this->rho, this->wfcr, this->wfcr_another_spin);
@@ -178,7 +178,7 @@ void ElecStatePW<FPTYPE, Device>::rhoBandK(const psi::Psi<std::complex<FPTYPE>, 
 
             this->basis->recip_to_real(this->ctx, &psi(ibnd,0), this->wfcr, ik);
 
-            const FPTYPE w1 = this->wg(ik, ibnd) / GlobalC::ucell.omega;
+            const auto w1 = static_cast<FPTYPE>(this->wg(ik, ibnd) / GlobalC::ucell.omega);
 
             if (w1 != 0.0)
             {
@@ -193,7 +193,7 @@ void ElecStatePW<FPTYPE, Device>::rhoBandK(const psi::Psi<std::complex<FPTYPE>, 
                 {
                     setmem_complex_op()(this->ctx, this->wfcr, 0,  this->charge->nrxx);
 
-                    meta_op()(this->ctx, ik, j, npw, this->basis->npwk_max, GlobalC::ucell.tpiba, this->basis->template get_gcar_data<FPTYPE>(), this->basis->template get_kvec_c_data<FPTYPE>(), &psi(ibnd, 0), this->wfcr);
+                    meta_op()(this->ctx, ik, j, npw, this->basis->npwk_max, static_cast<FPTYPE>(GlobalC::ucell.tpiba), this->basis->template get_gcar_data<FPTYPE>(), this->basis->template get_kvec_c_data<FPTYPE>(), &psi(ibnd, 0), this->wfcr);
 
                     this->basis->recip_to_real(this->ctx, this->wfcr, this->wfcr, ik);
 
