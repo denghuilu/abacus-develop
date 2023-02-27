@@ -35,13 +35,15 @@ TEST_F(PWTEST,test_other)
     ModuleBase::Vector3<double> *kvec_d = new ModuleBase::Vector3<double>[nks];
     kvec_d[0].set(0,0,0.5);
     kvec_d[1].set(0.5,0.5,0.5);
-    GlobalV::precision_flag = "double"; //temporary
+    // GlobalV::precision_flag = "double"; //temporary
+    pwktest.set_precision("double");
     pwktest.initgrids(2, latvec, 4,4,4);
     pwktest.initparameters(true, 20, nks, kvec_d);
     pwktest.setuptransform();
     pwktest.collect_local_pw();
 #ifdef __MIX_PRECISION
-    GlobalV::precision_flag = "single";
+    // GlobalV::precision_flag = "single";
+    pwktest.set_precision("single");
 #endif
     pwktest.initparameters(true, 8, nks, kvec_d);
     pwktest.setuptransform();

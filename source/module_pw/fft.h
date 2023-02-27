@@ -22,6 +22,7 @@
 
 //Temporary: we donot need psi. However some GPU ops are defined in psi, which should be moved into module_base or module_gpu
 #include "module_psi/psi.h"
+#include "module_base/global_variable.h"
 // #ifdef __MIX_PRECISION
 // #include "fftw3f.h"
 // #if defined(__FFTW3_MPI) && defined(__MPI)
@@ -139,6 +140,9 @@ private:
 
     float * s_rspace=nullptr; //real number space for r, [nplane * nx *ny]
     double * d_rspace=nullptr; //real number space for r, [nplane * nx *ny]
+
+    std::string device = GlobalV::device_flag;
+    std::string precision = GlobalV::precision_flag;
 };
 }
 

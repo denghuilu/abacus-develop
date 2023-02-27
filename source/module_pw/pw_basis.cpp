@@ -31,7 +31,7 @@ PW_Basis:: ~PW_Basis()
     delete[] ig2igg;
     delete[] gg_uniq;
 #if defined(__CUDA) || defined(__ROCM)
-    if (GlobalV::device_flag == "gpu") {
+    if (this->device == "gpu") {
         delmem_int_op()(gpu_ctx, this->d_is2fftixy);
     }
 #endif
