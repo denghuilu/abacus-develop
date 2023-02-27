@@ -260,6 +260,10 @@ public:
     using resmem_int_op = psi::memory::resize_memory_op<int, psi::DEVICE_GPU>;
     using delmem_int_op = psi::memory::delete_memory_op<int, psi::DEVICE_GPU>;
     using syncmem_int_h2d_op = psi::memory::synchronize_memory_op<int, psi::DEVICE_GPU, psi::DEVICE_CPU>;
+
+protected:
+    std::string device = GlobalV::device_flag;
+    std::string precision = GlobalV::precision_flag;
 };
 
 }

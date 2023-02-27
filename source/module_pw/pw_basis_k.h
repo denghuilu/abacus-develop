@@ -136,8 +136,6 @@ private:
     float * s_gcar = nullptr, * s_kvec_c = nullptr;
     double * d_gcar = nullptr, * d_kvec_c = nullptr;
 
-    std::string device = GlobalV::device_flag;
-    std::string precision = GlobalV::precision_flag;
 };
 
 }
