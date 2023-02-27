@@ -334,14 +334,6 @@ void PW_Basis_K::get_ig2ixyz_k()
 #endif
 }
 
-void PW_Basis_K::set_device(std::string device_) {
-    this->device = std::move(device_);
-}
-
-void PW_Basis_K::set_precision(std::string precision_) {
-    this->device = std::move(precision_);
-}
-
 template <>
 float * PW_Basis_K::get_kvec_c_data() const {
     return this->s_kvec_c;

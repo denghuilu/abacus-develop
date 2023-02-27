@@ -1,4 +1,6 @@
 #include "pw_basis.h"
+
+#include <utility>
 #include "../module_base/mymath.h"
 #include "../module_base/timer.h"
 #include "../module_base/global_function.h"
@@ -215,5 +217,12 @@ void PW_Basis::getfftixy2is(int * fftixy2is)
     }
 }
 
+void PW_Basis::set_device(std::string device_) {
+    this->device = std::move(device_);
+}
+
+void PW_Basis::set_precision(std::string precision_) {
+    this->precision = std::move(precision_);
+}
 
 }

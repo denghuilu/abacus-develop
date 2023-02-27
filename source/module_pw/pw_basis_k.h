@@ -129,9 +129,6 @@ public:
     template <typename FPTYPE> FPTYPE * get_gcar_data() const;
     template <typename FPTYPE> FPTYPE * get_kvec_c_data() const;
 
-    void set_device(std::string device_);
-    void set_precision(std::string precision_);
-
 private:
     float * s_gcar = nullptr, * s_kvec_c = nullptr;
     double * d_gcar = nullptr, * d_kvec_c = nullptr;

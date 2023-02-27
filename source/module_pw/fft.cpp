@@ -777,4 +777,12 @@ std::complex<double> * FFT::get_auxr_3d_data() {
 }
 #endif
 
+void FFT::set_device(std::string device_) {
+    this->device = std::move(device_);
 }
+
+void FFT::set_precision(std::string precision_) {
+    this->precision = std::move(precision_);
+}
+
+} // namespace ModulePW
