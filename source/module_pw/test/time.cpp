@@ -25,7 +25,7 @@ int main(int argc, char **argv)
     int nbands = 100;
 //----------------------------------------------------
 
-    ModulePW::PW_Basis pwtest1(GlobalV::device_flag, GlobalV::precision_flag);
+    ModulePW::PW_Basis pwtest1;
     pwtest1.initmpi(nproc, myrank, MPI_COMM_WORLD);
     if(Nx*Ny*Nz==0)
     {
@@ -39,7 +39,7 @@ int main(int argc, char **argv)
     }
     pwtest1.setuptransform();
 
-    ModulePW::PW_Basis pwtest2(GlobalV::device_flag, GlobalV::precision_flag);
+    ModulePW::PW_Basis pwtest2;
     pwtest2.initmpi(nproc, myrank, MPI_COMM_WORLD);
     if(Nx*Ny*Nz==0)
     {
@@ -53,7 +53,7 @@ int main(int argc, char **argv)
     }
     pwtest2.setuptransform();
 
-    ModulePW::PW_Basis pwtest3(GlobalV::device_flag, GlobalV::precision_flag);
+    ModulePW::PW_Basis pwtest3;
     pwtest3.initmpi(nproc, myrank, MPI_COMM_WORLD);
     if(Nx*Ny*Nz==0)
     {
@@ -67,7 +67,7 @@ int main(int argc, char **argv)
     }
     pwtest3.setuptransform();
 
-    ModulePW::PW_Basis pwtest4(GlobalV::device_flag, GlobalV::precision_flag);
+    ModulePW::PW_Basis pwtest4;
     pwtest4.initmpi(nproc, myrank, MPI_COMM_WORLD);
     if(Nx*Ny*Nz==0)
     {
