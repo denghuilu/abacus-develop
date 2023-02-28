@@ -54,6 +54,12 @@ class PW_Basis_K : public PW_Basis
 
 public:
     PW_Basis_K();
+    PW_Basis_K(std::string device_, std::string precision_) {
+        this->device = std::move(device_);
+        this->precision = std::move(precision_);
+        this->ft.set_device(this->device);
+        this->ft.set_precision(this->precision);
+    }
     ~PW_Basis_K();
 
     //init parameters of pw_basis_k class
