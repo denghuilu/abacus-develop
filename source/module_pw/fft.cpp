@@ -1,6 +1,7 @@
 #include "fft.h"
 
 #include "module_base/memory.h"
+#include "module_base/tool_quit.h"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -49,7 +50,8 @@ void FFT::clear()
             }
         }
     }
-#endif
+#endif // defined(__CUDA) || defined(__ROCM)
+#if defined(__ENABLE_FLOAT_FFTW)
     if (this->precision == "single") {
         this->cleanfFFT();
         if (c_auxg != nullptr) {
@@ -62,6 +64,7 @@ void FFT::clear()
         }
         s_rspace = nullptr;
     }
+#endif // defined(__ENABLE_FLOAT_FFTW)
 }
 
 void FFT:: initfft(int nx_in, int ny_in, int nz_in, int lixy_in, int rixy_in, int ns_in, int nplane_in, int nproc_in, bool gamma_only_in, bool xprime_in, bool mpifft_in)
@@ -105,13 +108,15 @@ void FFT:: initfft(int nx_in, int ny_in, int nz_in, int lixy_in, int rixy_in, in
                 resmem_zd_op()(gpu_ctx, this->z_auxr_3d, this->nx * this->ny * this->nz);
             }
         }
-#endif
+#endif // defined(__CUDA) || defined(__ROCM)
+#if defined(__ENABLE_FLOAT_FFTW)
         if (this->precision == "single") {
             c_auxg  = (std::complex<float> *) fftw_malloc(sizeof(fftwf_complex) * maxgrids);
             c_auxr  = (std::complex<float> *) fftw_malloc(sizeof(fftwf_complex) * maxgrids);
 			ModuleBase::Memory::record("FFT::grid_s", 2 * sizeof(fftwf_complex) * maxgrids);
             s_rspace = (float *) c_auxg;
         }
+#endif // defined(__ENABLE_FLOAT_FFTW)
 	}
 	else
 	{
@@ -125,9 +130,11 @@ void FFT:: setupFFT()
 	if(!this->mpifft)
 	{
 		this->initplan();
+#if defined(__ENABLE_FLOAT_FFTW)
         if (this->precision == "single") {
             this->initplanf();
         }
+#endif // defined(__ENABLE_FLOAT_FFTW)
 	}
 #if defined(__FFTW3_MPI) && defined(__MPI)
 	else
@@ -252,6 +259,7 @@ void FFT :: initplan()
 	destroyp = false;
 }
 
+#if defined(__ENABLE_FLOAT_FFTW)
 void FFT :: initplanf()
 {
 	//---------------------------------------------------------
@@ -324,7 +332,7 @@ void FFT :: initplanf()
 	}
 	destroypf = false;
 }
-
+#endif // defined(__ENABLE_FLOAT_FFTW)
 // void FFT :: initplan_mpi()
 // {
 
@@ -395,6 +403,7 @@ void FFT:: cleanFFT()
 	destroyp = true;
 }
 
+#if defined(__ENABLE_FLOAT_FFTW)
 void FFT:: cleanfFFT()
 {
 	if(destroypf==true) return;
@@ -435,12 +444,18 @@ void FFT:: cleanfFFT()
 	destroypf = true;
 	return;
 }
+#endif // defined(__ENABLE_FLOAT_FFTW)
 
 template <>
 void FFT::fftzfor(std::complex<float> * in, std::complex<float> * out)
 {
+#if defined(__ENABLE_FLOAT_FFTW)
     fftwf_execute_dft(this->planfzfor,(fftwf_complex *)in,(fftwf_complex *)out);
+#else
+    ModuleBase::WARNING_QUIT("fft", "Please compile ABACUS using the ENABLE_FLOAT_FFTW flag!");
+#endif // defined(__ENABLE_FLOAT_FFTW)
 }
+
 template <>
 void FFT::fftzfor(std::complex<double> * in, std::complex<double> * out)
 {
@@ -450,8 +465,13 @@ void FFT::fftzfor(std::complex<double> * in, std::complex<double> * out)
 template <>
 void FFT::fftzbac(std::complex<float> * in, std::complex<float> * out)
 {
+#if defined(__ENABLE_FLOAT_FFTW)
     fftwf_execute_dft(this->planfzbac,(fftwf_complex *)in, (fftwf_complex *)out);
+#else
+    ModuleBase::WARNING_QUIT("fft", "Please compile ABACUS using the ENABLE_FLOAT_FFTW flag!");
+#endif // defined(__ENABLE_FLOAT_FFTW)
 }
+
 template <>
 void FFT::fftzbac(std::complex<double> * in, std::complex<double> * out)
 {
@@ -461,6 +481,7 @@ void FFT::fftzbac(std::complex<double> * in, std::complex<double> * out)
 template <>
 void FFT::fftxyfor(std::complex<float> * in, std::complex<float> * out)
 {
+#if defined(__ENABLE_FLOAT_FFTW)
     int npy = this->nplane * this-> ny;
     if(this->xprime)
     {
@@ -485,7 +506,11 @@ void FFT::fftxyfor(std::complex<float> * in, std::complex<float> * out)
         fftwf_execute_dft( this->planfxfor1, (fftwf_complex *)in, (fftwf_complex *)out);
         fftwf_execute_dft( this->planfxfor2, (fftwf_complex *)&in[rixy*nplane], (fftwf_complex *)&out[rixy*nplane]);
     }
+#else
+    ModuleBase::WARNING_QUIT("fft", "Please compile ABACUS using the ENABLE_FLOAT_FFTW flag!");
+#endif // defined(__ENABLE_FLOAT_FFTW)
 }
+
 template <>
 void FFT::fftxyfor(std::complex<double> * in, std::complex<double> * out)
 {
@@ -518,6 +543,7 @@ void FFT::fftxyfor(std::complex<double> * in, std::complex<double> * out)
 template <>
 void FFT::fftxybac(std::complex<float> * in, std::complex<float> * out)
 {
+#if defined(__ENABLE_FLOAT_FFTW)
     int npy = this->nplane * this-> ny;
     if(this->xprime)
     {
@@ -542,7 +568,11 @@ void FFT::fftxybac(std::complex<float> * in, std::complex<float> * out)
             fftwf_execute_dft( this->planfybac, (fftwf_complex*)&in[i*npy], (fftwf_complex*)&out[i*npy] );
         }
     }
+#else
+    ModuleBase::WARNING_QUIT("fft", "Please compile ABACUS using the ENABLE_FLOAT_FFTW flag!");
+#endif // defined(__ENABLE_FLOAT_FFTW)
 }
+
 template <>
 void FFT::fftxybac(std::complex<double> * in, std::complex<double> * out)
 {
@@ -575,6 +605,7 @@ void FFT::fftxybac(std::complex<double> * in, std::complex<double> * out)
 template <>
 void FFT::fftxyr2c(float * in, std::complex<float> * out)
 {
+#if defined(__ENABLE_FLOAT_FFTW)
     int npy = this->nplane * this-> ny;
     if(this->xprime)
     {
@@ -594,7 +625,11 @@ void FFT::fftxyr2c(float * in, std::complex<float> * out)
 
         fftwf_execute_dft( this->planfxfor1, (fftwf_complex *)out, (fftwf_complex *)out);
     }
+#else
+    ModuleBase::WARNING_QUIT("fft", "Please compile ABACUS using the ENABLE_FLOAT_FFTW flag!");
+#endif // defined(__ENABLE_FLOAT_FFTW)
 }
+
 template <>
 void FFT::fftxyr2c(double * in, std::complex<double> * out)
 {
@@ -622,6 +657,7 @@ void FFT::fftxyr2c(double * in, std::complex<double> * out)
 template <>
 void FFT::fftxyc2r(std::complex<float>* in, float* out)
 {
+#if defined(__ENABLE_FLOAT_FFTW)
     int npy = this->nplane * this-> ny;
     if(this->xprime)
     {
@@ -641,7 +677,11 @@ void FFT::fftxyc2r(std::complex<float>* in, float* out)
             fftwf_execute_dft_c2r( this->planfyc2r, (fftwf_complex*)&in[i*npy], &out[i*npy] );
         }
     }
+#else
+    ModuleBase::WARNING_QUIT("fft", "Please compile ABACUS using the ENABLE_FLOAT_FFTW flag!");
+#endif // defined(__ENABLE_FLOAT_FFTW)
 }
+
 template <>
 void FFT::fftxyc2r(std::complex<double> * in, double * out)
 {
