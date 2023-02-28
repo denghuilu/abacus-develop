@@ -43,7 +43,7 @@ int main(int argc, char **argv)
       create_pools(totnproc, myrank, nproc);
       if(myrank < nproc)  
       {
-        ModulePW::PW_Basis pwtest(GlobalV::device_flag, GlobalV::precision_flag);
+        ModulePW::PW_Basis pwtest;
 #ifdef __MPI
         pwtest.initmpi(nproc, myrank, POOL_WORLD);
 #endif
@@ -133,7 +133,6 @@ int main(int argc, char **argv)
         
     }
 
-    MPI_Type_free(&mpicomplex);
     MPI_Finalize(); 
 
 

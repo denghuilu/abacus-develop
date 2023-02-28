@@ -22,7 +22,7 @@ TEST_F(PWTEST,test1_1_2)
     bool xprime = false;
     //--------------------------------------------------
 
-    ModulePW::PW_Basis pwtest(GlobalV::device_flag, GlobalV::precision_flag);
+    ModulePW::PW_Basis pwtest(device_flag, precision_flag);
 #ifdef __MPI
     pwtest.initmpi(nproc_in_pool, rank_in_pool, POOL_WORLD);
 #endif
