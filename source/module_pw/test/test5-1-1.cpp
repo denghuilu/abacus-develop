@@ -24,7 +24,7 @@ TEST_F(PWTEST,test5_1_1)
     int full_pw_dim = 1;
     //--------------------------------------------------
 
-    ModulePW::PW_Basis pwtest;
+    ModulePW::PW_Basis pwtest(GlobalV::device_flag, GlobalV::precision_flag);
 #ifdef __MPI
     pwtest.initmpi(nproc_in_pool, rank_in_pool, POOL_WORLD);
 #endif

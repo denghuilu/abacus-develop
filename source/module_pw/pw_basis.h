@@ -56,6 +56,7 @@ class PW_Basis
 public:
     std::string classname;
     PW_Basis();
+    PW_Basis(std::string device_, std::string precision_);
     virtual ~PW_Basis();
     //Init mpi parameters
 #ifdef __MPI
@@ -270,6 +271,6 @@ protected:
 };
 
 }
-#endif //PlaneWave 
+#endif // PWBASIS_H
 
 #include "./pw_basis_big.h" //temporary it will be removed
