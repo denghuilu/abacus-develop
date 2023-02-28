@@ -36,10 +36,6 @@ int main(int argc, char **argv)
     
     int kpar;
     kpar = 1;
-#ifdef __ENABLE_FLOAT_FFTW
-    //Temporary, pw_basis should not contain global variables
-    GlobalV::precision_flag = "single";
-#endif
 #ifdef __MPI
     int nproc, myrank,mypool;
     setupmpi(argc,argv,nproc, myrank);

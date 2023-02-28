@@ -17,8 +17,8 @@ using namespace std;
 TEST_F(PWTEST,test_other)
 {
     cout<<"Test other codes"<<endl;
-    ModulePW::PW_Basis pwtest;
-    ModulePW::PW_Basis_K pwktest;
+    ModulePW::PW_Basis pwtest(GlobalV::device_flag, GlobalV::precision_flag);
+    ModulePW::PW_Basis_K pwktest(GlobalV::device_flag, GlobalV::precision_flag);
     ModuleBase::Matrix3 latvec(0.2, 0, 0, 0, 1, 0, 0, 0, 1);
 #ifdef __MPI
     pwtest.initmpi(nproc_in_pool, rank_in_pool, POOL_WORLD);
@@ -35,13 +35,14 @@ TEST_F(PWTEST,test_other)
     ModuleBase::Vector3<double> *kvec_d = new ModuleBase::Vector3<double>[nks];
     kvec_d[0].set(0,0,0.5);
     kvec_d[1].set(0.5,0.5,0.5);
-    GlobalV::precision_flag = "double"; //temporary
+    // GlobalV::precision_flag = "double"; //temporary
+    pwktest.set_precision("double");
     pwktest.initgrids(2, latvec, 4,4,4);
     pwktest.initparameters(true, 20, nks, kvec_d);
     pwktest.setuptransform();
     pwktest.collect_local_pw();
 #ifdef __ENABLE_FLOAT_FFTW
-    GlobalV::precision_flag = "single";
+    pwktest.set_precision("single");
 #endif
     pwktest.initparameters(true, 8, nks, kvec_d);
     pwktest.setuptransform();
@@ -131,8 +132,8 @@ TEST_F(PWTEST,test_other)
 
     
     delete[] kvec_d;
-    ModulePW::PW_Basis *p_pw = new ModulePW::PW_Basis();
-    ModulePW::PW_Basis_K *p_pwk = new ModulePW::PW_Basis_K();
+    ModulePW::PW_Basis *p_pw = new ModulePW::PW_Basis(GlobalV::device_flag, GlobalV::precision_flag);
+    ModulePW::PW_Basis_K *p_pwk = new ModulePW::PW_Basis_K(GlobalV::device_flag, GlobalV::precision_flag);
     delete p_pw;
     delete p_pwk;
     fftw_cleanup();
