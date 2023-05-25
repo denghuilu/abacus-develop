@@ -2775,61 +2775,81 @@ These variables are used to control berry phase and wannier90 interface paramete
 ### nurse
 
 - **Type**: Boolean
-- **Description**: If set to 1, the Hamiltonian matrix and S matrix in each iteration will be written in output.
+- **Description**: Specify whether to output the Hamiltonian matrix and S matrix in each iteration.
+  - 0: No.
+  - 1: Yes.
 - **Default**: 0
 
 ### t_in_h
 
 - **Type**: Boolean
-- **Description**: If set to 0, then kinetic term will not be included in obtaining the Hamiltonian.
+- **Description**: Specify whether to include kinetic term in obtaining the Hamiltonian matrix.
+  - 0: No.
+  - 1: Yes.
 - **Default**: 1
 
 ### vl_in_h
 
 - **Type**: Boolean
-- **Description**: If set to 0, then local pseudopotential term will not be included in obtaining the Hamiltonian.
+- **Description**: Specify whether to include local pseudopotential term in obtaining the Hamiltonian matrix.
+  - 0: No.
+  - 1: Yes.
 - **Default**: 1
 
 ### vnl_in_h
 
 - **Type**: Boolean
-- **Description**:  If set to 0, then non-local pseudopotential term will not be included in obtaining the Hamiltonian.
+- **Description**: Specify whether to include non-local pseudopotential term in obtaining the Hamiltonian matrix.
+	- 0: No.
+	- 1: Yes.
 - **Default**: 1
 
 ### vh_in_h
 
 - **Type**: Boolean
-- **Description**:  If set to 0, then Hartree potential term will not be included in obtaining the Hamiltonian.
+- **Description**: Specify whether to include Hartree potential term in obtaining the Hamiltonian matrix.
+	- 0: No.
+	- 1: Yes.
 - **Default**: 1
 
 ### vion_in_h
 
 - **Type**: Boolean
-- **Description**:  If set to 0, then local ionic potential term will not be included in obtaining the Hamiltonian.
+- **Description**: Specify whether to include local ionic potential term in obtaining the Hamiltonian matrix.
+	- 0: No.
+	- 1: Yes.
 - **Default**: 1
 
 ### test_force
 
 - **Type**: Boolean
-- **Description**: If set to 1, then detailed components in forces will be written to output.
+- **Description**: Specify whether to output the detailed components in forces.
+	- 0: No.
+	- 1: Yes.
 - **Default**: 0
 
 ### test_stress
 
 - **Type**: Boolean
-- **Description**: If set to 1, then detailed components in stress will be written to output.
+- **Description**: Specify whether to output the detailed components in stress.
+	- 0: No.
+	- 1: Yes.
 - **Default**: 0
 
 ### colour
 
 - **Type**: Boolean
-- **Description**: If set to 1, output to terminal will have some color.
+- **Description**: Specify whether to set the colorful output in terminal.
+	- 0: No.
+	- 1: Yes.
 - **Default**: 0
 
 ### test_skip_ewald
 
 - **Type**: Boolean
-- **Description**: If set to 1, then ewald energy will not be calculated.
+- **Description**: Specify whether to skip the calculation of the ewald energy.
+	- 0: No.
+	- 1: Yes.
 - **Default**: 0
 
 [back to top](#full-list-of-input-keywords)
