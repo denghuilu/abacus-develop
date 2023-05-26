@@ -317,7 +317,6 @@
 		- [ocp](#ocp)
 		- [ocp\_set](#ocp_set)
 	- [Variables useful for debugging](#variables-useful-for-debugging)
-		- [nurse](#nurse)
 		- [t\_in\_h](#t_in_h)
 		- [vl\_in\_h](#vl_in_h)
 		- [vnl\_in\_h](#vnl_in_h)
@@ -2771,14 +2770,6 @@ These variables are used to control berry phase and wannier90 interface paramete
 [back to top](#full-list-of-input-keywords)
 
 ## Variables useful for debugging
-
-### nurse
-
-- **Type**: Boolean
-- **Description**: Specify whether to output the Hamiltonian matrix and S matrix in each iteration.
-  - 0: No.
-  - 1: Yes.
-- **Default**: 0
 
 ### t_in_h
 
