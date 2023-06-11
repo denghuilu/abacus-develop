@@ -41,9 +41,23 @@ static const char* _cusolverGetErrorEnum(cusolverStatus_t error)
     return "<unknown>";
 }
 
+template<typename FPTYPE>
+cudaDataType_t get_cuda_data_type (FPTYPE * /* datatype */);
+
+template<>
+cudaDataType_t get_cuda_data_type (float * /* datatype */) {
+    return CUDA_C_32F;
+}
+
+template<>
+cudaDataType_t get_cuda_data_type (double * /* datatype */) {
+    return CUDA_C_64F;
+}
+
+
 inline void cusolverAssert(cusolverStatus_t code, const char* file, int line, bool abort = true)
 {
-    if (code != CUBLAS_STATUS_SUCCESS)
+    if (code != CUSOLVER_STATUS_SUCCESS)
     {
         fprintf(stderr, "cuSOLVER Assert: %s %s %d\n", _cusolverGetErrorEnum(code), file, line);
         if (abort)
@@ -71,6 +85,30 @@ void destoryCUSOLVERhandle()
         cusolverErrcheck(cusolverDnDestroy(cusolver_H));
         cusolver_H = nullptr;
     }
+}
+
+static inline
+void xpotrf_wapper (const cublasFillMode_t& uplo, const int& n, std::complex<float> * A, const int& lda)
+{
+    int lwork;
+    cusolverDnCpotrf_bufferSize(cusolver_H, uplo, n, reinterpret_cast<float2 *>(A), n, &lwork);
+    float2* work;
+    cudaMalloc((void**)&work, lwork * sizeof(float2));
+    // Perform Cholesky decomposition
+    cusolverDnCpotrf(cusolver_H, uplo, n, reinterpret_cast<float2 *>(A), n, work, lwork, nullptr);
+    cudaFree(work);
+}
+
+static inline
+void xpotrf_wapper (const cublasFillMode_t& uplo, const int& n, std::complex<double> * A, const int& lda)
+{
+    int lwork;
+    cusolverDnZpotrf_bufferSize(cusolver_H, uplo, n, reinterpret_cast<double2 *>(A), n, &lwork);
+    double2* work;
+    cudaMalloc((void**)&work, lwork * sizeof(double2));
+    // Perform Cholesky decomposition
+    cusolverDnZpotrf(cusolver_H, uplo, n, reinterpret_cast<double2 *>(A), n, work, lwork, nullptr);
+    cudaFree(work);
 }
 
 static inline
@@ -229,9 +267,60 @@ struct dnevx_op<FPTYPE, psi::DEVICE_GPU> {
     }
 };
 
+template <typename FPTYPE>
+struct dnevd_op<FPTYPE, psi::DEVICE_GPU> {
+    void operator()(const psi::DEVICE_GPU* dev, std::complex<FPTYPE>* A, const int& dim, FPTYPE* W)
+    {
+        // A to V
+        xheevd_wrapper(CUBLAS_FILL_MODE_UPPER, dim, A, dim, W);
+    }
+};
+
+template <typename FPTYPE>
+struct zpotrf_op<FPTYPE, psi::DEVICE_GPU> {
+    void operator()(const psi::DEVICE_GPU* /*dev*/,std::complex<FPTYPE>* A, const int& dim)
+    {
+        xpotrf_wapper(CUBLAS_FILL_MODE_UPPER, dim, A, dim);
+    }
+};
+
+template <typename FPTYPE>
+struct ztrtri_op<FPTYPE, psi::DEVICE_GPU> {
+    void operator()(const psi::DEVICE_GPU* /*dev*/,std::complex<FPTYPE>* A, const int& dim) {
+        FPTYPE *d_work = nullptr;
+        size_t d_lwork = 0;
+        FPTYPE *h_work = nullptr;
+        size_t h_lwork = 0;
+
+        cusolverDnXtrtri_bufferSize(cusolver_H, CUBLAS_FILL_MODE_UPPER, CUBLAS_DIAG_NON_UNIT, dim,
+                                    get_cuda_data_type<FPTYPE>(d_work),
+                                    reinterpret_cast<void *>(A), dim, &d_lwork,
+                                    &h_lwork);
+
+        cudaMalloc(reinterpret_cast<void **>(&d_work), d_lwork);
+
+        if (h_lwork) {
+            h_work = (FPTYPE *)malloc(h_lwork);
+        }
+
+        cusolverDnXtrtri(cusolver_H, CUBLAS_FILL_MODE_UPPER, CUBLAS_DIAG_NON_UNIT, dim, get_cuda_data_type<FPTYPE>(d_work),
+                         reinterpret_cast<void *>(A), dim,
+                         d_work, d_lwork, h_work, h_lwork, nullptr);
+
+        cudaFree(d_work);
+        free(h_work);
+    }
+};
+
+template struct zpotrf_op<float, psi::DEVICE_GPU>;
+template struct ztrtri_op<float, psi::DEVICE_GPU>;
 template struct dngvd_op<float, psi::DEVICE_GPU>;
+template struct dnevd_op<float, psi::DEVICE_GPU>;
 template struct dnevx_op<float, psi::DEVICE_GPU>;
 template struct dngvd_op<double, psi::DEVICE_GPU>;
 template struct dnevx_op<double, psi::DEVICE_GPU>;
+template struct dnevd_op<double, psi::DEVICE_GPU>;
+template struct zpotrf_op<double, psi::DEVICE_GPU>;
+template struct ztrtri_op<double, psi::DEVICE_GPU>;
 
 } // namespace hsolver

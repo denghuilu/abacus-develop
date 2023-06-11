@@ -11,6 +11,63 @@
 namespace hsolver
 {
 
+template <typename FPTYPE, typename Device>
+struct ztrtri_op {
+    /// @brief DNEVD computes all the eigenvalues and eigenvectors of a complex
+    /// Hermitian-definite eigenproblem. If eigenvectors are desired, it uses a divide and conquer algorithm.
+    ///
+    /// In this op, the CPU version is implemented through the `evd` interface, and the CUDA version
+    /// is implemented through the `evd` interface.
+    /// API doc:
+    /// 1. zheevd: https://netlib.org/lapack/explore-html/df/d9a/group__complex16_h_eeigen_ga74fdf9b5a16c90d8b7a589dec5ca058a.html
+    /// 2. cusolverDnZheevd: https://docs.nvidia.com/cuda/cusolver/index.html#cusolverdn-t-sygvd
+    ///
+    /// Input Parameters
+    ///     @param dev : the type of device, specify the device type used for this calclation!
+    ///     @param A : the hermitian matrix A in A x=lambda x (col major), Also A would store the output eigenvectors
+    ///     @param dim : the dim of the hermitian matrix A
+    void operator()(const Device* dev, std::complex<FPTYPE>* A, const int& dim);
+};
+
+template <typename FPTYPE, typename Device>
+struct zpotrf_op {
+    /// @brief DNEVD computes all the eigenvalues and eigenvectors of a complex
+    /// Hermitian-definite eigenproblem. If eigenvectors are desired, it uses a divide and conquer algorithm.
+    ///
+    /// In this op, the CPU version is implemented through the `evd` interface, and the CUDA version
+    /// is implemented through the `evd` interface.
+    /// API doc:
+    /// 1. zheevd: https://netlib.org/lapack/explore-html/df/d9a/group__complex16_h_eeigen_ga74fdf9b5a16c90d8b7a589dec5ca058a.html
+    /// 2. cusolverDnZheevd: https://docs.nvidia.com/cuda/cusolver/index.html#cusolverdn-t-sygvd
+    ///
+    /// Input Parameters
+    ///     @param dev : the type of device, specify the device type used for this calclation!
+    ///     @param A : the hermitian matrix A in A x=lambda x (col major), Also A would store the output eigenvectors
+    ///     @param dim : the dim of the hermitian matrix A
+    void operator()(const Device* dev, std::complex<FPTYPE>* A, const int& dim);
+};
+
+
+template <typename FPTYPE, typename Device>
+struct dnevd_op {
+    /// @brief DNEVD computes all the eigenvalues and eigenvectors of a complex
+    /// Hermitian-definite eigenproblem. If eigenvectors are desired, it uses a divide and conquer algorithm.
+    ///
+    /// In this op, the CPU version is implemented through the `evd` interface, and the CUDA version
+    /// is implemented through the `evd` interface.
+    /// API doc:
+    /// 1. zheevd: https://netlib.org/lapack/explore-html/df/d9a/group__complex16_h_eeigen_ga74fdf9b5a16c90d8b7a589dec5ca058a.html
+    /// 2. cusolverDnZheevd: https://docs.nvidia.com/cuda/cusolver/index.html#cusolverdn-t-sygvd
+    ///
+    /// Input Parameters
+    ///     @param dev : the type of device, specify the device type used for this calclation!
+    ///     @param A : the hermitian matrix A in A x=lambda x (col major), Also A would store the output eigenvectors
+    ///     @param dim : the dim of the hermitian matrix A
+    /// Output Parameter
+    ///     @param W : calculated eigenvalues
+    void operator()(const Device* dev, std::complex<FPTYPE>* A, const int& dim, FPTYPE* W);
+};
+
 template <typename FPTYPE, typename Device> struct dngvd_op
 {
     /// @brief DNGVD computes all the eigenvalues and eigenvectors of a complex generalized

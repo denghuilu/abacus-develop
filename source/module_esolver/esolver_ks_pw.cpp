@@ -403,6 +403,7 @@ void ESolver_KS_PW<FPTYPE, Device>::hamilt2density(const int istep, const int it
             hsolver::DiagoIterAssist<FPTYPE, Device>::need_subspace = true;
         }
 
+        hsolver::DiagoIterAssist<FPTYPE, Device>::SCF_ITER = iter;
         hsolver::DiagoIterAssist<FPTYPE, Device>::PW_DIAG_THR = ethr;
         hsolver::DiagoIterAssist<FPTYPE, Device>::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
         this->phsol->solve(this->p_hamilt, this->kspw_psi[0], this->pelec, GlobalV::KS_SOLVER);

@@ -55,6 +55,101 @@ inline void cublasAssert(cublasStatus_t code, const char *file, int line, bool a
 namespace hsolver
 {
 
+template <typename FPTYPE, typename Device>
+struct set_matrix_op {
+    /// @brief set a square matrix to upper or lower format
+    ///
+    /// Input Parameters
+    /// \param dev : the type of computing device
+    /// \param uplo : format, 'U' for upper, 'L' for lower
+    /// \param A : input matrix A [dim: row x col, column major, lda = lda]
+    /// \param dim : size of A
+    ///
+    /// \return res : the result vector
+    /// FPTYPE : dot product result
+    void operator() (
+        const Device* /* dev */,
+        const char & uplo,
+        std::complex<FPTYPE>* A,
+        const int &dim);
+};
+
+template <typename FPTYPE, typename Device>
+struct line_minimize_all_band_op {
+    /// @brief zdot_real_op computes the dot product of the given complex arrays(treated as float arrays).
+    /// And there's may have MPI communications while enabling planewave parallization strategy.
+    ///
+    /// Input Parameters
+    /// \param dev : the type of computing device
+    /// \param A : input array arr
+    /// \param dim : size of A
+    /// \param lda : leading dimention of A
+    /// \param batch : batch size, the size of the result array res
+    ///
+    /// \return res : the result vector
+    /// FPTYPE : dot product result
+    void operator() (
+        const Device* /* dev */,
+        std::complex<FPTYPE>* grad_out,
+        std::complex<FPTYPE>* hgrad_out,
+        std::complex<FPTYPE>* psi_out,
+        std::complex<FPTYPE>* hpsi_out,
+        const int &n_basis,
+        const int &n_basis_max,
+        const int &n_band);
+};
+
+template <typename FPTYPE, typename Device>
+struct mat_add_inplace_op {
+    /// @brief calculate A += B, where A and B are both matrix
+    ///
+    /// Input Parameters
+    /// \param dev : the type of computing device
+    /// \param A : input matrix A [dim: row x col, column major, lda = lda]
+    /// \param B : input matrix B [dim: row x col, column major, lda = lda]
+    /// \param row : size of A
+    /// \param lda : leading dimention of A
+    /// \param col : batch size, the size of the result array res
+    ///
+    /// \return res : the result vector
+    /// FPTYPE : dot product result
+    void operator() (
+        const Device* /* dev */,
+        std::complex<FPTYPE>* A,
+        std::complex<FPTYPE>* B,
+        const int &n_basis,
+        const int &n_band,
+        const int &n_basis_max);
+};
+
+template <typename FPTYPE, typename Device>
+struct calc_grad_all_band_op {
+    /// @brief zdot_real_op computes the dot product of the given complex arrays(treated as float arrays).
+    /// And there's may have MPI communications while enabling planewave parallization strategy.
+    ///
+    /// Input Parameters
+    /// \param dev : the type of computing device
+    /// \param A : input array arr
+    /// \param dim : size of A
+    /// \param lda : leading dimention of A
+    /// \param batch : batch size, the size of the result array res
+    ///
+    /// \return res : the result vector
+    /// FPTYPE : dot product result
+    void operator() (
+        const Device* /* dev */,
+        const FPTYPE* prec_in,
+        FPTYPE* err_out,
+        FPTYPE* beta_out,
+        std::complex<FPTYPE>* psi_out,
+        std::complex<FPTYPE>* hpsi_out,
+        std::complex<FPTYPE>* grad_out,
+        std::complex<FPTYPE>* grad_old_out,
+        const int &n_basis,
+        const int &n_basis_max,
+        const int &n_band);
+};
+
 template <typename FPTYPE, typename Device> 
 struct zdot_real_op {
   /// @brief zdot_real_op computes the dot product of the given complex arrays(treated as float arrays).
@@ -323,6 +418,55 @@ template <typename FPTYPE, typename Device> struct matrixSetToAnother
 };
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
+
+template <typename FPTYPE>
+struct set_matrix_op<FPTYPE, psi::DEVICE_GPU> {
+  void operator() (
+    const psi::DEVICE_GPU* /* dev */,
+    const char &uplo,
+    std::complex<FPTYPE>* A,
+    const int &dim);
+};
+
+template <typename FPTYPE>
+struct line_minimize_all_band_op<FPTYPE, psi::DEVICE_GPU> {
+  void operator()(
+    const psi::DEVICE_GPU* /* dev */,
+    std::complex<FPTYPE>* grad_out,
+    std::complex<FPTYPE>* hgrad_out,
+    std::complex<FPTYPE>* psi_out,
+    std::complex<FPTYPE>* hpsi_out,
+    const int &n_basis,
+    const int &n_basis_max,
+    const int &n_band);
+};
+
+template <typename FPTYPE>
+struct mat_add_inplace_op<FPTYPE, psi::DEVICE_GPU> {
+  void operator()(
+    const psi::DEVICE_GPU* /* dev */,
+    std::complex<FPTYPE>* A,
+    std::complex<FPTYPE>* B,
+    const int &row,
+    const int &col,
+    const int &lda);
+};
+
+template <typename FPTYPE>
+struct calc_grad_all_band_op<FPTYPE, psi::DEVICE_GPU> {
+  void operator()(
+    const psi::DEVICE_GPU* /* dev */,
+    const FPTYPE* prec_in,
+    FPTYPE* err_out,
+    FPTYPE* beta_out,
+    std::complex<FPTYPE>* psi_out,
+    std::complex<FPTYPE>* hpsi_out,
+    std::complex<FPTYPE>* grad_out,
+    std::complex<FPTYPE>* grad_old_out,
+    const int &n_basis,
+    const int &n_basis_max,
+    const int &n_band);
+};
 
 // Partially specialize functor for psi::GpuDevice.
 template <typename FPTYPE> 

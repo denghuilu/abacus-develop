@@ -5,6 +5,60 @@
 namespace hsolver {
 
 template <typename FPTYPE>
+struct zpotrf_op<FPTYPE, psi::DEVICE_CPU> {
+    void operator()(const psi::DEVICE_CPU* /*dev*/,std::complex<FPTYPE>* A, const int& dim)
+    {
+        int info = 0;
+        LapackConnector::potrf('L', dim, A, dim, info);
+        assert(0 == info);
+    }
+};
+
+template <typename FPTYPE>
+struct ztrtri_op<FPTYPE, psi::DEVICE_CPU> {
+    void operator()(const psi::DEVICE_CPU* /*dev*/,std::complex<FPTYPE>* A, const int& dim)
+    {
+        int info = 0;
+        LapackConnector::trtri('U', 'N', dim, A, dim, info);
+        assert(0 == info);
+    }
+};
+
+template <typename FPTYPE>
+struct dnevd_op<FPTYPE, psi::DEVICE_CPU> {
+    void operator()(
+        const psi::DEVICE_CPU* /*dev*/,
+        std::complex<FPTYPE>* A,
+        const int& dim,
+        FPTYPE* W)
+    {
+        int info = 0;
+        int lwork = 2 * dim + dim * dim;
+        auto work = new std::complex<FPTYPE>[lwork];
+        ModuleBase::GlobalFunc::ZEROS(work, lwork);
+
+        int lrwork = 1 + 5 * dim + 2 * dim * dim;
+        auto rwork = new FPTYPE[lrwork];
+        ModuleBase::GlobalFunc::ZEROS(rwork, lrwork);
+
+        int liwork = 3 + 5 * dim;
+        auto iwork = new int[liwork];
+        ModuleBase::GlobalFunc::ZEROS(iwork, liwork);
+
+        //===========================
+        // calculate all eigenvalues
+        //===========================
+        LapackConnector::xheevd('V', 'U', dim, A, dim, W,  work, lwork, rwork, lrwork, iwork, liwork, info);
+
+        assert(0 == info);
+
+        delete[] work;
+        delete[] rwork;
+        delete[] iwork;
+    }
+};
+
+template <typename FPTYPE>
 struct dngvd_op<FPTYPE, psi::DEVICE_CPU> {
     void operator()(
         const psi::DEVICE_CPU *d,
@@ -138,6 +192,14 @@ struct dnevx_op<FPTYPE, psi::DEVICE_CPU> {
     }
 };
 
+template struct zpotrf_op<float, psi::DEVICE_CPU>;
+template struct zpotrf_op<double, psi::DEVICE_CPU>;
+
+template struct ztrtri_op<float, psi::DEVICE_CPU>;
+template struct ztrtri_op<double, psi::DEVICE_CPU>;
+
+template struct dnevd_op<float, psi::DEVICE_CPU>;
+template struct dnevd_op<double, psi::DEVICE_CPU>;
 
 template struct dngvd_op<float, psi::DEVICE_CPU>;
 template struct dngvd_op<double, psi::DEVICE_CPU>;

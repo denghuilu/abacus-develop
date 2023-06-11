@@ -35,12 +35,15 @@ struct resize_memory_op<FPTYPE, psi::DEVICE_CPU> {
 
 template <typename FPTYPE> 
 struct set_memory_op<FPTYPE, psi::DEVICE_CPU> {
-  void operator()(const psi::DEVICE_CPU* dev, FPTYPE* arr, const int var, const size_t size) {
-    ModuleBase::OMP_PARALLEL([&](int num_thread, int thread_id) {
-      int beg, len;
-      ModuleBase::BLOCK_TASK_DIST_1D(num_thread, thread_id, size, (size_t)4096/sizeof(FPTYPE), beg, len);
-      memset(arr + beg, var, sizeof(FPTYPE)*len);
-    });
+  void operator()(const psi::DEVICE_CPU* dev, FPTYPE* arr, const FPTYPE var, const size_t size) {
+    //ModuleBase::OMP_PARALLEL([&](int num_thread, int thread_id) {
+    //  int beg, len;
+    //  ModuleBase::BLOCK_TASK_DIST_1D(num_thread, thread_id, size, (size_t)4096/sizeof(FPTYPE), beg, len);
+    //  memset(arr + beg, var, sizeof(FPTYPE)*len);
+    //});
+    for (int ii = 0; ii < size; ii++) {
+        arr[ii] = var;
+    }
   }
 };
 

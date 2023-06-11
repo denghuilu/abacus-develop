@@ -37,7 +37,7 @@ struct set_memory_op {
   ///
   /// Output Parameters
   /// \param arr : output array initialized by the input value
-  void operator()(const Device* dev, FPTYPE* arr, const int var, const size_t size);
+  void operator()(const Device* dev, FPTYPE* arr, const FPTYPE var, const size_t size);
 };
 
 template <typename FPTYPE, typename Device_out, typename Device_in> 
@@ -99,7 +99,7 @@ struct resize_memory_op<FPTYPE, psi::DEVICE_GPU> {
 
 template <typename FPTYPE> 
 struct set_memory_op<FPTYPE, psi::DEVICE_GPU> {
-  void operator()(const psi::DEVICE_GPU* dev, FPTYPE* arr, const int var, const size_t size);
+  void operator()(const psi::DEVICE_GPU* dev, FPTYPE* arr, const FPTYPE var, const size_t size);
 };
 
 template <typename FPTYPE> 
@@ -197,6 +197,7 @@ using castmem_c2z_d2h_op = psi::memory::cast_memory_op<std::complex<double>, std
 using castmem_z2c_h2h_op = psi::memory::cast_memory_op<std::complex<float>, std::complex<double>, psi::DEVICE_CPU, psi::DEVICE_CPU>;
 using castmem_z2c_h2d_op = psi::memory::cast_memory_op<std::complex<float>, std::complex<double>, psi::DEVICE_GPU, psi::DEVICE_CPU>;
 using castmem_z2c_d2h_op = psi::memory::cast_memory_op<std::complex<float>, std::complex<double>, psi::DEVICE_CPU, psi::DEVICE_GPU>;
+using castmem_z2z_h2d_op = psi::memory::cast_memory_op<std::complex<double>, std::complex<double>, psi::DEVICE_GPU, psi::DEVICE_CPU>;
 
 static psi::DEVICE_CPU * cpu_ctx = {};
 static psi::DEVICE_GPU * gpu_ctx = {};

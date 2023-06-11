@@ -37,6 +37,75 @@ extern "C"
                  std::complex<double>* work, int* lwork, double* rwork, int* lrwork,
                  int* iwork, int* liwork, int* info);
 
+    /**
+    * @brief Computes the inverse of a triangular matrix A, where A is an upper or lower triangular matrix.
+    *
+    * @param uplo Indicates whether the matrix A is upper ('U') or lower ('L') triangular.
+    * @param diag Indicates whether the diagonal elements of A are unit ('U') or non-unit ('N').
+    * @param n The number of rows and columns of the matrix A.
+    * @param a Pointer to the first entry of the matrix A. On exit, it contains the inverse of A.
+    * @param lda The leading dimension of the array containing A, which must be at least max(1, n).
+    * @param info An integer output parameter. If info = 0, the matrix A was successfully inverted. If info = i > 0, the i-th diagonal element of A is zero, and the matrix cannot be inverted.
+    */
+    void ctrtri_(const char* uplo, const char* diag, const int* n, std::complex<float>* a, const int* lda, int* info);
+
+    /**
+    * @brief Computes the inverse of a triangular matrix A, where A is an upper or lower triangular matrix.
+    *
+    * @param uplo Indicates whether the matrix A is upper ('U') or lower ('L') triangular.
+    * @param diag Indicates whether the diagonal elements of A are unit ('U') or non-unit ('N').
+    * @param n The number of rows and columns of the matrix A.
+    * @param a Pointer to the first entry of the matrix A. On exit, it contains the inverse of A.
+    * @param lda The leading dimension of the array containing A, which must be at least max(1, n).
+    * @param info An integer output parameter. If info = 0, the matrix A was successfully inverted. If info = i > 0, the i-th diagonal element of A is zero, and the matrix cannot be inverted.
+    */
+    void ztrtri_(const char* uplo, const char* diag, const int* n, std::complex<double>* a, const int* lda, int* info);
+
+
+/**
+     * @brief Computes all eigenvalues and eigenvectors of a complex Hermitian matrix using the divide and conquer algorithm.
+     *
+     * @param jobz      Indicates whether eigenvectors should be computed or not. If 'N', only eigenvalues are computed. If 'V', both eigenvalues and eigenvectors are computed.
+     * @param uplo      Indicates whether the upper or lower triangular part of the Hermitian matrix should be used. If 'U', the upper triangular part is used. If 'L', the lower triangular part is used.
+     * @param n         The order of the matrix A.
+     * @param a         A pointer to the first element of the matrix. On exit, if jobz = 'V', the eigenvectors are stored in this array.
+     * @param lda       The leading dimension of A.
+     * @param w         A pointer to the first element of the output eigenvalue array.
+     * @param work      A workspace array.
+     * @param lwork     The size of the workspace array.
+     * @param rwork     A workspace array containing real numbers.
+     * @param lrwork    The size of the real workspace array.
+     * @param iwork     A workspace array containing integers.
+     * @param liwork    The size of the integer workspace array.
+     * @param info      An integer variable that stores the exit status of the function. If info = 0, the computation was successful. If info > 0, then the corresponding eigenvalue failed to converge.
+     */
+    void cheevd_(const char *jobz, const char *uplo, const int *n,
+             std::complex<float> *a, const int *lda, float *w,
+             std::complex<float> *work, int *lwork, float *rwork, int *lrwork,
+             int *iwork, int *liwork, int *info);
+
+    /**
+     * @brief Computes all eigenvalues and eigenvectors of a complex Hermitian matrix using the divide and conquer algorithm.
+     *
+     * @param jobz      Indicates whether eigenvectors should be computed or not. If 'N', only eigenvalues are computed. If 'V', both eigenvalues and eigenvectors are computed.
+     * @param uplo      Indicates whether the upper or lower triangular part of the Hermitian matrix should be used. If 'U', the upper triangular part is used. If 'L', the lower triangular part is used.
+     * @param n         The order of the matrix A.
+     * @param a         A pointer to the first element of the matrix. On exit, if jobz = 'V', the eigenvectors are stored in this array.
+     * @param lda       The leading dimension of A.
+     * @param w         A pointer to the first element of the output eigenvalue array.
+     * @param work      A workspace array.
+     * @param lwork     The size of the workspace array.
+     * @param rwork     A workspace array containing real numbers.
+     * @param lrwork    The size of the real workspace array.
+     * @param iwork     A workspace array containing integers.
+     * @param liwork    The size of the integer workspace array.
+     * @param info      An integer variable that stores the exit status of the function. If info = 0, the computation was successful. If info > 0, then the corresponding eigenvalue failed to converge.
+     */
+    void zheevd_(const char *jobz, const char *uplo, const int *n,
+                 std::complex<double> *a, const int *lda, double *w,
+                 std::complex<double> *work, int *lwork, double *rwork, int *lrwork,
+                 int *iwork, int *liwork, int *info);
+
     void cheevx_(const char* jobz, const char* range, const char* uplo, const int* n,
              std::complex<float> *a, const int* lda,
              const float* vl, const float* vu, const int* il, const int* iu, const float* abstol,
@@ -342,6 +411,52 @@ public:
                 a, &lda, b, &ldb, w,
                 work, &lwork, rwork, &lrwork,
                 iwork, &liwork, &info);
+    }
+
+    // wrap function of fortran lapack routine zhegvd. (pointer version)
+    static inline
+    void xheev(const char jobz, const char uplo, const int n,
+                std::complex<float>* a, const int lda, float* w,
+                std::complex<float>* work, int lwork, float* rwork, int& info)
+    {
+        // call the fortran routine
+        cheev_(&jobz, &uplo, &n, a, &lda, w, work, &lwork, rwork, &info);
+    }
+
+    static inline
+    void xheev(const char jobz, const char uplo, const int n,
+                std::complex<double>* a, const int lda, double* w,
+                std::complex<double>* work, int lwork, double* rwork, int& info)
+    {
+        // call the fortran routine
+        zheev_(&jobz, &uplo, &n, a, &lda, w, work, &lwork, rwork, &info);
+    }
+
+    // wrap function of fortran lapack routine zhegvd.
+    static inline
+    void xheevd(const char jobz, const char uplo, const int n,
+                std::complex<float>* a, const int lda, float* w,
+                std::complex<float>* work, int lwork, float* rwork, int lrwork,
+                int* iwork, int liwork, int& info)
+    {
+        // call the fortran routine
+        cheevd_( &jobz, &uplo, &n,
+                 a, &lda, w,
+                 work, &lwork, rwork, &lrwork,
+                 iwork, &liwork, &info);
+    }
+    // wrap function of fortran lapack routine zhegvd.
+    static inline
+    void xheevd(const char jobz, const char uplo, const int n,
+                std::complex<double>* a, const int lda, double* w,
+                std::complex<double>* work, int lwork, double* rwork, int lrwork,
+                int* iwork, int liwork, int& info)
+    {
+        // call the fortran routine
+        zheevd_( &jobz, &uplo, &n,
+                 a, &lda, w,
+                 work, &lwork, rwork, &lrwork,
+                 iwork, &liwork, &info);
     }
 
     // wrap function of fortran lapack routine zheevx.
@@ -665,6 +780,17 @@ public:
 		const char uplo_changed = change_uplo(uplo);
 		zpotri_( &uplo_changed, &n, A, &lda, &info);		
 	}
+
+    static inline
+    void trtri( const char &uplo, const char &diag, const int &n, std::complex<float>* A, const int &lda, int &info )
+    {
+        ctrtri_( &uplo, &diag, &n, A, &lda, &info);
+    }
+    static inline
+    void trtri( const char &uplo, const char &diag, const int &n, std::complex<double>* A, const int &lda, int &info)
+    {
+        ztrtri_( &uplo, &diag, &n, A, &lda, &info);
+    }
 
 	// Peize Lin add 2016-07-09
 	static inline

@@ -283,6 +283,10 @@ void ElecState::print_etot(const bool converged,
     {
         label = "CU";
     }
+    else if (ks_solver_type == "all-band-cg")
+    {
+        label = "AB";
+    }
     else
     {
         ModuleBase::WARNING_QUIT("Energy", "print_etot found unknown ks_solver_type");

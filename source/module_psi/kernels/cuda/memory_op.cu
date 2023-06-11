@@ -10,6 +10,17 @@
 namespace psi {
 namespace memory {
 
+template <typename FPTYPE>
+__global__ void set_memory(
+        FPTYPE* arr,
+        const FPTYPE var,
+        const int size)
+{
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if(idx >= size) {return;}
+    arr[idx] = var;
+}
+
 template <typename FPTYPE_out, typename FPTYPE_in>
 __global__ void cast_memory(
         FPTYPE_out* out,
@@ -51,10 +62,12 @@ template <typename FPTYPE>
 void set_memory_op<FPTYPE, psi::DEVICE_GPU>::operator()(
     const psi::DEVICE_GPU* dev, 
     FPTYPE* arr, 
-    const int var, 
+    const FPTYPE var,
     const size_t size) 
 {
-  cudaMemset(arr, var, sizeof(FPTYPE) * size);  
+  // cudaMemset(arr, var, sizeof(FPTYPE) * size);
+  const int block = (size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+  set_memory<<<block, THREADS_PER_BLOCK>>>(arr, var, size);
 }
 
 template <typename FPTYPE> 
