@@ -100,7 +100,13 @@ class Tensor {
      */
     template <typename T>
     T* data() const {
-        if (!do_type_check<T>()) {
+        if ((std::is_same<T, float>::value && data_type_ != DataType::DT_FLOAT) ||
+            (std::is_same<T, int>::value && data_type_ != DataType::DT_INT) ||
+            (std::is_same<T, int64_t>::value && data_type_ != DataType::DT_INT64) ||
+            (std::is_same<T, double>::value && data_type_ != DataType::DT_DOUBLE) ||
+            (std::is_same<T, std::complex<float>>::value && data_type_ != DataType::DT_COMPLEX) ||
+            (std::is_same<T, std::complex<double>>::value && data_type_ != DataType::DT_COMPLEX_DOUBLE))
+        {
             std::cerr << "Tensor data type does not match requested type." << std::endl;
             exit(EXIT_FAILURE);
         }
@@ -300,9 +306,8 @@ class Tensor {
         if (index > shape_.dim_size(static_cast<int>(shape_.ndim() - 1))) {
             throw std::invalid_argument("Invalid index, index of the inner-most must less than the inner-most shape size!");
         }
-        do_type_check<T>();
 
-        return buffer_.base<T>() + index * shape_.dim_size(static_cast<int>(shape_.ndim()) - 1);
+        return data<T>() + index * shape_.dim_size(static_cast<int>(shape_.ndim()) - 1);
     }
 
 private:
@@ -331,30 +336,6 @@ private:
      * @brief The TensorBuffer object that holds the data of the tensor.
      */
     TensorBuffer buffer_;
-
-    /**
-     * @brief Performs a type check to verify if the given data type matches the tensor's data type.
-     *
-     * @tparam T The data type to check.
-     *
-     * @return True if the data type matches, false otherwise.
-     *
-     * @note This function compares the template parameter `T` with the data type of the tensor.
-     * If the data type does not match, an error message is printed and the program exits.
-     */
-    template <typename T>
-    bool do_type_check() const {
-        if ((std::is_same<T, float>::value && data_type_ != DataType::DT_FLOAT) ||
-            (std::is_same<T, int>::value && data_type_ != DataType::DT_INT) ||
-            (std::is_same<T, int64_t>::value && data_type_ != DataType::DT_INT64) ||
-            (std::is_same<T, double>::value && data_type_ != DataType::DT_DOUBLE) ||
-            (std::is_same<T, std::complex<float>>::value && data_type_ != DataType::DT_COMPLEX) ||
-            (std::is_same<T, std::complex<double>>::value && data_type_ != DataType::DT_COMPLEX_DOUBLE))
-        {
-            return false;
-        }
-        return true;
-    }
 
     /**
      * @brief Calculates the linear index corresponding to the given indices.
