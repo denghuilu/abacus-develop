@@ -39,7 +39,7 @@ option(COMMIT_INFO "Print commit information in log" ON)
 if(COMMIT_INFO)
   find_program(GIT_EXECUTABLE git)
   if(NOT GIT_EXECUTABLE)
-    message(WARNING "Git is not found, and abacus will not output the git commit information in log. \n\
+    message(STATUS "Git is not found, and abacus will not output the git commit information in log. \n\
 You can install Git first and reinstall abacus.")
   else()
     message(STATUS "Found git: attempting to get commit info...")
@@ -63,7 +63,7 @@ You can install Git first and reinstall abacus.")
       message(STATUS "Current commit hash: ${GIT_COMMIT_HASH}")
       message(STATUS "Last commit date: ${GIT_COMMIT_DATE}")
     else()
-      message(WARNING "Failed to get git commit info")
+      message(STATUS "Failed to get git commit info")
     endif()
   endif()
 endif()
@@ -111,9 +111,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if (CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 5)
   message(WARNING "GCC4 is not fully supported.")
 endif()
-add_compile_options(-Wno-write-strings
-  -Wno-tautological-constant-compare # Suppress warnings introduced by Torch using a LLVM compiler
-)
+# add_compile_options(-Wno-write-strings
+#   -Wno-tautological-constant-compare # Suppress warnings introduced by Torch using a LLVM compiler
+# )
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-write-strings -Wno-tautological-constant-compare")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-write-strings -Wno-tautological-constant-compare")
+
 set(FETCHCONTENT_QUIET FALSE) # Notify user when cloning git repo
 
 find_program(CCACHE ccache)
@@ -189,7 +192,9 @@ target_link_libraries(${ABACUS_BIN_NAME} Threads::Threads)
 if(USE_OPENMP)
   find_package(OpenMP REQUIRED)
   target_link_libraries(${ABACUS_BIN_NAME} OpenMP::OpenMP_CXX)
-  add_compile_options(${OpenMP_CXX_FLAGS})
+  # add_compile_options(${OpenMP_CXX_FLAGS})
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_CXX_FLAGS}")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
   add_link_options(${OpenMP_CXX_LIBRARIES})
 endif()
 

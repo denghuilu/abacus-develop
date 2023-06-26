@@ -93,27 +93,11 @@ void DiagoAllBandCG<FPTYPE, Device>::line_minimize(
         std::complex<FPTYPE> * hpsi_out)
 {
     line_minimize_all_band_op()(this->ctx, grad_in, hgrad_in, psi_out, hpsi_out, this->n_basis, this->n_basis_max, this->n_band);
-    // std::vector<std::complex<FPTYPE>> h_psi(this->n_band * this->n_basis_max);
-    // std::vector<std::complex<FPTYPE>> h_hpsi(this->n_band * this->n_basis_max);
-    // std::vector<std::complex<FPTYPE>> h_grad(this->n_band * this->n_basis_max);
-    // std::vector<std::complex<FPTYPE>> h_hgrad(this->n_band * this->n_basis_max);
-    //
-    // syncmem_complex_d2h_op()(this->cpu_ctx, this->ctx, h_psi.data(), psi_out, h_psi.size());
-    // syncmem_complex_d2h_op()(this->cpu_ctx, this->ctx, h_hpsi.data(), hpsi_out, h_hpsi.size());
-    // syncmem_complex_d2h_op()(this->cpu_ctx, this->ctx, h_grad.data(), grad_in, h_grad.size());
-    // syncmem_complex_d2h_op()(this->cpu_ctx, this->ctx, h_hgrad.data(), hgrad_in, h_hgrad.size());
-    // // calc_grad_all_band_op()(this->ctx, prec_in, err_out, beta_out, psi_in, hpsi_in, grad_out, grad_old_out, this->n_basis, this->n_basis_max, this->n_band);
-    // // line_minimize_all_band_op()(this->ctx, grad_in, hgrad_in, psi_out, hpsi_out, this->n_basis, this->n_basis_max, this->n_band);
-    // hsolver::line_minimize_all_band_op<FPTYPE, psi::DEVICE_CPU>()(this->cpu_ctx, h_grad.data(), h_hgrad.data(), h_psi.data(), h_hpsi.data(), this->n_basis, this->n_basis_max, this->n_band);
-    // syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, psi_out, h_psi.data(), h_psi.size());
-    // syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, hpsi_out, h_hpsi.data(), h_hpsi.size());
-    // syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, grad_in, h_grad.data(), h_grad.size());
-    // syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, hgrad_in, h_hgrad.data(), h_hgrad.size());
 }
 
 // Finally, the last two!
 template<typename FPTYPE, typename Device>
-void DiagoAllBandCG<FPTYPE, Device>::orth_cholesky(std::complex<FPTYPE> * workspace_in, std::complex<FPTYPE> * psi_out, std::complex<FPTYPE> * hsub_out)
+void DiagoAllBandCG<FPTYPE, Device>::orth_cholesky(std::complex<FPTYPE> * workspace_in, std::complex<FPTYPE> * psi_out, std::complex<FPTYPE> * hpsi_out, std::complex<FPTYPE> * hsub_out)
 {
     // hsub_out = transc(psi_out) * psi_out
     gemm_op<FPTYPE, Device>()(
@@ -139,23 +123,8 @@ void DiagoAllBandCG<FPTYPE, Device>::orth_cholesky(std::complex<FPTYPE> * worksp
     zpotrf_op()(this->ctx, hsub_out, this->n_band);
     ztrtri_op()(this->ctx, hsub_out, this->n_band);
 
-    gemm_op<FPTYPE, Device>()(
-        this->ctx,
-        'N',
-        'N',
-        this->n_basis,
-        this->n_band,
-        this->n_band,
-        this->one,
-        psi_out,
-        this->n_basis_max,
-        hsub_out,
-        this->n_band,
-        this->zero,
-        workspace_in,
-        this->n_basis_max
-    );
-    syncmem_complex_op()(this->ctx, this->ctx, psi_out, workspace_in, this->n_basis * this->n_band);
+    this->rotate_wf(hsub_out, psi_out, workspace_in);
+    this->rotate_wf(hsub_out, hpsi_out, workspace_in);
 }
 
 template<typename FPTYPE, typename Device>
@@ -169,30 +138,6 @@ void DiagoAllBandCG<FPTYPE, Device>::calc_grad_all_band(
         std::complex<FPTYPE> * grad_old_out)
 {
     calc_grad_all_band_op()(this->ctx, prec_in, err_out, beta_out, psi_in, hpsi_in, grad_out, grad_old_out, this->n_basis, this->n_basis_max, this->n_band);
-    // std::vector<FPTYPE> h_prec_in(this->n_basis_max);
-    // std::vector<FPTYPE> h_err(this->n_band);
-    // std::vector<FPTYPE> h_beta(this->n_band);
-    // std::vector<std::complex<FPTYPE>> h_psi(this->n_band * this->n_basis_max);
-    // std::vector<std::complex<FPTYPE>> h_hpsi(this->n_band * this->n_basis_max);
-    // std::vector<std::complex<FPTYPE>> h_grad(this->n_band * this->n_basis_max);
-    // std::vector<std::complex<FPTYPE>> h_grad_old(this->n_band * this->n_basis_max);
-    // syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, h_prec_in.data(), prec_in, h_prec_in.size());
-    // syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, h_err.data(), err_out, h_err.size());
-    // syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, h_beta.data(), beta_out, h_beta.size());
-    //
-    // syncmem_complex_d2h_op()(this->cpu_ctx, this->ctx, h_psi.data(), psi_in, h_psi.size());
-    // syncmem_complex_d2h_op()(this->cpu_ctx, this->ctx, h_hpsi.data(), hpsi_in, h_hpsi.size());
-    // syncmem_complex_d2h_op()(this->cpu_ctx, this->ctx, h_grad.data(), grad_out, h_grad.size());
-    // syncmem_complex_d2h_op()(this->cpu_ctx, this->ctx, h_grad_old.data(), grad_old_out, h_grad_old.size());
-    // // calc_grad_all_band_op()(this->ctx, prec_in, err_out, beta_out, psi_in, hpsi_in, grad_out, grad_old_out, this->n_basis, this->n_basis_max, this->n_band);
-    // hsolver::calc_grad_all_band_op<FPTYPE, psi::DEVICE_CPU>()(this->cpu_ctx, h_prec_in.data(), h_err.data(), h_beta.data(), h_psi.data(), h_hpsi.data(), h_grad.data(), h_grad_old.data(), this->n_basis, this->n_basis_max, this->n_band);
-    // syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, psi_in, h_psi.data(), h_psi.size());
-    // syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, hpsi_in, h_hpsi.data(), h_hpsi.size());
-    // syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, grad_out, h_grad.data(), h_grad.size());
-    // syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, grad_old_out, h_grad_old.data(), h_grad_old.size());
-    //
-    // syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, err_out, h_err.data(), h_err.size());
-    // syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, beta_out, h_beta.data(), h_beta.size());
 }
 
 template<typename FPTYPE, typename Device>
@@ -290,50 +235,6 @@ void DiagoAllBandCG<FPTYPE, Device>::calc_hpsi_all_band(
     psi::Range all_bands_range(1, psi_in.get_current_k(), 0, psi_in.get_nbands() - 1);
     hpsi_info info(&psi_in, all_bands_range, hpsi_out);
     hamilt_in->ops->hPsi(info);
-}
-
-template<typename FPTYPE, typename Device>
-void DiagoAllBandCG<FPTYPE, Device>::output_matrix(const std::complex<FPTYPE> * mat, const char * file_name, const int nrow, const int ncol)
-{
-    const std::complex<FPTYPE> * matrix = mat;
-    std::vector<std::complex<FPTYPE>>h_mat(nrow * ncol);
-    if (this->device == psi::GpuDevice) {
-        syncmem_complex_d2h_op()(this->cpu_ctx, this->ctx, h_mat.data(), mat, nrow * ncol);
-        matrix = h_mat.data();
-    }
-
-    std::fstream fout(file_name, std::ios::out);
-    for (int ii = 0; ii < nrow; ii++) {
-        for (int jj = 0; jj < ncol; jj++) {
-            // fout << setprecision(16) << mat[ii * ncol + jj].real() << "\n";
-            // fout << setprecision(16) << mat[ii * ncol + jj].imag() << "\n";
-            fout << setprecision(16) << matrix[ii * ncol + jj] << "\n";
-        }
-        fout << std::endl;
-    }
-    fout.close();
-}
-
-template<typename FPTYPE, typename Device>
-void DiagoAllBandCG<FPTYPE, Device>::output_matrix(const FPTYPE * mat, const char * file_name, const int nrow, const int ncol)
-{
-    const FPTYPE * matrix = mat;
-    std::vector<FPTYPE>h_mat(nrow * ncol);
-    if (this->device == psi::GpuDevice) {
-        syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, h_mat.data(), mat, nrow * ncol);
-        matrix = h_mat.data();
-    }
-
-    std::fstream fout(file_name, std::ios::out);
-    for (int ii = 0; ii < nrow; ii++) {
-        for (int jj = 0; jj < ncol; jj++) {
-            // fout << setprecision(16) << mat[ii * ncol + jj].real() << "\n";
-            // fout << setprecision(16) << mat[ii * ncol + jj].imag() << "\n";
-            fout << setprecision(16) << matrix[ii * ncol + jj] << "\n";
-        }
-        fout << std::endl;
-    }
-    fout.close();
 }
 
 template<typename FPTYPE, typename Device>
@@ -439,9 +340,7 @@ void DiagoAllBandCG<FPTYPE, Device>::diag(
         this->line_minimize(this->grad, this->hgrad, this->psi, this->hpsi);
 
         // orthogonal psi by cholesky method
-        this->orth_cholesky(this->work, this->psi, this->hsub);
-
-        this->rotate_wf(this->hsub, this->hpsi, this->work);
+        this->orth_cholesky(this->work, this->psi, this->hpsi, this->hsub);
 
     } while (ntry < max_iter && this->test_error(this->err_st, this->all_band_cg_thr));
     this->calc_hsub_all_band(hamilt_in, psi_in, this->psi, this->hpsi, this->hsub, this->work, this->eigen);

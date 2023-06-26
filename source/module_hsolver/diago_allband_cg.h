@@ -286,9 +286,10 @@ class DiagoAllBandCG : public DiagH<FPTYPE, Device>
      *
      * @param workspace_in Workspace memory, [dim: n_basis x n_band, column major, lda = n_basis_max]..
      * @param psi_out Input and output wavefunction array. [dim: n_basis x n_band, column major, lda = n_basis_max].
+     * @param hpsi_out Input and output hpsi array. [dim: n_basis x n_band, column major, lda = n_basis_max].
      * @param hsub_out Input Hamiltonian product array. [dim: n_band x n_band, column major, lda = n_band].
      */
-    void orth_cholesky(std::complex<FPTYPE> * workspace_in, std::complex<FPTYPE> * psi_out, std::complex<FPTYPE> * hsub_out);
+    void orth_cholesky(std::complex<FPTYPE> * workspace_in, std::complex<FPTYPE> * psi_out, std::complex<FPTYPE> * hpsi_out, std::complex<FPTYPE> * hsub_out);
 
     /**
      * @brief Checks if the error satisfies the given threshold.
@@ -311,8 +312,6 @@ class DiagoAllBandCG : public DiagH<FPTYPE, Device>
     using delmem_complex_op = psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
     using resmem_complex_op = psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
     using syncmem_complex_op = psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, Device>;
-    using syncmem_complex_d2h_op = psi::memory::synchronize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU, Device>;
-    using syncmem_complex_h2d_op = psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, psi::DEVICE_CPU>;
 
     using dnevd_op = hsolver::dnevd_op<FPTYPE, Device>;
     using zpotrf_op = hsolver::zpotrf_op<FPTYPE, Device>;
@@ -323,9 +322,6 @@ class DiagoAllBandCG : public DiagH<FPTYPE, Device>
     using line_minimize_all_band_op = hsolver::line_minimize_all_band_op<FPTYPE, Device>;
 
     const std::complex<FPTYPE> * one = nullptr, * zero = nullptr, * neg_one = nullptr;
-
-    void output_matrix(const FPTYPE * mat, const char * file_name, const int nrow, const int ncol);
-    void output_matrix(const std::complex<FPTYPE> * mat, const char * file_name, const int nrow, const int ncol);
 };
 
 } // namespace hsolver
