@@ -31,7 +31,6 @@ option(GIT_SUBMODULE "Check submodules during build" ON)
 option(DEBUG_INFO "Print message for developers to debug." OFF)
 # Do not enable it if generated code will run on different CPUs
 option(ENABLE_NATIVE_OPTIMIZATION "Enable compilation optimization for the native machine's CPU type" OFF)
-# Do not use the new container by default.
 option(ENABLE_CONTAINER "Enable the new multi-device container." ON)
 option(COMMIT_INFO "Print commit information in log" ON)
 
