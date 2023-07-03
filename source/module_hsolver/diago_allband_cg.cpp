@@ -190,13 +190,13 @@ void DiagoAllBandCG<FPTYPE, Device>::orth_projection(
         this->n_basis_max,
         hsub_in,
         this->n_band,
-        this->zero,
-        workspace_in,
+        this->one,
+        grad_out,
         this->n_basis_max
     );
 
     // grad_out += workspace_in
-    mat_add_inplace_op()(this->ctx, grad_out, workspace_in, this->n_basis, this->n_band, this->n_basis_max);
+    // mat_add_inplace_op()(this->ctx, grad_out, workspace_in, this->n_basis, this->n_band, this->n_basis_max);
 }
 
 template<typename FPTYPE, typename Device>
