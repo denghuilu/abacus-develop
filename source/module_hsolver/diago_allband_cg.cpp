@@ -156,7 +156,6 @@ template<typename FPTYPE, typename Device>
 void DiagoAllBandCG<FPTYPE, Device>::orth_projection(
         const std::complex<FPTYPE> * psi_in,
         std::complex<FPTYPE> * hsub_in,
-        std::complex<FPTYPE> * workspace_in,
         std::complex<FPTYPE> * grad_out)
 {
     // hsub_in = transc(psi_in) x grad_out
@@ -325,7 +324,7 @@ void DiagoAllBandCG<FPTYPE, Device>::diag(
         // Orthogonalize column vectors g_i in matrix grad to column vectors p_j in matrix psi
         // for all 'j less or equal to i'.
         // Note: hsub and work are only used to store intermediate variables of gemm operator.
-        this->orth_projection(this->psi, this->hsub, this->work,this->grad);
+        this->orth_projection(this->psi, this->hsub, this->grad);
 
         // this->grad_old = this->grad;
         syncmem_complex_op()(this->ctx, this->ctx, this->grad_old, this->grad, n_basis_max * n_band);

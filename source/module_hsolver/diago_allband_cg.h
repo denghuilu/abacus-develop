@@ -254,13 +254,11 @@ class DiagoAllBandCG : public DiagH<FPTYPE, Device>
      *
      * @param psi_in Input wavefunction array, [dim: n_basis x n_band, column major, lda = n_basis_max].
      * @param hsub_in Subspace matrix input, [dim: n_band x n_band, column major, lda = n_band].
-     * @param workspace_in Workspace memory, [dim: n_basis x n_band, column major, lda = n_basis_max]..
      * @param grad_out Input and output gradient array, [dim: n_basis x n_band, column major, lda = n_basis_max]..
      * @note This function is a member of the DiagoAllBandCG class.
      */
     void orth_projection(const std::complex<FPTYPE> * psi_in,
             std::complex<FPTYPE> * hsub_in,
-            std::complex<FPTYPE> * workspace_in,
             std::complex<FPTYPE> * grad_out);
 
     /**
