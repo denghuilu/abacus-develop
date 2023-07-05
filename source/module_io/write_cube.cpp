@@ -22,11 +22,6 @@ void ModuleIO::write_cube(
 	const int &out_fermi)
 {
 	ModuleBase::TITLE("ModuleIO","write_cube");
-	
-	if (GlobalV::out_chg==0 && GlobalV::out_pot==0) 
-	{
-		return;
-	}
 
 	time_t start, end;
 	std::ofstream ofs_cube;
@@ -117,9 +112,9 @@ void ModuleIO::write_cube(
 						 << " " << fac*ucell->atoms[it].tau[ia].z << std::endl;
 			}
 		}
-		ofs_cube.unsetf(ostream::fixed);
+		ofs_cube.unsetf(std::ostream::fixed);
 		ofs_cube << std::setprecision(precision);
-		ofs_cube << scientific;
+		ofs_cube << std::scientific;
 	}
 
 #ifdef __MPI

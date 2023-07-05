@@ -279,6 +279,7 @@ OBJS_ORBITAL=ORB_atomic.o\
       ORB_table_alpha.o\
       ORB_table_beta.o\
       ORB_table_phi.o\
+      parallel_2d.o\
       parallel_orbitals.o\
 
 OBJS_PSI=psi.o\
@@ -364,8 +365,10 @@ OBJS_IO=input.o\
     write_potential.o\
     write_dipole.o\
     write_wfc_r.o\
+    output_log.o\
     output_rho.o\
     output_potential.o\
+    output_mat_sparse.o\
 
 OBJS_IO_LCAO=cal_r_overlap_R.o\
       write_orb_info.o\
