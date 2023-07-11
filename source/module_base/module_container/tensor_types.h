@@ -7,6 +7,7 @@
 
 #include <complex>
 #include <iostream>
+#include "module_psi/kernels/types.h"
 
 namespace container {
 
@@ -66,6 +67,14 @@ struct DeviceTypeToEnum<DEVICE_CPU> {
 };
 template <>
 struct DeviceTypeToEnum<DEVICE_GPU> {
+    static constexpr DeviceType value = DeviceType::GpuDevice;
+};
+template <>
+struct DeviceTypeToEnum<psi::DEVICE_CPU> {
+    static constexpr DeviceType value = DeviceType::CpuDevice;
+};
+template <>
+struct DeviceTypeToEnum<psi::DEVICE_GPU> {
     static constexpr DeviceType value = DeviceType::GpuDevice;
 };
 

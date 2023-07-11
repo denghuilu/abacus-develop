@@ -187,6 +187,9 @@ Tensor Tensor::slice(const std::vector<int> &start, const std::vector<int> &size
 
 // Resize tensor object with the given tensor_shape
 void Tensor::resize(const TensorShape& new_shape) {
+    if (!this->buffer_.OwnsMemory()) {
+        throw std::logic_error("Mapped tensor object does not support the resize method.");
+    }
     if (shape_ == new_shape) {
         return;
     }
