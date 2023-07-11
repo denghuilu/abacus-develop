@@ -307,7 +307,7 @@ void DiagoAllBandCG<FPTYPE, Device>::diag(
         FPTYPE *eigenvalue_in)
 {
     // Get the pointer of the input psi
-    this->psi = new container::Tensor(psi_in.get_pointer(), cx_type, device_type, {this->n_band, this->n_basis_max});
+    this->psi = new container::TensorMap(psi_in.get_pointer(), cx_type, device_type, {this->n_band, this->n_basis_max});
     // Update the precondition array
     this->calc_prec();
 
@@ -356,7 +356,7 @@ void DiagoAllBandCG<FPTYPE, Device>::diag(
     this->calc_hsub_all_band(hamilt_in, psi_in, this->psi, this->hpsi, this->hsub, this->work, this->eigen);
     syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, eigenvalue_in, this->eigen->template data<FPTYPE>(), this->n_band);
 
-    delete this->psi;
+    delete (container::TensorMap*)this->psi;
 }
 
 template class DiagoAllBandCG<float, psi::DEVICE_CPU>;

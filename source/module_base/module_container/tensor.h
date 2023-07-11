@@ -243,19 +243,6 @@ class Tensor {
     virtual void resize(const TensorShape& new_shape);
 
     /**
-     * @brief Constructor that creates a tensor with the given data pointer,
-     * data type, device type and shape.
-     *
-     * This tensor does not own memory.
-     *
-     * @param data The data pointer.
-     * @param data_type The data type of the tensor.
-     * @param device The data type of the tensor.
-     * @param shape The shape of the tensor.
-     */
-    Tensor(void * data, DataType data_type, DeviceType device, const TensorShape& shape);
-
-    /**
      * @brief Get the Allocator object according to the given device type.
      *
      * @param device The device type.
@@ -312,7 +299,7 @@ class Tensor {
         return data<T>() + index * shape_.dim_size(static_cast<int>(shape_.ndim()) - 1);
     }
 
-private:
+protected:
 
     /**
      * @brief The data type of the tensor.

@@ -99,7 +99,7 @@ namespace container {
 
    private:
      void *data_;  ///< Pointer to the underlying data buffer.
-     Allocator* const alloc_; ///< Pointer to the allocator used for memory allocation.
+     Allocator* alloc_; ///< Pointer to the allocator used for memory allocation.
      bool owns_memory; ///< Bool to indicate whether this tensor owns it's memory.
 };
 

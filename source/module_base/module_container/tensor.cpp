@@ -18,14 +18,6 @@ Tensor::Tensor(DataType data_type, const TensorShape& shape)
           allocator_(GetAllocator(device_)),
           buffer_(allocator_, allocator_->allocate(shape.NumElements() * SizeOfType(data_type))) {}
 
-// Constructor that creates a tensor with the given data pointer, data type, device type and shape.
-Tensor::Tensor(void *data, DataType data_type, DeviceType device, const TensorShape &shape)
-        : data_type_(data_type),
-          shape_(shape),
-          device_(device),
-          allocator_(GetAllocator(device_)),
-          buffer_(data) {}
-
 // Construct a new Tensor object with the given data type and shape.
 Tensor::Tensor(DataType data_type, DeviceType device, const TensorShape& shape)
         : data_type_(data_type),
