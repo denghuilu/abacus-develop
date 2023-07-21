@@ -38,28 +38,85 @@ enum EinsumDimensionType {
 bool ValidateEinsumEquation(
     const std::string& equation,
     std::vector<std::string>& input_subscripts,
-    std::vector<std::string>& output_subscript);
+    std::string& output_subscript);
 
 // Parses and validates the equation and the input shapes. Single character
 // labels are integerized, and we populate input and output label subscripts
 // and corresponding counts. Also create the mapping from (named) labels to
 // their EinsumDimensionType.
 bool ParseEinsumEquation(
-    const std::string& equation, std::vector<std::string>& input_labels,
-    std::vector<std::string>& output_labels,
-    std::vector<EinsumDimensionType>* label_types,
-    std::vector<int>& input_label_counts,
+    const std::string& equation, 
+    std::vector<std::vector<int>>& input_labels,
+    std::vector<int>& output_labels,
+    std::vector<EinsumDimensionType>& label_types,
+    std::vector<std::vector<int>>& input_label_counts,
     std::vector<int>& output_label_counts,
     std::vector<bool>& input_has_ellipsis,
-    std::vector<bool>& output_has_ellipsis);
+    bool& output_has_ellipsis);
 
+/**
+ * @brief Records and validates the label to dimension mapping for a given axis in the input tensor.
+ *
+ * This function records the mapping of a label to its corresponding dimension for a specific axis in the input tensor.
+ * It also validates that the label and dimension mapping is consistent with previous recordings, ensuring that the 
+ * same label is not mapped to different dimensions along different axes.
+ *
+ * @param label The label representing a dimension in the input tensor.
+ * @param axis The axis index in the input tensor for which the label is being recorded.
+ * @param input The input tensor for which the label-to-dimension mapping is being recorded.
+ * @param label_to_dim_sizes An unordered map that stores the label-to-dimension mapping for all axes.
+ *                           It maps each label to its corresponding dimension for each axis.
+ *
+ * @return Returns true if the label is successfully recorded and validated, false otherwise.
+ */
 bool RecordLabelToDimension(
     const int label,
     const int axis,
     const Tensor& input,
     std::unordered_map<int, int64_t>& label_to_dim_sizes);
 
-}   // namespace utils
+
+/**
+ * @brief Functor for performing reduce operation on a given Tensor.
+ * 
+ * This functor is used to execute a reduce operation on the input Tensor
+ * based on the specified label types, counts, and labels. The resulting 
+ * reduced Tensor is stored in the output Tensor.
+ *
+ * @tparam T The data type of the Tensor elements.
+ * @tparam Device The device type where the Tensor operation is performed.
+ */
+template <typename T, typename Device>
+struct reduce_op {
+    /**
+     * @brief Execute the reduce operation on the input Tensor.
+     *
+     * This function performs a reduce operation on the input Tensor based on
+     * the provided label information. It reduces dimensions with specified 
+     * labels and stores the result in the output Tensor.
+     *
+     * @param input The input Tensor on which the reduce operation is performed.
+     * @param label_types A vector specifying the type of each input dimension. 
+     *                    Possible types are EinsumDimensionType::kBroadcasting,
+     *                    EinsumDimensionType::kFree, and EinsumDimensionType::kBatch.
+     * @param label_counts A vector containing the counts of each label in the input Tensor.
+     * @param labels A vector of integers representing the labels of the input Tensor dimensions.
+     * @param free_labels A vector of integers representing the labels of free dimensions.
+     * @param swap_free_and_contract A pointer to a boolean variable. If the value is set to true, 
+     *                               it indicates that free and contract dimensions should be swapped.
+     * @param output The output Tensor where the reduced result is stored.
+     */
+    bool operator()(
+        const Tensor& input,
+        const std::vector<EinsumDimensionType>& label_types,
+        const std::vector<int>& label_counts,
+        const std::vector<int>& labels,
+        const std::vector<int>& free_labels,
+        bool * swap_free_and_contract,
+        Tensor& output);
+};
+
+} // namespace utils
 }   // namespace container
 
 #endif  // CONTAINER_KERNELS_EINSUM_OP_UTIL_H_
