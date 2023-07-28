@@ -12,17 +12,13 @@
 namespace container {
 namespace einsum_utils {
 
-
 // Do some initialization work for bcast dimensions
-static bool prepare_bcast(
-        std::vector<int64_t>& x,
-        std::vector<int64_t>& y,
-        int64_t& x_batch_size,
-        int64_t& y_batch_size,
-        TensorShape& output_batch_shape)
+static BCast prepare_bcast(
+        std::vector<int64_t>& x_,
+        std::vector<int64_t>& y_)
 {
-    const std::vector<int64_t> x_resized(x.begin(), x.end() - 2);
-    const std::vector<int64_t> y_resized(y.begin(), y.end() - 2);
+    const std::vector<int64_t> x(x_.begin(), x_.end() - 2);
+    const std::vector<int64_t> y(y_.begin(), y_.end() - 2);
 
     // Safely multiplies dimensions taking into account symbolic shapes.
     auto mul_dims = [](int64_t dim1, int64_t dim2) -> int64_t {
@@ -32,23 +28,145 @@ static bool prepare_bcast(
         return dim1 * dim2;
     };
 
-    bool all_equal = true, broadcasting_required_ = true;
-    size_t lagest_rank = 0;
-    int64_t output_batch_size = 1;
+    BCast bcast = {};
+    bool all_equal = x == y;
+    size_t lagest_batch_rank = std::max(x.size(), y.size());
 
     // calculate the all_equal and lagest_rank
     // There can be at most two operands, so we can use a 2 for loop size
-    if (x_resized != y_resized) {
-        all_equal = false;
-    }
-    lagest_rank = std::max(x_resized.size(), y_resized.size());
     if (all_equal) {
-        broadcasting_required_ = false;
+        bcast.requires_broadcast = false;
+        // Fast path for common case of identical shapes.
+        int64_t batch_size = 1;
+        const int rank = x.size();
+        for (int ii = 0; ii < rank; ++ii) {
+            bcast.z_batch_shape.resize(rank);
+            for (int ii = 0; ii < x.size(); ii++) {
+                bcast.z_batch_shape[ii] = x[ii];
+                batch_size = mul_dims(batch_size, x[ii]);
+            }
+        }
+        bcast.x_bcast_shape.push_back(1);
+        bcast.y_bcast_shape.push_back(1);
+        bcast.z_batch_size = batch_size;
+        bcast.x_batch_shape.push_back(batch_size);
+        bcast.y_batch_shape.push_back(batch_size);
+        
+        return std::move(bcast);
     }
     
+    std::vector<int64_t> inv_x = x;
+    std::vector<int64_t> inv_y = y;
+    BCast::reverse(inv_x);
+    BCast::reverse(inv_y);
 
+    // 1-extend and align all vectors.
+    inv_x.resize(lagest_batch_rank, 1);
+    inv_y.resize(lagest_batch_rank, 1);
 
-    return true;
+    // going through each dimension starting from the inner-most
+    // dimension, compares dimension of x and y. They are compatible if
+    // they are equal or either is 1.
+
+    // indices of j-th component of each input.
+    int64_t output_dim = -1;
+    bool x_prev_is_one = false, y_prev_is_one = false;
+    bool x_current_is_one = false, y_current_is_one = false;
+    bool output_dim_set = false, none_is_one = true, set_one = false;
+    for (int ii = 0; ii < lagest_batch_rank; ii++) {
+        // Pre condition setting
+        output_dim = -1;
+        output_dim_set = false;
+        none_is_one = true;
+        if (inv_x[ii] == 1) {
+            none_is_one = false;
+            x_current_is_one = true;
+        }
+        else {
+            x_current_is_one = false;
+            output_dim = inv_x[ii];
+            output_dim_set = true;
+        }
+        if (inv_x[ii] == 1) {
+            none_is_one = false;
+            y_current_is_one = true;
+        }
+        else {
+            y_current_is_one = false;
+            if (!output_dim_set || output_dim == inv_y[ii]) {
+                output_dim = inv_y[ii];
+                output_dim_set = true;
+            }
+            else {
+                bcast.valid = false;
+                return std::move(bcast);
+            }
+        }
+        bcast.z_batch_shape.push_back(output_dim_set ? output_dim : 1);
+        bcast.z_batch_size = mul_dims(bcast.z_batch_size, bcast.z_batch_shape.back());
+        
+        // All dimensions are 1
+        if (!output_dim_set) {
+            // This will skip updating the previous state to the current one. We'll
+            // explain why this is safe below.
+            // Consider the previous state P, current state C and the next state N.
+            // In the case where N also is all ones (N == C), we'll do the same
+            // optimization here (push back one dimensions if we need to), which is
+            // safe and is expected.
+            //
+            // When N != C, we'll continue as usual. However, we might trigger the
+            // next block if N == P (because we didn't update the previous state).
+            // We trigger the next block if `fewer_dims_optimization` is true.
+            // This means that we did not modify and broadcast / reshapes in this
+            // block (we skipped updating, since the one dimensions can be ignored).
+            // In essence, we only need to check whether the previous non-one state is
+            // equal to the current non-one state.
+            continue;
+        }
+        else if (x_current_is_one == x_prev_is_one && y_current_is_one == y_prev_is_one && set_one) {
+            // fewer_dims_optimization
+            // If the previous state is the same as the current state, we can skip
+            // broadcasting / reshaping. This is because we can ignore dimensions of
+            // size 1. This is safe because we know that the previous state is not
+            // all ones (otherwise we would have continued in the previous block).
+
+            // It is a run of the same broadcasting case as last time.
+            // We can reshape the input so that fewer dimensions
+            // are involved in the intermediate computation.
+            bcast.x_batch_shape.back() = mul_dims(bcast.x_batch_shape.back(), inv_x[ii]);
+            bcast.y_batch_shape.back() = mul_dims(bcast.y_batch_shape.back(), inv_y[ii]);
+
+            bcast.x_bcast_shape.back() = mul_dims(bcast.x_bcast_shape.back(), x_current_is_one ? output_dim : 1);
+            bcast.y_bcast_shape.back() = mul_dims(bcast.y_bcast_shape.back(), y_current_is_one ? output_dim : 1);
+        }
+        else {
+            bcast.x_batch_shape.push_back(inv_x[ii]);
+            bcast.y_batch_shape.push_back(inv_y[ii]);
+
+            bcast.x_bcast_shape.push_back(x_current_is_one ? output_dim : 1);
+            bcast.y_bcast_shape.push_back(y_current_is_one ? output_dim : 1);
+        }
+        set_one = true;
+        x_prev_is_one = x_current_is_one;
+        y_prev_is_one = y_current_is_one;
+    }
+    if (bcast.x_batch_shape.empty()) {
+        bcast.x_batch_shape.push_back(1);
+        bcast.x_bcast_shape.push_back(1);
+    }
+    if (bcast.y_batch_shape.empty()) {
+        bcast.y_batch_shape.push_back(1);
+        bcast.y_bcast_shape.push_back(1);
+    }
+
+    // Do something about batches
+    BCast::reverse(bcast.x_batch_shape);
+    BCast::reverse(bcast.x_bcast_shape);
+    BCast::reverse(bcast.y_batch_shape);
+    BCast::reverse(bcast.y_bcast_shape);
+    BCast::reverse(bcast.z_batch_shape);
+
+    return std::move(bcast);
 }
 
 static int64_t IPow(int64_t base, int64_t exponent) {
@@ -64,6 +182,15 @@ static bool CopyFrom(Tensor& input, const TensorShape& shape, Tensor& output)
 {
     output = TensorMap(input.data(), input.data_type(), input.device_type(), input.shape());
     return true;
+}
+
+// Reshapes a Tensor of shape [b0,b1...bk,N,M] to [prod(b0,b1...bk),N,M].
+static bool ReshapeToRank3(Tensor& input, int batch_size, Tensor& output)
+{
+    const int rank = input.shape().ndim();
+    TensorShape output_shape = {batch_size, input.shape().dim_size(rank - 2),
+                                input.shape().dim_size(rank - 1)};
+    return CopyFrom(input, output_shape, output);
 }
 
 template <typename T>
@@ -277,15 +404,33 @@ static void MapToLabels(const std::string& subscript, std::vector<int>& labels,
         const int mapped_label = label_mapping[label_char];
         labels.push_back(mapped_label);
     }
+    // Check the number of ellipsis.
+    if (std::count(labels.begin(), labels.end(), kEllipsisLabel) > 1) {
+        throw std::invalid_argument("More than one ellipsis in subscript: " + subscript);
+    }
 }
 
 /// Check the validation of the input equations
 bool ValidateEinsumEquation(
-        const std::string& equation,
+        std::string& equation,
         std::vector<std::string>& input_subscripts,
         std::string& output_subscript)
 {
-    /// Part 1: Check the "->" flag
+    // Part 1: Check the equation's validation
+    if (equation.empty()) {
+        throw std::invalid_argument("Empty einsum equation");
+    }
+
+    // Part 2: Remove the white space in the equation
+    std::string equation_no_space;
+    for (const char c : equation) {
+        if (c != ' ') {
+            equation_no_space.push_back(c);
+        }
+    }
+    equation = std::move(equation_no_space);
+
+    // Part 3: Check the "->" flag
     std::vector<std::string> inputs_and_output_subscripts;
     auto delimiter_pos = equation.find("->");
     if (delimiter_pos == std::string::npos) {
@@ -299,6 +444,7 @@ bool ValidateEinsumEquation(
 
     output_subscript = std::move(inputs_and_output_subscripts[1]);
 
+    // Part 4: Address the comma in the input subscripts
     auto comma_pos = inputs_and_output_subscripts[0].find(',');
     while (comma_pos != std::string::npos) {
         input_subscripts.push_back(inputs_and_output_subscripts[0].substr(0, comma_pos));
@@ -370,7 +516,7 @@ bool ParseEinsumEquation(
     // Map each label to a unique EinsumDimensionType.
     label_types.resize(num_labels);
     for (int label = 0; label < num_labels; label++) {
-        if (label == kEllipsisLabel) continue;
+        // if (label == kEllipsisLabel) continue; Not necessary here.
         bool removed = (output_label_counts)[label] == 0;
         bool unique = num_inputs == 1 || input_label_counts[0][label] == 0 ||
                       input_label_counts[1][label] == 0;
@@ -507,6 +653,7 @@ inline bool reduce_oprand<T, Device>::operator()(
     // EinsumDimensionType; i.e. batch, free, contract and reduce dimensions.
     // This makes it more convenient to invoke Reduce/Contract operations.
     std::vector<int> permutation(input.shape().ndim(), 0);
+    std::iota(permutation.begin(), permutation.end(), 0);
 
     Tensor input_transposed;
     // Check if we can avoid the transpose. We need to flip the adj_x (or adj_y)
@@ -591,7 +738,35 @@ inline bool contract_oprands<T, Device>::operator()(
     if (inputs.size() == 1) {
         return CopyFrom(inputs[0], inputs[0].shape(), output);
     }
-    
+    BCast bcast = prepare_bcast(inputs[0].shape().dims(), inputs[1].shape().dims());
+
+    if (bcast.valid == false) {
+        throw std::invalid_argument("Invalid broadcast shape");
+    }
+    Tensor lhs, rhs;
+    ReshapeToRank3(inputs[0], bcast.x_batch_size, lhs);
+    ReshapeToRank3(inputs[1], bcast.y_batch_size, lhs);
+
+    TensorShape output_shape = bcast.z_batch_shape;
+    for (int ii = 0; ii < inputs.size(); ii++) {
+      const int64_t free_axis =
+          inputs[ii].shape().ndim() - (swap_free_and_contract[i] ? 1 : 2);
+          output_shape.add_dim(inputs[i].dim_size(free_axis)));
+    }
+    bool trans_x = swap_free_and_contract[0];
+    bool trans_y = !swap_free_and_contract[1];
+
+    output.resize(output_shape);
+    if (lhs.NumElements() == 0 || rhs.NumElements() == 0) {
+        output.zero();
+        return true;
+    }
+
+    Tensor output_reshaped;
+    ReshapeToRank3(output, bcast.z_batch_size, output_reshaped);
+    op::contract_op<T, Device>()(lhs, rhs, trans_x, trans_y, bcast, output_reshaped);
+
+    return true;
 }
 
 }   // namespace einsum_utils

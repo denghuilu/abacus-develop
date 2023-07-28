@@ -9,6 +9,27 @@
 namespace container {
 namespace einsum_utils {
 
+class BCast {
+  public:
+
+    bool valid = true;
+    bool requires_broadcast = false;
+
+    int64_t x_batch_size = 1; // input a batch size
+    int64_t y_batch_size = 1; // input b batch size
+    int64_t z_batch_size = 1; // output c batch size
+
+    std::vector<int64_t> x_batch_shape = {}; // input a shape
+    std::vector<int64_t> y_batch_shape = {}; // input b shape
+    std::vector<int64_t> z_batch_shape = {}; // output c shape
+
+    std::vector<int64_t> x_bcast_shape = {}; // input a bcast shape
+    std::vector<int64_t> y_bcast_shape = {}; // input b bcast shape
+
+    static void reverse(std::vector<int64_t>& vec) {
+      std::reverse(vec.begin(), vec.end());
+    }
+};
 
 // Dummy axis label used to denote an ellipsis in an input or output subscript.
 constexpr int kEllipsisLabel = -1;
@@ -54,21 +75,10 @@ bool ParseEinsumEquation(
     std::vector<bool>& input_has_ellipsis,
     bool& output_has_ellipsis);
 
-/**
- * @brief Records and validates the label to dimension mapping for a given axis in the input tensor.
- *
- * This function records the mapping of a label to its corresponding dimension for a specific axis in the input tensor.
- * It also validates that the label and dimension mapping is consistent with previous recordings, ensuring that the 
- * same label is not mapped to different dimensions along different axes.
- *
- * @param label The label representing a dimension in the input tensor.
- * @param axis The axis index in the input tensor for which the label is being recorded.
- * @param input The input tensor for which the label-to-dimension mapping is being recorded.
- * @param label_to_dim_sizes An unordered map that stores the label-to-dimension mapping for all axes.
- *                           It maps each label to its corresponding dimension for each axis.
- *
- * @return Returns true if the label is successfully recorded and validated, false otherwise.
- */
+
+// This function records the mapping of a label to its corresponding dimension for a specific axis in the input tensor.
+// It also validates that the label and dimension mapping is consistent with previous recordings, ensuring that the 
+// same label is not mapped to different dimensions along different axes.
 bool RecordLabelToDimension(
     const int label,
     const int axis,
