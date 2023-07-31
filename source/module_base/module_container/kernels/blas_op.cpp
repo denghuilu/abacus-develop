@@ -3,29 +3,6 @@
 namespace container {
 namespace op {
 
-//// CPU specialization of actual computation.
-//template <typename T>
-//struct zdot_real_op<T, DEVICE_CPU> {
-//    T operator() (
-//            const DEVICE_CPU* d,
-//            const int& dim,
-//            const std::complex<T>* psi_L,
-//            const std::complex<T>* psi_R,
-//            const bool reduce)
-//    {
-//        //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-//        // qianrui modify 2021-3-14
-//        // Note that  ddot_(2*dim,a,1,b,1) = REAL( zdotc_(dim,a,1,b,1) )
-//        const T* pL = reinterpret_cast<const T*>(psi_L);
-//        const T* pR = reinterpret_cast<const T*>(psi_R);
-//        T result = BlasConnector::dot(2 * dim, pL, 1, pR, 1);
-//        if (reduce) {
-//            Parallel_Reduce::reduce_double_pool(result);
-//        }
-//        return result;
-//    }
-//};
-
 template <typename T>
 struct scal_op<T, DEVICE_CPU> {
     void operator()(

@@ -51,50 +51,38 @@ inline void cublasAssert(cublasStatus_t code, const char *file, int line, bool a
 namespace container {
 namespace op {
 
-// TODO: add zdot_real_op implementation
-// TODO: add MPI support.
-//
-//template <typename T, typename DEVICE>
-//struct zdot_real_op {
-//    /// @brief zdot_real_op computes the dot product of the given complex arrays(treated as float arrays).
-//    /// And there's may have MPI communications while enabling planewave parallization strategy.
-//    ///
-//    /// Input Parameters
-//    /// \param d : the type of computing device
-//    /// \param dim : array size
-//    /// \param psi_L : input array A
-//    /// \param psi_R : input array B
-//    /// \param reduce : flag to control whether to perform the MPI communications
-//    ///
-//    /// \return
-//    /// T : dot product result
-//    T operator() (
-//            const DEVICE* d,
-//            const int& dim,
-//            const std::complex<T>* psi_L,
-//            const std::complex<T>* psi_R,
-//            const bool reduce = true);
-//};
-
-// replace vector_div_constant_op : x = alpha * x
+/**
+ * @brief A struct representing a scaling operation on a vector.
+ *
+ * This struct defines the operation of scaling a vector with a scalar.
+ * The scaling operation modifies the input vector by multiplying each element
+ * of the vector by the given scalar alpha.
+ *
+ * @tparam T The type of the elements in the vector (e.g., float, double, etc.).
+ * @tparam DEVICE The device where the vector resides (e.g., CPU, GPU, etc.).
+ */
 template <typename T, typename DEVICE>
 struct scal_op {
-    /// @brief x = alpha * x
-    ///
-    /// Input Parameters
-    /// \param N : array size
-    /// \param alpha : input constant
-    /// \param X : input array
-    /// \param incx : computing strip of array X
-    ///
-    /// Output Parameters
-    /// \param X : output array
+    /**
+     * @brief Perform the scaling operation on the input vector.
+     *
+     * This function applies the scaling operation to the input vector X.
+     * It multiplies each element of the vector by the given scalar alpha.
+     *
+     * @param N The number of elements in the vector.
+     * @param alpha A pointer to the scalar used for scaling.
+     * @param X A pointer to the input vector to be scaled.
+     * @param incx The increment between consecutive elements of the vector X.
+     *
+     * @note The length of the vector X should be at least (1 + (N - 1) * abs(incx)).
+     */
     void operator()(
-            const int& N,
-            const std::complex<T>* alpha,
-            std::complex<T>* X,
-            const int& incx);
+        const int64_t& N,
+        const T* alpha,
+        T* X,
+        const int64_t& incx);
 };
+
 
 //  compute Y = alpha * X + Y
 template <typename T, typename DEVICE>
