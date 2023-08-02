@@ -24,6 +24,8 @@ void zcopy_(long const *n, const std::complex<double> *a, int const *incx, std::
 
 //reason for passing results as argument instead of returning it:
 //see https://www.numbercrunch.de/blog/2014/07/lost-in-translation/
+void cdotc_(std::complex<float> *result, const int *n, const std::complex<float> *zx,
+            const int *incx, const std::complex<float> *zy, const int *incy);
 void zdotc_(std::complex<double> *result, const int *n, const std::complex<double> *zx,
             const int *incx, const std::complex<double> *zy, const int *incy);
 // Peize Lin add ?dot 2017-10-27, to compute d=x*y
@@ -36,6 +38,9 @@ double dnrm2_( const int *n, const double *X, const int *incX );
 double dznrm2_( const int *n, const std::complex<double> *X, const int *incX );
 
 // level 2: matrix-std::vector operations, O(n^2) data and O(n^2) work.
+void sgemv_(const char*const transa, const int*const m, const int*const n,
+            const float*const alpha, const float*const a, const int*const lda, const float*const x, const int*const incx,
+            const float*const eta, float*const y, const int*const incy);
 void dgemv_(const char*const transa, const int*const m, const int*const n,
             const double*const alpha, const double*const a, const int*const lda, const double*const x, const int*const incx,
             const double*const beta, double*const y, const int*const incy);
@@ -74,6 +79,7 @@ void zgemm_(const char *transa, const char *transb, const int *m, const int *n, 
             const std::complex<double> *alpha, const std::complex<double> *a, const int *lda, const std::complex<double> *b, const int *ldb,
             const std::complex<double> *beta, std::complex<double> *c, const int *ldc);
 
+
 //a is symmetric
 void dsymm_(const char *side, const char *uplo, const int *m, const int *n,
             const double *alpha, const double *a, const int *lda, const double *b, const int *ldb,
@@ -93,7 +99,7 @@ void ztrsm_(char *side, char* uplo, char *transa, char *diag, int *m, int *n,
 // Class BlasConnector provide the connector to fortran lapack routine.
 // The entire function in this class are static and inline function.
 // Usage example:	BlasConnector::functionname(parameter list).
-class BlasConnector {
+struct BlasConnector {
 public:
 
     // Peize Lin add 2016-08-04
@@ -154,6 +160,21 @@ public:
     {
         return ddot_(&n, X, &incX, Y, &incY);
     }
+    // Denghui Lu add 2023-8-01
+    static inline
+    std::complex<float> dot(const int n, const std::complex<float> *X, const int incX, const std::complex<float> *Y, const int incY)
+    {
+        std::complex<float> result = {};
+        cdotc_(&result, &n, X, &incX, Y, &incY);
+        return result;
+    }
+    static inline
+    std::complex<double> dot(const int n, const std::complex<double> *X, const int incX, const std::complex<double> *Y, const int incY)
+    {
+        std::complex<double> result = {};
+        zdotc_(&result, &n, X, &incX, Y, &incY);
+        return result;
+    }
 
     // Peize Lin add 2017-10-27, fix bug trans 2019-01-17
     // C = a * A.? * B.? + b * C
@@ -192,6 +213,21 @@ public:
         zgemm_(&transb, &transa, &n, &m, &k,
                &alpha, b, &ldb, a, &lda,
                &beta, c, &ldc);
+    }
+
+    static inline
+    void gemv(const char trans, const int m, const int n,
+              const float alpha, const float *A, const int lda, const float *X, const int incx,
+              const float beta, float *Y, const int incy)
+    {
+        sgemv_(&trans, &m, &n, &alpha, A, &lda, X, &incx, &beta, Y, &incy);
+    }
+    static inline
+    void gemv(const char trans, const int m, const int n,
+              const double alpha, const double *A, const int lda, const double *X, const int incx,
+              const double beta, double *Y, const int incy)
+    {
+        dgemv_(&trans, &m, &n, &alpha, A, &lda, X, &incx, &beta, Y, &incy);
     }
     static inline
     void gemv(const char trans, const int m, const int n,
@@ -239,49 +275,4 @@ public:
     }
 };
 
-// If GATHER_INFO is defined, the original function is replaced with a "i" suffix,
-// preventing changes on the original code.
-// The real function call is at gather_math_lib_info.cpp
-#ifdef GATHER_INFO
-
-#define zgemm_ zgemm_i
-void zgemm_i(const char *transa,
-             const char *transb,
-             const int *m,
-             const int *n,
-             const int *k,
-             const std::complex<double> *alpha,
-             const std::complex<double> *a,
-             const int *lda,
-             const std::complex<double> *b,
-             const int *ldb,
-             const std::complex<double> *beta,
-             std::complex<double> *c,
-             const int *ldc);
-
-#define zaxpy_  zaxpy_i
-void zaxpy_i(const int *N,
-            const std::complex<double> *alpha,
-            const std::complex<double> *X,
-            const int *incX,
-            std::complex<double> *Y,
-            const int *incY);
-
-/*
-#define zgemv_ zgemv_i
-
-void zgemv_i(const char *trans,
-             const int *m,
-             const int *n,
-             const std::complex<double> *alpha,
-             const std::complex<double> *a,
-             const int *lda,
-             const std::complex<double> *x,
-             const int *incx,
-             const std::complex<double> *beta,
-             std::complex<double> *y,
-             const int *incy);
-*/
-
-#endif // GATHER_INFO
 #endif // CONTAINER_KERNELS_THIRD_PARTY_BLAS_CONNECTOR_H_

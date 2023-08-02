@@ -5,6 +5,8 @@ calculation		scf
 #nbands			8
 symmetry		1
 device			gpu
+precision       double
+ks_solver       all-band-cg
 
 #Parameters (2.Iteration)
 ecutwfc			60
@@ -16,8 +18,8 @@ cal_stress 		1
 basis_type		pw
 
 #Parameters (4.Smearing)
-smearing_method		gauss
-smearing_sigma		0.002
+smearing_method	gauss
+smearing_sigma	0.002
 
 #Parameters (5.Mixing)
 mixing_type		pulay

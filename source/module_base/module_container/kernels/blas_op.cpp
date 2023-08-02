@@ -1,110 +1,236 @@
 #include "blas_op.h"
 
 namespace container {
-namespace op {
-
-//// CPU specialization of actual computation.
-//template <typename T>
-//struct zdot_real_op<T, DEVICE_CPU> {
-//    T operator() (
-//            const DEVICE_CPU* d,
-//            const int& dim,
-//            const std::complex<T>* psi_L,
-//            const std::complex<T>* psi_R,
-//            const bool reduce)
-//    {
-//        //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-//        // qianrui modify 2021-3-14
-//        // Note that  ddot_(2*dim,a,1,b,1) = REAL( zdotc_(dim,a,1,b,1) )
-//        const T* pL = reinterpret_cast<const T*>(psi_L);
-//        const T* pR = reinterpret_cast<const T*>(psi_R);
-//        T result = BlasConnector::dot(2 * dim, pL, 1, pR, 1);
-//        if (reduce) {
-//            Parallel_Reduce::reduce_double_pool(result);
-//        }
-//        return result;
-//    }
-//};
+namespace functor {
 
 template <typename T>
-struct scal_op<T, DEVICE_CPU> {
+struct blas_dot<T, DEVICE_CPU> {
     void operator()(
-            const int &N,
-            const std::complex<T> *alpha,
-            std::complex<T> *X,
-            const int &incx)
+        const int& n,
+        const T* x,
+        const int& incx,
+        const T* y,
+        const int& incy,
+        T* result)
     {
-        BlasConnector::scal(N, *alpha, X, incx);
+        *result = BlasConnector::dot(n, x, incx, y, incy);
     }
 };
 
 template <typename T>
-struct gemv_op<T, DEVICE_CPU> {
+struct blas_scal<T, DEVICE_CPU> {
     void operator()(
-            const DEVICE_CPU *d,
-            const char &trans,
-            const int &m,
-            const int &n,
-            const std::complex<T> *alpha,
-            const std::complex<T> *A,
-            const int &lda,
-            const std::complex<T> *X,
-            const int &incx,
-            const std::complex<T> *beta,
-            std::complex<T> *Y,
-            const int &incy)
+        const int& n,
+        const T* alpha,
+        T* x,
+        const int& incx)
     {
-        BlasConnector::gemv(trans, m, n, *alpha, A, lda, X, incx, *beta, Y, incy);
+        BlasConnector::scal(n, *alpha, x, incx);
     }
 };
 
 template <typename T>
-struct axpy_op<T, DEVICE_CPU> {
+struct blas_axpy<T, DEVICE_CPU> {
     void operator()(
-            const DEVICE_CPU * /*ctx*/,
-            const int &dim,
-            const std::complex<T> *alpha,
-            const std::complex<T> *X,
-            const int &incX,
-            std::complex<T> *Y,
-            const int &incY)
+        const int& n,
+        const T* alpha,
+        const T* x,
+        const int& incx,
+        T* y,
+        const int& incy)
     {
-        BlasConnector::axpy(dim, *alpha, X, incX, Y, incY);
+        BlasConnector::axpy(n, *alpha, x, incx, y, incy);
     }
 };
 
 template <typename T>
-struct gemm_op<T, DEVICE_CPU> {
+struct blas_gemv<T, DEVICE_CPU> {
     void operator()(
-            const DEVICE_CPU * /*ctx*/,
-            const char &transa,
-            const char &transb,
-            const int &m,
-            const int &n,
-            const int &k,
-            const std::complex<T> *alpha,
-            const std::complex<T> *a,
-            const int &lda,
-            const std::complex<T> *b,
-            const int &ldb,
-            const std::complex<T> *beta,
-            std::complex<T> *c,
-            const int &ldc)
+        const char& trans,
+        const int& m,
+        const int& n,
+        const T* alpha,
+        const T* A,
+        const int& lda,
+        const T* x,
+        const int& incx,
+        const T* beta,
+        T* y,
+        const int& incy)
     {
-        BlasConnector::gemm(transb, transa, n, m, k, *alpha, b, ldb, a, lda, *beta, c, ldc);
+        BlasConnector::gemv(trans, m, n, *alpha, A, lda, x, incx, *beta, y, incy);
+    }
+};
+
+template <typename T>
+struct blas_gemv_batched<T, DEVICE_CPU> {
+    void operator()(
+        const char& trans,
+        const int& m,
+        const int& n,
+        const T* alpha,
+        const T** A,
+        const int& lda,
+        const T** x,
+        const int& incx,
+        const T* beta,
+        T** y,
+        const int& incy,
+        const int& batch_size)
+    {
+        for (int ii = 0; ii < batch_size; ++ii) {
+            // Call the single GEMV for each pair of matrix A[ii] and vector x[ii]
+            BlasConnector::gemv(trans, m, n, *alpha, A[ii], lda, x[ii], incx, *beta, y[ii], incy);
+        }
+    }
+};
+
+
+template <typename T>
+struct blas_gemv_batched_strided<T, DEVICE_CPU> {
+    void operator()(
+        const char& trans,
+        const int& m,
+        const int& n,
+        const T* alpha,
+        const T* A,
+        const int& lda,
+        const int64_t& stride_a,
+        const T* x,
+        const int& incx,
+        const int64_t& stride_x,
+        const T* beta,
+        T* y,
+        const int& incy,
+        const int64_t& stride_y,
+        const int& batch_size)
+    {
+        for (int ii = 0; ii < batch_size; ii++) {
+            // Call the single GEMV for each pair of matrix A[ii] and vector x[ii]
+            BlasConnector::gemv(trans, m, n, *alpha, A + ii * stride_a, lda, x + ii * stride_x, incx, *beta, y + ii * stride_y, incy);
+        }    
+    }
+};
+
+template <typename T>
+struct blas_gemm<T, DEVICE_CPU> {
+    void operator()(
+        const char& transa,
+        const char& transb,
+        const int& m,
+        const int& n,
+        const int& k,
+        const T* alpha,
+        const T* A,
+        const int& lda,
+        const T* B,
+        const int& ldb,
+        const T* beta,
+        T* C,
+        const int& ldc)
+    {
+        BlasConnector::gemm(transb, transa, n, m, k, *alpha, B, ldb, A, lda, *beta, C, ldc);
+    }
+};
+
+template <typename T>
+struct blas_gemm_batched<T, DEVICE_CPU> {
+    void operator()(
+        const char& transa,
+        const char& transb,
+        const int& m,
+        const int& n,
+        const int& k,
+        const T* alpha,
+        const T** A,
+        const int& lda,
+        const T** B,
+        const int& ldb,
+        const T* beta,
+        T** C,
+        const int& ldc,
+        const int& batch_size)
+    {
+        for (int ii = 0; ii < batch_size; ++ii) {
+            // Call the single GEMV for each pair of matrix A[ii] and vector x[ii]
+            BlasConnector::gemm(transb, transa, n, m, k, *alpha, B[ii], ldb, A[ii], lda, *beta, C[ii], ldc);
+        }
+    }
+};
+
+template <typename T>
+struct blas_gemm_batched_strided<T, DEVICE_CPU> {
+    void operator()(
+        const char& transa,
+        const char& transb,
+        const int& m,
+        const int& n,
+        const int& k,
+        const T* alpha,
+        const T* A,
+        const int& lda,
+        const int& stride_a,
+        const T* B,
+        const int& ldb,
+        const int& stride_b,
+        const T* beta,
+        T* C,
+        const int& ldc,
+        const int& stride_c,
+        const int& batch_size)
+    {
+        for (int ii = 0; ii < batch_size; ii++) {
+            // Call the single GEMV for each pair of matrix A[ii] and vector x[ii]
+            BlasConnector::gemm(transb, transa, n, m, k, *alpha, B + ii * stride_b, ldb, A + ii * stride_a, lda, *beta, C + ii * stride_c, ldc);
+        }
     }
 };
 
 // Explicitly instantiate functors for the types of functor registered.
-template struct scal_op<float, DEVICE_CPU>;
-template struct axpy_op<float, DEVICE_CPU>;
-template struct gemv_op<float, DEVICE_CPU>;
-template struct gemm_op<float, DEVICE_CPU>;
+template struct blas_dot<float , DEVICE_CPU>;
+template struct blas_dot<double, DEVICE_CPU>;
+template struct blas_dot<std::complex<float >, DEVICE_CPU>;
+template struct blas_dot<std::complex<double>, DEVICE_CPU>;
 
-template struct scal_op<double, DEVICE_CPU>;
-template struct axpy_op<double, DEVICE_CPU>;
-template struct gemv_op<double, DEVICE_CPU>;
-template struct gemm_op<double, DEVICE_CPU>;
+template struct blas_scal<float , DEVICE_CPU>;
+template struct blas_scal<double, DEVICE_CPU>;
+template struct blas_scal<std::complex<float >, DEVICE_CPU>;
+template struct blas_scal<std::complex<double>, DEVICE_CPU>;
 
-} // namespace op
+template struct blas_axpy<float , DEVICE_CPU>;
+template struct blas_axpy<double, DEVICE_CPU>;
+template struct blas_axpy<std::complex<float >, DEVICE_CPU>;
+template struct blas_axpy<std::complex<double>, DEVICE_CPU>;
+
+template struct blas_gemv<float , DEVICE_CPU>;
+template struct blas_gemv<double, DEVICE_CPU>;
+template struct blas_gemv<std::complex<float >, DEVICE_CPU>;
+template struct blas_gemv<std::complex<double>, DEVICE_CPU>;
+
+template struct blas_gemv_batched<float , DEVICE_CPU>;
+template struct blas_gemv_batched<double, DEVICE_CPU>;
+template struct blas_gemv_batched<std::complex<float >, DEVICE_CPU>;
+template struct blas_gemv_batched<std::complex<double>, DEVICE_CPU>;
+
+template struct blas_gemv_batched_strided<float , DEVICE_CPU>;
+template struct blas_gemv_batched_strided<double, DEVICE_CPU>;
+template struct blas_gemv_batched_strided<std::complex<float >, DEVICE_CPU>;
+template struct blas_gemv_batched_strided<std::complex<double>, DEVICE_CPU>;
+
+template struct blas_gemm<float , DEVICE_CPU>;
+template struct blas_gemm<double, DEVICE_CPU>;
+template struct blas_gemm<std::complex<float >, DEVICE_CPU>;
+template struct blas_gemm<std::complex<double>, DEVICE_CPU>;
+
+template struct blas_gemm_batched<float , DEVICE_CPU>;
+template struct blas_gemm_batched<double, DEVICE_CPU>;
+template struct blas_gemm_batched<std::complex<float >, DEVICE_CPU>;
+template struct blas_gemm_batched<std::complex<double>, DEVICE_CPU>;
+
+template struct blas_gemm_batched_strided<float , DEVICE_CPU>;
+template struct blas_gemm_batched_strided<double, DEVICE_CPU>;
+template struct blas_gemm_batched_strided<std::complex<float >, DEVICE_CPU>;
+template struct blas_gemm_batched_strided<std::complex<double>, DEVICE_CPU>;
+
+} // namespace functor
 } // namespace container

@@ -1,7 +1,7 @@
 #include "../blas_op.h"
 
 namespace container {
-namespace op {
+namespace functor {
 
 static cublasHandle_t cublas_handle = nullptr;
 
@@ -39,7 +39,7 @@ void destoryBlasHandle() {
 }
 
 template <typename T>
-struct scal_op<T, DEVICE_GPU> {
+struct blas_scal<T, DEVICE_GPU> {
     void operator()(
             const int &N,
             const std::complex<T> *alpha,
@@ -51,7 +51,7 @@ struct scal_op<T, DEVICE_GPU> {
 };
 
 template <>
-struct axpy_op<float, DEVICE_GPU> {
+struct blas_axpy<float, DEVICE_GPU> {
     void operator()(
             const int &N,
             const std::complex<float> *alpha,
@@ -65,7 +65,7 @@ struct axpy_op<float, DEVICE_GPU> {
 };
 
 template <>
-struct axpy_op<double, DEVICE_GPU> {
+struct blas_axpy<double, DEVICE_GPU> {
     void operator()(
             const int &N,
             const std::complex<double> *alpha,
@@ -79,7 +79,7 @@ struct axpy_op<double, DEVICE_GPU> {
 };
 
 template <>
-struct gemv_op<float, DEVICE_GPU> {
+struct blas_gemv<float, DEVICE_GPU> {
     void operator()(
             const char &trans,
             const int &m,
@@ -107,7 +107,7 @@ struct gemv_op<float, DEVICE_GPU> {
 };
 
 template <>
-struct gemv_op<double, DEVICE_GPU> {
+struct blas_gemv<double, DEVICE_GPU> {
     void operator()(
             const char &trans,
             const int &m,
@@ -137,7 +137,7 @@ struct gemv_op<double, DEVICE_GPU> {
 
 
 template <>
-struct gemm_op<float, DEVICE_GPU> {
+struct blas_gemm<float, DEVICE_GPU> {
     void operator()(
             const char &transa,
             const char &transb,
@@ -177,7 +177,7 @@ struct gemm_op<float, DEVICE_GPU> {
 };
 
 template <>
-struct gemm_op<double, DEVICE_GPU> {
+struct blas_gemm<double, DEVICE_GPU> {
     void operator()(
             const char& transa,
             const char& transb,
@@ -220,11 +220,11 @@ struct gemm_op<double, DEVICE_GPU> {
 };
 
 // Explicitly instantiate functors for the types of functor registered.
-template struct axpy_op<float, DEVICE_GPU>;
-template struct scal_op<float, DEVICE_GPU>;
+template struct blas_axpy<float, DEVICE_GPU>;
+template struct blas_scal<float, DEVICE_GPU>;
 
-template struct axpy_op<double, DEVICE_GPU>;
-template struct scal_op<double, DEVICE_GPU>;
+template struct blas_axpy<double, DEVICE_GPU>;
+template struct blas_scal<double, DEVICE_GPU>;
 
 } // namespace op
 } // namespace container

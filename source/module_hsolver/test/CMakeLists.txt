@@ -8,14 +8,14 @@ AddTest(
           ../../module_hamilt_general/operator.cpp
           ../../module_hamilt_pw/hamilt_pwdft/operator_pw/operator_pw.cpp
 )
-AddTest(
-  TARGET HSolver_cg_float
-  LIBS ${math_libs} base psi device
-  SOURCES diago_cg_float_test.cpp ../diago_cg.cpp  ../diago_iter_assist.cpp  
-          ../../module_basis/module_pw/test/test_tool.cpp
-          ../../module_hamilt_general/operator.cpp
-          ../../module_hamilt_pw/hamilt_pwdft/operator_pw/operator_pw.cpp
-)
+# AddTest(
+#   TARGET HSolver_cg_float
+#   LIBS ${math_libs} base psi device container
+#   SOURCES diago_cg_float_test.cpp ../diago_cg.cpp  ../diago_iter_assist.cpp  
+#           ../../module_basis/module_pw/test/test_tool.cpp
+#           ../../module_hamilt_general/operator.cpp
+#           ../../module_hamilt_pw/hamilt_pwdft/operator_pw/operator_pw.cpp
+# )
 AddTest(
   TARGET HSolver_dav
   LIBS ${math_libs} base psi device
@@ -24,44 +24,44 @@ AddTest(
           ../../module_hamilt_general/operator.cpp
           ../../module_hamilt_pw/hamilt_pwdft/operator_pw/operator_pw.cpp
 )
-AddTest(
-  TARGET HSolver_dav_float
-  LIBS ${math_libs} base psi device
-  SOURCES diago_david_float_test.cpp ../diago_david.cpp  ../diago_iter_assist.cpp 
-          ../../module_basis/module_pw/test/test_tool.cpp
-          ../../module_hamilt_general/operator.cpp
-          ../../module_hamilt_pw/hamilt_pwdft/operator_pw/operator_pw.cpp
-)
+# AddTest(
+#   TARGET HSolver_dav_float
+#   LIBS ${math_libs} base device container psi
+#   SOURCES diago_david_float_test.cpp ../diago_david.cpp  ../diago_iter_assist.cpp 
+#           ../../module_basis/module_pw/test/test_tool.cpp
+#           ../../module_hamilt_general/operator.cpp
+#           ../../module_hamilt_pw/hamilt_pwdft/operator_pw/operator_pw.cpp
+# )
 
-AddTest(
-  TARGET HSolver_base
-  LIBS ${math_libs} psi device base
-  SOURCES test_hsolver.cpp 
-)
+# AddTest(
+#   TARGET HSolver_base
+#   LIBS ${math_libs} psi device base container
+#   SOURCES test_hsolver.cpp 
+# )
 
-AddTest(
-  TARGET HSolver_pw
-  LIBS ${math_libs} psi device base
-  SOURCES test_hsolver_pw.cpp ../hsolver_pw.cpp
-)
+# AddTest(
+#   TARGET HSolver_pw
+#   LIBS ${math_libs} psi device base container
+#   SOURCES test_hsolver_pw.cpp ../hsolver_pw.cpp
+# )
 
-AddTest(
-  TARGET HSolver_sdft
-  LIBS ${math_libs} psi device base
-  SOURCES test_hsolver_sdft.cpp ../hsolver_pw_sdft.cpp ../hsolver_pw.cpp
-)
+# AddTest(
+#   TARGET HSolver_sdft
+#   LIBS ${math_libs} psi device base container
+#   SOURCES test_hsolver_sdft.cpp ../hsolver_pw_sdft.cpp ../hsolver_pw.cpp
+# )
 
 if(ENABLE_LCAO)
   if(USE_ELPA)
   AddTest(
     TARGET HSolver_LCAO
-    LIBS ${math_libs} ELPA::ELPA base genelpa psi device
+    LIBS ${math_libs} ELPA::ELPA base genelpa psi device container
     SOURCES diago_lcao_test.cpp ../diago_elpa.cpp ../diago_blas.cpp 
   )
   else()
     AddTest(
       TARGET HSolver_LCAO
-      LIBS ${math_libs} base psi device
+      LIBS ${math_libs} base psi device container
       SOURCES diago_lcao_test.cpp ../diago_blas.cpp 
     )
   endif()

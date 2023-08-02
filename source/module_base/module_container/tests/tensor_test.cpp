@@ -2,6 +2,7 @@
 #include <gtest/gtest.h>
 
 #include "../tensor.h"
+#include "../tensor_map.h"
 
 TEST(Tensor, Constructor) {
     // Test constructor with default allocator
@@ -30,7 +31,7 @@ TEST(Tensor, Constructor) {
 
     // Test reference constructor
     std::vector<float> vec{1.0, 2.0, 3.0};
-    container::Tensor t4(&vec[0], container::DataType::DT_FLOAT, container::DeviceType::CpuDevice, container::TensorShape({1, 3}));
+    container::TensorMap t4(&vec[0], container::DataType::DT_FLOAT, container::DeviceType::CpuDevice, container::TensorShape({1, 3}));
     EXPECT_EQ(t4.data_type(), container::DataType::DT_FLOAT);
     EXPECT_EQ(t4.device_type(), container::DeviceType::CpuDevice);
     EXPECT_EQ(t4.shape().dims(), std::vector<int>({1, 3}));
@@ -348,12 +349,12 @@ TEST(Tensor, OutputOperator) {
         data6[ii] = std::complex<double>{static_cast<double>(ii), static_cast<double>(ii)};
     }
     const container::TensorShape shape({2, 2});
-    const container::Tensor t1(data1, container::DataType::DT_INT, container::DeviceType::CpuDevice, shape);
-    const container::Tensor t2(data2, container::DataType::DT_INT64, container::DeviceType::CpuDevice, shape);
-    const container::Tensor t3(data3, container::DataType::DT_FLOAT, container::DeviceType::CpuDevice, shape);
-    const container::Tensor t4(data4, container::DataType::DT_DOUBLE, container::DeviceType::CpuDevice, shape);
-    const container::Tensor t5(data5, container::DataType::DT_COMPLEX, container::DeviceType::CpuDevice, shape);
-    const container::Tensor t6(data6, container::DataType::DT_COMPLEX_DOUBLE, container::DeviceType::CpuDevice, shape);
+    const container::TensorMap t1(data1, container::DataType::DT_INT, container::DeviceType::CpuDevice, shape);
+    const container::TensorMap t2(data2, container::DataType::DT_INT64, container::DeviceType::CpuDevice, shape);
+    const container::TensorMap t3(data3, container::DataType::DT_FLOAT, container::DeviceType::CpuDevice, shape);
+    const container::TensorMap t4(data4, container::DataType::DT_DOUBLE, container::DeviceType::CpuDevice, shape);
+    const container::TensorMap t5(data5, container::DataType::DT_COMPLEX, container::DeviceType::CpuDevice, shape);
+    const container::TensorMap t6(data6, container::DataType::DT_COMPLEX_DOUBLE, container::DeviceType::CpuDevice, shape);
     // Test if the output operator produces the expected output
     std::ostringstream oss;
     oss << t1 << t2 << t3 << t4 << t5 << t6;

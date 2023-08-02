@@ -187,6 +187,7 @@ void DiagoAllBandCG<FPTYPE, Device>::orth_projection(
         this->n_band
     );
 
+    // set_matrix_op()(this->ctx, 'L', hsub_in->data<std::complex<FPTYPE>>(), this->n_band);
     // workspace_in = - psi_in x hsub_in
     gemm_op<FPTYPE, Device>()(
         this->ctx,
@@ -306,6 +307,7 @@ void DiagoAllBandCG<FPTYPE, Device>::diag(
         psi::Psi<std::complex<FPTYPE>, Device> &psi_in,
         FPTYPE *eigenvalue_in)
 {
+    const int current_scf_iter = hsolver::DiagoIterAssist<FPTYPE, Device>::SCF_ITER;
     // Get the pointer of the input psi
     this->psi = new container::TensorMap(psi_in.get_pointer(), cx_type, device_type, {this->n_band, this->n_basis_max});
     // Update the precondition array
@@ -317,9 +319,9 @@ void DiagoAllBandCG<FPTYPE, Device>::diag(
     setmem_complex_op()(this->ctx, this->grad_old->template data<std::complex<FPTYPE>>(), 0, this->n_basis_max * this->n_band);
     setmem_var_op()(this->ctx, this->beta->template data<FPTYPE>(), 1E+40, this->n_band);
     int ntry = 0;
-    int max_iter = hsolver::DiagoIterAssist<FPTYPE, Device>::SCF_ITER > 1 ?
+    int max_iter = current_scf_iter > 1 ?
                    this->nline :
-                   this->nline * 8;
+                   this->nline * 6;
     do
     {
         ++ntry;
@@ -352,6 +354,9 @@ void DiagoAllBandCG<FPTYPE, Device>::diag(
         // orthogonal psi by cholesky method
         this->orth_cholesky(this->work, this->psi, this->hpsi, this->hsub);
 
+        if (current_scf_iter == 1 && ntry % this->nline == 0) {
+            this->calc_hsub_all_band(hamilt_in, psi_in, this->psi, this->hpsi, this->hsub, this->work, this->eigen);
+        }
     } while (ntry < max_iter && this->test_error(this->err_st, this->all_band_cg_thr));
     this->calc_hsub_all_band(hamilt_in, psi_in, this->psi, this->hpsi, this->hsub, this->work, this->eigen);
     syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, eigenvalue_in, this->eigen->template data<FPTYPE>(), this->n_band);

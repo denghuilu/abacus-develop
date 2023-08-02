@@ -6,84 +6,52 @@
 #include "third_party/lapack_connector.h"
 
 #if defined(__CUDA) || defined(__UT_USE_CUDA)
-#include <cusolverDn.h>
-// cuSOLVER API errors
-static const char* cusolverGetErrorEnum(cusolverStatus_t error) {
-    switch (error) {
-        case CUSOLVER_STATUS_SUCCESS:
-            return "CUSOLVER_STATUS_SUCCESS";
-        case CUSOLVER_STATUS_NOT_INITIALIZED:
-            return "CUSOLVER_STATUS_NOT_INITIALIZED";
-        case CUSOLVER_STATUS_ALLOC_FAILED:
-            return "CUSOLVER_STATUS_ALLOC_FAILED";
-        case CUSOLVER_STATUS_INVALID_VALUE:
-            return "CUSOLVER_STATUS_INVALID_VALUE";
-        case CUSOLVER_STATUS_ARCH_MISMATCH:
-            return "CUSOLVER_STATUS_ARCH_MISMATCH";
-        case CUSOLVER_STATUS_MAPPING_ERROR:
-            return "CUSOLVER_STATUS_MAPPING_ERROR";
-        case CUSOLVER_STATUS_EXECUTION_FAILED:
-            return "CUSOLVER_STATUS_EXECUTION_FAILED";
-        case CUSOLVER_STATUS_INTERNAL_ERROR:
-            return "CUSOLVER_STATUS_INTERNAL_ERROR";
-        case CUSOLVER_STATUS_MATRIX_TYPE_NOT_SUPPORTED:
-            return "CUSOLVER_STATUS_MATRIX_TYPE_NOT_SUPPORTED";
-        case CUSOLVER_STATUS_NOT_SUPPORTED:
-            return "CUSOLVER_STATUS_NOT_SUPPORTED ";
-        case CUSOLVER_STATUS_ZERO_PIVOT:
-            return "CUSOLVER_STATUS_ZERO_PIVOT";
-        case CUSOLVER_STATUS_INVALID_LICENSE:
-            return "CUSOLVER_STATUS_INVALID_LICENSE";
-        default:
-            return "Unknown cusolverStatus_t message";
-    }
-}
-
-inline void cusolverAssert(cusolverStatus_t code, const char* file, int line, bool abort = true)
-{
-    if (code != CUSOLVER_STATUS_SUCCESS)
-    {
-        fprintf(stderr, "cuSOLVER Assert: %s %s %d\n", cusolverGetErrorEnum(code), file, line);
-        if (abort)
-            exit(code);
-    }
-}
-
-#define cusolverErrcheck(res) {                    \
-        cusolverAssert((res), __FILE__, __LINE__); \
-    }
-#endif // __CUDA || __UT_USE_CUDA
+#include "gpu_utils.h"
+#endif
 
 namespace container {
 namespace op {
 
+/**
+ * @brief A struct representing the DNGVD operation for computing eigenvalues and eigenvectors of a complex generalized Hermitian-definite eigenproblem.
+ *
+ * The DNGVD operation computes all the eigenvalues and eigenvectors of a complex generalized Hermitian-definite eigenproblem.
+ * If eigenvectors are desired, it uses a divide and conquer algorithm. The operation supports both CPU and CUDA versions.
+ *
+ * API Documentation:
+ * 1. LAPACK zhegvd: https://netlib.org/lapack/explore-html/df/d9a/group__complex16_h_eeigen_ga74fdf9b5a16c90d8b7a589dec5ca058a.html
+ * 2. cuSOLVER cusolverDnZhegvd: https://docs.nvidia.com/cuda/cusolver/index.html#cusolverdn-t-sygvd
+ *
+ * @tparam T The type of the elements in the matrices (e.g., float, double, etc.).
+ * @tparam Device The device where the matrices reside (e.g., CPU, GPU, etc.).
+ */
 template <typename T, typename Device>
 struct dngvd_op {
-    /// @brief DNGVD computes all the eigenvalues and eigenvectors of a complex generalized
-    /// Hermitian-definite eigenproblem. If eigenvectors are desired, it uses a divide and conquer algorithm.
-    ///
-    /// In this op, the CPU version is implemented through the `gvd` interface, and the CUDA version
-    /// is implemented through the `gvd` interface.
-    /// API doc:
-    /// 1. zhegvd: https://netlib.org/lapack/explore-html/df/d9a/group__complex16_h_eeigen_ga74fdf9b5a16c90d8b7a589dec5ca058a.html
-    /// 2. cusolverDnZhegvd: https://docs.nvidia.com/cuda/cusolver/index.html#cusolverdn-t-sygvd
-    ///
-    /// Input Parameters
-    ///     @param d : the type of device
-    ///     @param nstart : the number of cols of the matrix
-    ///     @param ldh : the number of rows of the matrix
-    ///     @param A : the hermitian matrix A in A x=lambda B x (col major)
-    ///     @param B : the overlap matrix B in A x=lambda B x (col major)
-    /// Output Parameter
-    ///     @param W : calculated eigenvalues
-    ///     @param V : calculated eigenvectors (col major)
+    /**
+     * @brief Compute all the eigenvalues and eigenvectors of a complex generalized Hermitian-definite eigenproblem.
+     *
+     * This function computes all the eigenvalues and eigenvectors of a complex generalized Hermitian-definite eigenproblem.
+     * The problem is defined as A * x = lambda * B * x, where A is the hermitian matrix, B is the overlap matrix, x is the eigenvector,
+     * and lambda is the eigenvalue. The operation supports both CPU and CUDA versions.
+     *
+     * @param nstart The number of columns of the matrix.
+     * @param ldh The leading dimension (stride) of the matrix A and B.
+     * @param A A pointer to the hermitian matrix A (col major).
+     * @param B A pointer to the overlap matrix B (col major).
+     * @param W A pointer to store the calculated eigenvalues.
+     * @param V A pointer to store the calculated eigenvectors (col major).
+     *
+     * @note The leading dimension ldh should be at least max(1, nstart) for row-major storage and column-major storage.
+     * @note The length of the A and B arrays should be at least nstart * ldh.
+     * @note The length of the W array should be at least nstart, and the length of the V array should be at least nstart * ldh.
+     */
     void operator()(
-            const int nstart,
-            const int ldh,
-            const std::complex<T>* A,
-            const std::complex<T>* B,
-            T* W,
-            std::complex<T>* V);
+        const int nstart,
+        const int ldh,
+        const std::complex<T>* A,
+        const std::complex<T>* B,
+        T* W,
+        std::complex<T>* V);
 };
 
 
@@ -117,8 +85,8 @@ struct dnevx_op {
 
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
-void createCusolverHandle();
-void destroyCusolverHandle();
+void createCusolverHandle();  // create cusolver handle
+void destroyCusolverHandle(); // destroy cusolver handle
 #endif
 
 } // namespace container
