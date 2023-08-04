@@ -11,7 +11,7 @@
 #endif
 
 namespace container {
-namespace functor {
+namespace op {
 
 /**
  * @brief A functor representing the dot product operation using BLAS(CPU)/cuBLAS(GPU) library.
@@ -220,9 +220,9 @@ struct blas_gemv_batched {
         const int& m,
         const int& n,
         const T* alpha,
-        const T** A,
+        T** A,
         const int& lda,
-        const T** x,
+        T** x,
         const int& incx,
         const T* beta,
         T** y,
@@ -407,9 +407,9 @@ struct blas_gemm_batched {
         const int& n,
         const int& k,
         const T* alpha,
-        const T** A,
+        T** A,
         const int& lda,
-        const T** B,
+        T** B,
         const int& ldb,
         const T* beta,
         T** C,
@@ -495,15 +495,7 @@ void createBlasHandle();  // create blas handle
 void destroyBlasHandle(); // destory blas handle
 #endif // __CUDA || __UT_USE_CUDA
 
-} // namespace functor
-
-
-namespace op {
-
-
-
 } // namespace op
-
 } // namespace container
 
 #endif // CONTAINER_KERNELS_BLAS_OP_H_

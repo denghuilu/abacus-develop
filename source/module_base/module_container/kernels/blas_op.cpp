@@ -1,7 +1,7 @@
 #include "blas_op.h"
 
 namespace container {
-namespace functor {
+namespace op {
 
 template <typename T>
 struct blas_dot<T, DEVICE_CPU> {
@@ -69,9 +69,9 @@ struct blas_gemv_batched<T, DEVICE_CPU> {
         const int& m,
         const int& n,
         const T* alpha,
-        const T** A,
+        T** A,
         const int& lda,
-        const T** x,
+        T** x,
         const int& incx,
         const T* beta,
         T** y,
@@ -129,7 +129,7 @@ struct blas_gemm<T, DEVICE_CPU> {
         T* C,
         const int& ldc)
     {
-        BlasConnector::gemm(transb, transa, n, m, k, *alpha, B, ldb, A, lda, *beta, C, ldc);
+        BlasConnector::gemm(transa, transb, m, n, k, *alpha, A, lda, B, ldb, *beta, C, ldc);
     }
 };
 
@@ -142,9 +142,9 @@ struct blas_gemm_batched<T, DEVICE_CPU> {
         const int& n,
         const int& k,
         const T* alpha,
-        const T** A,
+        T** A,
         const int& lda,
-        const T** B,
+        T** B,
         const int& ldb,
         const T* beta,
         T** C,
@@ -153,7 +153,7 @@ struct blas_gemm_batched<T, DEVICE_CPU> {
     {
         for (int ii = 0; ii < batch_size; ++ii) {
             // Call the single GEMV for each pair of matrix A[ii] and vector x[ii]
-            BlasConnector::gemm(transb, transa, n, m, k, *alpha, B[ii], ldb, A[ii], lda, *beta, C[ii], ldc);
+            BlasConnector::gemm(transa, transb, m, n, k, *alpha, A[ii], lda, B[ii], ldb, *beta, C[ii], ldc);
         }
     }
 };
@@ -181,7 +181,7 @@ struct blas_gemm_batched_strided<T, DEVICE_CPU> {
     {
         for (int ii = 0; ii < batch_size; ii++) {
             // Call the single GEMV for each pair of matrix A[ii] and vector x[ii]
-            BlasConnector::gemm(transb, transa, n, m, k, *alpha, B + ii * stride_b, ldb, A + ii * stride_a, lda, *beta, C + ii * stride_c, ldc);
+            BlasConnector::gemm(transa, transb, m, n, k, *alpha, A + ii * stride_a, lda, B + ii * stride_b, ldb, *beta, C + ii * stride_c, ldc);
         }
     }
 };
@@ -232,5 +232,5 @@ template struct blas_gemm_batched_strided<double, DEVICE_CPU>;
 template struct blas_gemm_batched_strided<std::complex<float >, DEVICE_CPU>;
 template struct blas_gemm_batched_strided<std::complex<double>, DEVICE_CPU>;
 
-} // namespace functor
+} // namespace op
 } // namespace container

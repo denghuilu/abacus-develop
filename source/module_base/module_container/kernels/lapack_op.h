@@ -55,32 +55,39 @@ struct dngvd_op {
 };
 
 
+/**
+ * @brief dnevx_op computes the first m eigenvalues and their corresponding eigenvectors of
+ * a complex generalized Hermitian-definite eigenproblem.
+ *
+ * In this op, the CPU version is implemented through the `evx` interface, and the CUDA version
+ * is implemented through the `evd` interface and acquires the first m eigenpairs.
+ * 
+ * API doc:
+ * 1. zheevx: https://netlib.org/lapack/explore-html/df/d9a/group__complex16_h_eeigen_gaabef68a9c7b10df7aef8f4fec89fddbe.html
+ * 2. cusolverDnZheevd: https://docs.nvidia.com/cuda/cusolver/index.html#cusolverdn-t-syevd
+ *
+ * @tparam T The data type of the matrix and vectors (e.g., float, double)
+ * @tparam Device The device type (e.g., DEVICE_CPU, DEVICE_CUDA)
+ */
 template <typename T, typename Device>
 struct dnevx_op {
-    /// @brief DNEVX computes the first m eigenvalues ​​and their corresponding eigenvectors of
-    /// a complex generalized Hermitian-definite eigenproblem
-    ///
-    /// In this op, the CPU version is implemented through the `evx` interface, and the CUDA version
-    /// is implemented through the `evd` interface and acquires the first m eigenpairs.
-    /// API doc:
-    /// 1. zheevx: https://netlib.org/lapack/explore-html/df/d9a/group__complex16_h_eeigen_gaabef68a9c7b10df7aef8f4fec89fddbe.html
-    /// 2. cusolverDnZheevd: https://docs.nvidia.com/cuda/cusolver/index.html#cusolverdn-t-syevd
-    ///
-    /// Input Parameters
-    ///     @param d : the type of device
-    ///     @param nstart : the number of cols of the matrix
-    ///     @param ldh : the number of rows of the matrix
-    ///     @param A : the hermitian matrix A in A x=lambda B x (row major)
-    /// Output Parameter
-    ///     @param W : calculated eigenvalues
-    ///     @param V : calculated eigenvectors (row major)
+    /**
+     * @brief Computes the eigenvalues and eigenvectors of a complex generalized Hermitian-definite eigenproblem.
+     *
+     * @param nstart The number of cols of the matrix.
+     * @param ldh The number of rows of the matrix.
+     * @param A The hermitian matrix A in A x=lambda B x (row major).
+     * @param m The number of eigenvalues and eigenvectors to compute.
+     * @param W Array to store the calculated eigenvalues.
+     * @param V Array to store the calculated eigenvectors (row major).
+     */
     void operator()(
-            const int nstart,
-            const int ldh,
-            const std::complex<T>* A,
-            const int m,
-            T* W,
-            std::complex<T>* V);
+        const int nstart,
+        const int ldh,
+        const std::complex<T>* A,
+        const int m,
+        T* W,
+        std::complex<T>* V);
 };
 
 

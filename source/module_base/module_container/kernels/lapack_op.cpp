@@ -9,12 +9,12 @@ namespace op {
 template <typename T>
 struct dngvd_op<T, DEVICE_CPU> {
     void operator()(
-            const int nstart,
-            const int ldh,
-            const std::complex<T> *hcc,
-            const std::complex<T> *scc,
-            T *eigenvalue,
-            std::complex<T> *vcc)
+        const int nstart,
+        const int ldh,
+        const std::complex<T> *hcc,
+        const std::complex<T> *scc,
+        T *eigenvalue,
+        std::complex<T> *vcc)
     {
         for (int i = 0; i < nstart * ldh; i++) {
             vcc[i] = hcc[i];
@@ -50,12 +50,12 @@ struct dngvd_op<T, DEVICE_CPU> {
 template <typename T>
 struct dnevx_op<T, DEVICE_CPU> {
     void operator()(
-            const int nstart,
-            const int ldh,
-            const std::complex<T>* hcc, // hcc
-            const int nbands, // nbands
-            T* eigenvalue, // eigenvalue
-            std::complex<T>* vcc) // vcc
+        const int nstart,
+        const int ldh,
+        const std::complex<T>* hcc, // hcc
+        const int nbands, // nbands
+        T* eigenvalue, // eigenvalue
+        std::complex<T>* vcc) // vcc
     {
         std::complex<T>* aux = new std::complex<T>[nstart * ldh];
         for (int ii = 0; ii < nstart * ldh; ii++) {
@@ -99,28 +99,28 @@ struct dnevx_op<T, DEVICE_CPU> {
         // obtained by the zhegvx operation is (nstart * nstart) and stored in zux (internal to the function). When
         // the function is output, the data of zux will be mapped to the corresponding position of V.
         LapackConnector::xheevx(
-                1, // ITYPE = 1:  A*x = (lambda)*B*x
-                'V', // JOBZ = 'V':  Compute eigenvalues and eigenvectors.
-                'I', // RANGE = 'I': the IL-th through IU-th eigenvalues will be found.
-                'L', // UPLO = 'L':  Lower triangles of A and B are stored.
-                nstart, // N = base
-                aux, // A is COMPLEX*16 array  dimension (LDA, N)
-                ldh, // LDA = base
-                0.0, // Not referenced if RANGE = 'A' or 'I'.
-                0.0, // Not referenced if RANGE = 'A' or 'I'.
-                1, // IL: If RANGE='I', the index of the smallest eigenvalue to be returned. 1 <= IL <= IU <= N,
-                nbands, // IU: If RANGE='I', the index of the largest eigenvalue to be returned. 1 <= IL <= IU <= N,
-                0.0, // ABSTOL
-                nbands, // M: The total number of eigenvalues found.  0 <= M <= N. if RANGE = 'I', M = IU-IL+1.
-                eigenvalue, // W store eigenvalues
-                vcc, // store eigenvector
-                ldh, // LDZ: The leading dimension of the array Z.
-                work.data<std::complex<T>>(),
-                lwork,
-                rwork.data<T>(),
-                iwork.data<int>(),
-                ifail.data<int>(),
-                info);
+            1, // ITYPE = 1:  A*x = (lambda)*B*x
+            'V', // JOBZ = 'V':  Compute eigenvalues and eigenvectors.
+            'I', // RANGE = 'I': the IL-th through IU-th eigenvalues will be found.
+            'L', // UPLO = 'L':  Lower triangles of A and B are stored.
+            nstart, // N = base
+            aux, // A is COMPLEX*16 array  dimension (LDA, N)
+            ldh, // LDA = base
+            0.0, // Not referenced if RANGE = 'A' or 'I'.
+            0.0, // Not referenced if RANGE = 'A' or 'I'.
+            1, // IL: If RANGE='I', the index of the smallest eigenvalue to be returned. 1 <= IL <= IU <= N,
+            nbands, // IU: If RANGE='I', the index of the largest eigenvalue to be returned. 1 <= IL <= IU <= N,
+            0.0, // ABSTOL
+            nbands, // M: The total number of eigenvalues found.  0 <= M <= N. if RANGE = 'I', M = IU-IL+1.
+            eigenvalue, // W store eigenvalues
+            vcc, // store eigenvector
+            ldh, // LDZ: The leading dimension of the array Z.
+            work.data<std::complex<T>>(),
+            lwork,
+            rwork.data<T>(),
+            iwork.data<int>(),
+            ifail.data<int>(),
+            info);
 
         delete[] aux;
 
@@ -133,5 +133,5 @@ template struct dngvd_op<double, DEVICE_CPU>;
 
 template struct dnevx_op<float, DEVICE_CPU>;
 template struct dnevx_op<double, DEVICE_CPU>;
-} // namespace container
 } // namespace op
+} // namespace container

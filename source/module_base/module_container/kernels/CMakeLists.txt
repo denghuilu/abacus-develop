@@ -19,3 +19,7 @@ if(USE_ROCM)
 endif()
 
 add_library(kernels OBJECT ${kernels_srcs})
+
+if(BUILD_TESTING)
+  add_subdirectory(tests)
+endif()

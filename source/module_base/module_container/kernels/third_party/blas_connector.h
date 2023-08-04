@@ -24,10 +24,10 @@ void zcopy_(long const *n, const std::complex<double> *a, int const *incx, std::
 
 //reason for passing results as argument instead of returning it:
 //see https://www.numbercrunch.de/blog/2014/07/lost-in-translation/
-void cdotc_(std::complex<float> *result, const int *n, const std::complex<float> *zx,
-            const int *incx, const std::complex<float> *zy, const int *incy);
-void zdotc_(std::complex<double> *result, const int *n, const std::complex<double> *zx,
-            const int *incx, const std::complex<double> *zy, const int *incy);
+void cdotc_(const int *n, const std::complex<float> *zx, const int *incx, 
+            const std::complex<float> *zy, const int *incy, std::complex<float> *result);
+void zdotc_(const int *n, const std::complex<double> *zx, const int *incx, 
+            const std::complex<double> *zy, const int *incy, std::complex<double> *result);
 // Peize Lin add ?dot 2017-10-27, to compute d=x*y
 float sdot_(const int *N, const float *X, const int *incX, const float *Y, const int *incY);
 double ddot_(const int *N, const double *X, const int *incX, const double *Y, const int *incY);
@@ -164,15 +164,21 @@ public:
     static inline
     std::complex<float> dot(const int n, const std::complex<float> *X, const int incX, const std::complex<float> *Y, const int incY)
     {
-        std::complex<float> result = {};
-        cdotc_(&result, &n, X, &incX, Y, &incY);
+        std::complex<float> result = {0, 0};
+        // cdotc_(&n, X, &incX, Y, &incY, &result);
+        for (int ii = 0; ii < n; ii++) {
+            result += std::conj(X[ii * incX]) * Y[ii * incY];
+        }
         return result;
     }
     static inline
     std::complex<double> dot(const int n, const std::complex<double> *X, const int incX, const std::complex<double> *Y, const int incY)
     {
-        std::complex<double> result = {};
-        zdotc_(&result, &n, X, &incX, Y, &incY);
+        std::complex<double> result = {0, 0};
+        // zdotc_(&n, X, &incX, Y, &incY, &result);
+        for (int ii = 0; ii < n; ii++) {
+            result += std::conj(X[ii * incX]) * Y[ii * incY];
+        }
         return result;
     }
 
@@ -183,8 +189,8 @@ public:
               const float alpha, const float *a, const int lda, const float *b, const int ldb,
               const float beta, float *c, const int ldc)
     {
-        sgemm_(&transb, &transa, &n, &m, &k,
-               &alpha, b, &ldb, a, &lda,
+        sgemm_(&transa, &transb, &m, &n, &k,
+               &alpha, a, &lda, b, &ldb,
                &beta, c, &ldc);
     }
     static inline
@@ -192,8 +198,8 @@ public:
               const double alpha, const double *a, const int lda, const double *b, const int ldb,
               const double beta, double *c, const int ldc)
     {
-        dgemm_(&transb, &transa, &n, &m, &k,
-               &alpha, b, &ldb, a, &lda,
+        dgemm_(&transa, &transb, &m, &n, &k,
+               &alpha, a, &lda, b, &ldb,
                &beta, c, &ldc);
     }
     static inline
@@ -201,8 +207,8 @@ public:
               const std::complex<float> alpha, const std::complex<float> *a, const int lda, const std::complex<float> *b, const int ldb,
               const std::complex<float> beta, std::complex<float> *c, const int ldc)
     {
-        cgemm_(&transb, &transa, &n, &m, &k,
-               &alpha, b, &ldb, a, &lda,
+        cgemm_(&transa, &transb, &m, &n, &k,
+               &alpha, a, &lda, b, &ldb,
                &beta, c, &ldc);
     }
     static inline
@@ -210,8 +216,8 @@ public:
               const std::complex<double> alpha, const std::complex<double> *a, const int lda, const std::complex<double> *b, const int ldb,
               const std::complex<double> beta, std::complex<double> *c, const int ldc)
     {
-        zgemm_(&transb, &transa, &n, &m, &k,
-               &alpha, b, &ldb, a, &lda,
+        zgemm_(&transa, &transb, &m, &n, &k,
+               &alpha, a, &lda, b, &ldb,
                &beta, c, &ldc);
     }
 
