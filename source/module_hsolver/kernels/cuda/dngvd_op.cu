@@ -87,29 +87,29 @@ void destoryCUSOLVERhandle()
     }
 }
 
-// static inline
-// void xpotri_wapper (const cublasFillMode_t& uplo, const int& n, std::complex<float> * A, const int& lda)
-// {
-//     int lwork;
-//     cusolverDnCpotri_bufferSize(cusolver_H, uplo, n, reinterpret_cast<float2 *>(A), n, &lwork);
-//     float2* work;
-//     cudaMalloc((void**)&work, lwork * sizeof(float2));
-//     // Perform Cholesky decomposition
-//     cusolverDnCpotri(cusolver_H, uplo, n, reinterpret_cast<float2 *>(A), n, work, lwork, nullptr);
-//     cudaFree(work);
-// }
+static inline
+void xpotri_wapper (const cublasFillMode_t& uplo, const int& n, std::complex<float> * A, const int& lda)
+{
+    int lwork;
+    cusolverDnCpotri_bufferSize(cusolver_H, uplo, n, reinterpret_cast<float2 *>(A), n, &lwork);
+    float2* work;
+    cudaMalloc((void**)&work, lwork * sizeof(float2));
+    // Perform Cholesky decomposition
+    cusolverDnCpotri(cusolver_H, uplo, n, reinterpret_cast<float2 *>(A), n, work, lwork, nullptr);
+    cudaFree(work);
+}
 
-// static inline
-// void xpotri_wapper (const cublasFillMode_t& uplo, const int& n, std::complex<double> * A, const int& lda)
-// {
-//     int lwork;
-//     cusolverDnZpotri_bufferSize(cusolver_H, uplo, n, reinterpret_cast<double2 *>(A), n, &lwork);
-//     double2* work;
-//     cudaMalloc((void**)&work, lwork * sizeof(double2));
-//     // Perform Cholesky decomposition
-//     cusolverDnZpotri(cusolver_H, uplo, n, reinterpret_cast<double2 *>(A), n, work, lwork, nullptr);
-//     cudaFree(work);
-// }
+static inline
+void xpotri_wapper (const cublasFillMode_t& uplo, const int& n, std::complex<double> * A, const int& lda)
+{
+    int lwork;
+    cusolverDnZpotri_bufferSize(cusolver_H, uplo, n, reinterpret_cast<double2 *>(A), n, &lwork);
+    double2* work;
+    cudaMalloc((void**)&work, lwork * sizeof(double2));
+    // Perform Cholesky decomposition
+    cusolverDnZpotri(cusolver_H, uplo, n, reinterpret_cast<double2 *>(A), n, work, lwork, nullptr);
+    cudaFree(work);
+}
 
 static inline
 void xpotrf_wapper (const cublasFillMode_t& uplo, const int& n, std::complex<float> * A, const int& lda)
@@ -346,14 +346,14 @@ struct ztrtri_op<FPTYPE, psi::DEVICE_GPU> {
         // }
         
 
-        std::vector<std::complex<FPTYPE>> h_A(dim * dim);
-        using sync_1 = psi::memory::synchronize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU, psi::DEVICE_GPU>;
-        sync_1()(cpu_ctx, gpu_ctx, h_A.data(), A, dim * dim);
-        hsolver::ztrtri_op<FPTYPE, psi::DEVICE_CPU>()(cpu_ctx, h_A.data(), dim);
-        using sync_2 = psi::memory::synchronize_memory_op<std::complex<FPTYPE>, psi::DEVICE_GPU, psi::DEVICE_CPU>;
-        sync_2()(gpu_ctx, cpu_ctx, A, h_A.data(), dim * dim);
+        // std::vector<std::complex<FPTYPE>> h_A(dim * dim);
+        // using sync_1 = psi::memory::synchronize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU, psi::DEVICE_GPU>;
+        // sync_1()(cpu_ctx, gpu_ctx, h_A.data(), A, dim * dim);
+        // hsolver::ztrtri_op<FPTYPE, psi::DEVICE_CPU>()(cpu_ctx, h_A.data(), dim);
+        // using sync_2 = psi::memory::synchronize_memory_op<std::complex<FPTYPE>, psi::DEVICE_GPU, psi::DEVICE_CPU>;
+        // sync_2()(gpu_ctx, cpu_ctx, A, h_A.data(), dim * dim);
 
-        // xpotri_wapper(CUBLAS_FILL_MODE_UPPER, dim, A, dim);
+        xpotri_wapper(CUBLAS_FILL_MODE_UPPER, dim, A, dim);
 
         /*
         void *d_work = nullptr;
