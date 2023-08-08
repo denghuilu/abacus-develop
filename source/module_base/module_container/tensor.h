@@ -50,6 +50,13 @@ class Tensor {
      */
     Tensor(const Tensor& other);
 
+    template <typename T> 
+    Tensor(std::initializer_list<T> values, DeviceType device = DeviceType::CpuDevice) : Tensor(DataTypeToEnum<T>::value, device, TensorShape({static_cast<int>(values.size())})) {
+        TEMPLATE_ALL_2(this->data_type_, this->device_,
+                   op::synchronize_memory_op<T, DEVICE_, DEVICE_CPU>()(
+                           this->data<T>(), values.begin(), this->NumElements()))
+    }
+
     /**
      * @brief Get the data type of the tensor.
      *
@@ -298,6 +305,18 @@ class Tensor {
         }
         return data<T>() + index * shape_.dim_size(static_cast<int>(shape_.ndim()) - 1);
     }
+
+
+    /**
+     * @brief Equality comparison operator for tensors.
+     *
+     * Compares the current tensor with another tensor for equality. Returns true if the data type,
+     * device type, and shape of the two tensors match, and the data elements are equal.
+     *
+     * @param other The tensor to compare with.
+     * @return True if the tensors are equal, otherwise false.
+     */
+    bool operator==(const Tensor& other) const;
 
 protected:
 

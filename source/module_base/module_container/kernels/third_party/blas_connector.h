@@ -3,21 +3,26 @@
 
 #include <complex>
 
+#include <cuda_runtime.h>
+#include <cublas_v2.h>
+
+#include "../gpu_utils.h"
+
 extern "C"
 {
 // level 1: std::vector-std::vector operations, O(n) data and O(n) work.
 
 // Peize Lin add ?scal 2016-08-04, to compute x=a*x
-void sscal_(const int *N, const float *alpha, float *X, const int *incX);
-void dscal_(const int *N, const double *alpha, double *X, const int *incX);
-void cscal_(const int *N, const std::complex<float> *alpha, std::complex<float> *X, const int *incX);
-void zscal_(const int *N, const std::complex<double> *alpha, std::complex<double> *X, const int *incX);
+void sscal_(const int *N, const float *alpha, float *x, const int *incx);
+void dscal_(const int *N, const double *alpha, double *x, const int *incx);
+void cscal_(const int *N, const std::complex<float> *alpha, std::complex<float> *x, const int *incx);
+void zscal_(const int *N, const std::complex<double> *alpha, std::complex<double> *x, const int *incx);
 
 // Peize Lin add ?axpy 2016-08-04, to compute y=a*x+y
-void saxpy_(const int *N, const float *alpha, const float *X, const int *incX, float *Y, const int *incY);
-void daxpy_(const int *N, const double *alpha, const double *X, const int *incX, double *Y, const int *incY);
-void caxpy_(const int *N, const std::complex<float> *alpha, const std::complex<float> *X, const int *incX, std::complex<float> *Y, const int *incY);
-void zaxpy_(const int *N, const std::complex<double> *alpha, const std::complex<double> *X, const int *incX, std::complex<double> *Y, const int *incY);
+void saxpy_(const int *N, const float *alpha, const float *x, const int *incx, float *y, const int *incy);
+void daxpy_(const int *N, const double *alpha, const double *x, const int *incx, double *y, const int *incy);
+void caxpy_(const int *N, const std::complex<float> *alpha, const std::complex<float> *x, const int *incx, std::complex<float> *y, const int *incy);
+void zaxpy_(const int *N, const std::complex<double> *alpha, const std::complex<double> *x, const int *incx, std::complex<double> *y, const int *incy);
 
 void dcopy_(long const *n, const double *a, int const *incx, double *b, int const *incy);
 void zcopy_(long const *n, const std::complex<double> *a, int const *incx, std::complex<double> *b, int const *incy);
@@ -29,13 +34,13 @@ void cdotc_(const int *n, const std::complex<float> *zx, const int *incx,
 void zdotc_(const int *n, const std::complex<double> *zx, const int *incx, 
             const std::complex<double> *zy, const int *incy, std::complex<double> *result);
 // Peize Lin add ?dot 2017-10-27, to compute d=x*y
-float sdot_(const int *N, const float *X, const int *incX, const float *Y, const int *incY);
-double ddot_(const int *N, const double *X, const int *incX, const double *Y, const int *incY);
+float sdot_(const int *N, const float *x, const int *incx, const float *y, const int *incy);
+double ddot_(const int *N, const double *x, const int *incx, const double *y, const int *incy);
 
 // Peize Lin add ?nrm2 2018-06-12, to compute out = ||x||_2 = \sqrt{ \sum_i x_i**2 }
-float snrm2_( const int *n, const float *X, const int *incX );
-double dnrm2_( const int *n, const double *X, const int *incX );
-double dznrm2_( const int *n, const std::complex<double> *X, const int *incX );
+float snrm2_( const int *n, const float *x, const int *incx );
+double dnrm2_( const int *n, const double *x, const int *incx );
+double dznrm2_( const int *n, const std::complex<double> *x, const int *incx );
 
 // level 2: matrix-std::vector operations, O(n^2) data and O(n^2) work.
 void sgemv_(const char*const transa, const int*const m, const int*const n,
@@ -102,82 +107,80 @@ void ztrsm_(char *side, char* uplo, char *transa, char *diag, int *m, int *n,
 struct BlasConnector {
 public:
 
-    // Peize Lin add 2016-08-04
-    // y=a*x+y
     static inline
-    void axpy( const int n, const float alpha, const float *X, const int incX, float *Y, const int incY)
+    void axpy( const int& n, const float& alpha, const float *x, const int& incx, float *y, const int& incy)
     {
-        saxpy_(&n, &alpha, X, &incX, Y, &incY);
+        saxpy_(&n, &alpha, x, &incx, y, &incy);
     }
     static inline
-    void axpy( const int n, const double alpha, const double *X, const int incX, double *Y, const int incY)
+    void axpy( const int& n, const double& alpha, const double *x, const int& incx, double *y, const int& incy)
     {
-        daxpy_(&n, &alpha, X, &incX, Y, &incY);
+        daxpy_(&n, &alpha, x, &incx, y, &incy);
     }
     static inline
-    void axpy( const int n, const std::complex<float> alpha, const std::complex<float> *X, const int incX, std::complex<float> *Y, const int incY)
+    void axpy( const int& n, const std::complex<float>& alpha, const std::complex<float> *x, const int& incx, std::complex<float> *y, const int& incy)
     {
-        caxpy_(&n, &alpha, X, &incX, Y, &incY);
+        caxpy_(&n, &alpha, x, &incx, y, &incy);
     }
     static inline
-    void axpy( const int n, const std::complex<double> alpha, const std::complex<double> *X, const int incX, std::complex<double> *Y, const int incY)
+    void axpy( const int& n, const std::complex<double>& alpha, const std::complex<double> *x, const int& incx, std::complex<double> *y, const int& incy)
     {
-        zaxpy_(&n, &alpha, X, &incX, Y, &incY);
+        zaxpy_(&n, &alpha, x, &incx, y, &incy);
     }
 
     // Peize Lin add 2016-08-04
     // x=a*x
     static inline
-    void scal( const int n,  const float alpha, float *X, const int incX)
+    void scal( const int& n,  const float& alpha, float *x, const int& incx)
     {
-        sscal_(&n, &alpha, X, &incX);
+        sscal_(&n, &alpha, x, &incx);
     }
     static inline
-    void scal( const int n, const double alpha, double *X, const int incX)
+    void scal( const int& n, const double& alpha, double *x, const int& incx)
     {
-        dscal_(&n, &alpha, X, &incX);
+        dscal_(&n, &alpha, x, &incx);
     }
     static inline
-    void scal( const int n, const std::complex<float> alpha, std::complex<float> *X, const int incX)
+    void scal( const int& n, const std::complex<float>& alpha, std::complex<float> *x, const int& incx)
     {
-        cscal_(&n, &alpha, X, &incX);
+        cscal_(&n, &alpha, x, &incx);
     }
     static inline
-    void scal( const int n, const std::complex<double> alpha, std::complex<double> *X, const int incX)
+    void scal( const int& n, const std::complex<double>& alpha, std::complex<double> *x, const int& incx)
     {
-        zscal_(&n, &alpha, X, &incX);
+        zscal_(&n, &alpha, x, &incx);
     }
 
     // Peize Lin add 2017-10-27
     // d=x*y
     static inline
-    float dot( const int n, const float *X, const int incX, const float *Y, const int incY)
+    float dot( const int& n, const float *x, const int& incx, const float *y, const int& incy)
     {
-        return sdot_(&n, X, &incX, Y, &incY);
+        return sdot_(&n, x, &incx, y, &incy);
     }
     static inline
-    double dot( const int n, const double *X, const int incX, const double *Y, const int incY)
+    double dot( const int& n, const double *x, const int& incx, const double *y, const int& incy)
     {
-        return ddot_(&n, X, &incX, Y, &incY);
+        return ddot_(&n, x, &incx, y, &incy);
     }
     // Denghui Lu add 2023-8-01
     static inline
-    std::complex<float> dot(const int n, const std::complex<float> *X, const int incX, const std::complex<float> *Y, const int incY)
+    std::complex<float> dot(const int& n, const std::complex<float> *x, const int& incx, const std::complex<float> *y, const int& incy)
     {
         std::complex<float> result = {0, 0};
-        // cdotc_(&n, X, &incX, Y, &incY, &result);
+        // cdotc_(&n, x, &incx, y, &incy, &result);
         for (int ii = 0; ii < n; ii++) {
-            result += std::conj(X[ii * incX]) * Y[ii * incY];
+            result += std::conj(x[ii * incx]) * y[ii * incy];
         }
         return result;
     }
     static inline
-    std::complex<double> dot(const int n, const std::complex<double> *X, const int incX, const std::complex<double> *Y, const int incY)
+    std::complex<double> dot(const int& n, const std::complex<double> *x, const int& incx, const std::complex<double> *y, const int& incy)
     {
         std::complex<double> result = {0, 0};
-        // zdotc_(&n, X, &incX, Y, &incY, &result);
+        // zdotc_(&n, x, &incx, y, &incy, &result);
         for (int ii = 0; ii < n; ii++) {
-            result += std::conj(X[ii * incX]) * Y[ii * incY];
+            result += std::conj(x[ii * incx]) * y[ii * incy];
         }
         return result;
     }
@@ -185,87 +188,135 @@ public:
     // Peize Lin add 2017-10-27, fix bug trans 2019-01-17
     // C = a * A.? * B.? + b * C
     static inline
-    void gemm(const char transa, const char transb, const int m, const int n, const int k,
-              const float alpha, const float *a, const int lda, const float *b, const int ldb,
-              const float beta, float *c, const int ldc)
+    void gemm(const char& transa, const char& transb, const int& m, const int& n, const int& k,
+              const float& alpha, const float* A, const int& lda, const float* B, const int& ldb,
+              const float& beta, float* C, const int& ldc)
     {
         sgemm_(&transa, &transb, &m, &n, &k,
-               &alpha, a, &lda, b, &ldb,
-               &beta, c, &ldc);
+               &alpha, A, &lda, B, &ldb,
+               &beta, C, &ldc);
     }
     static inline
-    void gemm(const char transa, const char transb, const int m, const int n, const int k,
-              const double alpha, const double *a, const int lda, const double *b, const int ldb,
-              const double beta, double *c, const int ldc)
+    void gemm(const char& transa, const char& transb, const int& m, const int& n, const int& k,
+              const double& alpha, const double* A, const int& lda, const double* B, const int& ldb,
+              const double& beta, double* C, const int& ldc)
     {
         dgemm_(&transa, &transb, &m, &n, &k,
-               &alpha, a, &lda, b, &ldb,
-               &beta, c, &ldc);
+               &alpha, A, &lda, B, &ldb,
+               &beta, C, &ldc);
     }
     static inline
-    void gemm(const char transa, const char transb, const int m, const int n, const int k,
-              const std::complex<float> alpha, const std::complex<float> *a, const int lda, const std::complex<float> *b, const int ldb,
-              const std::complex<float> beta, std::complex<float> *c, const int ldc)
+    void gemm(const char& transa, const char& transb, const int& m, const int& n, const int& k,
+              const std::complex<float>& alpha, const std::complex<float>* A, const int& lda, const std::complex<float>* B, const int& ldb,
+              const std::complex<float>& beta, std::complex<float>* C, const int& ldc)
     {
         cgemm_(&transa, &transb, &m, &n, &k,
-               &alpha, a, &lda, b, &ldb,
-               &beta, c, &ldc);
+               &alpha, A, &lda, B, &ldb,
+               &beta, C, &ldc);
     }
     static inline
-    void gemm(const char transa, const char transb, const int m, const int n, const int k,
-              const std::complex<double> alpha, const std::complex<double> *a, const int lda, const std::complex<double> *b, const int ldb,
-              const std::complex<double> beta, std::complex<double> *c, const int ldc)
+    void gemm(const char& transa, const char& transb, const int& m, const int& n, const int& k,
+              const std::complex<double>& alpha, const std::complex<double>* A, const int& lda, const std::complex<double>* B, const int& ldb,
+              const std::complex<double>& beta, std::complex<double>* C, const int& ldc)
     {
         zgemm_(&transa, &transb, &m, &n, &k,
-               &alpha, a, &lda, b, &ldb,
-               &beta, c, &ldc);
+               &alpha, A, &lda, B, &ldb,
+               &beta, C, &ldc);
+    }
+
+    template <typename T>
+    static inline
+    void gemm_batched(const char& transa, const char& transb, const int& m, const int& n, const int& k,
+              const T& alpha, T** A, const int& lda, T** B, const int& ldb,
+              const T& beta, T** C, const int& ldc, const int& batch_size)
+    {
+        for (int ii = 0; ii < batch_size; ++ii) {
+            // Call the single GEMV for each pair of matrix A[ii] and vector x[ii]
+            BlasConnector::gemm(transa, transb, m, n, k, alpha, A[ii], lda, B[ii], ldb, beta, C[ii], ldc);
+        }
+    }
+
+    template <typename T>
+    static inline
+    void gemm_batched_strided(const char& transa, const char& transb, const int& m, const int& n, const int& k,
+              const T& alpha, const T* A, const int& lda, const int& stride_a, const T* B, const int& ldb, const int& stride_b,
+              const T& beta, T* C, const int& ldc, const int& stride_c, const int& batch_size)
+    {
+        for (int ii = 0; ii < batch_size; ii++) {
+            // Call the single GEMV for each pair of matrix A[ii] and vector x[ii]
+            BlasConnector::gemm(transa, transb, m, n, k, alpha, A + ii * stride_a, lda, B + ii * stride_b, ldb, beta, C + ii * stride_c, ldc);
+        }
     }
 
     static inline
-    void gemv(const char trans, const int m, const int n,
-              const float alpha, const float *A, const int lda, const float *X, const int incx,
-              const float beta, float *Y, const int incy)
+    void gemv(const char& trans, const int& m, const int& n,
+              const float& alpha, const float *A, const int& lda, const float *x, const int& incx,
+              const float& beta, float *y, const int& incy)
     {
-        sgemv_(&trans, &m, &n, &alpha, A, &lda, X, &incx, &beta, Y, &incy);
+        sgemv_(&trans, &m, &n, &alpha, A, &lda, x, &incx, &beta, y, &incy);
     }
     static inline
-    void gemv(const char trans, const int m, const int n,
-              const double alpha, const double *A, const int lda, const double *X, const int incx,
-              const double beta, double *Y, const int incy)
+    void gemv(const char& trans, const int& m, const int& n,
+              const double& alpha, const double *A, const int& lda, const double *x, const int& incx,
+              const double& beta, double *y, const int& incy)
     {
-        dgemv_(&trans, &m, &n, &alpha, A, &lda, X, &incx, &beta, Y, &incy);
+        dgemv_(&trans, &m, &n, &alpha, A, &lda, x, &incx, &beta, y, &incy);
     }
     static inline
-    void gemv(const char trans, const int m, const int n,
-              const std::complex<float> alpha, const std::complex<float> *A, const int lda, const std::complex<float> *X, const int incx,
-              const std::complex<float> beta, std::complex<float> *Y, const int incy)
+    void gemv(const char& trans, const int& m, const int& n,
+              const std::complex<float>& alpha, const std::complex<float> *A, const int& lda, const std::complex<float> *x, const int& incx,
+              const std::complex<float>& beta, std::complex<float> *y, const int& incy)
     {
-        cgemv_(&trans, &m, &n, &alpha, A, &lda, X, &incx, &beta, Y, &incy);
+        cgemv_(&trans, &m, &n, &alpha, A, &lda, x, &incx, &beta, y, &incy);
     }
     static inline
-    void gemv(const char trans, const int m, const int n,
-              const std::complex<double> alpha, const std::complex<double> *A, const int lda, const std::complex<double> *X, const int incx,
-              const std::complex<double> beta, std::complex<double> *Y, const int incy)
+    void gemv(const char& trans, const int& m, const int& n,
+              const std::complex<double>& alpha, const std::complex<double> *A, const int& lda, const std::complex<double> *x, const int& incx,
+              const std::complex<double>& beta, std::complex<double> *y, const int& incy)
     {
-        zgemv_(&trans, &m, &n, &alpha, A, &lda, X, &incx, &beta, Y, &incy);
+        zgemv_(&trans, &m, &n, &alpha, A, &lda, x, &incx, &beta, y, &incy);
+    }
+
+    template <typename T>
+    static inline
+    void gemv_batched(const char& trans, const int& m, const int& n,
+              const T& alpha, T** A, const int& lda, T** x, const int& incx,
+              const T& beta, T** y, const int& incy, const int& batch_size)
+    {
+        for (int ii = 0; ii < batch_size; ++ii) {
+            // Call the single GEMV for each pair of matrix A[ii] and vector x[ii]
+            BlasConnector::gemv(trans, m, n, alpha, A[ii], lda, x[ii], incy, beta, y[ii], incy);
+        }
+    }
+
+    template <typename T>
+    static inline
+    void gemv_batched_strided(const char& transa, const int& m, const int& n,
+              const T& alpha, const T* A, const int& lda, const int& stride_a, const T* x, const int& incx, const int& stride_x,
+              const T& beta, T* y, const int& incy, const int& stride_y, const int& batch_size)
+    {
+        for (int ii = 0; ii < batch_size; ii++) {
+            // Call the single GEMV for each pair of matrix A[ii] and vector x[ii]
+            BlasConnector::gemv(transa, m, n, alpha, A + ii * stride_a, lda, x + ii * stride_x, incx, beta, y + ii * stride_y, incy);
+        }
     }
 
     // Peize Lin add 2018-06-12
     // out = ||x||_2
     static inline
-    float nrm2( const int n, const float *X, const int incX )
+    float nrm2( const int n, const float *x, const int incx )
     {
-        return snrm2_( &n, X, &incX );
+        return snrm2_( &n, x, &incx );
     }
     static inline
-    double nrm2( const int n, const double *X, const int incX )
+    double nrm2( const int n, const double *x, const int incx )
     {
-        return dnrm2_( &n, X, &incX );
+        return dnrm2_( &n, x, &incx );
     }
     static inline
-    double nrm2( const int n, const std::complex<double> *X, const int incX )
+    double nrm2( const int n, const std::complex<double> *x, const int incx )
     {
-        return dznrm2_( &n, X, &incX );
+        return dznrm2_( &n, x, &incx );
     }
 
     // copies a into b
@@ -278,6 +329,291 @@ public:
     void copy(const long n, const std::complex<double> *a, const int incx, std::complex<double> *b, const int incy)
     {
         zcopy_(&n, a, &incx, b, &incy);
+    }
+};
+
+struct cuBlasConnector {
+    
+    static inline
+    float dot(cublasHandle_t& handle, const int& n, const float *x, const int& incx, const float *y, const int& incy)
+    {
+        float result = 0.f;
+        cublasSdot(handle, n, x, incx, y, incy, &result);
+        return result;
+    }
+    static inline
+    double dot(cublasHandle_t& handle, const int& n, const double *x, const int& incx, const double *y, const int& incy)
+    {
+        double result = 0;
+        cublasDdot(handle, n, x, incx, y, incy, &result);
+        return result;
+    }
+    // Denghui Lu add 2023-8-01
+    static inline
+    std::complex<float> dot(cublasHandle_t& handle, const int& n, const std::complex<float> *x, const int& incx, const std::complex<float> *y, const int& incy)
+    {
+        std::complex<float> result = {0.f, 0.f};
+        cublasCdotc(handle, n, reinterpret_cast<const cuComplex*>(x), incx, reinterpret_cast<const cuComplex*>(y), incy, reinterpret_cast<cuComplex*>(&result));
+        return result;
+    }
+    static inline
+    std::complex<double> dot(cublasHandle_t& handle, const int& n, const std::complex<double> *x, const int& incx, const std::complex<double> *y, const int& incy)
+    {
+        std::complex<double> result = {0, 0};
+        cublasZdotc(handle, n, reinterpret_cast<const cuDoubleComplex*>(x), incx, reinterpret_cast<const cuDoubleComplex*>(y), incy, reinterpret_cast<cuDoubleComplex*>(&result));
+        return result;
+    }
+
+    static inline
+    void axpy(cublasHandle_t& handle, const int& n, const float& alpha, const float *x, const int& incx, float *y, const int& incy)
+    {
+        cublasSaxpy(handle, n, &alpha, x, incx, y, incy);
+    }
+    static inline
+    void axpy(cublasHandle_t& handle, const int& n, const double& alpha, const double *x, const int& incx, double *y, const int& incy)
+    {
+        cublasDaxpy(handle, n, &alpha, x, incx, y, incy);
+    }
+    static inline
+    void axpy(cublasHandle_t& handle, const int& n, const std::complex<float>& alpha, const std::complex<float> *x, const int& incx, std::complex<float> *y, const int& incy)
+    {
+        cublasCaxpy(handle, n, reinterpret_cast<const cuComplex*>(&alpha), reinterpret_cast<const cuComplex*>(x), incx, reinterpret_cast<cuComplex*>(y), incy);
+    }
+    static inline
+    void axpy(cublasHandle_t& handle, const int& n, const std::complex<double>& alpha, const std::complex<double> *x, const int& incx, std::complex<double> *y, const int& incy)
+    {
+        cublasZaxpy(handle, n, reinterpret_cast<const cuDoubleComplex*>(&alpha), reinterpret_cast<const cuDoubleComplex*>(x), incx, reinterpret_cast<cuDoubleComplex*>(y), incy);
+    }
+
+    static inline
+    void scal(cublasHandle_t& handle, const int& n,  const float& alpha, float *x, const int& incx)
+    {
+        cublasSscal(handle, n, &alpha, x, incx);
+    }
+    static inline
+    void scal(cublasHandle_t& handle, const int& n, const double& alpha, double *x, const int& incx)
+    {
+        cublasDscal(handle, n, &alpha, x, incx);
+    }
+    static inline
+    void scal(cublasHandle_t& handle, const int& n, const std::complex<float>& alpha, std::complex<float> *x, const int& incx)
+    {
+        cublasCscal(handle, n, reinterpret_cast<const cuComplex*>(&alpha), reinterpret_cast<cuComplex*>(x), incx);
+    }
+    static inline
+    void scal(cublasHandle_t& handle, const int& n, const std::complex<double>& alpha, std::complex<double> *x, const int& incx)
+    {
+        cublasZscal(handle, n, reinterpret_cast<const cuDoubleComplex*>(&alpha), reinterpret_cast<cuDoubleComplex*>(x), incx);
+    }
+
+    static inline
+    void gemv(cublasHandle_t& handle, const char& trans, const int& m, const int& n,
+              const float& alpha, const float *A, const int& lda, const float *x, const int& incx,
+              const float& beta, float *y, const int& incy)
+    {
+        cublasSgemv(handle, GetCublasOperation(trans), m, n, &alpha, A, lda, x, incx, &beta, y, incy);
+    }
+    static inline
+    void gemv(cublasHandle_t& handle, const char& trans, const int& m, const int& n,
+              const double& alpha, const double *A, const int& lda, const double *x, const int& incx,
+              const double& beta, double *y, const int& incy)
+    {
+        cublasDgemv(handle, GetCublasOperation(trans), m, n, &alpha, A, lda, x, incx, &beta, y, incy);
+    }
+    static inline
+    void gemv(cublasHandle_t& handle, const char& trans, const int& m, const int& n,
+              const std::complex<float>& alpha, const std::complex<float> *A, const int& lda, const std::complex<float> *x, const int& incx,
+              const std::complex<float>& beta, std::complex<float> *y, const int& incy)
+    {
+        cublasCgemv(handle, GetCublasOperation(trans), m, n, reinterpret_cast<const cuComplex*>(&alpha), 
+        reinterpret_cast<const cuComplex*>(A), lda, reinterpret_cast<const cuComplex*>(x), incx, reinterpret_cast<const cuComplex*>(&beta), reinterpret_cast<cuComplex*>(y), incy);
+    }
+    static inline
+    void gemv(cublasHandle_t& handle, const char& trans, const int& m, const int& n,
+              const std::complex<double>& alpha, const std::complex<double> *A, const int& lda, const std::complex<double> *x, const int& incx,
+              const std::complex<double>& beta, std::complex<double> *y, const int& incy)
+    {
+        cublasZgemv(handle, GetCublasOperation(trans), m, n, reinterpret_cast<const cuDoubleComplex*>(&alpha), 
+        reinterpret_cast<const cuDoubleComplex*>(A), lda, reinterpret_cast<const cuDoubleComplex*>(x), incx, reinterpret_cast<const cuDoubleComplex*>(&beta), reinterpret_cast<cuDoubleComplex*>(y), incy);
+    }
+
+    template <typename T>
+    static inline
+    void gemv_batched(cublasHandle_t& handle, const char& trans, const int& m, const int& n,
+              const T& alpha, T** A, const int& lda, T** x, const int& incx,
+              const T& beta, T** y, const int& incy, const int& batch_size)
+    {
+        for (int ii = 0; ii < batch_size; ++ii) {
+            // Call the single GEMV for each pair of matrix A[ii] and vector x[ii]
+            cuBlasConnector::gemv(handle, trans, m, n, alpha, A[ii], lda, x[ii], incy, beta, y[ii], incy);
+        }
+    }
+
+    template <typename T>
+    static inline
+    void gemv_batched_strided(cublasHandle_t& handle, const char& transa, const int& m, const int& n,
+              const T& alpha, const T* A, const int& lda, const int& stride_a, const T* x, const int& incx, const int& stride_x,
+              const T& beta, T* y, const int& incy, const int& stride_y, const int& batch_size)
+    {
+        for (int ii = 0; ii < batch_size; ii++) {
+            // Call the single GEMV for each pair of matrix A[ii] and vector x[ii]
+            cuBlasConnector::gemv(handle, transa, m, n, alpha, A + ii * stride_a, lda, x + ii * stride_x, incx, beta, y + ii * stride_y, incy);
+        }
+    }
+
+    static inline
+    void gemm(cublasHandle_t& handle, const char& transa, const char& transb, const int& m, const int& n, const int& k,
+              const float& alpha, const float* A, const int& lda, const float* B, const int& ldb,
+              const float& beta, float* C, const int& ldc)
+    {
+        cublasSgemm(handle, GetCublasOperation(transa), GetCublasOperation(transb),
+                    m, n, k, &alpha, A, lda, B, ldb, &beta, C, ldc);
+    }
+    static inline
+    void gemm(cublasHandle_t& handle, const char& transa, const char& transb, const int& m, const int& n, const int& k,
+              const double& alpha, const double* A, const int& lda, const double* B, const int& ldb,
+              const double& beta, double* C, const int& ldc)
+    {
+        cublasDgemm(handle, GetCublasOperation(transa), GetCublasOperation(transb),
+                    m, n, k, &alpha, A, lda, B, ldb, &beta, C, ldc);
+    }
+    static inline
+    void gemm(cublasHandle_t& handle, const char& transa, const char& transb, const int& m, const int& n, const int& k,
+              const std::complex<float>& alpha, const std::complex<float>* A, const int& lda, const std::complex<float>* B, const int& ldb,
+              const std::complex<float>& beta, std::complex<float>* C, const int& ldc)
+    {
+        cublasCgemm(handle, GetCublasOperation(transa), GetCublasOperation(transb),
+                    m, n, k, 
+                    reinterpret_cast<const cuComplex*>(&alpha), 
+                    reinterpret_cast<const cuComplex*>(A), lda, 
+                    reinterpret_cast<const cuComplex*>(B), ldb, 
+                    reinterpret_cast<const cuComplex*>(&beta), 
+                    reinterpret_cast<cuComplex*>(C), ldc);
+    }
+    static inline
+    void gemm(cublasHandle_t& handle, const char& transa, const char& transb, const int& m, const int& n, const int& k,
+              const std::complex<double>& alpha, const std::complex<double>* A, const int& lda, const std::complex<double>* B, const int& ldb,
+              const std::complex<double>& beta, std::complex<double>* C, const int& ldc)
+    {
+        cublasZgemm(handle, GetCublasOperation(transa), GetCublasOperation(transb),
+                    m, n, k,
+                    reinterpret_cast<const cuDoubleComplex*>(&alpha),  
+                    reinterpret_cast<const cuDoubleComplex*>(A), lda, 
+                    reinterpret_cast<const cuDoubleComplex*>(B), ldb, 
+                    reinterpret_cast<const cuDoubleComplex*>(&beta), 
+                    reinterpret_cast<cuDoubleComplex*>(C), ldc);
+    }
+
+    static inline
+    void gemm_batched(cublasHandle_t& handle, const char& transa, const char& transb, const int& m, const int& n, const int& k,
+              const float& alpha, float** A, const int& lda, float** B, const int& ldb,
+              const float& beta, float** C, const int& ldc, const int& batch_size)
+    {
+        cublasSgemmBatched(handle, GetCublasOperation(transa), GetCublasOperation(transb),
+                           m, n, k, &alpha, A, lda, B, ldb, &beta, C, ldc, batch_size);
+    }
+    static inline
+    void gemm_batched(cublasHandle_t& handle, const char& transa, const char& transb, const int& m, const int& n, const int& k,
+              const double& alpha, double** A, const int& lda, double** B, const int& ldb,
+              const double& beta, double** C, const int& ldc, const int& batch_size)
+    {
+        cublasDgemmBatched(handle, GetCublasOperation(transa), GetCublasOperation(transb),
+                           m, n, k, &alpha, A, lda, B, ldb, &beta, C, ldc, batch_size);
+    }
+    static inline
+    void gemm_batched(cublasHandle_t& handle, const char& transa, const char& transb, const int& m, const int& n, const int& k,
+              const std::complex<float>& alpha, std::complex<float>** A, const int& lda, std::complex<float>** B, const int& ldb,
+              const std::complex<float>& beta, std::complex<float>** C, const int& ldc, const int& batch_size)
+    {
+        cublasCgemmBatched(handle, GetCublasOperation(transa), GetCublasOperation(transb),
+                           m, n, k, 
+                           reinterpret_cast<const cuComplex*>(&alpha), 
+                           reinterpret_cast<cuComplex**>(A), lda, 
+                           reinterpret_cast<cuComplex**>(B), ldb, 
+                           reinterpret_cast<const cuComplex*>(&beta), 
+                           reinterpret_cast<cuComplex**>(C), ldc, batch_size);
+    }
+    static inline
+    void gemm_batched(cublasHandle_t& handle, const char& transa, const char& transb, const int& m, const int& n, const int& k,
+              const std::complex<double>& alpha, std::complex<double>** A, const int& lda, std::complex<double>** B, const int& ldb,
+              const std::complex<double>& beta, std::complex<double>** C, const int& ldc, const int& batch_size)
+    {
+        cublasZgemmBatched(handle, GetCublasOperation(transa), GetCublasOperation(transb),
+                           m, n, k, 
+                           reinterpret_cast<const cuDoubleComplex*>(&alpha), 
+                           reinterpret_cast<cuDoubleComplex**>(A), lda, 
+                           reinterpret_cast<cuDoubleComplex**>(B), ldb, 
+                           reinterpret_cast<const cuDoubleComplex*>(&beta), 
+                           reinterpret_cast<cuDoubleComplex**>(C), ldc, batch_size);
+    }
+
+    static inline
+    void gemm_batched_strided(cublasHandle_t& handle, const char& transa, const char& transb, const int& m, const int& n, const int& k,
+              const float& alpha, const float* A, const int& lda, const int& stride_a, const float* B, const int& ldb, const int& stride_b,
+              const float& beta, float* C, const int& ldc, const int& stride_c, const int& batch_size)
+    {
+        cublasSgemmStridedBatched(
+                handle, 
+                GetCublasOperation(transa), 
+                GetCublasOperation(transb),
+                m, n, k, 
+                &alpha, 
+                A, lda, stride_a, 
+                B, ldb, stride_b, 
+                &beta, 
+                C, ldc, stride_c,
+                batch_size);
+    }
+    static inline
+    void gemm_batched_strided(cublasHandle_t& handle, const char& transa, const char& transb, const int& m, const int& n, const int& k,
+              const double& alpha, const double* A, const int& lda, const int& stride_a, const double* B, const int& ldb, const int& stride_b,
+              const double& beta, double* C, const int& ldc, const int& stride_c, const int& batch_size)
+    {
+        cublasDgemmStridedBatched(
+                handle, 
+                GetCublasOperation(transa), 
+                GetCublasOperation(transb),
+                m, n, k, 
+                &alpha, 
+                A, lda, stride_a, 
+                B, ldb, stride_b, 
+                &beta, 
+                C, ldc, stride_c,
+                batch_size);
+    }
+    static inline
+    void gemm_batched_strided(cublasHandle_t& handle, const char& transa, const char& transb, const int& m, const int& n, const int& k,
+              const std::complex<float>& alpha, const std::complex<float>* A, const int& lda, const int& stride_a, const std::complex<float>* B, const int& ldb, const int& stride_b,
+              const std::complex<float>& beta, std::complex<float>* C, const int& ldc, const int& stride_c, const int& batch_size)
+    {
+        cublasCgemmStridedBatched(
+                handle, 
+                GetCublasOperation(transa), 
+                GetCublasOperation(transb),
+                m, n, k, 
+                reinterpret_cast<const cuComplex*>(&alpha), 
+                reinterpret_cast<const cuComplex*>(A), lda, stride_a, 
+                reinterpret_cast<const cuComplex*>(B), ldb, stride_b, 
+                reinterpret_cast<const cuComplex*>(&beta), 
+                reinterpret_cast<cuComplex*>(C), ldc, stride_c,
+                batch_size);
+    }
+    static inline
+    void gemm_batched_strided(cublasHandle_t& handle, const char& transa, const char& transb, const int& m, const int& n, const int& k,
+              const std::complex<double>& alpha, const std::complex<double>* A, const int& lda, const int& stride_a, const std::complex<double>* B, const int& ldb, const int& stride_b,
+              const std::complex<double>& beta, std::complex<double>* C, const int& ldc, const int& stride_c, const int& batch_size)
+    {
+        cublasZgemmStridedBatched(
+                handle, 
+                GetCublasOperation(transa), 
+                GetCublasOperation(transb),
+                m, n, k, 
+                reinterpret_cast<const cuDoubleComplex*>(&alpha), 
+                reinterpret_cast<const cuDoubleComplex*>(A), lda, stride_a, 
+                reinterpret_cast<const cuDoubleComplex*>(B), ldb, stride_b, 
+                reinterpret_cast<const cuDoubleComplex*>(&beta), 
+                reinterpret_cast<cuDoubleComplex*>(C), ldc, stride_c,
+                batch_size);
     }
 };
 

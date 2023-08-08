@@ -1,29 +1,12 @@
 #include "../blas_op.h"
 
+#include <cuda_runtime.h>
+#include <cublas_v2.h>
+
 namespace container {
-namespace functor {
+namespace op {
 
 static cublasHandle_t cublas_handle = nullptr;
-
-// static inline
-// void xdot_wrapper(const int &n, const float * x, const int &incx, const float * y, const int &incy, float &result) {
-//     cublasErrcheck(cublasSdot(cublas_handle, n, x, incx, y, incy, &result));
-// }
-//
-// static inline
-// void xdot_wrapper(const int &n, const double * x, const int &incx, const double * y, const int &incy, double &result) {
-//     cublasErrcheck(cublasDdot(cublas_handle, n, x, incx, y, incy, &result));
-// }
-
-static inline
-void xscal_wrapper(const int &n, const std::complex<float> * alpha, std::complex<float> * X, const int &incx) {
-    cublasErrcheck(cublasCscal(cublas_handle, n, (float2*)alpha, (float2*)X, incx));
-}
-
-static inline
-void xscal_wrapper(const int &n, const std::complex<double> * alpha, std::complex<double> * X, const int &incx) {
-    cublasErrcheck(cublasZscal(cublas_handle, n, (double2*)alpha, (double2*)X, incx));
-}
 
 void createBlasHandle() {
     if (cublas_handle == nullptr) {
@@ -38,193 +21,224 @@ void destoryBlasHandle() {
     }
 }
 
+
+template <typename T>
+struct blas_dot<T, DEVICE_GPU> {
+    void operator()(
+        const int& n,
+        const T* x,
+        const int& incx,
+        const T* y,
+        const int& incy,
+        T* result)
+    {
+        *result = cuBlasConnector::dot(cublas_handle, n, x, incx, y, incy);
+    }
+};
+
 template <typename T>
 struct blas_scal<T, DEVICE_GPU> {
     void operator()(
-            const int &N,
-            const std::complex<T> *alpha,
-            std::complex<T> *X,
-            const int &incx)
+        const int& n,
+        const T* alpha,
+        T* x,
+        const int& incx)
     {
-        xscal_wrapper(N, alpha, X, incx);
+        cuBlasConnector::scal(cublas_handle, n, *alpha, x, incx);
     }
 };
 
-template <>
-struct blas_axpy<float, DEVICE_GPU> {
+template <typename T>
+struct blas_axpy<T, DEVICE_GPU> {
     void operator()(
-            const int &N,
-            const std::complex<float> *alpha,
-            const std::complex<float> *X,
-            const int &incX,
-            std::complex<float> *Y,
-            const int &incY)
+        const int& n,
+        const T* alpha,
+        const T* x,
+        const int& incx,
+        T* y,
+        const int& incy)
     {
-        cublasErrcheck(cublasCaxpy(cublas_handle, N, (float2 *) alpha, (float2 *) X, incX, (float2 *) Y, incY));
+        cuBlasConnector::axpy(cublas_handle, n, *alpha, x, incx, y, incy);
     }
 };
 
-template <>
-struct blas_axpy<double, DEVICE_GPU> {
+template <typename T>
+struct blas_gemv<T, DEVICE_GPU> {
     void operator()(
-            const int &N,
-            const std::complex<double> *alpha,
-            const std::complex<double> *X,
-            const int &incX,
-            std::complex<double> *Y,
-            const int &incY)
+        const char& trans,
+        const int& m,
+        const int& n,
+        const T* alpha,
+        const T* A,
+        const int& lda,
+        const T* x,
+        const int& incx,
+        const T* beta,
+        T* y,
+        const int& incy) 
     {
-        cublasErrcheck(cublasZaxpy(cublas_handle, N, (double2 *) alpha, (double2 *) X, incX, (double2 *) Y, incY));
-    }
-};
-
-template <>
-struct blas_gemv<float, DEVICE_GPU> {
-    void operator()(
-            const char &trans,
-            const int &m,
-            const int &n,
-            const std::complex<float> *alpha,
-            const std::complex<float> *A,
-            const int &lda,
-            const std::complex<float> *X,
-            const int &incx,
-            const std::complex<float> *beta,
-            std::complex<float> *Y,
-            const int &incy) {
-        cublasOperation_t cutrans = {};
-        if (trans == 'N') {
-            cutrans = CUBLAS_OP_N;
-        } else if (trans == 'T') {
-            cutrans = CUBLAS_OP_T;
-        } else if (trans == 'C') {
-            cutrans = CUBLAS_OP_C;
-        }
-        cublasErrcheck(
-                cublasCgemv(cublas_handle, cutrans, m, n, (float2 *) alpha, (float2 *) A, lda, (float2 *) X, incx,
-                            (float2 *) beta, (float2 *) Y, incy));
-    }
-};
-
-template <>
-struct blas_gemv<double, DEVICE_GPU> {
-    void operator()(
-            const char &trans,
-            const int &m,
-            const int &n,
-            const std::complex<double> *alpha,
-            const std::complex<double> *A,
-            const int &lda,
-            const std::complex<double> *X,
-            const int &incx,
-            const std::complex<double> *beta,
-            std::complex<double> *Y,
-            const int &incy)
-    {
-        cublasOperation_t cutrans = {};
-        if (trans == 'N') {
-            cutrans = CUBLAS_OP_N;
-        } else if (trans == 'T') {
-            cutrans = CUBLAS_OP_T;
-        } else if (trans == 'C') {
-            cutrans = CUBLAS_OP_C;
-        }
-        cublasErrcheck(
-                cublasZgemv(cublas_handle, cutrans, m, n, (double2 *) alpha, (double2 *) A, lda, (double2 *) X, incx,
-                            (double2 *) beta, (double2 *) Y, incy));
+        cuBlasConnector::gemv(cublas_handle, trans, m, n, *alpha, A, lda, x, incx, *beta, y, incy);
     }
 };
 
 
-template <>
-struct blas_gemm<float, DEVICE_GPU> {
+template <typename T>
+struct blas_gemv_batched<T, DEVICE_CPU> {
     void operator()(
-            const char &transa,
-            const char &transb,
-            const int &m,
-            const int &n,
-            const int &k,
-            const std::complex<float> *alpha,
-            const std::complex<float> *a,
-            const int &lda,
-            const std::complex<float> *b,
-            const int &ldb,
-            const std::complex<float> *beta,
-            std::complex<float> *c,
-            const int &ldc)
+        const char& trans,
+        const int& m,
+        const int& n,
+        const T* alpha,
+        T** A,
+        const int& lda,
+        T** x,
+        const int& incx,
+        const T* beta,
+        T** y,
+        const int& incy,
+        const int& batch_size)
     {
-        cublasOperation_t cutransA = {};
-        cublasOperation_t cutransB = {};
-        // cutransA
-        if (transa == 'N') {
-            cutransA = CUBLAS_OP_N;
-        } else if (transa == 'T') {
-            cutransA = CUBLAS_OP_T;
-        } else if (transa == 'C') {
-            cutransA = CUBLAS_OP_C;
-        }
-        // cutransB
-        if (transb == 'N') {
-            cutransB = CUBLAS_OP_N;
-        } else if (transb == 'T') {
-            cutransB = CUBLAS_OP_T;
-        } else if (transb == 'C') {
-            cutransB = CUBLAS_OP_C;
-        }
-        cublasErrcheck(cublasCgemm(cublas_handle, cutransA, cutransB, m, n, k, (float2 *) alpha, (float2 *) a, lda,
-                                   (float2 *) b, ldb, (float2 *) beta, (float2 *) c, ldc));
+        cuBlasConnector::gemv_batched(cublas_handle, trans, m, n, *alpha, A, lda, x, incx, *beta, y, incy, batch_size);
     }
 };
 
-template <>
-struct blas_gemm<double, DEVICE_GPU> {
+
+template <typename T>
+struct blas_gemv_batched_strided<T, DEVICE_CPU> {
     void operator()(
-            const char& transa,
-            const char& transb,
-            const int& m,
-            const int& n,
-            const int& k,
-            const std::complex<double> *alpha,
-            const std::complex<double> *a,
-            const int& lda,
-            const std::complex<double> *b,
-            const int& ldb,
-            const std::complex<double> *beta,
-            std::complex<double> *c,
-            const int& ldc)
+        const char& trans,
+        const int& m,
+        const int& n,
+        const T* alpha,
+        const T* A,
+        const int& lda,
+        const int64_t& stride_a,
+        const T* x,
+        const int& incx,
+        const int64_t& stride_x,
+        const T* beta,
+        T* y,
+        const int& incy,
+        const int64_t& stride_y,
+        const int& batch_size)
     {
-        cublasOperation_t cutransA;
-        cublasOperation_t cutransB;
-        // cutransA
-        if (transa == 'N'){
-            cutransA = CUBLAS_OP_N;
-        }
-        else if (transa == 'T'){
-            cutransA = CUBLAS_OP_T;
-        }
-        else if (transa == 'C'){
-            cutransA = CUBLAS_OP_C;
-        }
-        // cutransB
-        if (transb == 'N'){
-            cutransB = CUBLAS_OP_N;
-        }
-        else if (transb == 'T'){
-            cutransB = CUBLAS_OP_T;
-        }
-        else if (transb == 'C'){
-            cutransB = CUBLAS_OP_C;
-        }
-        cublasErrcheck(cublasZgemm(cublas_handle, cutransA, cutransB, m, n ,k, (double2*)alpha, (double2*)a , lda, (double2*)b, ldb, (double2*)beta, (double2*)c, ldc));
+        cuBlasConnector::gemv_batched_strided(cublas_handle, trans, m, n, *alpha, A, lda, stride_a, x, incx, stride_x, *beta, y, incy, stride_y, batch_size);
+    }
+};
+
+template <typename T>
+struct blas_gemm<T, DEVICE_CPU> {
+    void operator()(
+        const char& transa,
+        const char& transb,
+        const int& m,
+        const int& n,
+        const int& k,
+        const T* alpha,
+        const T* A,
+        const int& lda,
+        const T* B,
+        const int& ldb,
+        const T* beta,
+        T* C,
+        const int& ldc)
+    {
+        cuBlasConnector::gemm(cublas_handle, transa, transb, m, n, k, *alpha, A, lda, B, ldb, *beta, C, ldc);
+    }
+};
+
+template <typename T>
+struct blas_gemm_batched<T, DEVICE_CPU> {
+    void operator()(
+        const char& transa,
+        const char& transb,
+        const int& m,
+        const int& n,
+        const int& k,
+        const T* alpha,
+        T** A,
+        const int& lda,
+        T** B,
+        const int& ldb,
+        const T* beta,
+        T** C,
+        const int& ldc,
+        const int& batch_size)
+    {
+        cuBlasConnector::gemm_batched(cublas_handle, transa, transb, m, n, k, *alpha, A, lda, B, ldb, *beta, C, ldc, batch_size);
+    }
+};
+
+template <typename T>
+struct blas_gemm_batched_strided<T, DEVICE_CPU> {
+    void operator()(
+        const char& transa,
+        const char& transb,
+        const int& m,
+        const int& n,
+        const int& k,
+        const T* alpha,
+        const T* A,
+        const int& lda,
+        const int& stride_a,
+        const T* B,
+        const int& ldb,
+        const int& stride_b,
+        const T* beta,
+        T* C,
+        const int& ldc,
+        const int& stride_c,
+        const int& batch_size)
+    {
+        cuBlasConnector::gemm_batched_strided(cublas_handle, transa, transb, m, n, k, *alpha, A, lda, stride_a, B, ldb, stride_b, *beta, C, ldc, stride_c, batch_size);
     }
 };
 
 // Explicitly instantiate functors for the types of functor registered.
-template struct blas_axpy<float, DEVICE_GPU>;
-template struct blas_scal<float, DEVICE_GPU>;
+template struct blas_dot<float , DEVICE_GPU>;
+template struct blas_dot<double, DEVICE_GPU>;
+template struct blas_dot<std::complex<float> , DEVICE_GPU>;
+template struct blas_dot<std::complex<double>, DEVICE_GPU>;
 
-template struct blas_axpy<double, DEVICE_GPU>;
+template struct blas_scal<float , DEVICE_GPU>;
 template struct blas_scal<double, DEVICE_GPU>;
+template struct blas_scal<std::complex<float> , DEVICE_GPU>;
+template struct blas_scal<std::complex<double>, DEVICE_GPU>;
+
+template struct blas_axpy<float , DEVICE_GPU>;
+template struct blas_axpy<double, DEVICE_GPU>;
+template struct blas_axpy<std::complex<float> , DEVICE_GPU>;
+template struct blas_axpy<std::complex<double>, DEVICE_GPU>;
+
+template struct blas_gemv<float , DEVICE_GPU>;
+template struct blas_gemv<double, DEVICE_GPU>;
+template struct blas_gemv<std::complex<float >, DEVICE_GPU>;
+template struct blas_gemv<std::complex<double>, DEVICE_GPU>;
+
+template struct blas_gemv_batched<float , DEVICE_GPU>;
+template struct blas_gemv_batched<double, DEVICE_GPU>;
+template struct blas_gemv_batched<std::complex<float >, DEVICE_GPU>;
+template struct blas_gemv_batched<std::complex<double>, DEVICE_GPU>;
+
+template struct blas_gemv_batched_strided<float , DEVICE_GPU>;
+template struct blas_gemv_batched_strided<double, DEVICE_GPU>;
+template struct blas_gemv_batched_strided<std::complex<float >, DEVICE_GPU>;
+template struct blas_gemv_batched_strided<std::complex<double>, DEVICE_GPU>;
+
+template struct blas_gemm<float , DEVICE_GPU>;
+template struct blas_gemm<double, DEVICE_GPU>;
+template struct blas_gemm<std::complex<float >, DEVICE_GPU>;
+template struct blas_gemm<std::complex<double>, DEVICE_GPU>;
+
+template struct blas_gemm_batched<float , DEVICE_GPU>;
+template struct blas_gemm_batched<double, DEVICE_GPU>;
+template struct blas_gemm_batched<std::complex<float >, DEVICE_GPU>;
+template struct blas_gemm_batched<std::complex<double>, DEVICE_GPU>;
+
+template struct blas_gemm_batched_strided<float , DEVICE_GPU>;
+template struct blas_gemm_batched_strided<double, DEVICE_GPU>;
+template struct blas_gemm_batched_strided<std::complex<float >, DEVICE_GPU>;
+template struct blas_gemm_batched_strided<std::complex<double>, DEVICE_GPU>;
 
 } // namespace op
 } // namespace container

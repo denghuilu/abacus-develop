@@ -190,6 +190,29 @@ void Tensor::resize(const TensorShape& new_shape) {
     this->zero();
 }
 
+bool Tensor::operator==(const Tensor& other) const {
+    if (this->data_type_ != other.data_type_ ||
+        this->device_ != other.device_ ||
+        this->shape_ != other.shape_) 
+    {
+        return false;
+    }
+    bool result = false;
+    if (this->device_ != DeviceType::CpuDevice) {
+        Tensor tmpA = *this;
+        Tensor tmpB = other;
+        tmpA.to_device<DEVICE_CPU>();
+        tmpB.to_device<DEVICE_CPU>();
+        TEMPLATE_ALL_2(tmpA.data_type(), tmpA.device_type(),
+                       result = std::equal(tmpA.data<T_>(), tmpA.data<T_>() + tmpA.NumElements(), tmpB.data<T_>()))
+        return result;
+    }
+    TEMPLATE_ALL_2(this->data_type_, this->device_,
+                   result = std::equal(this->data<T_>(), this->data<T_>() + this->NumElements(), other.data<T_>()))
+    return result;
+}
+    
+
 // Overloaded operator<< for the Tensor class.
 std::ostream& operator<<(std::ostream& os, const Tensor& tensor) {
     std::ios::fmtflags flag(os.flags());

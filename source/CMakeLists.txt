@@ -91,7 +91,6 @@ if(USE_CUDA)
   set_property(
     TARGET device
     PROPERTY CUDA_ARCHITECTURES
-    35 # K40
     60 # P100
     70 # V100
     75 # T4

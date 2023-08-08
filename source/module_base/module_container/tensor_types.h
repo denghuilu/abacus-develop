@@ -40,7 +40,7 @@ struct DEVICE_GPU;
  */
 enum class DeviceType {
     UnKnown = 0,  ///< Memory type is unknown.
-    CpuDevice = 1,      ///< Memory type is CPU.
+    CpuDevice = 1,     ///< Memory type is CPU.
     GpuDevice = 2,     ///< Memory type is GPU(CUDA or ROCm).
 };
 

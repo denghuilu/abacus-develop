@@ -5,6 +5,19 @@
 #include "cublas_v2.h"
 #include <cuda_runtime.h>
 #include <cusolverDn.h>
+
+static cublasOperation_t GetCublasOperation(const char& trans) {
+    cublasOperation_t cutrans = {};
+    if (trans == 'N') {
+        cutrans = CUBLAS_OP_N;
+    } else if (trans == 'T') {
+        cutrans = CUBLAS_OP_T;
+    } else if (trans == 'C') {
+        cutrans = CUBLAS_OP_C;
+    }
+    return cutrans;
+}
+
 // cuSOLVER API errors
 static const char* cusolverGetErrorEnum(cusolverStatus_t error) {
     switch (error) {

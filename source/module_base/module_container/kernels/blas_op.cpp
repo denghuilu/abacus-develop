@@ -78,10 +78,7 @@ struct blas_gemv_batched<T, DEVICE_CPU> {
         const int& incy,
         const int& batch_size)
     {
-        for (int ii = 0; ii < batch_size; ++ii) {
-            // Call the single GEMV for each pair of matrix A[ii] and vector x[ii]
-            BlasConnector::gemv(trans, m, n, *alpha, A[ii], lda, x[ii], incx, *beta, y[ii], incy);
-        }
+        BlasConnector::gemv_batched(trans, m, n, *alpha, A, lda, x, incx, *beta, y, incy, batch_size);
     }
 };
 
@@ -105,10 +102,7 @@ struct blas_gemv_batched_strided<T, DEVICE_CPU> {
         const int64_t& stride_y,
         const int& batch_size)
     {
-        for (int ii = 0; ii < batch_size; ii++) {
-            // Call the single GEMV for each pair of matrix A[ii] and vector x[ii]
-            BlasConnector::gemv(trans, m, n, *alpha, A + ii * stride_a, lda, x + ii * stride_x, incx, *beta, y + ii * stride_y, incy);
-        }    
+        BlasConnector::gemv_batched_strided(trans, m, n, *alpha, A, lda, stride_a, x, incx, stride_x, *beta, y, incy, stride_y, batch_size);
     }
 };
 
@@ -151,10 +145,7 @@ struct blas_gemm_batched<T, DEVICE_CPU> {
         const int& ldc,
         const int& batch_size)
     {
-        for (int ii = 0; ii < batch_size; ++ii) {
-            // Call the single GEMV for each pair of matrix A[ii] and vector x[ii]
-            BlasConnector::gemm(transa, transb, m, n, k, *alpha, A[ii], lda, B[ii], ldb, *beta, C[ii], ldc);
-        }
+        BlasConnector::gemm_batched(transa, transb, m, n, k, *alpha, A, lda, B, ldb, *beta, C, ldc, batch_size);
     }
 };
 
@@ -179,10 +170,7 @@ struct blas_gemm_batched_strided<T, DEVICE_CPU> {
         const int& stride_c,
         const int& batch_size)
     {
-        for (int ii = 0; ii < batch_size; ii++) {
-            // Call the single GEMV for each pair of matrix A[ii] and vector x[ii]
-            BlasConnector::gemm(transa, transb, m, n, k, *alpha, A + ii * stride_a, lda, B + ii * stride_b, ldb, *beta, C + ii * stride_c, ldc);
-        }
+        BlasConnector::gemm_batched_strided(transa, transb, m, n, k, *alpha, A, lda, stride_a, B, ldb, stride_b, *beta, C, ldc, stride_c, batch_size);
     }
 };
 
