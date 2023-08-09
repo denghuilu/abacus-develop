@@ -50,11 +50,35 @@ class Tensor {
      */
     Tensor(const Tensor& other);
 
+    /**
+     * @brief Move constructor for the Tensor class.
+     *
+     * This constructor is used to move the contents and ownership of another Tensor object
+     * into the newly created object using move semantics. The source Tensor's resources will be
+     * taken over, and the source object will be left in a valid but unspecified state.
+     *
+     * @param other The rvalue reference to the source Tensor object to be moved.
+     */
+    Tensor(Tensor&& other) noexcept;
+
+
+    /**
+     * @brief Constructor for the Tensor class using an initializer list of values.
+     *
+     * This constructor creates a Tensor object with the specified data type and device type,
+     * using the values provided in the initializer list. The Tensor's shape is automatically
+     * determined based on the size of the initializer list.
+     *
+     * @tparam T The data type of the elements in the initializer list.
+     * @param values The initializer list containing the values to populate the Tensor with.
+     * @param device The device type where the Tensor will be allocated (default is CPU).
+     */
     template <typename T> 
-    Tensor(std::initializer_list<T> values, DeviceType device = DeviceType::CpuDevice) : Tensor(DataTypeToEnum<T>::value, device, TensorShape({static_cast<int>(values.size())})) {
+    Tensor(std::initializer_list<T> values, DeviceType device = DeviceType::CpuDevice) :
+        Tensor(DataTypeToEnum<T>::value, device, TensorShape({static_cast<int>(values.size())})) {
         TEMPLATE_ALL_2(this->data_type_, this->device_,
-                   op::synchronize_memory_op<T, DEVICE_, DEVICE_CPU>()(
-                           this->data<T>(), values.begin(), this->NumElements()))
+            op::synchronize_memory_op<T, DEVICE_, DEVICE_CPU>()(
+                this->data<T>(), values.begin(), this->NumElements()))
     }
 
     /**
@@ -328,6 +352,19 @@ class Tensor {
      * @return A reference to the current Tensor object after the assignment.
      */
     Tensor& operator=(const Tensor& other);
+
+    /**
+     * @brief Move assignment operator overload for the Tensor class.
+     *
+     * This operator is used to move the contents and ownership of another Tensor object
+     * into the current object using move semantics. The source Tensor's resources will be
+     * taken over, and the source object will be left in a valid but unspecified state.
+     *
+     * @param other The rvalue reference to the source Tensor object to be moved.
+     * @return A reference to the current Tensor object after the move assignment.
+     * @note This function is declared as noexcept, indicating that it does not throw exceptions.
+     */
+    Tensor& operator=(Tensor&& other) noexcept;
 
 
 protected:

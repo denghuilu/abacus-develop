@@ -14,9 +14,20 @@ TensorBuffer::TensorBuffer(Allocator* alloc, void* data_ptr) : data_(data_ptr), 
 // Note, this is a reference TensorBuffer, does not owns memory itself.
 TensorBuffer::TensorBuffer(void* data_ptr) : data_(data_ptr), alloc_(), owns_memory(false) {}
 
+// Move constructor.
+TensorBuffer::TensorBuffer(TensorBuffer&& other) noexcept
+        : data_(other.data_), 
+          alloc_(other.alloc_), 
+          owns_memory(other.owns_memory) 
+{
+    // Reset the other TensorBuffer.
+    other.data_ = nullptr;
+    other.owns_memory = false;
+}
+
 // Destroy the TensorBuffer object.
 TensorBuffer::~TensorBuffer() {
-    if (this->OwnsMemory()) {
+    if (this->OwnsMemory() && data_ != nullptr) {
         alloc_->free(data_);
     }
 }
@@ -86,6 +97,21 @@ TensorBuffer& TensorBuffer::operator=(const TensorBuffer& other) {
 
     this->data_ = this->alloc_->allocate(other.GetAllocatedBytes());
     this->owns_memory = true;
+    return *this;
+}
+
+TensorBuffer& TensorBuffer::operator=(TensorBuffer&& other) noexcept {
+    if (this->OwnsMemory()) {
+        this->alloc_->free(data_);
+    }
+    delete this->alloc_;
+    this->alloc_ = other.alloc_;
+    this->data_ = other.data_;
+    this->owns_memory = other.owns_memory;
+
+    // Reset the other TensorBuffer.
+    other.data_ = nullptr;
+    other.owns_memory = false;
     return *this;
 }
 

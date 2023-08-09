@@ -29,7 +29,19 @@ namespace container {
       * @param data_ptr Pointer to the given data buffer.
       */
     explicit TensorBuffer(void* data_ptr);
-    
+
+    /**
+     * @brief Move constructor for the TensorBuffer class.
+     *
+     * This constructor is used to move the contents and ownership of another TensorBuffer object
+     * into the newly created object using move semantics. The source TensorBuffer's resources will be
+     * taken over, and the source object will be left in a valid but unspecified state.
+     *
+     * @param other The rvalue reference to the source TensorBuffer object to be moved.
+     * @note This function is declared as noexcept, indicating that it does not throw exceptions.
+     */
+    TensorBuffer(TensorBuffer&& other) noexcept;
+
     /**
      * @brief Destroy the TensorBuffer object.
      */
@@ -108,11 +120,24 @@ namespace container {
      */
     TensorBuffer& operator=(const TensorBuffer& other);
 
+    /**
+     * @brief Move assignment operator overload for the TensorBuffer class.
+     *
+     * This operator is used to move the contents and ownership of another TensorBuffer object
+     * into the current object using move semantics. The source TensorBuffer's resources will be
+     * taken over, and the source object will be left in a valid but unspecified state.
+     *
+     * @param other The rvalue reference to the source TensorBuffer object to be moved.
+     * @return A reference to the current TensorBuffer object after the move assignment.
+     * @note This function is declared as noexcept, indicating that it does not throw exceptions.
+     */
+    TensorBuffer& operator=(TensorBuffer&& other) noexcept;
+
 
   private:
-    void *data_;       ///< Pointer to the underlying data buffer.
-    Allocator* alloc_; ///< Pointer to the allocator used for memory allocation.
-    bool owns_memory;  ///< Bool to indicate whether this tensor owns it's memory.
+    void *data_ = nullptr;       ///< Pointer to the underlying data buffer.
+    Allocator* alloc_ = nullptr; ///< Pointer to the allocator used for memory allocation.
+    bool owns_memory = false;    ///< Bool to indicate whether this tensor owns it's memory.
 };
 
 }  // namespace container

@@ -39,6 +39,18 @@ Tensor::Tensor(const Tensor& other)
                     this->data<T_>(), other.data<T_>(), this->NumElements()))
 }
 
+// Construct a new Tensor object by moving another Tensor.
+Tensor::Tensor(Tensor&& other) noexcept
+        : data_type_(other.data_type_),
+          shape_(other.shape_),
+          device_(other.device_),
+          buffer_(std::move(other.buffer_))
+{
+    this->allocator_ = this->buffer_.allocator();
+    // Reset the other TensorBuffer.
+    other.allocator_ = nullptr;
+}
+
 // Get the data type of the tensor.
 DataType Tensor::data_type() const { return data_type_; }
 
@@ -203,6 +215,21 @@ Tensor& Tensor::operator=(const Tensor& other) {
     TEMPLATE_ALL_2(this->data_type_, this->device_,
                    container::op::synchronize_memory_op<T_, DEVICE_, DEVICE_>()(
                    this->data<T_>(), other.data<T_>(), this->NumElements()))
+    return *this;
+}
+
+Tensor& Tensor::operator=(Tensor&& other) noexcept {
+    if (this == &other) {
+        return *this;
+    }
+    this->shape_ = other.shape_;
+    this->device_ = other.device_;
+    this->data_type_ = other.data_type_;
+    this->buffer_ = std::move(other.buffer_);
+    this->allocator_ = this->buffer_.allocator();
+
+    // Reset the other TensorBuffer.
+    other.allocator_ = nullptr;
     return *this;
 }
 
