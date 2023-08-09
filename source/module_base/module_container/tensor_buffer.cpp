@@ -1,4 +1,9 @@
 #include "tensor_buffer.h"
+#include "cpu_allocator.h"
+
+#if defined(__CUDA) || defined(__ROCM)
+#include "gpu_allocator.h"
+#endif
 
 namespace container {
 
@@ -34,7 +39,7 @@ size_t TensorBuffer::GetAllocatedBytes() const {
 TensorBuffer* TensorBuffer::root_buffer() { return this; } // Implementation goes here.
 
 // Get the Allocator object used in this class.
-Allocator * TensorBuffer::allocator() const {
+Allocator* TensorBuffer::allocator() const {
     return alloc_;
 }
 
@@ -61,6 +66,27 @@ void TensorBuffer::resize(size_t size) {
     // Update the internal state.
     this->data_ = new_data;
     this->owns_memory = true;
+}
+
+TensorBuffer& TensorBuffer::operator=(const TensorBuffer& other) {
+    if (this->OwnsMemory()) {
+        this->alloc_->free(data_);
+    }
+
+    delete this->alloc_;
+    if (other.GetDeviceType() == DeviceType::CpuDevice) {
+        this->alloc_ = new CPUAllocator();
+    }
+    #if defined(__CUDA) || defined(__ROCM)
+    else if (other.GetDeviceType() == DeviceType::GpuDevice) {
+        this->alloc_ = new GPUAllocator();
+    }
+    #endif // __CUDA || __ROCM
+
+
+    this->data_ = this->alloc_->allocate(other.GetAllocatedBytes());
+    this->owns_memory = true;
+    return *this;
 }
 
 }  // namespace container

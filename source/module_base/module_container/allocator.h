@@ -50,7 +50,9 @@ class Allocator {
      * @param ptr The pointer to get the allocated size of.
      * @return size_t The size of the allocated block of memory, in bytes.
      */
-    virtual size_t AllocatedSize(void* ptr) = 0;
+    virtual size_t AllocatedSize(void* ptr) {
+        return allocated_size_;
+    }
 
     /**
      * @brief Get the type of memory used by the TensorBuffer.
@@ -58,6 +60,12 @@ class Allocator {
      * @return MemoryType The type of memory used by the TensorBuffer.
      */
     virtual DeviceType GetDeviceType() = 0;
+
+  protected:
+    /**
+     * @brief The total number of bytes allocated by this allocator.
+     */
+    size_t allocated_size_ = 0;
 };
 
 } // namespace ABACUS

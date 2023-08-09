@@ -318,6 +318,18 @@ class Tensor {
      */
     bool operator==(const Tensor& other) const;
 
+    /**
+     * @brief Assignment operator overload for the Tensor class.
+     *
+     * This operator is used to assign the values of another Tensor object to the current object.
+     * It performs a deep copy of the data from the source Tensor to the destination Tensor.
+     *
+     * @param other The source Tensor object whose values will be assigned.
+     * @return A reference to the current Tensor object after the assignment.
+     */
+    Tensor& operator=(const Tensor& other);
+
+
 protected:
 
     /**

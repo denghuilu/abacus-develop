@@ -3,10 +3,11 @@
 
 #include <complex>
 
+#if __CUDA || __ROCM
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
-
 #include "../gpu_utils.h"
+#endif // __CUDA || __ROCM
 
 extern "C"
 {
@@ -332,6 +333,7 @@ public:
     }
 };
 
+#if __CUDA || __ROCM
 struct cuBlasConnector {
     
     static inline
@@ -504,47 +506,81 @@ struct cuBlasConnector {
                     reinterpret_cast<cuDoubleComplex*>(C), ldc);
     }
 
+    template <typename T>
+    static inline 
+    T** allocate_(T** in, const int& batch_size)
+    {
+        T** out = nullptr;
+        cudaMalloc(reinterpret_cast<void **>(&out), sizeof(T*) * batch_size);
+        cudaMemcpy(out, in, sizeof(T*) * batch_size, cudaMemcpyHostToDevice);
+        return out;
+    }
+
     static inline
     void gemm_batched(cublasHandle_t& handle, const char& transa, const char& transb, const int& m, const int& n, const int& k,
               const float& alpha, float** A, const int& lda, float** B, const int& ldb,
               const float& beta, float** C, const int& ldc, const int& batch_size)
     {
+        float** d_A = allocate_(A, batch_size);
+        float** d_B = allocate_(B, batch_size);
+        float** d_C = allocate_(C, batch_size);
         cublasSgemmBatched(handle, GetCublasOperation(transa), GetCublasOperation(transb),
-                           m, n, k, &alpha, A, lda, B, ldb, &beta, C, ldc, batch_size);
+                           m, n, k, &alpha, d_A, lda, d_B, ldb, &beta, d_C, ldc, batch_size);
+        cudaFree(d_A);
+        cudaFree(d_B);
+        cudaFree(d_C);
     }
     static inline
     void gemm_batched(cublasHandle_t& handle, const char& transa, const char& transb, const int& m, const int& n, const int& k,
               const double& alpha, double** A, const int& lda, double** B, const int& ldb,
               const double& beta, double** C, const int& ldc, const int& batch_size)
     {
+        double** d_A = allocate_(A, batch_size);
+        double** d_B = allocate_(B, batch_size);
+        double** d_C = allocate_(C, batch_size);
         cublasDgemmBatched(handle, GetCublasOperation(transa), GetCublasOperation(transb),
-                           m, n, k, &alpha, A, lda, B, ldb, &beta, C, ldc, batch_size);
+                           m, n, k, &alpha, d_A, lda, d_B, ldb, &beta, d_C, ldc, batch_size);
+        cudaFree(d_A);
+        cudaFree(d_B);
+        cudaFree(d_C);
     }
     static inline
     void gemm_batched(cublasHandle_t& handle, const char& transa, const char& transb, const int& m, const int& n, const int& k,
               const std::complex<float>& alpha, std::complex<float>** A, const int& lda, std::complex<float>** B, const int& ldb,
               const std::complex<float>& beta, std::complex<float>** C, const int& ldc, const int& batch_size)
     {
+        std::complex<float>** d_A = allocate_(A, batch_size);
+        std::complex<float>** d_B = allocate_(B, batch_size);
+        std::complex<float>** d_C = allocate_(C, batch_size);
         cublasCgemmBatched(handle, GetCublasOperation(transa), GetCublasOperation(transb),
                            m, n, k, 
                            reinterpret_cast<const cuComplex*>(&alpha), 
-                           reinterpret_cast<cuComplex**>(A), lda, 
-                           reinterpret_cast<cuComplex**>(B), ldb, 
+                           reinterpret_cast<cuComplex**>(d_A), lda, 
+                           reinterpret_cast<cuComplex**>(d_B), ldb, 
                            reinterpret_cast<const cuComplex*>(&beta), 
-                           reinterpret_cast<cuComplex**>(C), ldc, batch_size);
+                           reinterpret_cast<cuComplex**>(d_C), ldc, batch_size);
+        cudaFree(d_A);
+        cudaFree(d_B);
+        cudaFree(d_C);
     }
     static inline
     void gemm_batched(cublasHandle_t& handle, const char& transa, const char& transb, const int& m, const int& n, const int& k,
               const std::complex<double>& alpha, std::complex<double>** A, const int& lda, std::complex<double>** B, const int& ldb,
               const std::complex<double>& beta, std::complex<double>** C, const int& ldc, const int& batch_size)
     {
+        std::complex<double>** d_A = allocate_(A, batch_size);
+        std::complex<double>** d_B = allocate_(B, batch_size);
+        std::complex<double>** d_C = allocate_(C, batch_size);
         cublasZgemmBatched(handle, GetCublasOperation(transa), GetCublasOperation(transb),
                            m, n, k, 
                            reinterpret_cast<const cuDoubleComplex*>(&alpha), 
-                           reinterpret_cast<cuDoubleComplex**>(A), lda, 
-                           reinterpret_cast<cuDoubleComplex**>(B), ldb, 
+                           reinterpret_cast<cuDoubleComplex**>(d_A), lda, 
+                           reinterpret_cast<cuDoubleComplex**>(d_B), ldb, 
                            reinterpret_cast<const cuDoubleComplex*>(&beta), 
-                           reinterpret_cast<cuDoubleComplex**>(C), ldc, batch_size);
+                           reinterpret_cast<cuDoubleComplex**>(d_C), ldc, batch_size);
+        cudaFree(d_A);
+        cudaFree(d_B);
+        cudaFree(d_C);
     }
 
     static inline
@@ -616,5 +652,5 @@ struct cuBlasConnector {
                 batch_size);
     }
 };
-
+#endif // __CUDA || __ROCM
 #endif // CONTAINER_KERNELS_THIRD_PARTY_BLAS_CONNECTOR_H_

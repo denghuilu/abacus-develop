@@ -31,7 +31,7 @@ Tensor::Tensor(const Tensor& other)
         : data_type_(other.data_type_),
           shape_(other.shape_),
           device_(other.device_),
-          allocator_(other.allocator_),
+          allocator_(GetAllocator(other.device_)),
           buffer_(allocator_, allocator_->allocate(shape_.NumElements() * SizeOfType(data_type_)))
 {
     TEMPLATE_ALL_2(data_type_, device_,
@@ -63,11 +63,11 @@ Allocator* Tensor::GetAllocator(DeviceType device) {
     if (device == DeviceType::CpuDevice) {
         allocator = new CPUAllocator();
     }
-#if defined(__CUDA)
+#if defined(__CUDA) || defined(__ROCM)
     else if (device == DeviceType::GpuDevice) {
         allocator = new GPUAllocator();
     }
-#endif // __CUDA
+#endif // __CUDA || __ROCM
     else {
         std::cerr << "Tensor device type " << device << " does not match requested type." << std::endl;
         exit(EXIT_FAILURE);
@@ -190,6 +190,22 @@ void Tensor::resize(const TensorShape& new_shape) {
     this->zero();
 }
 
+Tensor& Tensor::operator=(const Tensor& other) {
+    if (this == &other) {
+        return *this;
+    }
+    this->shape_ = other.shape_;
+    this->device_ = other.device_;
+    this->data_type_ = other.data_type_;
+    this->buffer_ = other.buffer_;
+    this->allocator_ = this->buffer_.allocator();
+
+    TEMPLATE_ALL_2(this->data_type_, this->device_,
+                   container::op::synchronize_memory_op<T_, DEVICE_, DEVICE_>()(
+                   this->data<T_>(), other.data<T_>(), this->NumElements()))
+    return *this;
+}
+
 bool Tensor::operator==(const Tensor& other) const {
     if (this->data_type_ != other.data_type_ ||
         this->device_ != other.device_ ||
@@ -199,10 +215,8 @@ bool Tensor::operator==(const Tensor& other) const {
     }
     bool result = false;
     if (this->device_ != DeviceType::CpuDevice) {
-        Tensor tmpA = *this;
-        Tensor tmpB = other;
-        tmpA.to_device<DEVICE_CPU>();
-        tmpB.to_device<DEVICE_CPU>();
+        Tensor tmpA = this->to_device<DEVICE_CPU>();
+        Tensor tmpB = other.to_device<DEVICE_CPU>();
         TEMPLATE_ALL_2(tmpA.data_type(), tmpA.device_type(),
                        result = std::equal(tmpA.data<T_>(), tmpA.data<T_>() + tmpA.NumElements(), tmpB.data<T_>()))
         return result;

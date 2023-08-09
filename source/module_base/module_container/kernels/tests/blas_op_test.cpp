@@ -1,226 +1,264 @@
+#include <tuple>
 #include <gtest/gtest.h>
 #include "../blas_op.h"  // Include the code snippet
+#include "op_test_utils.h"
 #include "module_base/module_container/tensor.h"
 
 namespace container {
 namespace op {
 
 template <typename T>
-class BlasOpTest : public testing::Test {};
+class BlasOpTest : public testing::Test {
+public:
+    BlasOpTest() {
+        tests_utils::init_blas_handle();
+    }
+    ~BlasOpTest() override {
+        tests_utils::delete_blas_handle();
+    }
+};
 
-using Types = ::testing::Types<float, double, std::complex<float>, std::complex<double>>;
-TYPED_TEST_SUITE(BlasOpTest, Types);
+TYPED_TEST_SUITE(BlasOpTest, tests_utils::Types);
 
-TYPED_TEST(BlasOpTest, DotCpu) {
-    blas_dot<TypeParam, DEVICE_CPU> dotCalculator;
+TYPED_TEST(BlasOpTest, Dot) {
+    using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
+
+    blas_dot<Type, Device> dotCalculator;
 
     const int n = 3;
-    const Tensor x = {static_cast<TypeParam>(1.0), static_cast<TypeParam>(2.0), static_cast<TypeParam>(3.0)};
-    const Tensor y = {static_cast<TypeParam>(4.0), static_cast<TypeParam>(5.0), static_cast<TypeParam>(6.0)};
+    const Tensor x = Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0)}).to_device<Device>();
+    const Tensor y = Tensor({static_cast<Type>(4.0), static_cast<Type>(5.0), static_cast<Type>(6.0)}).to_device<Device>();
     
-    TypeParam result = {};
-    dotCalculator(n, x.data<TypeParam>(), 1, y.data<TypeParam>(), 1, &result);
-    const TypeParam expected = static_cast<TypeParam>(32.0);
+    Type result = {};
+    dotCalculator(n, x.data<Type>(), 1, y.data<Type>(), 1, &result);
+    const Type expected = static_cast<Type>(32.0);
 
     EXPECT_EQ(result, expected);
 }
 
-TYPED_TEST(BlasOpTest, ScalCpu) {
-    blas_scal<TypeParam, DEVICE_CPU> scalCalculator;
+TYPED_TEST(BlasOpTest, Scal) {
+    using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
+
+    blas_scal<Type, Device> scalCalculator;
 
     const int n = 3;
-    const TypeParam alpha = static_cast<TypeParam>(2.0);
-    Tensor x = {static_cast<TypeParam>(1.0), static_cast<TypeParam>(2.0), static_cast<TypeParam>(3.0)};
+    const Type alpha = static_cast<Type>(2.0);
+    Tensor x = Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0)}).to_device<Device>();
     
-    scalCalculator(n, &alpha, x.data<TypeParam>(), 1);
-    const Tensor expected = {static_cast<TypeParam>(2.0), static_cast<TypeParam>(4.0), static_cast<TypeParam>(6.0)};
+    scalCalculator(n, &alpha, x.data<Type>(), 1);
+    const Tensor expected = Tensor({static_cast<Type>(2.0), static_cast<Type>(4.0), static_cast<Type>(6.0)}).to_device<Device>();
 
     EXPECT_EQ(x, expected);
 }
 
-TYPED_TEST(BlasOpTest, AxpyCpu) {
-    blas_axpy<TypeParam, DEVICE_CPU> axpyCalculator;
+
+TYPED_TEST(BlasOpTest, Axpy) {
+    using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
+
+    blas_axpy<Type, Device> axpyCalculator;
 
     const int n = 3;
-    const TypeParam alpha = static_cast<TypeParam>(2.0);
-    const Tensor x = {static_cast<TypeParam>(1.0), static_cast<TypeParam>(2.0), static_cast<TypeParam>(3.0)};
-    Tensor y = {static_cast<TypeParam>(4.0), static_cast<TypeParam>(5.0), static_cast<TypeParam>(6.0)};
+    const Type alpha = static_cast<Type>(2.0);
+    const Tensor x = Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0)}).to_device<Device>();
+    Tensor y = Tensor({static_cast<Type>(4.0), static_cast<Type>(5.0), static_cast<Type>(6.0)}).to_device<Device>();
     
-    axpyCalculator(n, &alpha, x.data<TypeParam>(), 1, y.data<TypeParam>(), 1);
-    const Tensor expected = {static_cast<TypeParam>(6.0), static_cast<TypeParam>(9.0), static_cast<TypeParam>(12.0)};
+    axpyCalculator(n, &alpha, x.data<Type>(), 1, y.data<Type>(), 1);
+    const Tensor expected = Tensor({static_cast<Type>(6.0), static_cast<Type>(9.0), static_cast<Type>(12.0)}).to_device<Device>();
 
     EXPECT_EQ(y, expected);
 }
 
-TYPED_TEST(BlasOpTest, GemvCpu) {
-    blas_gemv<TypeParam, DEVICE_CPU> gemvCalculator;
+
+TYPED_TEST(BlasOpTest, Gemv) {
+    using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
+
+    blas_gemv<Type, Device> gemvCalculator;
 
     const char trans = 'N';
     const int m = 3;
     const int n = 2;
-    const TypeParam alpha = static_cast<TypeParam>(2.0);
-    const TypeParam beta = static_cast<TypeParam>(3.0);
-    const Tensor A = {static_cast<TypeParam>(1.0), static_cast<TypeParam>(2.0), static_cast<TypeParam>(3.0), 
-                      static_cast<TypeParam>(4.0), static_cast<TypeParam>(5.0), static_cast<TypeParam>(6.0)};
-    const Tensor x = {static_cast<TypeParam>(1.0), static_cast<TypeParam>(2.0)};
-    Tensor y = {static_cast<TypeParam>(1.0), static_cast<TypeParam>(2.0), static_cast<TypeParam>(3.0)};
+    const Type alpha = static_cast<Type>(2.0);
+    const Type beta  = static_cast<Type>(3.0);
+    const Tensor A = Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0), 
+                             static_cast<Type>(4.0), static_cast<Type>(5.0), static_cast<Type>(6.0)}).to_device<Device>();
+    const Tensor x = Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0)}).to_device<Device>();
+    Tensor       y = Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0)}).to_device<Device>();
     
-    gemvCalculator(trans, m, n, &alpha, A.data<TypeParam>(), m, x.data<TypeParam>(), 1, &beta, y.data<TypeParam>(), 1);
-    const Tensor expected = {static_cast<TypeParam>(21.0), static_cast<TypeParam>(30.0), static_cast<TypeParam>(39.0)};
+    gemvCalculator(trans, m, n, &alpha, A.data<Type>(), m, x.data<Type>(), 1, &beta, y.data<Type>(), 1);
+    const Tensor expected = Tensor({static_cast<Type>(21.0), static_cast<Type>(30.0), static_cast<Type>(39.0)}).to_device<Device>();
 
     EXPECT_EQ(y, expected);
 }
 
-TYPED_TEST(BlasOpTest, GemvBatchedCpu) {
-    blas_gemv<TypeParam, DEVICE_CPU> gemvCalculator;
-    blas_gemv_batched<TypeParam, DEVICE_CPU> gemvBatchedCalculator;
+
+TYPED_TEST(BlasOpTest, GemvBatched) {
+    using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
+
+    blas_gemv<Type, Device> gemvCalculator;
+    blas_gemv_batched<Type, Device> gemvBatchedCalculator;
 
     const char trans = 'N';
     const int m = 3;
     const int n = 2;
     const int batch_size = 2;
-    const TypeParam alpha = static_cast<TypeParam>(2.0);
-    const TypeParam beta = static_cast<TypeParam>(3.0);
+    const Type alpha = static_cast<Type>(2.0);
+    const Type beta  = static_cast<Type>(3.0);
 
-    std::vector<TypeParam*> A = {};
-    std::vector<TypeParam*> x = {};
-    std::vector<TypeParam*> y = {};
+    std::vector<Type*> A = {};
+    std::vector<Type*> x = {};
+    std::vector<Type*> y = {};
 
-    const Tensor _A = {
-        static_cast<TypeParam>(1.0), static_cast<TypeParam>(2.0), 
-        static_cast<TypeParam>(3.0), static_cast<TypeParam>(4.0), 
-        static_cast<TypeParam>(5.0), static_cast<TypeParam>(6.0),
+    const Tensor _A = Tensor({
+        static_cast<Type>(1.0), static_cast<Type>(2.0), 
+        static_cast<Type>(3.0), static_cast<Type>(4.0), 
+        static_cast<Type>(5.0), static_cast<Type>(6.0),
         
-        static_cast<TypeParam>(7.0), static_cast<TypeParam>(8.0),
-        static_cast<TypeParam>(9.0), static_cast<TypeParam>(10.0),
-        static_cast<TypeParam>(11.0), static_cast<TypeParam>(12.0)};
+        static_cast<Type>(7.0), static_cast<Type>(8.0),
+        static_cast<Type>(9.0), static_cast<Type>(10.0),
+        static_cast<Type>(11.0), static_cast<Type>(12.0)}).to_device<Device>();
     
-    A.push_back(_A.data<TypeParam>());
-    A.push_back(_A.data<TypeParam>() + m * n);
+    A.push_back(_A.data<Type>());
+    A.push_back(_A.data<Type>() + m * n);
 
-    const Tensor _x = {static_cast<TypeParam>(1.0), static_cast<TypeParam>(2.0)};
-    x.push_back(_x.data<TypeParam>());
-    x.push_back(_x.data<TypeParam>());
+    const Tensor _x = Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0)}).to_device<Device>();
+    x.push_back(_x.data<Type>());
+    x.push_back(_x.data<Type>());
 
-    Tensor _y1 = {static_cast<TypeParam>(4.0), static_cast<TypeParam>(5.0), static_cast<TypeParam>(6.0),
-                 static_cast<TypeParam>(7.0), static_cast<TypeParam>(8.0), static_cast<TypeParam>(9.0)};
+    Tensor _y1 = Tensor({static_cast<Type>(4.0), static_cast<Type>(5.0), static_cast<Type>(6.0),
+                 static_cast<Type>(7.0), static_cast<Type>(8.0), static_cast<Type>(9.0)}).to_device<Device>();
     Tensor _y2 = _y1;
-    y.push_back(_y1.data<TypeParam>());
-    y.push_back(_y1.data<TypeParam>() + m);
+    y.push_back(_y1.data<Type>());
+    y.push_back(_y1.data<Type>() + m);
 
     gemvBatchedCalculator(trans, m, n, &alpha, A.data(), m, x.data(), 1, &beta, y.data(), 1, batch_size);
 
     for (int ii = 0; ii < batch_size; ++ii) {
-        gemvCalculator(trans, m, n, &alpha, A[ii], m, x[ii], 1, &beta, _y2.data<TypeParam>() + ii * m, 1);
+        gemvCalculator(trans, m, n, &alpha, A[ii], m, x[ii], 1, &beta, _y2.data<Type>() + ii * m, 1);
     }
 
     EXPECT_EQ(_y1, _y2);
 }
 
-TYPED_TEST(BlasOpTest, GemvBatchedStridedCpu) {
-    blas_gemv<TypeParam, DEVICE_CPU> gemvCalculator;
-    blas_gemv_batched_strided<TypeParam, DEVICE_CPU> gemvBatchedStridedCalculator;
+
+TYPED_TEST(BlasOpTest, GemvBatchedStrided) {
+    using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
+
+    blas_gemv<Type, Device> gemvCalculator;
+    blas_gemv_batched_strided<Type, Device> gemvBatchedStridedCalculator;
 
     const char trans = 'N';
     const int m = 3;
     const int n = 2;
     const int batch_size = 2;
-    const TypeParam alpha = static_cast<TypeParam>(2.0);
-    const TypeParam beta = static_cast<TypeParam>(3.0);
+    const Type alpha = static_cast<Type>(2.0);
+    const Type beta = static_cast<Type>(3.0);
 
-    std::vector<TypeParam*> A = {};
-    std::vector<TypeParam*> x = {};
-    std::vector<TypeParam*> y = {};
+    std::vector<Type*> A = {};
+    std::vector<Type*> x = {};
+    std::vector<Type*> y = {};
 
-    const Tensor _A = {
-        static_cast<TypeParam>(1.0), static_cast<TypeParam>(2.0), 
-        static_cast<TypeParam>(3.0), static_cast<TypeParam>(4.0), 
-        static_cast<TypeParam>(5.0), static_cast<TypeParam>(6.0),
+    const Tensor _A = Tensor({
+        static_cast<Type>(1.0), static_cast<Type>(2.0), 
+        static_cast<Type>(3.0), static_cast<Type>(4.0), 
+        static_cast<Type>(5.0), static_cast<Type>(6.0),
         
-        static_cast<TypeParam>(7.0), static_cast<TypeParam>(8.0),
-        static_cast<TypeParam>(9.0), static_cast<TypeParam>(10.0),
-        static_cast<TypeParam>(11.0), static_cast<TypeParam>(12.0)};
+        static_cast<Type>(7.0), static_cast<Type>(8.0),
+        static_cast<Type>(9.0), static_cast<Type>(10.0),
+        static_cast<Type>(11.0), static_cast<Type>(12.0)}).to_device<Device>();
     
-    A.push_back(_A.data<TypeParam>());
-    A.push_back(_A.data<TypeParam>() + m * n);
+    A.push_back(_A.data<Type>());
+    A.push_back(_A.data<Type>() + m * n);
 
-    const Tensor _x = {static_cast<TypeParam>(1.0), static_cast<TypeParam>(2.0)};
-    x.push_back(_x.data<TypeParam>());
-    x.push_back(_x.data<TypeParam>());
+    const Tensor _x = Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0)}).to_device<Device>();
+    x.push_back(_x.data<Type>());
+    x.push_back(_x.data<Type>());
 
-    Tensor _y1 = {static_cast<TypeParam>(4.0), static_cast<TypeParam>(5.0), static_cast<TypeParam>(6.0),
-                 static_cast<TypeParam>(7.0), static_cast<TypeParam>(8.0), static_cast<TypeParam>(9.0)};
+    Tensor _y1 = Tensor({static_cast<Type>(4.0), static_cast<Type>(5.0), static_cast<Type>(6.0),
+                         static_cast<Type>(7.0), static_cast<Type>(8.0), static_cast<Type>(9.0)}).to_device<Device>();
     Tensor _y2 = _y1;
-    y.push_back(_y1.data<TypeParam>());
-    y.push_back(_y1.data<TypeParam>() + m);
+    y.push_back(_y1.data<Type>());
+    y.push_back(_y1.data<Type>() + m);
 
     gemvBatchedStridedCalculator(trans, m, n, &alpha, A[0], m, m * n, x[0], 1, 0, &beta, y[0], 1, m, batch_size);
 
     for (int ii = 0; ii < batch_size; ++ii) {
-        gemvCalculator(trans, m, n, &alpha, A[ii], m, x[ii], 1, &beta, _y2.data<TypeParam>() + ii * m, 1);
+        gemvCalculator(trans, m, n, &alpha, A[ii], m, x[ii], 1, &beta, _y2.data<Type>() + ii * m, 1);
     }
     EXPECT_EQ(_y1, _y2);
 }
 
 
-TYPED_TEST(BlasOpTest, GemmCpu) {
-    blas_gemm<TypeParam, DEVICE_CPU> gemmCalculator;
+TYPED_TEST(BlasOpTest, Gemm) {
+    using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
+
+    blas_gemm<Type, Device> gemmCalculator;
 
     const char trans = 'N';
     const int m = 3;
     const int n = 2;
-    const TypeParam alpha = static_cast<TypeParam>(2.0);
-    const TypeParam beta = static_cast<TypeParam>(3.0);
-    const Tensor A = {static_cast<TypeParam>(1.0), static_cast<TypeParam>(2.0), static_cast<TypeParam>(3.0), 
-                      static_cast<TypeParam>(4.0), static_cast<TypeParam>(5.0), static_cast<TypeParam>(6.0)};
-    const Tensor x = {static_cast<TypeParam>(1.0), static_cast<TypeParam>(2.0)};
-    Tensor y = {static_cast<TypeParam>(1.0), static_cast<TypeParam>(2.0), static_cast<TypeParam>(3.0)};
+    const Type alpha = static_cast<Type>(2.0);
+    const Type beta  = static_cast<Type>(3.0);
+    const Tensor A = Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0), 
+                             static_cast<Type>(4.0), static_cast<Type>(5.0), static_cast<Type>(6.0)}).to_device<Device>();
+    const Tensor x = Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0)}).to_device<Device>();
+    Tensor y = Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0)}).to_device<Device>();
     
-    gemmCalculator(trans, trans, m, 1, n, &alpha, A.data<TypeParam>(), m, x.data<TypeParam>(), n, &beta, y.data<TypeParam>(), m);
-    const Tensor expected = {static_cast<TypeParam>(21.0), static_cast<TypeParam>(30.0), static_cast<TypeParam>(39.0)};
+    gemmCalculator(trans, trans, m, 1, n, &alpha, A.data<Type>(), m, x.data<Type>(), n, &beta, y.data<Type>(), m);
+    const Tensor expected = Tensor({static_cast<Type>(21.0), static_cast<Type>(30.0), static_cast<Type>(39.0)}).to_device<Device>();
 
     EXPECT_EQ(y, expected);
 }
 
-TYPED_TEST(BlasOpTest, GemmBatchedCpu) {
-    blas_gemv_batched<TypeParam, DEVICE_CPU> gemvBatchedCalculator;
-    blas_gemm_batched<TypeParam, DEVICE_CPU> gemmBatchedCalculator;
+
+TYPED_TEST(BlasOpTest, GemmBatched) {
+    using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
+
+    blas_gemv_batched<Type, Device> gemvBatchedCalculator;
+    blas_gemm_batched<Type, Device> gemmBatchedCalculator;
 
     const char trans = 'N';
     const int m = 3;
     const int n = 2;
     const int batch_size = 2;
-    const TypeParam alpha = static_cast<TypeParam>(2.0);
-    const TypeParam beta = static_cast<TypeParam>(3.0);
+    const Type alpha = static_cast<Type>(2.0);
+    const Type beta  = static_cast<Type>(3.0);
 
-    std::vector<TypeParam*> A = {};
-    std::vector<TypeParam*> x = {};
-    std::vector<TypeParam*> y1 = {};
-    std::vector<TypeParam*> y2 = {};
+    std::vector<Type*> A = {};
+    std::vector<Type*> x = {};
+    std::vector<Type*> y1 = {};
+    std::vector<Type*> y2 = {};
 
-    const Tensor _A = {
-        static_cast<TypeParam>(1.0), static_cast<TypeParam>(2.0), 
-        static_cast<TypeParam>(3.0), static_cast<TypeParam>(4.0), 
-        static_cast<TypeParam>(5.0), static_cast<TypeParam>(6.0),
+    const Tensor _A = Tensor({
+        static_cast<Type>(1.0), static_cast<Type>(2.0), 
+        static_cast<Type>(3.0), static_cast<Type>(4.0), 
+        static_cast<Type>(5.0), static_cast<Type>(6.0),
         
-        static_cast<TypeParam>(7.0), static_cast<TypeParam>(8.0),
-        static_cast<TypeParam>(9.0), static_cast<TypeParam>(10.0),
-        static_cast<TypeParam>(11.0), static_cast<TypeParam>(12.0)};
+        static_cast<Type>(7.0), static_cast<Type>(8.0),
+        static_cast<Type>(9.0), static_cast<Type>(10.0),
+        static_cast<Type>(11.0), static_cast<Type>(12.0)}).to_device<Device>();
     
-    A.push_back(_A.data<TypeParam>());
-    A.push_back(_A.data<TypeParam>() + m * n);
+    A.push_back(_A.data<Type>());
+    A.push_back(_A.data<Type>() + m * n);
 
-    const Tensor _x = {static_cast<TypeParam>(1.0), static_cast<TypeParam>(2.0)};
-    x.push_back(_x.data<TypeParam>());
-    x.push_back(_x.data<TypeParam>());
+    const Tensor _x = Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0)}).to_device<Device>();
+    x.push_back(_x.data<Type>());
+    x.push_back(_x.data<Type>());
 
-    Tensor _y1 = {static_cast<TypeParam>(4.0), static_cast<TypeParam>(5.0), static_cast<TypeParam>(6.0),
-                 static_cast<TypeParam>(7.0), static_cast<TypeParam>(8.0), static_cast<TypeParam>(9.0)};
+    Tensor _y1 = Tensor({static_cast<Type>(4.0), static_cast<Type>(5.0), static_cast<Type>(6.0),
+                         static_cast<Type>(7.0), static_cast<Type>(8.0), static_cast<Type>(9.0)}).to_device<Device>();
     Tensor _y2 = _y1;
-    y1.push_back(_y1.data<TypeParam>());
-    y1.push_back(_y1.data<TypeParam>() + m);
-    y2.push_back(_y2.data<TypeParam>());
-    y2.push_back(_y2.data<TypeParam>() + m);
+    y1.push_back(_y1.data<Type>());
+    y1.push_back(_y1.data<Type>() + m);
+    y2.push_back(_y2.data<Type>());
+    y2.push_back(_y2.data<Type>() + m);
 
     gemvBatchedCalculator(trans, m, n, &alpha, A.data(), m, x.data(), 1, &beta, y1.data(), 1, batch_size);
     gemmBatchedCalculator(trans, trans, m, 1, n, &alpha, A.data(), m, x.data(), n, &beta, y2.data(), m, batch_size);
@@ -228,45 +266,49 @@ TYPED_TEST(BlasOpTest, GemmBatchedCpu) {
     EXPECT_EQ(_y1, _y2);
 }
 
-TYPED_TEST(BlasOpTest, GemmBatchedStridedCpu) {
-    blas_gemv_batched_strided<TypeParam, DEVICE_CPU> gemvBatchedStridedCalculator;
-    blas_gemm_batched_strided<TypeParam, DEVICE_CPU> gemmBatchedStridedCalculator;
+
+TYPED_TEST(BlasOpTest, GemmBatchedStrided) {
+    using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
+
+    blas_gemv_batched_strided<Type, Device> gemvBatchedStridedCalculator;
+    blas_gemm_batched_strided<Type, Device> gemmBatchedStridedCalculator;
 
     const char trans = 'N';
     const int m = 3;
     const int n = 2;
     const int batch_size = 2;
-    const TypeParam alpha = static_cast<TypeParam>(2.0);
-    const TypeParam beta = static_cast<TypeParam>(3.0);
+    const Type alpha = static_cast<Type>(2.0);
+    const Type beta  = static_cast<Type>(3.0);
 
-    std::vector<TypeParam*> A = {};
-    std::vector<TypeParam*> x = {};
-    std::vector<TypeParam*> y1 = {};
-    std::vector<TypeParam*> y2 = {};
+    std::vector<Type*> A = {};
+    std::vector<Type*> x = {};
+    std::vector<Type*> y1 = {};
+    std::vector<Type*> y2 = {};
 
-    const Tensor _A = {
-        static_cast<TypeParam>(1.0), static_cast<TypeParam>(2.0), 
-        static_cast<TypeParam>(3.0), static_cast<TypeParam>(4.0), 
-        static_cast<TypeParam>(5.0), static_cast<TypeParam>(6.0),
+    const Tensor _A = Tensor({
+        static_cast<Type>(1.0), static_cast<Type>(2.0), 
+        static_cast<Type>(3.0), static_cast<Type>(4.0), 
+        static_cast<Type>(5.0), static_cast<Type>(6.0),
         
-        static_cast<TypeParam>(7.0), static_cast<TypeParam>(8.0),
-        static_cast<TypeParam>(9.0), static_cast<TypeParam>(10.0),
-        static_cast<TypeParam>(11.0), static_cast<TypeParam>(12.0)};
+        static_cast<Type>(7.0), static_cast<Type>(8.0),
+        static_cast<Type>(9.0), static_cast<Type>(10.0),
+        static_cast<Type>(11.0),static_cast<Type>(12.0)}).to_device<Device>();
     
-    A.push_back(_A.data<TypeParam>());
-    A.push_back(_A.data<TypeParam>() + m * n);
+    A.push_back(_A.data<Type>());
+    A.push_back(_A.data<Type>() + m * n);
 
-    const Tensor _x = {static_cast<TypeParam>(1.0), static_cast<TypeParam>(2.0)};
-    x.push_back(_x.data<TypeParam>());
-    x.push_back(_x.data<TypeParam>());
+    const Tensor _x = Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0)}).to_device<Device>();
+    x.push_back(_x.data<Type>());
+    x.push_back(_x.data<Type>());
 
-    Tensor _y1 = {static_cast<TypeParam>(4.0), static_cast<TypeParam>(5.0), static_cast<TypeParam>(6.0),
-                 static_cast<TypeParam>(7.0), static_cast<TypeParam>(8.0), static_cast<TypeParam>(9.0)};
+    Tensor _y1 = Tensor({static_cast<Type>(4.0), static_cast<Type>(5.0), static_cast<Type>(6.0),
+                         static_cast<Type>(7.0), static_cast<Type>(8.0), static_cast<Type>(9.0)}).to_device<Device>();
     Tensor _y2 = _y1;
-    y1.push_back(_y1.data<TypeParam>());
-    y1.push_back(_y1.data<TypeParam>() + m);
-    y2.push_back(_y2.data<TypeParam>());
-    y2.push_back(_y2.data<TypeParam>() + m);
+    y1.push_back(_y1.data<Type>());
+    y1.push_back(_y1.data<Type>() + m);
+    y2.push_back(_y2.data<Type>());
+    y2.push_back(_y2.data<Type>() + m);
 
     gemvBatchedStridedCalculator(trans, m, n, &alpha, A[0], m, m * n, x[0], 1, 0, &beta, y1[0], 1, m, batch_size);
     gemmBatchedStridedCalculator(trans, trans, m, 1, n, &alpha, A[0], m, m * n, x[0], n, 0, &beta, y2[0], m, m, batch_size);

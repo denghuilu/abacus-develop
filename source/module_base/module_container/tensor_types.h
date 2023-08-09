@@ -32,8 +32,8 @@ enum class DataType {
  *@struct DEVICE_CPU, DEVICE_GPU
  *@brief A tag type for identifying CPU and GPU devices.
 */
-struct DEVICE_CPU;
-struct DEVICE_GPU;
+struct DEVICE_CPU {};
+struct DEVICE_GPU {};
 
 /**
  * @brief The type of memory used by an allocator.
@@ -157,6 +157,17 @@ std::ostream& operator<<(std::ostream& os, const DeviceType& memory_type);
     break;                                        \
   }
 
+#define CASE_3(TYPE, DEVICE_OUT, DEVICE_IN, STMTS)      \
+  case (int(DataTypeToEnum<TYPE>::value) * 100 +        \
+        int(DeviceTypeToEnum<DEVICE_OUT>::value) * 10 + \
+        int(DeviceTypeToEnum<DEVICE_IN>::value)): {     \
+    typedef TYPE T_;                                    \
+    typedef DEVICE_OUT DEVICE_OUT_;                     \
+    typedef DEVICE_IN DEVICE_IN_;                       \
+    STMTS;                                              \
+    break;                                              \
+  }
+
 #define CASES_ALL_WITH_DEFAULT_2(TYPE_ENUM, DEVICE_ENUM, STMTS, DEFAULT) \
   switch (int(TYPE_ENUM) * 10 + int(DEVICE_ENUM)) {                      \
     CASE_2(float, DEVICE_CPU, SINGLE_ARG(STMTS))                         \
@@ -187,6 +198,37 @@ std::ostream& operator<<(std::ostream& os, const DeviceType& memory_type);
       break;                                                             \
   }
 
+#define CASES_ALL_WITH_DEFAULT_3(TYPE_ENUM, DEVICE_ENUM_OUT, DEVICE_ENUM_IN, STMTS, DEFAULT) \
+  switch (int(TYPE_ENUM) * 100 + int(DEVICE_ENUM_OUT) * 10 + int(DEVICE_ENUM_IN)) {          \
+    CASE_3(float, DEVICE_CPU, DEVICE_CPU, SINGLE_ARG(STMTS))                                 \
+    CASE_3(float, DEVICE_GPU, DEVICE_CPU, SINGLE_ARG(STMTS))                                 \
+    CASE_3(double, DEVICE_CPU, DEVICE_CPU, SINGLE_ARG(STMTS))                                \
+    CASE_3(double, DEVICE_GPU, DEVICE_CPU, SINGLE_ARG(STMTS))                                \
+    CASE_3(int, DEVICE_CPU, DEVICE_CPU, SINGLE_ARG(STMTS))                                   \
+    CASE_3(int, DEVICE_GPU, DEVICE_CPU, SINGLE_ARG(STMTS))                                   \
+    CASE_3(int64_t, DEVICE_CPU, DEVICE_CPU, SINGLE_ARG(STMTS))                               \
+    CASE_3(int64_t, DEVICE_GPU, DEVICE_CPU, SINGLE_ARG(STMTS))                               \
+    CASE_3(std::complex<float>, DEVICE_CPU, DEVICE_CPU, SINGLE_ARG(STMTS))                   \
+    CASE_3(std::complex<float>, DEVICE_CPU, DEVICE_GPU, SINGLE_ARG(STMTS))                   \
+    CASE_3(std::complex<double>, DEVICE_CPU, DEVICE_CPU, SINGLE_ARG(STMTS))                  \
+    CASE_3(std::complex<double>, DEVICE_CPU, DEVICE_GPU, SINGLE_ARG(STMTS))                  \
+    CASE_3(float, DEVICE_CPU, DEVICE_GPU, SINGLE_ARG(STMTS))                                 \
+    CASE_3(float, DEVICE_GPU, DEVICE_GPU, SINGLE_ARG(STMTS))                                 \
+    CASE_3(double, DEVICE_CPU, DEVICE_GPU, SINGLE_ARG(STMTS))                                \
+    CASE_3(double, DEVICE_GPU, DEVICE_GPU, SINGLE_ARG(STMTS))                                \
+    CASE_3(int, DEVICE_CPU, DEVICE_GPU, SINGLE_ARG(STMTS))                                   \
+    CASE_3(int, DEVICE_GPU, DEVICE_GPU, SINGLE_ARG(STMTS))                                   \
+    CASE_3(int64_t, DEVICE_CPU, DEVICE_GPU, SINGLE_ARG(STMTS))                               \
+    CASE_3(int64_t, DEVICE_GPU, DEVICE_GPU, SINGLE_ARG(STMTS))                               \
+    CASE_3(std::complex<float>, DEVICE_GPU, DEVICE_CPU, SINGLE_ARG(STMTS))                   \
+    CASE_3(std::complex<float>, DEVICE_GPU, DEVICE_GPU, SINGLE_ARG(STMTS))                   \
+    CASE_3(std::complex<double>, DEVICE_GPU, DEVICE_CPU, SINGLE_ARG(STMTS))                  \
+    CASE_3(std::complex<double>, DEVICE_GPU, DEVICE_GPU, SINGLE_ARG(STMTS))                  \
+    default:                                                                                 \
+      DEFAULT;                                                                               \
+      break;                                                                                 \
+  }
+
 // TODO: add a log solution to container.
 #define TEMPLATE_ALL_2(TYPE_ENUM, DEVICE_ENUM, ...)                      \
   CASES_ALL_WITH_DEFAULT_2(TYPE_ENUM, DEVICE_ENUM, (__VA_ARGS__),        \
@@ -194,6 +236,10 @@ std::ostream& operator<<(std::ostream& os, const DeviceType& memory_type);
 
 #define TEMPLATE_CZ_2(TYPE_ENUM, DEVICE_ENUM, ...)                       \
   CASES_CZ_WITH_DEFAULT_2(TYPE_ENUM, DEVICE_ENUM, (__VA_ARGS__),         \
+                           std::cerr << "Unexpected type: " << TYPE_ENUM; exit(EXIT_FAILURE));
+
+#define TEMPLATE_ALL_3(TYPE_ENUM, DEVICE_ENUM_OUT, DEVICE_ENUM_IN, ...)                      \
+  CASES_ALL_WITH_DEFAULT_3(TYPE_ENUM, DEVICE_ENUM_OUT, DEVICE_ENUM_IN, (__VA_ARGS__),        \
                            std::cerr << "Unexpected type: " << TYPE_ENUM; exit(EXIT_FAILURE));
 
 } // namespace container

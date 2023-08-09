@@ -12,6 +12,7 @@ void* GPUAllocator::allocate(size_t size) {
     if (result != cudaSuccess) {
         return nullptr;
     }
+    this->allocated_size_ = size;
     return ptr;
 }
 
@@ -22,18 +23,14 @@ void* GPUAllocator::allocate(size_t size, size_t alignment) {
     if (result != cudaSuccess) {
         return nullptr;
     }
+    this->allocated_size_ = size;
     return ptr;
 }
 
 // Free a block of CPU memory that was previously allocated by this allocator.
 void GPUAllocator::free(void* ptr) {
     cudaFree(ptr);
-}
-
-// Get the allocated size of a given pointer.
-size_t GPUAllocator::AllocatedSize(void* ptr) {
-    assert(false && "not implemented");
-    return 0;
+    this->allocated_size_ = 0;
 }
 
 // Get the type of device used by the TensorBuffer.

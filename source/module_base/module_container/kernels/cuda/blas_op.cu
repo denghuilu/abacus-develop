@@ -14,7 +14,7 @@ void createBlasHandle() {
     }
 }
 
-void destoryBlasHandle() {
+void destroyBlasHandle() {
     if (cublas_handle != nullptr) {
         cublasErrcheck(cublasDestroy(cublas_handle));
         cublas_handle = nullptr;
@@ -83,7 +83,7 @@ struct blas_gemv<T, DEVICE_GPU> {
 
 
 template <typename T>
-struct blas_gemv_batched<T, DEVICE_CPU> {
+struct blas_gemv_batched<T, DEVICE_GPU> {
     void operator()(
         const char& trans,
         const int& m,
@@ -104,7 +104,7 @@ struct blas_gemv_batched<T, DEVICE_CPU> {
 
 
 template <typename T>
-struct blas_gemv_batched_strided<T, DEVICE_CPU> {
+struct blas_gemv_batched_strided<T, DEVICE_GPU> {
     void operator()(
         const char& trans,
         const int& m,
@@ -127,7 +127,7 @@ struct blas_gemv_batched_strided<T, DEVICE_CPU> {
 };
 
 template <typename T>
-struct blas_gemm<T, DEVICE_CPU> {
+struct blas_gemm<T, DEVICE_GPU> {
     void operator()(
         const char& transa,
         const char& transb,
@@ -148,7 +148,7 @@ struct blas_gemm<T, DEVICE_CPU> {
 };
 
 template <typename T>
-struct blas_gemm_batched<T, DEVICE_CPU> {
+struct blas_gemm_batched<T, DEVICE_GPU> {
     void operator()(
         const char& transa,
         const char& transb,
@@ -170,7 +170,7 @@ struct blas_gemm_batched<T, DEVICE_CPU> {
 };
 
 template <typename T>
-struct blas_gemm_batched_strided<T, DEVICE_CPU> {
+struct blas_gemm_batched_strided<T, DEVICE_GPU> {
     void operator()(
         const char& transa,
         const char& transb,

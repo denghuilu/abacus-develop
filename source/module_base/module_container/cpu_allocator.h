@@ -42,16 +42,6 @@ class CPUAllocator : public Allocator {
     void free(void* ptr) override;
 
     /**
-     * @brief Get the allocated size of a given pointer.
-     *
-     * @param ptr The pointer to get the allocated size of.
-     * @return size_t The size of the allocated block of memory, in bytes.
-     *
-     * @note This function is not implemented for CPUAllocator and always returns 0.
-     */
-    size_t AllocatedSize(void* ptr) override;
-
-    /**
      * @brief Get the type of device used by the TensorBuffer.
      *
      * @return MemoryType The type of memory used by the TensorBuffer.
