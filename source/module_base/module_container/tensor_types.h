@@ -11,6 +11,19 @@
 
 namespace container {
 
+template <typename T, int Accuracy>
+static inline bool element_compare(T& a, T& b) {
+    if (Accuracy <= 4) {
+        return (a == b) || (std::norm(a - b) < 1e-7);
+    } 
+    else if (Accuracy <= 8) {
+        return (a == b) || (std::norm(a - b) < 1e-15);
+    } 
+    else {
+        return (a == b);
+    }
+}
+
 /**
 @brief Enumeration of data types for tensors.
 The DataType enum lists the supported data types for tensors. Each data type
@@ -43,6 +56,40 @@ enum class DeviceType {
     CpuDevice = 1,     ///< Memory type is CPU.
     GpuDevice = 2,     ///< Memory type is GPU(CUDA or ROCm).
 };
+
+/**
+ * @brief Template struct to determine the return type based on the input type.
+ *
+ * This struct defines a template class that is used to determine the appropriate return type
+ * based on the input type. By default, the return type is the same as the input type.
+ *
+ * @tparam T The input type for which the return type needs to be determined.
+ */
+template <typename T>
+struct PossibleComplexToReal {
+    using type = T; /**< The return type based on the input type. */
+};
+
+/**
+ * @brief Specialization of PossibleComplexToReal for std::complex<float>.
+ *
+ * This specialization sets the return type to be float when the input type is std::complex<float>.
+ */
+template <>
+struct PossibleComplexToReal<std::complex<float>> {
+    using type = float; /**< The return type specialization for std::complex<float>. */
+};
+
+/**
+ * @brief Specialization of PossibleComplexToReal for std::complex<double>.
+ *
+ * This specialization sets the return type to be double when the input type is std::complex<double>.
+ */
+template <>
+struct PossibleComplexToReal<std::complex<double>> {
+    using type = double; /**< The return type specialization for std::complex<double>. */
+};
+
 
 /**
  * @brief Template struct for mapping a Device Type to its corresponding enum value.

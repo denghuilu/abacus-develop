@@ -4,7 +4,6 @@
 #include "../tensor.h"
 #include "../tensor_types.h"
 #include "third_party/blas_connector.h"
-#include "third_party/lapack_connector.h"
 
 #if defined(__CUDA) || defined(__UT_USE_CUDA)
 #include "gpu_utils.h"

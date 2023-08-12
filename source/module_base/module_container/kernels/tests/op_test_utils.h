@@ -32,6 +32,18 @@ static inline void delete_blas_handle() {
     #endif
 }
 
+static inline void init_cusolver_handle() {
+    #if __CUDA || __ROCM
+        op::createCusolverHandle();
+    #endif
+}
+
+static inline void delete_cusolver_handle() {
+    #if __CUDA || __ROCM
+        op::destroyCusolverHandle();
+    #endif
+}
+
 } // namespace tests_utils
 } // namespace container
 
