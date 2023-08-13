@@ -137,10 +137,10 @@ struct DeviceTypeToEnum<psi::DEVICE_GPU> {
  *  Example usage:
  *      DataTypeToEnum<float>::value; // Returns DataType::DT_FLOAT
  */
- template <typename T>
- struct DataTypeToEnum {
-     static constexpr DataType value = {};
- };
+template <typename T>
+struct DataTypeToEnum {
+    static constexpr DataType value = {};
+};
 // Specializations of DataTypeToEnum for supported types.
 template <>
 struct DataTypeToEnum<int> {

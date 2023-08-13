@@ -11,9 +11,11 @@ template <typename T>
 class LapackOpTest : public testing::Test {
 public:
     LapackOpTest() {
+        tests_utils::init_blas_handle();
         tests_utils::init_cusolver_handle();
     }
     ~LapackOpTest() override {
+        tests_utils::delete_blas_handle();
         tests_utils::delete_cusolver_handle();
     }
 };
@@ -102,7 +104,7 @@ TYPED_TEST(LapackOpTest, dnevd) {
                                  static_cast<Type>(1.0), static_cast<Type>(5.0), static_cast<Type>(3.0),
                                  static_cast<Type>(1.0), static_cast<Type>(3.0), static_cast<Type>(6.0)}).to_device<Device>());
     
-    Tensor E = std::move(Tensor({static_cast<Real>(0.0), static_cast<Real>(0.0), static_cast<Real>(0.0)}));
+    Tensor E = std::move(Tensor({static_cast<Real>(0.0), static_cast<Real>(0.0), static_cast<Real>(0.0)}).to_device<Device>());
     Tensor B = A;
     Tensor expected_C1 = A;
     Tensor expected_C2 = A;
@@ -119,6 +121,7 @@ TYPED_TEST(LapackOpTest, dnevd) {
     // For this reason, we should employ 'L' instead of 'U' in the subsequent line.
     dnevdCalculator('V', 'U', B.data<Type>(), dim, E.data<Real>());
     
+    E = E.to_device<DEVICE_CPU>();
     const Tensor Alpha = std::move(Tensor({
             static_cast<Type>(E.data<Real>()[0]), 
             static_cast<Type>(E.data<Real>()[1]),
@@ -132,6 +135,7 @@ TYPED_TEST(LapackOpTest, dnevd) {
     }
     EXPECT_EQ(expected_C1, expected_C2);
 }
+
 
 TYPED_TEST(LapackOpTest, dngvd) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
@@ -151,7 +155,7 @@ TYPED_TEST(LapackOpTest, dngvd) {
                                  static_cast<Type>(0.0), static_cast<Type>(1.0), static_cast<Type>(0.0),
                                  static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(1.0)}).to_device<Device>());
     
-    Tensor E = std::move(Tensor({static_cast<Real>(0.0), static_cast<Real>(0.0), static_cast<Real>(0.0)}));
+    Tensor E = std::move(Tensor({static_cast<Real>(0.0), static_cast<Real>(0.0), static_cast<Real>(0.0)}).to_device<Device>());
     Tensor B = A;
     Tensor expected_C1 = A;
     Tensor expected_C2 = A;
@@ -164,10 +168,11 @@ TYPED_TEST(LapackOpTest, dngvd) {
     const int k = 3;
     const Type alpha = static_cast<Type>(1.0);
     const Type beta  = static_cast<Type>(0.0);
-    // Note all blas and lapack operators within container are column major!
+    // Note al<l blas and lapack operators within container are column major!
     // For this reason, we should employ 'L' instead of 'U' in the subsequent line.
     dngvdCalculator(1, 'V', 'U', B.data<Type>(), I.data<Type>(), dim, E.data<Real>());
 
+    E = E.to_device<DEVICE_CPU>();
     const Tensor Alpha = std::move(Tensor({
             static_cast<Type>(E.data<Real>()[0]), 
             static_cast<Type>(E.data<Real>()[1]),

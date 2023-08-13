@@ -5,6 +5,24 @@
 #include "cublas_v2.h"
 #include <cuda_runtime.h>
 #include <cusolverDn.h>
+#include <thrust/complex.h>
+
+#define THREAD_PER_BLOCK 256
+
+template <typename T>
+struct PossibleStdComplexToThrustComplex {
+    using type = T;
+};
+
+template <>
+struct PossibleStdComplexToThrustComplex<std::complex<float>> {
+    using type = thrust::complex<float>; /**< The return type specialization for std::complex<float>. */
+};
+
+template <>
+struct PossibleStdComplexToThrustComplex<std::complex<double>> {
+    using type = thrust::complex<double>; /**< The return type specialization for std::complex<float>. */
+};
 
 static cublasOperation_t GetCublasOperation(const char& trans) {
     cublasOperation_t cutrans = {};

@@ -41,7 +41,7 @@ struct lapack_trtri<T, DEVICE_CPU> {
         const int& lda) 
     {
         int info = 0;
-        LapackConnector::trtri(uplo, diag, dim, Mat, lda, info);
+        lapackConnector::trtri(uplo, diag, dim, Mat, lda, info);
         if (info != 0) {
             throw std::runtime_error("potrf failed with info = " + std::to_string(info));
         }
@@ -57,7 +57,7 @@ struct lapack_potrf<T, DEVICE_CPU> {
         const int& lda) 
     {
         int info = 0;
-        LapackConnector::potrf(uplo, dim, Mat, dim, info);
+        lapackConnector::potrf(uplo, dim, Mat, dim, info);
         if (info != 0) {
             throw std::runtime_error("potrf failed with info = " + std::to_string(info));
         }
@@ -87,7 +87,7 @@ struct lapack_dnevd<T, DEVICE_CPU> {
         Tensor iwork(DataTypeToEnum<int>::value, DeviceType::CpuDevice, {liwork});
         iwork.zero();
 
-        LapackConnector::dnevd(jobz, uplo, dim, Mat, dim, eigen_val,  work.data<T>(), lwork, rwork.data<Real>(), lrwork, iwork.data<int>(), liwork, info);
+        lapackConnector::dnevd(jobz, uplo, dim, Mat, dim, eigen_val,  work.data<T>(), lwork, rwork.data<Real>(), lrwork, iwork.data<int>(), liwork, info);
         assert(0 == info);
     }
 };
@@ -100,7 +100,7 @@ struct lapack_dngvd<T, DEVICE_CPU> {
         const char& jobz,
         const char& uplo,
         T* Mat_A,
-        const T* Mat_B,
+        T* Mat_B,
         const int& dim,
         Real* eigen_val)
     {
@@ -117,7 +117,7 @@ struct lapack_dngvd<T, DEVICE_CPU> {
         Tensor iwork(DataType::DT_INT, DeviceType::CpuDevice, {liwork});
         iwork.zero();
 
-        LapackConnector::dngvd(itype, jobz, uplo, dim, Mat_A, dim, Mat_B, dim, eigen_val, work.data<T>(), lwork, rwork.data<Real>(), lrwork, iwork.data<int>(), liwork, info);
+        lapackConnector::dngvd(itype, jobz, uplo, dim, Mat_A, dim, Mat_B, dim, eigen_val, work.data<T>(), lwork, rwork.data<Real>(), lrwork, iwork.data<int>(), liwork, info);
         assert(0 == info);
     }
 };

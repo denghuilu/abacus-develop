@@ -187,12 +187,12 @@ struct lapack_dngvd {
         const char& jobz,
         const char& uplo,
         T* Mat_A,
-        const T* Mat_B,
+        T* Mat_B,
         const int& dim,
         Real* eigen_val);
 };
 
-#if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
+#if defined(__CUDA) || defined(__ROCM)
 void createCusolverHandle();  // create cusolver handle
 void destroyCusolverHandle(); // destroy cusolver handle
 #endif

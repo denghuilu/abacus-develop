@@ -4,10 +4,7 @@
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
 #include <cusolverDn.h>
-
-#include <cassert>
-#include <algorithm>
-
+#include <thrust/complex.h>
 
 namespace container {
 namespace op {
@@ -21,7 +18,7 @@ void createCusolverHandle() {
     }
 }
 
-void destoryCusolverHandle() {
+void destroyCusolverHandle() {
     if (cusolver_handle != nullptr) {
         cusolverErrcheck(cusolverDnDestroy(cusolver_handle));
         cusolver_handle = nullptr;
@@ -29,85 +26,118 @@ void destoryCusolverHandle() {
 }
 
 template <typename T>
-struct potrf_op<T, psi::DEVICE_GPU> {
-    void operator()(T* Mat, const int& dim) {
-        cuSolverConector::potrf(cusolver_handle, 'U', dim, Mat, dim);
+__global__ void set_matrix_kernel(
+    const char uplo,
+    T* A, 
+    const int dim) 
+{
+    int bid = blockIdx.x;
+    int tid = threadIdx.x;
+
+    for (int ii = tid; ii < bid + 1; ii += THREAD_PER_BLOCK) {
+        if (uplo == 'L') {
+            A[ii * dim + bid + 1] = static_cast<T>(0);
+        }
+        else {
+            A[(bid + 1) * dim + ii] = static_cast<T>(0);
+        }
+    }
+}
+
+template <typename T>
+struct set_matrix<T, DEVICE_GPU> {
+    using Type = typename PossibleStdComplexToThrustComplex<T>::type;
+    void operator() (
+        const char& uplo,
+        T* A,
+        const int& dim)
+    {
+        set_matrix_kernel<Type><<<dim - 1, THREAD_PER_BLOCK>>>(
+            uplo, 
+            reinterpret_cast<Type*>(A), 
+            dim);
     }
 };
 
 template <typename T>
-struct trtri_op<T, psi::DEVICE_GPU> {
-    void operator()(T* Mat, const int& dim) {
-        cuSolverConector::potri(cusolver_handle, 'L', dim, Mat, dim);
+struct lapack_trtri<T, DEVICE_GPU> {
+    void operator()(
+        const char& uplo,
+        const char& diag,
+        const int& dim,
+        T* Mat,
+        const int& lda) 
+    {
+        cuSolverConnector::trtri(cusolver_handle, uplo, diag, dim, Mat, lda);
     }
 };
 
 template <typename T>
-struct dnevd_op<T, psi::DEVICE_GPU> {
+struct lapack_potrf<T, DEVICE_GPU> {
+    void operator()(
+        const char& uplo,
+        const int& dim,
+        T* Mat, 
+        const int& lda) 
+    {
+        cuSolverConnector::potrf(cusolver_handle, uplo, dim, Mat, dim);
+    }
+};
+
+template <typename T>
+struct lapack_dnevd<T, DEVICE_GPU> {
     using Real = typename PossibleComplexToReal<T>::type;
     void operator()(
+        const char& jobz,
+        const char& uplo,
         T* Mat,
         const int& dim,
         Real* eigen_val)
     {
-        
+        cuSolverConnector::dnevd(cusolver_handle, jobz, uplo, dim, Mat, dim, eigen_val);
     }
 };
 
 template <typename T>
-struct dngvd_op<T, DEVICE_GPU> {
+struct lapack_dngvd<T, DEVICE_GPU> {
     using Real = typename PossibleComplexToReal<T>::type;
     void operator()(
+        const int& itype,
+        const char& jobz,
+        const char& uplo,
+        T* Mat_A,
+        T* Mat_B,
         const int& dim,
-        const T* Mat_A,
-        const T* Mat_B,
-        Real *eigen_val,
-        T *eigen_vec)
+        Real* eigen_val)
     {
-        
+        cuSolverConnector::dngvd(cusolver_handle, itype, jobz, uplo, dim, Mat_A, dim, Mat_B, dim, eigen_val);
     }
 };
 
+template struct set_matrix<float,  DEVICE_GPU>;
+template struct set_matrix<double, DEVICE_GPU>;
+template struct set_matrix<std::complex<float>,  DEVICE_GPU>;
+template struct set_matrix<std::complex<double>, DEVICE_GPU>;
 
-template <typename T>
-struct dnevx_op<T, DEVICE_GPU> {
-    using Real = typename PossibleComplexToReal<T>::type;
-    void operator()(
-        const int row,
-        const int col,
-        const T* Mat_A,
-        const int nband, 
-        Real* eigen_val,
-        T* eigen_vec)
-    {
-        
-    }
-};
+template struct lapack_trtri<float,  DEVICE_GPU>;
+template struct lapack_trtri<double, DEVICE_GPU>;
+template struct lapack_trtri<std::complex<float>,  DEVICE_GPU>;
+template struct lapack_trtri<std::complex<double>, DEVICE_GPU>;
 
-template struct potrf_op<float,  DEVICE_GPU>;
-template struct potrf_op<double, DEVICE_GPU>;
-template struct potrf_op<std::complex<float>,  DEVICE_GPU>;
-template struct potrf_op<std::complex<double>, DEVICE_GPU>;
+template struct lapack_potrf<float,  DEVICE_GPU>;
+template struct lapack_potrf<double, DEVICE_GPU>;
+template struct lapack_potrf<std::complex<float>,  DEVICE_GPU>;
+template struct lapack_potrf<std::complex<double>, DEVICE_GPU>;
 
-template struct trtri_op<float,  DEVICE_GPU>;
-template struct trtri_op<double, DEVICE_GPU>;
-template struct trtri_op<std::complex<float>,  DEVICE_GPU>;
-template struct trtri_op<std::complex<double>, DEVICE_GPU>;
+template struct lapack_dnevd<float,  DEVICE_GPU>;
+template struct lapack_dnevd<double, DEVICE_GPU>;
+template struct lapack_dnevd<std::complex<float>,  DEVICE_GPU>;
+template struct lapack_dnevd<std::complex<double>, DEVICE_GPU>;
 
-template struct dnevd_op<float,  DEVICE_GPU>;
-template struct dnevd_op<double, DEVICE_GPU>;
-template struct dnevd_op<std::complex<float>,  DEVICE_GPU>;
-template struct dnevd_op<std::complex<double>, DEVICE_GPU>;
-
-template struct dngvd_op<float,  DEVICE_GPU>;
-template struct dngvd_op<double, DEVICE_GPU>;
-template struct dngvd_op<std::complex<float>,  DEVICE_GPU>;
-template struct dngvd_op<std::complex<double>, DEVICE_GPU>;
-
-template struct dnevx_op<float,  DEVICE_GPU>;
-template struct dnevx_op<double, DEVICE_GPU>;
-template struct dnevx_op<std::complex<float>,  DEVICE_GPU>;
-template struct dnevx_op<std::complex<double>, DEVICE_GPU>;
+template struct lapack_dngvd<float,  DEVICE_GPU>;
+template struct lapack_dngvd<double, DEVICE_GPU>;
+template struct lapack_dngvd<std::complex<float>,  DEVICE_GPU>;
+template struct lapack_dngvd<std::complex<double>, DEVICE_GPU>;
 
 } // namespace op
 } // namespace container

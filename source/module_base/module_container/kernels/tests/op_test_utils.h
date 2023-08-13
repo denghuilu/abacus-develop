@@ -2,6 +2,7 @@
 #define CONTAINER_KERNELS_TESTS_OP_TEST_UTILS_H_
 #include <gtest/gtest.h>
 #include "module_base/module_container/kernels/blas_op.h"
+#include "module_base/module_container/kernels/lapack_op.h"
 
 namespace container {
 namespace tests_utils {

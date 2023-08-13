@@ -110,9 +110,8 @@ void ztrtri_(const char* uplo, const char* diag, const int* n, std::complex<doub
 // The entire function in this class are static and inline function.
 // Usage example:	LapackConnector::functionname(parameter list).
 namespace container {
-struct LapackConnector
+namespace lapackConnector
 {
-public:
     static inline
     int ilaenv( int ispec, const char *name,const char *opts,const int n1,const int n2,
                 const int n3,const int n4)
@@ -321,22 +320,112 @@ public:
         ztrtri_( &uplo, &diag, &n, A, &lda, &info);
     }
 
-};
+} // namespace lapackConnector
 
 #if __CUDA || __ROCM
-struct cuSolverConector {
+namespace cuSolverConnector {
+
+template <typename T>
+struct DataTypeToCudaType {
+    static constexpr cudaDataType cuda_data_type = cudaDataType::CUDA_R_32F;
+};
+// Specializations of DataTypeToEnum for supported types.
+template <>
+struct DataTypeToCudaType<int> {
+    static constexpr cudaDataType cuda_data_type = cudaDataType::CUDA_R_32I;
+};
+template <>
+struct DataTypeToCudaType<float> {
+    static constexpr cudaDataType cuda_data_type = cudaDataType::CUDA_R_32F;
+};
+template <>
+struct DataTypeToCudaType<double> {
+    static constexpr cudaDataType cuda_data_type = cudaDataType::CUDA_R_64F;
+};
+template <>
+struct DataTypeToCudaType<int64_t> {
+    static constexpr cudaDataType cuda_data_type = cudaDataType::CUDA_R_64I;
+};
+template <>
+struct DataTypeToCudaType<std::complex<float>> {
+    static constexpr cudaDataType cuda_data_type = cudaDataType::CUDA_C_32F;
+};
+template <>
+struct DataTypeToCudaType<std::complex<double>> {
+    static constexpr cudaDataType cuda_data_type = cudaDataType::CUDA_C_64F;
+};
+
 static inline
-cublasFillMode_t cublas_fill_mode(const char uplo) {
+cublasFillMode_t cublas_fill_mode(const char& uplo) {
     if (uplo == 'U' || uplo == 'u')
         return CUBLAS_FILL_MODE_UPPER;
     else if (uplo == 'L' || uplo == 'l')
         return CUBLAS_FILL_MODE_LOWER;
     else
-        throw std::runtime_error("to_fill_mode: unknown uplo");
+        throw std::runtime_error("cublas_fill_mode: unknown uplo");
 }
 
 static inline
-void potri (cusolverDnHandle_t& cusolver_handle, const char& uplo, const int& n, float * A, const int& lda)
+cublasDiagType_t cublas_diag_type(const char& diag) {
+    if (diag == 'U' || diag == 'u')
+        return CUBLAS_DIAG_UNIT;
+    else if (diag == 'N' || diag == 'n')
+        return CUBLAS_DIAG_NON_UNIT;
+    else
+        throw std::runtime_error("cublas_diag_type: unknown diag");
+}
+
+static inline
+cusolverEigMode_t cublas_eig_mode(const char& jobz) {
+    if (jobz == 'N' || jobz == 'n')
+        return CUSOLVER_EIG_MODE_NOVECTOR;
+    else if (jobz == 'V' || jobz == 'v')
+        return CUSOLVER_EIG_MODE_VECTOR;
+    else
+        throw std::runtime_error("cublas_eig_mode: unknown diag");
+}
+
+static inline
+cusolverEigType_t cublas_eig_type(const int& itype) {
+    if (itype == 1)
+        return CUSOLVER_EIG_TYPE_1;
+    else if (itype == 2)
+        return CUSOLVER_EIG_TYPE_2;
+    else
+        throw std::runtime_error("cublas_eig_mode: unknown diag");
+}
+
+template <typename T>
+static inline
+void trtri (cusolverDnHandle_t& cusolver_handle, const char& uplo, const char& diag, const int& n, T* A, const int& lda)
+{
+    size_t d_lwork = 0, h_lwork = 0;
+    using Type = typename PossibleStdComplexToThrustComplex<T>::type;
+    cusolverDnXtrtri_bufferSize(cusolver_handle, cublas_fill_mode(uplo), cublas_diag_type(diag), n, DataTypeToCudaType<T>::cuda_data_type, reinterpret_cast<Type*>(A), lda, &d_lwork, &h_lwork);
+    void* d_work = nullptr, *h_work = nullptr;
+    cudaMalloc((void**)&d_work, d_lwork);
+    if (h_lwork) {
+        h_work = malloc(h_lwork);
+        if (h_work == nullptr) {
+            throw std::bad_alloc();
+        }
+    }
+    int h_info = 0;
+    int* d_info = nullptr;
+    cudaMalloc((void**)&d_info, sizeof(int));
+    // Perform Cholesky decomposition
+    cusolverDnXtrtri(cusolver_handle, cublas_fill_mode(uplo), cublas_diag_type(diag), n, DataTypeToCudaType<T>::cuda_data_type, reinterpret_cast<Type*>(A), n, d_work, d_lwork, h_work, h_lwork, d_info);
+    cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost);
+    if (h_info != 0) {
+        throw std::runtime_error("trtri: failed to invert matrix");
+    }
+    free(h_work);
+    cudaFree(d_work);
+    cudaFree(d_info);
+}
+
+static inline
+void potri (cusolverDnHandle_t& cusolver_handle, const char& uplo, const char& diag, const int& n, float * A, const int& lda)
 {
     int lwork;
     cusolverDnSpotri_bufferSize(cusolver_handle, cublas_fill_mode(uplo), n, A, n, &lwork);
@@ -347,7 +436,7 @@ void potri (cusolverDnHandle_t& cusolver_handle, const char& uplo, const int& n,
     cudaFree(work);
 }
 static inline
-void potri (cusolverDnHandle_t& cusolver_handle, const char& uplo, const int& n, double * A, const int& lda)
+void potri (cusolverDnHandle_t& cusolver_handle, const char& uplo, const char& diag, const int& n, double * A, const int& lda)
 {
     int lwork;
     cusolverDnDpotri_bufferSize(cusolver_handle, cublas_fill_mode(uplo), n, A, n, &lwork);
@@ -358,7 +447,7 @@ void potri (cusolverDnHandle_t& cusolver_handle, const char& uplo, const int& n,
     cudaFree(work);
 }
 static inline
-void potri (cusolverDnHandle_t& cusolver_handle, const char& uplo, const int& n, std::complex<float> * A, const int& lda)
+void potri (cusolverDnHandle_t& cusolver_handle, const char& uplo, const char& diag, const int& n, std::complex<float> * A, const int& lda)
 {
     int lwork;
     cusolverDnCpotri_bufferSize(cusolver_handle, cublas_fill_mode(uplo), n, reinterpret_cast<cuComplex *>(A), n, &lwork);
@@ -369,7 +458,7 @@ void potri (cusolverDnHandle_t& cusolver_handle, const char& uplo, const int& n,
     cudaFree(work);
 }
 static inline
-void potri (cusolverDnHandle_t& cusolver_handle, const char& uplo, const int& n, std::complex<double> * A, const int& lda)
+void potri (cusolverDnHandle_t& cusolver_handle, const char& uplo, const char& diag, const int& n, std::complex<double> * A, const int& lda)
 {
     int lwork;
     cusolverDnZpotri_bufferSize(cusolver_handle, cublas_fill_mode(uplo), n, reinterpret_cast<cuDoubleComplex *>(A), n, &lwork);
@@ -425,7 +514,219 @@ void potrf (cusolverDnHandle_t& cusolver_handle, const char& uplo, const int& n,
     cusolverDnZpotrf(cusolver_handle, cublas_fill_mode(uplo), n, reinterpret_cast<cuDoubleComplex*>(A), n, work, lwork, nullptr);
     cudaFree(work);
 }
-};
+
+
+static inline
+void dnevd (cusolverDnHandle_t& cusolver_handle, const char& jobz, const char& uplo, const int& n, float* A, const int& lda, float * W)
+{
+    // prepare some values for cusolverDnZhegvd_bufferSize
+    int lwork  = 0; 
+    int h_info = 0; 
+    int*   d_info = nullptr;
+    float* d_work = nullptr;
+    cudaMalloc((void**)&d_info, sizeof(int));
+
+    // calculate the sizes needed for pre-allocated buffer.
+    cusolverDnSsyevd_bufferSize(cusolver_handle, cublas_eig_mode(jobz), cublas_fill_mode(uplo), 
+                                n, A, lda, W, &lwork);
+    // allocate memery
+    cudaMalloc((void**)&d_work, sizeof(float) * lwork);
+    // compute eigenvalues and eigenvectors.
+    cusolverDnSsyevd(cusolver_handle, cublas_eig_mode(jobz), cublas_fill_mode(uplo),
+                                n, A, lda, W, d_work, lwork, d_info);
+
+    cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost);
+    if (h_info != 0) {
+        throw std::runtime_error("dnevd: failed to invert matrix");
+    }
+    cudaFree(d_info);
+    cudaFree(d_work);
+}
+static inline
+void dnevd (cusolverDnHandle_t& cusolver_handle, const char& jobz, const char& uplo, const int& n, double* A, const int& lda, double * W)
+{
+    // prepare some values for cusolverDnZhegvd_bufferSize
+    int lwork  = 0; 
+    int h_info = 0; 
+    int*    d_info = nullptr;
+    double* d_work = nullptr;
+    cudaMalloc((void**)&d_info, sizeof(int));
+
+    // calculate the sizes needed for pre-allocated buffer.
+    cusolverDnDsyevd_bufferSize(cusolver_handle, cublas_eig_mode(jobz), cublas_fill_mode(uplo), 
+                                n, A, lda, W, &lwork);
+    // allocate memery
+    cudaMalloc((void**)&d_work, sizeof(double) * lwork);
+    // compute eigenvalues and eigenvectors.
+    cusolverDnDsyevd(cusolver_handle, cublas_eig_mode(jobz), cublas_fill_mode(uplo),
+                                n, A, lda, W, d_work, lwork, d_info);
+
+    cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost);
+    if (h_info != 0) {
+        throw std::runtime_error("dnevd: failed to invert matrix");
+    }
+    cudaFree(d_info);
+    cudaFree(d_work);
+}
+static inline
+void dnevd (cusolverDnHandle_t& cusolver_handle, const char& jobz, const char& uplo, const int& n, std::complex<float>* A, const int& lda, float * W)
+{
+    // prepare some values for cusolverDnZhegvd_bufferSize
+    int lwork  = 0; 
+    int h_info = 0; 
+    int*    d_info = nullptr;
+    cuComplex* d_work = nullptr;
+    cudaMalloc((void**)&d_info, sizeof(int));
+
+    // calculate the sizes needed for pre-allocated buffer.
+    cusolverDnCheevd_bufferSize(cusolver_handle, cublas_eig_mode(jobz), cublas_fill_mode(uplo), 
+                                n, reinterpret_cast<cuComplex*>(A), lda, W, &lwork);
+    // allocate memery
+    cudaMalloc((void**)&d_work, sizeof(cuComplex) * lwork);
+    // compute eigenvalues and eigenvectors.
+    cusolverDnCheevd(cusolver_handle, cublas_eig_mode(jobz), cublas_fill_mode(uplo),
+                                n, reinterpret_cast<cuComplex*>(A), lda, W, d_work, lwork, d_info);
+
+    cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost);
+    if (h_info != 0) {
+        throw std::runtime_error("dnevd: failed to invert matrix");
+    }
+    cudaFree(d_info);
+    cudaFree(d_work);
+}
+static inline
+void dnevd (cusolverDnHandle_t& cusolver_handle, const char& jobz, const char& uplo, const int& n, std::complex<double>* A, const int& lda, double* W)
+{
+    // prepare some values for cusolverDnZhegvd_bufferSize
+    int lwork  = 0; 
+    int h_info = 0; 
+    int*    d_info = nullptr;
+    cuDoubleComplex* d_work = nullptr;
+    cudaMalloc((void**)&d_info, sizeof(int));
+
+    // calculate the sizes needed for pre-allocated buffer.
+    cusolverDnZheevd_bufferSize(cusolver_handle, cublas_eig_mode(jobz), cublas_fill_mode(uplo), 
+                                n, reinterpret_cast<cuDoubleComplex*>(A), lda, W, &lwork);
+    // allocate memery
+    cudaMalloc((void**)&d_work, sizeof(cuDoubleComplex) * lwork);
+    // compute eigenvalues and eigenvectors.
+    cusolverDnZheevd(cusolver_handle, cublas_eig_mode(jobz), cublas_fill_mode(uplo),
+                                n, reinterpret_cast<cuDoubleComplex*>(A), lda, W, d_work, lwork, d_info);
+
+    cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost);
+    if (h_info != 0) {
+        throw std::runtime_error("dnevd: failed to invert matrix");
+    }
+    cudaFree(d_info);
+    cudaFree(d_work);
+}
+
+static inline
+void dngvd (cusolverDnHandle_t& cusolver_handle, const int& itype, const char& jobz, const char& uplo, const int& n, float* A, const int& lda, float* B, const int& ldb, float * W)
+{
+    // prepare some values for cusolverDnZhegvd_bufferSize
+    int lwork  = 0; 
+    int h_info = 0; 
+    int*   d_info = nullptr;
+    float* d_work = nullptr;
+    cudaMalloc((void**)&d_info, sizeof(int));
+
+    // calculate the sizes needed for pre-allocated buffer.
+    cusolverDnSsygvd_bufferSize(cusolver_handle, cublas_eig_type(itype), cublas_eig_mode(jobz), cublas_fill_mode(uplo), 
+                                n, A, lda, B, ldb, W, &lwork);
+    // allocate memery
+    cudaMalloc((void**)&d_work, sizeof(float) * lwork);
+    // compute eigenvalues and eigenvectors.
+    cusolverDnSsygvd(cusolver_handle, cublas_eig_type(itype), cublas_eig_mode(jobz), cublas_fill_mode(uplo), 
+                                n, A, lda, B, ldb, W, d_work, lwork, d_info);
+
+    cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost);
+    if (h_info != 0) {
+        throw std::runtime_error("dnevd: failed to invert matrix");
+    }
+    cudaFree(d_info);
+    cudaFree(d_work);
+}
+static inline
+void dngvd (cusolverDnHandle_t& cusolver_handle, const int& itype, const char& jobz, const char& uplo, const int& n, double* A, const int& lda, double* B, const int& ldb, double * W)
+{
+    // prepare some values for cusolverDnZhegvd_bufferSize
+    int lwork  = 0; 
+    int h_info = 0; 
+    int*   d_info = nullptr;
+    double* d_work = nullptr;
+    cudaMalloc((void**)&d_info, sizeof(int));
+
+    // calculate the sizes needed for pre-allocated buffer.
+    cusolverDnDsygvd_bufferSize(cusolver_handle, cublas_eig_type(itype), cublas_eig_mode(jobz), cublas_fill_mode(uplo), 
+                                n, A, lda, B, ldb, W, &lwork);
+    // allocate memery
+    cudaMalloc((void**)&d_work, sizeof(double) * lwork);
+    // compute eigenvalues and eigenvectors.
+    cusolverDnDsygvd(cusolver_handle, cublas_eig_type(itype), cublas_eig_mode(jobz), cublas_fill_mode(uplo), 
+                                n, A, lda, B, ldb, W, d_work, lwork, d_info);
+
+    cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost);
+    if (h_info != 0) {
+        throw std::runtime_error("dnevd: failed to invert matrix");
+    }
+    cudaFree(d_info);
+    cudaFree(d_work);
+}
+static inline
+void dngvd (cusolverDnHandle_t& cusolver_handle, const int& itype, const char& jobz, const char& uplo, const int& n, std::complex<float>* A, const int& lda, std::complex<float>* B, const int& ldb, float* W)
+{
+    // prepare some values for cusolverDnZhegvd_bufferSize
+    int lwork  = 0; 
+    int h_info = 0; 
+    int*   d_info = nullptr;
+    cuComplex* d_work = nullptr;
+    cudaMalloc((void**)&d_info, sizeof(int));
+
+    // calculate the sizes needed for pre-allocated buffer.
+    cusolverDnChegvd_bufferSize(cusolver_handle, cublas_eig_type(itype), cublas_eig_mode(jobz), cublas_fill_mode(uplo), 
+                                n, reinterpret_cast<cuComplex*>(A), lda, reinterpret_cast<cuComplex*>(B), ldb, W, &lwork);
+    // allocate memery
+    cudaMalloc((void**)&d_work, sizeof(cuComplex) * lwork);
+    // compute eigenvalues and eigenvectors.
+    cusolverDnChegvd(cusolver_handle, cublas_eig_type(itype), cublas_eig_mode(jobz), cublas_fill_mode(uplo), 
+                                n, reinterpret_cast<cuComplex*>(A), lda, reinterpret_cast<cuComplex*>(B), ldb, W, d_work, lwork, d_info);
+
+    cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost);
+    if (h_info != 0) {
+        throw std::runtime_error("dnevd: failed to invert matrix");
+    }
+    cudaFree(d_info);
+    cudaFree(d_work);
+}
+static inline
+void dngvd (cusolverDnHandle_t& cusolver_handle, const int& itype, const char& jobz, const char& uplo, const int& n, std::complex<double>* A, const int& lda, std::complex<double>* B, const int& ldb, double* W)
+{
+    // prepare some values for cusolverDnZhegvd_bufferSize
+    int lwork  = 0; 
+    int h_info = 0; 
+    int*   d_info = nullptr;
+    cuDoubleComplex* d_work = nullptr;
+    cudaMalloc((void**)&d_info, sizeof(int));
+
+    // calculate the sizes needed for pre-allocated buffer.
+    cusolverDnZhegvd_bufferSize(cusolver_handle, cublas_eig_type(itype), cublas_eig_mode(jobz), cublas_fill_mode(uplo), 
+                                n, reinterpret_cast<cuDoubleComplex*>(A), lda, reinterpret_cast<cuDoubleComplex*>(B), ldb, W, &lwork);
+    // allocate memery
+    cudaMalloc((void**)&d_work, sizeof(cuDoubleComplex) * lwork);
+    // compute eigenvalues and eigenvectors.
+    cusolverDnZhegvd(cusolver_handle, cublas_eig_type(itype), cublas_eig_mode(jobz), cublas_fill_mode(uplo), 
+                                n, reinterpret_cast<cuDoubleComplex*>(A), lda, reinterpret_cast<cuDoubleComplex*>(B), ldb, W, d_work, lwork, d_info);
+
+    cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost);
+    if (h_info != 0) {
+        throw std::runtime_error("dnevd: failed to invert matrix");
+    }
+    cudaFree(d_info);
+    cudaFree(d_work);
+}
+
+} // namespace cuSolverConnector
 #endif
 
 }
