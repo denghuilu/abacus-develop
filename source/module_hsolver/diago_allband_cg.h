@@ -12,8 +12,8 @@
 #include "module_hsolver/kernels/math_kernel_op.h"
 #include "module_hsolver/kernels/dngvd_op.h"
 
-#include "module_base/module_container/tensor.h"
-#include "module_base/module_container/tensor_map.h"
+#include <ATen/core/tensor.h>
+#include <ATen/core/tensor_map.h>
 
 namespace hsolver {
 
