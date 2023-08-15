@@ -6,6 +6,10 @@
 #endif // __CUDA || __ROCM
 namespace container {
 
+Tensor::Tensor() : Tensor(DataType::DT_FLOAT) {}
+
+Tensor::Tensor(DataType data_type) : Tensor(data_type, TensorShape({})) {}
+
 // Constructor that creates a tensor with the given data type and shape using the default allocator.
 Tensor::Tensor(DataType data_type, const TensorShape& shape)
         : data_type_(data_type),
@@ -49,6 +53,9 @@ Tensor::Tensor(Tensor&& other) noexcept
 }
 
 // Destructor that frees the memory allocated by the tensor.
+// Note: If you have a class with virtual functions, it requires a virtual destructor.
+// However, Our subclass TensorMap, etc., do not own resources.
+// So, we do not need to declare a virtual destructor here.
 Tensor::~Tensor() {
     if (buffer_ != nullptr) {
         delete buffer_;

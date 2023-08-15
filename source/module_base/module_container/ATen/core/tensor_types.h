@@ -45,9 +45,11 @@ enum class DataType {
  *@struct DEVICE_CPU, DEVICE_GPU
  *@brief A tag type for identifying CPU and GPU devices.
 */
+struct DEVICE_CPU;
+struct DEVICE_GPU;
+
 struct DEVICE_CPU {};
 struct DEVICE_GPU {};
-
 /**
  * @brief The type of memory used by an allocator.
  */

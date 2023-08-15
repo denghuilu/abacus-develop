@@ -32,6 +32,26 @@ namespace container {
  */
 class Tensor {
   public:
+    
+    /**
+     * @brief Creates a 1-dimentional, 0-element float tensor.
+     * 
+     * This constructor creates a new Tensor object. It can be used to initialize a tensor with
+     * default values or to create an empty tensor.
+     */
+    Tensor();
+
+    /**
+     * @brief Explicit constructor for the Tensor class.
+     * 
+     * This constructor creates a new Tensor object with the specified data type.
+     * The constructor is marked as explicit, which means it requires an explicit
+     * call and cannot be used for implicit type conversions.
+     * 
+     * @param data_type The data type of the tensor elements.
+     */
+    explicit Tensor(DataType data_type);
+
     /**
      * @brief Constructor that creates a tensor with the given data type and shape using the default allocator.
      *
@@ -50,6 +70,16 @@ class Tensor {
      * @param device The data type of the tensor.
      */
     Tensor(DataType data_type, DeviceType device, const TensorShape& shape);
+
+    // /// \brief Creates a tensor with the input datatype, shape and buf.
+    // ///
+    // /// Acquires a ref on buf that belongs to this Tensor.
+    // Tensor(DataType type, const TensorShape& shape, TensorBuffer* buf);
+
+    // /// \brief Creates a tensor with the input datatype, shape and buf.
+    // ///
+    // /// Takes an ownership of the bufffer from the reference counted pointer.
+    // Tensor(DataType type, TensorShape shape, core::RefCountPtr<TensorBuffer> buf);
 
     /**
      * @brief Construct a new Tensor object by copying another Tensor.
@@ -70,7 +100,7 @@ class Tensor {
      * @param other The rvalue reference to the source Tensor object to be moved.
      */
     Tensor(Tensor&& other) noexcept;
-
+    
     ~Tensor();
     /**
      * @brief Constructor for the Tensor class using an initializer list of values.
