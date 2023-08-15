@@ -6,7 +6,7 @@ TensorMap::TensorMap(void *data, DataType data_type, DeviceType device, const Te
         : Tensor(data_type, device, {})
 {
     this->shape_ = shape;
-    this->buffer_ = TensorBuffer(data);
+    this->buffer_ = new TensorBuffer(data);
 }
 
 void TensorMap::resize(const TensorShape &new_shape) {

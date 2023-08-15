@@ -16,7 +16,7 @@ Tensor::Tensor(DataType data_type, const TensorShape& shape)
           shape_(shape),
           device_(DeviceType::CpuDevice),
           allocator_(GetAllocator(device_)),
-          buffer_(allocator_, allocator_->allocate(shape.NumElements() * SizeOfType(data_type))) {}
+          buffer_(new TensorBuffer(allocator_, allocator_->allocate(shape.NumElements() * SizeOfType(data_type)))) {}
 
 // Construct a new Tensor object with the given data type and shape.
 Tensor::Tensor(DataType data_type, DeviceType device, const TensorShape& shape)
@@ -24,7 +24,7 @@ Tensor::Tensor(DataType data_type, DeviceType device, const TensorShape& shape)
           shape_(shape),
           device_(device),
           allocator_(GetAllocator(device_)),
-          buffer_(allocator_, allocator_->allocate(shape.NumElements() * SizeOfType(data_type))) {}
+          buffer_(new TensorBuffer(allocator_, allocator_->allocate(shape.NumElements() * SizeOfType(data_type)))) {}
 
 // Construct a new Tensor object by copying another Tensor.
 Tensor::Tensor(const Tensor& other)
@@ -32,7 +32,7 @@ Tensor::Tensor(const Tensor& other)
           shape_(other.shape_),
           device_(other.device_),
           allocator_(GetAllocator(other.device_)),
-          buffer_(allocator_, allocator_->allocate(shape_.NumElements() * SizeOfType(data_type_)))
+          buffer_(new TensorBuffer(allocator_, allocator_->allocate(shape_.NumElements() * SizeOfType(data_type_))))
 {
     TEMPLATE_ALL_2(data_type_, device_,
             op::synchronize_memory_op<T_, DEVICE_, DEVICE_>()(
@@ -44,11 +44,22 @@ Tensor::Tensor(Tensor&& other) noexcept
         : data_type_(other.data_type_),
           shape_(other.shape_),
           device_(other.device_),
-          buffer_(std::move(other.buffer_))
+          buffer_(other.buffer_),
+          allocator_(other.allocator_)
 {
-    this->allocator_ = this->buffer_.allocator();
-    // Reset the other TensorBuffer.
+    // Reset the other object.
+    other.buffer_ = nullptr;
     other.allocator_ = nullptr;
+}
+
+// Destructor that frees the memory allocated by the tensor.
+Tensor::~Tensor() {
+    if (buffer_ != nullptr) {
+        delete buffer_;
+    }
+    if (allocator_ != nullptr) {
+        delete allocator_;
+    }
 }
 
 // Get the data type of the tensor.
@@ -64,10 +75,10 @@ const TensorShape& Tensor::shape() const { return shape_; }
 int64_t Tensor::NumElements() const { return shape_.NumElements(); }
 
 // Get a pointer to the data buffer of the tensor.
-void* Tensor::data() const { return buffer_.data(); }
+void* Tensor::data() const { return buffer_->data(); }
 
 // Get the TensorBuffer object that holds the data of the tensor.
-const TensorBuffer& Tensor::buffer() const { return buffer_; }
+const TensorBuffer& Tensor::buffer() const { return *buffer_; }
 
 // Get the Allocator object according to the given device type.
 Allocator* Tensor::GetAllocator(DeviceType device) {
@@ -191,13 +202,13 @@ Tensor Tensor::slice(const std::vector<int> &start, const std::vector<int> &size
 
 // Resize tensor object with the given tensor_shape
 void Tensor::resize(const TensorShape& new_shape) {
-    if (!this->buffer_.OwnsMemory()) {
+    if (!this->buffer_->OwnsMemory()) {
         throw std::logic_error("Mapped tensor object does not support the resize method.");
     }
     if (shape_ == new_shape) {
         return;
     }
-    buffer_.resize(new_shape.NumElements() * Tensor::SizeOfType(data_type_));
+    buffer_->resize(new_shape.NumElements() * Tensor::SizeOfType(data_type_));
     shape_ = new_shape;
     this->zero();
 }
@@ -209,8 +220,10 @@ Tensor& Tensor::operator=(const Tensor& other) {
     this->shape_ = other.shape_;
     this->device_ = other.device_;
     this->data_type_ = other.data_type_;
-    this->buffer_ = other.buffer_;
-    this->allocator_ = this->buffer_.allocator();
+
+    delete this->buffer_;
+    this->buffer_ = new TensorBuffer(allocator_, allocator_->allocate(shape_.NumElements() * SizeOfType(data_type_)));
+    this->allocator_ = this->buffer_->allocator();
 
     TEMPLATE_ALL_2(this->data_type_, this->device_,
                    container::op::synchronize_memory_op<T_, DEVICE_, DEVICE_>()(
@@ -225,10 +238,11 @@ Tensor& Tensor::operator=(Tensor&& other) noexcept {
     this->shape_ = other.shape_;
     this->device_ = other.device_;
     this->data_type_ = other.data_type_;
-    this->buffer_ = std::move(other.buffer_);
-    this->allocator_ = this->buffer_.allocator();
+    this->buffer_ = other.buffer_;
+    this->allocator_ = other.allocator_;
 
     // Reset the other TensorBuffer.
+    other.buffer_ = nullptr;
     other.allocator_ = nullptr;
     return *this;
 }

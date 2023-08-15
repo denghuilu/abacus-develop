@@ -3,6 +3,7 @@
 
 #include <tuple>
 #include "../tensor.h"
+#include "einsum_op_utils.h"
 
 namespace container {
 namespace op {
@@ -162,7 +163,7 @@ struct contract_op {
         const Tensor& rhs,
         const bool& trans_x,
         const bool& trans_y,
-        const BCast& bcast,
+        const utils::BCast& bcast,
         Tensor& output);
 };
 

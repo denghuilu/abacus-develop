@@ -61,7 +61,7 @@ class Tensor {
      */
     Tensor(Tensor&& other) noexcept;
 
-
+    ~Tensor();
     /**
      * @brief Constructor for the Tensor class using an initializer list of values.
      *
@@ -141,7 +141,7 @@ class Tensor {
             std::cerr << "Tensor data type does not match requested type." << std::endl;
             exit(EXIT_FAILURE);
         }
-        return buffer_.base<T>();
+        return buffer_->base<T>();
     }
 
     /**
@@ -392,7 +392,7 @@ protected:
     /**
      * @brief The TensorBuffer object that holds the data of the tensor.
      */
-    TensorBuffer buffer_;
+    TensorBuffer* buffer_;
 
     /**
      * @brief Calculates the linear index corresponding to the given indices.

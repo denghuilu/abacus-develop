@@ -2,6 +2,8 @@ list(APPEND kernels_srcs
     blas_op.cpp
     lapack_op.cpp
     memory_op.cpp
+    math_kernel_op.cpp
+    einsum_op_utils.cpp
 )
 
 if(USE_CUDA)

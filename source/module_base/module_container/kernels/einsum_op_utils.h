@@ -1,5 +1,5 @@
-#ifndef CONTAINER_KERNELS_EINSUM_OP_UTIL_H_
-#define CONTAINER_KERNELS_EINSUM_OP_UTIL_H_
+#ifndef CONTAINER_KERNELS_EINSUM_OP_UTILS_H_
+#define CONTAINER_KERNELS_EINSUM_OP_UTILS_H_
 
 #include <vector>
 #include <string>
@@ -8,7 +8,7 @@
 #include "../tensor.h"
 
 namespace container {
-namespace einsum_utils {
+namespace utils {
 
 class BCast {
   public:
@@ -28,7 +28,7 @@ class BCast {
     std::vector<int64_t> y_bcast_shape = {}; // input b bcast shape
 
     static void reverse(std::vector<int64_t>& vec) {
-      std::reverse(vec.begin(), vec.end());
+        std::reverse(vec.begin(), vec.end());
     }
 };
 
@@ -68,14 +68,24 @@ bool ValidateEinsumEquation(
 // their EinsumDimensionType.
 bool ParseEinsumEquation(
     const std::string& equation, 
+    std::vector<EinsumDimensionType>& label_types,
     std::vector<std::vector<int>>& input_labels,
     std::vector<int>& output_labels,
-    std::vector<EinsumDimensionType>& label_types,
     std::vector<std::vector<int>>& input_label_counts,
     std::vector<int>& output_label_counts,
     std::vector<bool>& input_has_ellipsis,
     bool& output_has_ellipsis);
 
+bool ProcessDimensions(
+    const std::vector<const Tensor*>& inputs,
+    std::vector<EinsumDimensionType>& label_types,
+    std::vector<std::vector<int>>& input_labels,
+    std::vector<int>& output_labels,
+    std::vector<std::vector<int>>& input_label_counts,
+    std::vector<int>& output_label_counts,
+    const std::vector<bool>& input_has_ellipsis,
+    const bool output_has_ellipsis,
+    std::unordered_map<int, int64_t>& label_to_dim_sizes);
 
 // This function records the mapping of a label to its corresponding dimension for a specific axis in the input tensor.
 // It also validates that the label and dimension mapping is consistent with previous recordings, ensuring that the 
@@ -86,46 +96,14 @@ bool RecordLabelToDimension(
     const Tensor& input,
     std::unordered_map<int, int64_t>& label_to_dim_sizes);
 
-
-/**
- * @brief Functor for performing reduce operation on a given Tensor.
- * 
- * This functor is used to execute a reduce operation on the input Tensor
- * based on the specified label types, counts, and labels. The resulting 
- * reduced Tensor is stored in the output Tensor.
- *
- * @tparam T The data type of the Tensor elements.
- * @tparam Device The device type where the Tensor operation is performed.
- */
-template <typename T, typename Device>
-struct reduce_oprand {
-    /**
-     * @brief Execute the reduce operation on the input Tensor.
-     *
-     * This function performs a reduce operation on the input Tensor based on
-     * the provided label information. It reduces dimensions with specified 
-     * labels and stores the result in the output Tensor.
-     *
-     * @param input The input Tensor on which the reduce operation is performed.
-     * @param label_types A vector specifying the type of each input dimension. 
-     *                    Possible types are EinsumDimensionType::kBroadcasting,
-     *                    EinsumDimensionType::kFree, and EinsumDimensionType::kBatch.
-     * @param label_counts A vector containing the counts of each label in the input Tensor.
-     * @param labels A vector of integers representing the labels of the input Tensor dimensions.
-     * @param free_labels A vector of integers representing the labels of free dimensions.
-     * @param swap_free_and_contract A pointer to a boolean variable. If the value is set to true, 
-     *                               it indicates that free and contract dimensions should be swapped.
-     * @param output The output Tensor where the reduced result is stored.
-     */
-    bool operator()(
-        const Tensor& input,
-        const std::vector<EinsumDimensionType>& label_types,
-        const std::vector<int>& label_counts,
-        const std::vector<int>& labels,
-        const std::vector<int>& free_labels,
-        bool * swap_free_and_contract,
-        Tensor& output);
-};
+bool ReduceOperand(
+    const Tensor& input,
+    const std::vector<EinsumDimensionType>& label_types,
+    std::vector<int>& labels,
+    const std::vector<int>& label_counts,
+    std::vector<int>& free_labels,
+    int& swap_free_and_contract,
+    Tensor& output);
 
 /**
  * @brief A functor to perform contraction operation on multiple Tensors.
@@ -155,13 +133,13 @@ struct contract_oprands {
      * @return True if the contraction operation was successful, false otherwise.
      */
     bool operator()(
-        const std::vector<Tensor>& inputs,
+        std::vector<Tensor>& inputs,
         const std::vector<bool>& swap_free_and_contract,
         Tensor& output);
 };
 
 
-}   // namespace einsum_utils
+}   // namespace utils
 }   // namespace container
 
-#endif  // CONTAINER_KERNELS_EINSUM_OP_UTIL_H_
+#endif  // CONTAINER_KERNELS_EINSUM_OP_UTILS_H_
