@@ -71,6 +71,8 @@ class Tensor {
      */
     Tensor(DataType data_type, DeviceType device, const TensorShape& shape);
 
+    Tensor(Allocator* a, DataType data_type, DeviceType device, const TensorShape& shape);
+
     // /// \brief Creates a tensor with the input datatype, shape and buf.
     // ///
     // /// Acquires a ref on buf that belongs to this Tensor.
@@ -406,6 +408,12 @@ class Tensor {
      */
     Tensor& operator=(Tensor&& other) noexcept;
 
+    /// \brief Copy the other tensor into this tensor and reshape it.
+    ///
+    /// This tensor shares other's underlying storage. Returns `true`
+    /// iff `other.shape()` has the same number of elements of the given
+    /// `shape`.
+    bool CopyFrom(const Tensor& other, const TensorShape& shape);
 
 protected:
 
@@ -423,11 +431,6 @@ protected:
      * @brief The shape of the tensor.
      */
     TensorShape shape_;
-
-    /**
-     * @brief The allocator used to allocate the memory for the tensor.
-     */
-    Allocator* allocator_;
 
     /**
      * @brief The TensorBuffer object that holds the data of the tensor.
@@ -457,6 +460,26 @@ protected:
             stride *= shape_.dim_size(ii);
         }
         return linearIndex;
+    }
+
+    // This function is used to copy data and properties from another Tensor instance, 'other', into the current Tensor instance.
+    // The 'shape' parameter specifies the new shape for the current Tensor.
+    inline void CopyFromInternal(const Tensor& other, const TensorShape& shape) {
+        // Copy the data type and device from the 'other' Tensor.
+        data_type_ = other.data_type_;
+        device_ = other.device_;
+        // Set the shape of the current Tensor to the provided 'shape'.
+        shape_ = shape;
+        // Check if the buffer of the current Tensor is different from the buffer of the 'other' Tensor.
+        if (buffer_ != other.buffer_) {
+            // If the current Tensor has a buffer, decrease its reference count.
+            // Note this could indicate a delete of current buffer_
+            if (buffer_) buffer_->unref();
+            // Assign the buffer of the 'other' Tensor to the current Tensor's buffer.
+            buffer_ = other.buffer_;
+            // Increase the reference count of the buffer to indicate shared ownership.
+            if (buffer_) buffer_->ref();
+        }
     }
 
 };

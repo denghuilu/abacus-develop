@@ -16,46 +16,30 @@ class counted_base {
     /**
      * @brief Default constructor. Initializes the reference count to one.
      */
-    counted_base() : ref_(1) {}
+    counted_base();
 
     /**
      * @brief Increases the reference count by one.
      */
-    void ref() const {
-      ref_.fetch_add(1, std::memory_order_relaxed);
-    }
+    void ref() const;
 
     /**
      * @brief Decreases the reference count by one.
      * @return True if the object is deleted, otherwise false.
      */
-    bool unref() const {
-      int_fast32_t oldCount = ref_.fetch_sub(1, std::memory_order_release) - 1;
-      if (oldCount == 1) {
-        std::atomic_thread_fence(std::memory_order_acquire);
-        delete this;
-        return true;
-      }
-      return false;
-    }
+    bool unref() const;
 
     /**
      * @brief Gets the current reference count.
      * @return The current reference count.
      */
-    int_fast32_t ref_count() const {
-      return ref_.load(std::memory_order_relaxed);
-    }
+    int_fast32_t ref_count() const;
 
     /**
      * @brief Checks if the reference count is one.
      * @return True if the reference count is one, otherwise false.
      */
-    bool ref_count_is_one() const {
-      int_fast32_t count = ref_.load(std::memory_order_relaxed);
-      std::atomic_thread_fence(std::memory_order_acquire);
-      return count == 1;
-    }
+    bool ref_count_is_one() const;
 
  protected:
     /**
@@ -64,27 +48,10 @@ class counted_base {
      */
     virtual ~counted_base() {}
 
-    /**
-     * @brief Increases the reference count by one if the object is not being destructed.
-     * @return True if the reference is successfully acquired, otherwise false.
-     */
-    bool try_ref() const {
-      int_fast32_t count = ref_.load(std::memory_order_acquire);
-      while (count > 0) {
-        if (ref_.compare_exchange_weak(count, count + 1, std::memory_order_acquire)) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    /**
-     * @brief Notifies that the instance is deleted.
-     */
-    virtual void notify_deleted() const {}
-
  private:
     mutable std::atomic_int_fast32_t ref_;
+    counted_base(const counted_base&) = delete;
+    void operator=(const counted_base&) = delete;
 };
 
 /**
@@ -96,7 +63,7 @@ struct ref_count_deleter {
      * @param o Pointer to the object.
      */
     void operator()(const counted_base* o) const {
-      o->unref();
+        o->unref();
     }
 };
 
@@ -119,7 +86,7 @@ std::unique_ptr<T, ref_count_deleter> get_new_ref(T* ptr) {
                   "T must be derived from counted_base");
 
     if (ptr == nullptr) {
-      return std::unique_ptr<T, ref_count_deleter>();
+        return std::unique_ptr<T, ref_count_deleter>();
     }
     ptr->ref();
     return std::unique_ptr<T, ref_count_deleter>(ptr);

@@ -12,27 +12,24 @@ Tensor::Tensor(DataType data_type) : Tensor(data_type, TensorShape({})) {}
 
 // Constructor that creates a tensor with the given data type and shape using the default allocator.
 Tensor::Tensor(DataType data_type, const TensorShape& shape)
-        : data_type_(data_type),
-          shape_(shape),
-          device_(DeviceType::CpuDevice),
-          allocator_(GetAllocator(device_)),
-          buffer_(new TensorBuffer(allocator_, allocator_->allocate(shape.NumElements() * SizeOfType(data_type)))) {}
+        : Tensor(GetAllocator(DeviceType::CpuDevice), data_type, DeviceType::CpuDevice, shape) {}
 
 // Construct a new Tensor object with the given data type and shape.
 Tensor::Tensor(DataType data_type, DeviceType device, const TensorShape& shape)
+        : Tensor(GetAllocator(device), data_type, device, shape) {}
+
+Tensor::Tensor(Allocator* a, DataType data_type, DeviceType device, const TensorShape& shape)
         : data_type_(data_type),
-          shape_(shape),
           device_(device),
-          allocator_(GetAllocator(device_)),
-          buffer_(new TensorBuffer(allocator_, allocator_->allocate(shape.NumElements() * SizeOfType(data_type)))) {}
+          shape_(shape),
+          buffer_(new TensorBuffer(a, shape_.NumElements() * SizeOfType(data_type_))) {}
 
 // Construct a new Tensor object by copying another Tensor.
 Tensor::Tensor(const Tensor& other)
         : data_type_(other.data_type_),
           shape_(other.shape_),
           device_(other.device_),
-          allocator_(GetAllocator(other.device_)),
-          buffer_(new TensorBuffer(allocator_, allocator_->allocate(shape_.NumElements() * SizeOfType(data_type_))))
+          buffer_(new TensorBuffer(GetAllocator(device_), shape_.NumElements() * SizeOfType(data_type_)))
 {
     TEMPLATE_ALL_2(data_type_, device_,
             op::synchronize_memory_op<T_, DEVICE_, DEVICE_>()(
@@ -42,14 +39,12 @@ Tensor::Tensor(const Tensor& other)
 // Construct a new Tensor object by moving another Tensor.
 Tensor::Tensor(Tensor&& other) noexcept
         : data_type_(other.data_type_),
-          shape_(other.shape_),
           device_(other.device_),
-          buffer_(other.buffer_),
-          allocator_(other.allocator_)
+          shape_(std::move(other.shape_)),
+          buffer_(other.buffer_)
 {
     // Reset the other object.
     other.buffer_ = nullptr;
-    other.allocator_ = nullptr;
 }
 
 // Destructor that frees the memory allocated by the tensor.
@@ -57,12 +52,7 @@ Tensor::Tensor(Tensor&& other) noexcept
 // However, Our subclass TensorMap, etc., do not own resources.
 // So, we do not need to declare a virtual destructor here.
 Tensor::~Tensor() {
-    if (buffer_ != nullptr) {
-        delete buffer_;
-    }
-    if (allocator_ != nullptr) {
-        delete allocator_;
-    }
+    if (buffer_) buffer_->unref();
 }
 
 // Get the data type of the tensor.
@@ -220,13 +210,12 @@ Tensor& Tensor::operator=(const Tensor& other) {
     if (this == &other) {
         return *this;
     }
-    this->shape_ = other.shape_;
     this->device_ = other.device_;
     this->data_type_ = other.data_type_;
+    this->shape_ = other.shape_;
+    if (buffer_) buffer_->unref();
 
-    delete this->buffer_;
-    this->buffer_ = new TensorBuffer(allocator_, allocator_->allocate(shape_.NumElements() * SizeOfType(data_type_)));
-    this->allocator_ = this->buffer_->allocator();
+    this->buffer_ = new TensorBuffer(GetAllocator(device_), shape_.NumElements() * SizeOfType(data_type_));
 
     TEMPLATE_ALL_2(this->data_type_, this->device_,
                    container::op::synchronize_memory_op<T_, DEVICE_, DEVICE_>()(
@@ -238,15 +227,13 @@ Tensor& Tensor::operator=(Tensor&& other) noexcept {
     if (this == &other) {
         return *this;
     }
-    this->shape_ = other.shape_;
     this->device_ = other.device_;
     this->data_type_ = other.data_type_;
+    this->shape_ = std::move(other.shape_);
+   
+    if (buffer_) buffer_->unref();  // Release current resource
     this->buffer_ = other.buffer_;
-    this->allocator_ = other.allocator_;
-
-    // Reset the other TensorBuffer.
-    other.buffer_ = nullptr;
-    other.allocator_ = nullptr;
+    other.buffer_ = nullptr;        // Reset the other TensorBuffer.
     return *this;
 }
 
@@ -269,7 +256,14 @@ bool Tensor::operator==(const Tensor& other) const {
                    result = std::equal(this->data<T_>(), this->data<T_>() + this->NumElements(), other.data<T_>(), element_compare<T_, sizeof(PossibleComplexToReal<T_>::type)>))
     return result;
 }
-    
+
+bool Tensor::CopyFrom(const Tensor& other, const TensorShape& shape) {
+    if (other.NumElements() == shape.NumElements()) {
+        CopyFromInternal(other, shape);
+        return true;
+    }
+    return false;
+}
 
 // Overloaded operator<< for the Tensor class.
 std::ostream& operator<<(std::ostream& os, const Tensor& tensor) {

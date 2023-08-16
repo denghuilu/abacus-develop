@@ -3,13 +3,14 @@
 
 #include <ATen/core/allocator.h>
 #include <ATen/core/tensor_types.h>
+#include <base/core/refcount.h>
 
 namespace container {
 
 /**
  * @brief Interface to access the raw ref-counted data buffer.
  */
- class TensorBuffer {
+ class TensorBuffer : public base::counted_base {
    public:
     /**
      * @brief Construct a new TensorBuffer object.
@@ -18,6 +19,8 @@ namespace container {
      * @param data_ptr Pointer to the underlying data buffer.
      */
     TensorBuffer(Allocator* alloc, void* data_ptr);
+
+    TensorBuffer(Allocator* alloc, size_t size);
 
     /**
       * @brief Construct a new TensorBuffer object.
@@ -133,8 +136,8 @@ namespace container {
 
 
   private:
-    void *data_ = nullptr;       ///< Pointer to the underlying data buffer.
     Allocator* alloc_ = nullptr; ///< Pointer to the allocator used for memory allocation.
+    void *data_ = nullptr;       ///< Pointer to the underlying data buffer.
     bool owns_memory = false;    ///< Bool to indicate whether this tensor owns it's memory.
 };
 

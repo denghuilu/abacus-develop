@@ -8,16 +8,23 @@
 namespace container {
 
 // Construct a new TensorBuffer object.
-TensorBuffer::TensorBuffer(Allocator* alloc, void* data_ptr) : data_(data_ptr), alloc_(alloc), owns_memory(true) {}
+TensorBuffer::TensorBuffer(Allocator* alloc, void* data_ptr) : alloc_(alloc), data_(data_ptr), owns_memory(true) {}
 
 // Construct a new TensorBuffer object.
 // Note, this is a reference TensorBuffer, does not owns memory itself.
-TensorBuffer::TensorBuffer(void* data_ptr) : data_(data_ptr), alloc_(), owns_memory(false) {}
+TensorBuffer::TensorBuffer(void* data_ptr) : alloc_(), data_(data_ptr), owns_memory(false) {}
+
+// Class members are initialized in the order of their declaration, 
+// rather than the order they appear in the initialization list!
+TensorBuffer::TensorBuffer(Allocator* alloc, size_t size) 
+        : alloc_(alloc), 
+          data_(alloc_->allocate(size)), 
+          owns_memory(true) {}
 
 // Move constructor.
 TensorBuffer::TensorBuffer(TensorBuffer&& other) noexcept
-        : data_(other.data_), 
-          alloc_(other.alloc_), 
+        : alloc_(other.alloc_),
+          data_(other.data_), 
           owns_memory(other.owns_memory) 
 {
     // Reset the other TensorBuffer.
@@ -29,6 +36,9 @@ TensorBuffer::TensorBuffer(TensorBuffer&& other) noexcept
 TensorBuffer::~TensorBuffer() {
     if (this->OwnsMemory() && data_ != nullptr) {
         alloc_->free(data_);
+    }
+    if (alloc_ != nullptr) {
+        delete alloc_;
     }
 }
 

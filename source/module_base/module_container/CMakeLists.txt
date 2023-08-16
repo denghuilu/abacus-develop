@@ -5,6 +5,7 @@ list(APPEND container_srcs
     ATen/core/tensor_buffer.cpp
     ATen/core/tensor_shape.cpp
     ATen/core/tensor_types.cpp
+    base/core/refcount.cpp
 )
 
 if(USE_CUDA)

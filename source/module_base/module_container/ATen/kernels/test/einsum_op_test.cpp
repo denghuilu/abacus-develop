@@ -27,10 +27,6 @@ TYPED_TEST(EinsumOpTest, Trtri) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
 
-    Tensor empty_1 = {};
-
-    Tensor empty_2 = empty_1;
-
     const int dim = 3;
     Tensor A = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
                                  static_cast<Type>(0.0), static_cast<Type>(4.0), static_cast<Type>(5.0),
