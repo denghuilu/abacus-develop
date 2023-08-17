@@ -112,288 +112,218 @@ void ztrtri_(const char* uplo, const char* diag, const int* n, std::complex<doub
 namespace container {
 namespace lapackConnector
 {
-    static inline
-    int ilaenv( int ispec, const char *name,const char *opts,const int n1,const int n2,
-                const int n3,const int n4)
-    {
-        const int nb = ilaenv_(&ispec, name, opts, &n1, &n2, &n3, &n4);
-        return nb;
-    }
-    // wrap function of fortran lapack routine zhegvd. (pointer version)
-    static inline
-    void dngvd(const int itype, const char jobz, const char uplo, const int n,
-                float* a, const int lda,
-                const float* b, const int ldb, float* w,
-                float* work, int lwork, float* rwork, int lrwork,
-                int* iwork, int liwork, int info)
-    {
-        // call the fortran routine
-        ssygvd_(&itype, &jobz, &uplo, &n,
-                a, &lda, b, &ldb, w,
-                work, &lwork,
-                iwork, &liwork, &info);
-    }
-    // wrap function of fortran lapack routine zhegvd.
-    static inline
-    void dngvd(const int itype, const char jobz, const char uplo, const int n,
-                double* a, const int lda,
-                const double* b, const int ldb, double* w,
-                double* work, int lwork, double* rwork, int lrwork,
-                int* iwork, int liwork, int info)
-    {
-        // call the fortran routine
-        dsygvd_(&itype, &jobz, &uplo, &n,
-                a, &lda, b, &ldb, w,
-                work, &lwork,
-                iwork, &liwork, &info);
-    }
-    static inline
-    void dngvd(const int itype, const char jobz, const char uplo, const int n,
-                std::complex<float>* a, const int lda,
-                const std::complex<float>* b, const int ldb, float* w,
-                std::complex<float>* work, int lwork, float* rwork, int lrwork,
-                int* iwork, int liwork, int info)
-    {
-        // call the fortran routine
-        chegvd_(&itype, &jobz, &uplo, &n,
-                a, &lda, b, &ldb, w,
-                work, &lwork, rwork, &lrwork,
-                iwork, &liwork, &info);
-    }
-    // wrap function of fortran lapack routine zhegvd.
-    static inline
-    void dngvd(const int itype, const char jobz, const char uplo, const int n,
-                std::complex<double>* a, const int lda,
-                const std::complex<double>* b, const int ldb, double* w,
-                std::complex<double>* work, int lwork, double* rwork, int lrwork,
-                int* iwork, int liwork, int info)
-    {
-        // call the fortran routine
-        zhegvd_(&itype, &jobz, &uplo, &n,
-                a, &lda, b, &ldb, w,
-                work, &lwork, rwork, &lrwork,
-                iwork, &liwork, &info);
-    }
+static inline
+int ilaenv( int ispec, const char *name,const char *opts,const int n1,const int n2,
+            const int n3,const int n4)
+{
+    const int nb = ilaenv_(&ispec, name, opts, &n1, &n2, &n3, &n4);
+    return nb;
+}
+// wrap function of fortran lapack routine zhegvd. (pointer version)
+static inline
+void dngvd(const int itype, const char jobz, const char uplo, const int n,
+            float* a, const int lda,
+            const float* b, const int ldb, float* w,
+            float* work, int lwork, float* rwork, int lrwork,
+            int* iwork, int liwork, int info)
+{
+    // call the fortran routine
+    ssygvd_(&itype, &jobz, &uplo, &n,
+            a, &lda, b, &ldb, w,
+            work, &lwork,
+            iwork, &liwork, &info);
+}
+// wrap function of fortran lapack routine zhegvd.
+static inline
+void dngvd(const int itype, const char jobz, const char uplo, const int n,
+            double* a, const int lda,
+            const double* b, const int ldb, double* w,
+            double* work, int lwork, double* rwork, int lrwork,
+            int* iwork, int liwork, int info)
+{
+    // call the fortran routine
+    dsygvd_(&itype, &jobz, &uplo, &n,
+            a, &lda, b, &ldb, w,
+            work, &lwork,
+            iwork, &liwork, &info);
+}
+static inline
+void dngvd(const int itype, const char jobz, const char uplo, const int n,
+            std::complex<float>* a, const int lda,
+            const std::complex<float>* b, const int ldb, float* w,
+            std::complex<float>* work, int lwork, float* rwork, int lrwork,
+            int* iwork, int liwork, int info)
+{
+    // call the fortran routine
+    chegvd_(&itype, &jobz, &uplo, &n,
+            a, &lda, b, &ldb, w,
+            work, &lwork, rwork, &lrwork,
+            iwork, &liwork, &info);
+}
+// wrap function of fortran lapack routine zhegvd.
+static inline
+void dngvd(const int itype, const char jobz, const char uplo, const int n,
+            std::complex<double>* a, const int lda,
+            const std::complex<double>* b, const int ldb, double* w,
+            std::complex<double>* work, int lwork, double* rwork, int lrwork,
+            int* iwork, int liwork, int info)
+{
+    // call the fortran routine
+    zhegvd_(&itype, &jobz, &uplo, &n,
+            a, &lda, b, &ldb, w,
+            work, &lwork, rwork, &lrwork,
+            iwork, &liwork, &info);
+}
 
-    // wrap function of fortran lapack routine zheevx.
-    static inline
-    void dnevx( const int itype, const char jobz, const char range, const char uplo, const int n,
-                 float* a, const int lda,
-                 const float vl, const float vu, const int il, const int iu, const float abstol,
-                 const int m, float* w, float* z, const int ldz,
-                 float* work, const int lwork, float* rwork, int* iwork, int* ifail, int info)
-    {
-        ssyevx_(&jobz, &range, &uplo, &n,
-                a, &lda, &vl, &vu, &il, &iu,
-                &abstol, &m, w, z, &ldz,
-                work, &lwork, rwork, iwork, ifail, &info);
-    }
-    // wrap function of fortran lapack routine zheevx.
-    static inline
-    void dnevx( const int itype, const char jobz, const char range, const char uplo, const int n,
-                 double* a, const int lda,
-                 const double vl, const double vu, const int il, const int iu, const double abstol,
-                 const int m, double* w, double* z, const int ldz,
-                 double* work, const int lwork, double* rwork, int* iwork, int* ifail, int info)
-    {
-        dsyevx_(&jobz, &range, &uplo, &n,
-                a, &lda, &vl, &vu, &il, &iu,
-                &abstol, &m, w, z, &ldz,
-                work, &lwork, rwork, iwork, ifail, &info);
-    }
-    static inline
-    void dnevx( const int itype, const char jobz, const char range, const char uplo, const int n,
-                 std::complex<float>* a, const int lda,
-                 const float vl, const float vu, const int il, const int iu, const float abstol,
-                 const int m, float* w, std::complex<float>* z, const int ldz,
-                 std::complex<float>* work, const int lwork, float* rwork, int* iwork, int* ifail, int info)
-    {
-        cheevx_(&jobz, &range, &uplo, &n,
-                a, &lda, &vl, &vu, &il, &iu,
-                &abstol, &m, w, z, &ldz,
-                work, &lwork, rwork, iwork, ifail, &info);
-    }
-    // wrap function of fortran lapack routine zheevx.
-    static inline
-    void dnevx( const int itype, const char jobz, const char range, const char uplo, const int n,
-                 std::complex<double>* a, const int lda,
-                 const double vl, const double vu, const int il, const int iu, const double abstol,
-                 const int m, double* w, std::complex<double>* z, const int ldz,
-                 std::complex<double>* work, const int lwork, double* rwork, int* iwork, int* ifail, int info)
-    {
-        zheevx_(&jobz, &range, &uplo, &n,
-                a, &lda, &vl, &vu, &il, &iu,
-                &abstol, &m, w, z, &ldz,
-                work, &lwork, rwork, iwork, ifail, &info);
-    }
+// wrap function of fortran lapack routine zheevx.
+static inline
+void dnevx( const int itype, const char jobz, const char range, const char uplo, const int n,
+             float* a, const int lda,
+             const float vl, const float vu, const int il, const int iu, const float abstol,
+             const int m, float* w, float* z, const int ldz,
+             float* work, const int lwork, float* rwork, int* iwork, int* ifail, int info)
+{
+    ssyevx_(&jobz, &range, &uplo, &n,
+            a, &lda, &vl, &vu, &il, &iu,
+            &abstol, &m, w, z, &ldz,
+            work, &lwork, rwork, iwork, ifail, &info);
+}
+// wrap function of fortran lapack routine zheevx.
+static inline
+void dnevx( const int itype, const char jobz, const char range, const char uplo, const int n,
+             double* a, const int lda,
+             const double vl, const double vu, const int il, const int iu, const double abstol,
+             const int m, double* w, double* z, const int ldz,
+             double* work, const int lwork, double* rwork, int* iwork, int* ifail, int info)
+{
+    dsyevx_(&jobz, &range, &uplo, &n,
+            a, &lda, &vl, &vu, &il, &iu,
+            &abstol, &m, w, z, &ldz,
+            work, &lwork, rwork, iwork, ifail, &info);
+}
+static inline
+void dnevx( const int itype, const char jobz, const char range, const char uplo, const int n,
+             std::complex<float>* a, const int lda,
+             const float vl, const float vu, const int il, const int iu, const float abstol,
+             const int m, float* w, std::complex<float>* z, const int ldz,
+             std::complex<float>* work, const int lwork, float* rwork, int* iwork, int* ifail, int info)
+{
+    cheevx_(&jobz, &range, &uplo, &n,
+            a, &lda, &vl, &vu, &il, &iu,
+            &abstol, &m, w, z, &ldz,
+            work, &lwork, rwork, iwork, ifail, &info);
+}
+// wrap function of fortran lapack routine zheevx.
+static inline
+void dnevx( const int itype, const char jobz, const char range, const char uplo, const int n,
+             std::complex<double>* a, const int lda,
+             const double vl, const double vu, const int il, const int iu, const double abstol,
+             const int m, double* w, std::complex<double>* z, const int ldz,
+             std::complex<double>* work, const int lwork, double* rwork, int* iwork, int* ifail, int info)
+{
+    zheevx_(&jobz, &range, &uplo, &n,
+            a, &lda, &vl, &vu, &il, &iu,
+            &abstol, &m, w, z, &ldz,
+            work, &lwork, rwork, iwork, ifail, &info);
+}
 
-    static inline
-    void dnevd(const char jobz, const char uplo, const int n,
-                float* a, const int lda, float* w,
-                float* work, int lwork, float* rwork, int lrwork,
-                int* iwork, int liwork, int& info)
-    {
-        // call the fortran routine
-        ssyevd_( &jobz, &uplo, &n,
-                 a, &lda, w,
-                 work, &lwork,
-                 iwork, &liwork, &info);
-    }
-    // wrap function of fortran lapack routine zhegvd.
-    static inline
-    void dnevd(const char jobz, const char uplo, const int n,
-                double* a, const int lda, double* w,
-                double* work, int lwork, double* rwork, int lrwork,
-                int* iwork, int liwork, int& info)
-    {
-        // call the fortran routine
-        dsyevd_( &jobz, &uplo, &n,
-                 a, &lda, w,
-                 work, &lwork,
-                 iwork, &liwork, &info);
-    }
-    static inline
-    void dnevd(const char jobz, const char uplo, const int n,
-                std::complex<float>* a, const int lda, float* w,
-                std::complex<float>* work, int lwork, float* rwork, int lrwork,
-                int* iwork, int liwork, int& info)
-    {
-        // call the fortran routine
-        cheevd_( &jobz, &uplo, &n,
-                 a, &lda, w,
-                 work, &lwork, rwork, &lrwork,
-                 iwork, &liwork, &info);
-    }
-    // wrap function of fortran lapack routine zhegvd.
-    static inline
-    void dnevd(const char jobz, const char uplo, const int n,
-                std::complex<double>* a, const int lda, double* w,
-                std::complex<double>* work, int lwork, double* rwork, int lrwork,
-                int* iwork, int liwork, int& info)
-    {
-        // call the fortran routine
-        zheevd_( &jobz, &uplo, &n,
-                 a, &lda, w,
-                 work, &lwork, rwork, &lrwork,
-                 iwork, &liwork, &info);
-    }
+static inline
+void dnevd(const char jobz, const char uplo, const int n,
+            float* a, const int lda, float* w,
+            float* work, int lwork, float* rwork, int lrwork,
+            int* iwork, int liwork, int& info)
+{
+    // call the fortran routine
+    ssyevd_( &jobz, &uplo, &n,
+             a, &lda, w,
+             work, &lwork,
+             iwork, &liwork, &info);
+}
+// wrap function of fortran lapack routine zhegvd.
+static inline
+void dnevd(const char jobz, const char uplo, const int n,
+            double* a, const int lda, double* w,
+            double* work, int lwork, double* rwork, int lrwork,
+            int* iwork, int liwork, int& info)
+{
+    // call the fortran routine
+    dsyevd_( &jobz, &uplo, &n,
+             a, &lda, w,
+             work, &lwork,
+             iwork, &liwork, &info);
+}
+static inline
+void dnevd(const char jobz, const char uplo, const int n,
+            std::complex<float>* a, const int lda, float* w,
+            std::complex<float>* work, int lwork, float* rwork, int lrwork,
+            int* iwork, int liwork, int& info)
+{
+    // call the fortran routine
+    cheevd_( &jobz, &uplo, &n,
+             a, &lda, w,
+             work, &lwork, rwork, &lrwork,
+             iwork, &liwork, &info);
+}
+// wrap function of fortran lapack routine zhegvd.
+static inline
+void dnevd(const char jobz, const char uplo, const int n,
+            std::complex<double>* a, const int lda, double* w,
+            std::complex<double>* work, int lwork, double* rwork, int lrwork,
+            int* iwork, int liwork, int& info)
+{
+    // call the fortran routine
+    zheevd_( &jobz, &uplo, &n,
+             a, &lda, w,
+             work, &lwork, rwork, &lrwork,
+             iwork, &liwork, &info);
+}
 
-    static inline
-	void potrf( const char &uplo, const int &n, float* A, const int &lda, int &info )
-	{
-		spotrf_(&uplo, &n, A, &lda, &info );
-	}	
-	static inline
-	void potrf( const char &uplo, const int &n, double* A, const int &lda, int &info )
-	{
-		dpotrf_(&uplo, &n, A, &lda, &info );
-	}	
-	static inline
-	void potrf( const char &uplo, const int &n, std::complex<float>* A, const int &lda, int &info )
-	{
-		cpotrf_(&uplo, &n, A, &lda, &info );
-	}	
-	static inline
-	void potrf( const char &uplo, const int &n, std::complex<double>* A, const int &lda, int &info )
-	{
-		zpotrf_( &uplo, &n, A, &lda, &info );
-	}
+static inline
+void potrf( const char &uplo, const int &n, float* A, const int &lda, int &info )
+{
+	spotrf_(&uplo, &n, A, &lda, &info );
+}	
+static inline
+void potrf( const char &uplo, const int &n, double* A, const int &lda, int &info )
+{
+	dpotrf_(&uplo, &n, A, &lda, &info );
+}	
+static inline
+void potrf( const char &uplo, const int &n, std::complex<float>* A, const int &lda, int &info )
+{
+	cpotrf_(&uplo, &n, A, &lda, &info );
+}	
+static inline
+void potrf( const char &uplo, const int &n, std::complex<double>* A, const int &lda, int &info )
+{
+	zpotrf_( &uplo, &n, A, &lda, &info );
+}
 
-    static inline
-    void trtri( const char &uplo, const char &diag, const int &n, float* A, const int &lda, int &info )
-    {
-        strtri_( &uplo, &diag, &n, A, &lda, &info);
-    }
-    static inline
-    void trtri( const char &uplo, const char &diag, const int &n, double* A, const int &lda, int &info)
-    {
-        dtrtri_( &uplo, &diag, &n, A, &lda, &info);
-    }
-    static inline
-    void trtri( const char &uplo, const char &diag, const int &n, std::complex<float>* A, const int &lda, int &info )
-    {
-        ctrtri_( &uplo, &diag, &n, A, &lda, &info);
-    }
-    static inline
-    void trtri( const char &uplo, const char &diag, const int &n, std::complex<double>* A, const int &lda, int &info)
-    {
-        ztrtri_( &uplo, &diag, &n, A, &lda, &info);
-    }
+static inline
+void trtri( const char &uplo, const char &diag, const int &n, float* A, const int &lda, int &info )
+{
+    strtri_( &uplo, &diag, &n, A, &lda, &info);
+}
+static inline
+void trtri( const char &uplo, const char &diag, const int &n, double* A, const int &lda, int &info)
+{
+    dtrtri_( &uplo, &diag, &n, A, &lda, &info);
+}
+static inline
+void trtri( const char &uplo, const char &diag, const int &n, std::complex<float>* A, const int &lda, int &info )
+{
+    ctrtri_( &uplo, &diag, &n, A, &lda, &info);
+}
+static inline
+void trtri( const char &uplo, const char &diag, const int &n, std::complex<double>* A, const int &lda, int &info)
+{
+    ztrtri_( &uplo, &diag, &n, A, &lda, &info);
+}
 
 } // namespace lapackConnector
 
 #if __CUDA || __ROCM
 namespace cuSolverConnector {
-
-template <typename T>
-struct DataTypeToCudaType {
-    static constexpr cudaDataType cuda_data_type = cudaDataType::CUDA_R_32F;
-};
-// Specializations of DataTypeToEnum for supported types.
-template <>
-struct DataTypeToCudaType<int> {
-    static constexpr cudaDataType cuda_data_type = cudaDataType::CUDA_R_32I;
-};
-template <>
-struct DataTypeToCudaType<float> {
-    static constexpr cudaDataType cuda_data_type = cudaDataType::CUDA_R_32F;
-};
-template <>
-struct DataTypeToCudaType<double> {
-    static constexpr cudaDataType cuda_data_type = cudaDataType::CUDA_R_64F;
-};
-template <>
-struct DataTypeToCudaType<int64_t> {
-    static constexpr cudaDataType cuda_data_type = cudaDataType::CUDA_R_64I;
-};
-template <>
-struct DataTypeToCudaType<std::complex<float>> {
-    static constexpr cudaDataType cuda_data_type = cudaDataType::CUDA_C_32F;
-};
-template <>
-struct DataTypeToCudaType<std::complex<double>> {
-    static constexpr cudaDataType cuda_data_type = cudaDataType::CUDA_C_64F;
-};
-
-static inline
-cublasFillMode_t cublas_fill_mode(const char& uplo) {
-    if (uplo == 'U' || uplo == 'u')
-        return CUBLAS_FILL_MODE_UPPER;
-    else if (uplo == 'L' || uplo == 'l')
-        return CUBLAS_FILL_MODE_LOWER;
-    else
-        throw std::runtime_error("cublas_fill_mode: unknown uplo");
-}
-
-static inline
-cublasDiagType_t cublas_diag_type(const char& diag) {
-    if (diag == 'U' || diag == 'u')
-        return CUBLAS_DIAG_UNIT;
-    else if (diag == 'N' || diag == 'n')
-        return CUBLAS_DIAG_NON_UNIT;
-    else
-        throw std::runtime_error("cublas_diag_type: unknown diag");
-}
-
-static inline
-cusolverEigMode_t cublas_eig_mode(const char& jobz) {
-    if (jobz == 'N' || jobz == 'n')
-        return CUSOLVER_EIG_MODE_NOVECTOR;
-    else if (jobz == 'V' || jobz == 'v')
-        return CUSOLVER_EIG_MODE_VECTOR;
-    else
-        throw std::runtime_error("cublas_eig_mode: unknown diag");
-}
-
-static inline
-cusolverEigType_t cublas_eig_type(const int& itype) {
-    if (itype == 1)
-        return CUSOLVER_EIG_TYPE_1;
-    else if (itype == 2)
-        return CUSOLVER_EIG_TYPE_2;
-    else
-        throw std::runtime_error("cublas_eig_mode: unknown diag");
-}
 
 template <typename T>
 static inline

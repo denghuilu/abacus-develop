@@ -1,7 +1,6 @@
-#ifndef ATEN_KERNELS_GPU_UTILS_H_
-#define ATEN_KERNELS_GPU_UTILS_H_
+#ifndef BASE_MACROS_CUDA_H_
+#define BASE_MACROS_CUDA_H_
 
-#if defined(__CUDA) || defined(__UT_USE_CUDA)
 #include <cublas_v2.h>
 #include <cuda_runtime.h>
 #include <cusolverDn.h>
@@ -34,6 +33,76 @@ static cublasOperation_t GetCublasOperation(const char& trans) {
         cutrans = CUBLAS_OP_C;
     }
     return cutrans;
+}
+
+template <typename T>
+struct DataTypeToCudaType {
+    static constexpr cudaDataType cuda_data_type = cudaDataType::CUDA_R_32F;
+};
+// Specializations of DataTypeToEnum for supported types.
+template <>
+struct DataTypeToCudaType<int> {
+    static constexpr cudaDataType cuda_data_type = cudaDataType::CUDA_R_32I;
+};
+template <>
+struct DataTypeToCudaType<float> {
+    static constexpr cudaDataType cuda_data_type = cudaDataType::CUDA_R_32F;
+};
+template <>
+struct DataTypeToCudaType<double> {
+    static constexpr cudaDataType cuda_data_type = cudaDataType::CUDA_R_64F;
+};
+template <>
+struct DataTypeToCudaType<int64_t> {
+    static constexpr cudaDataType cuda_data_type = cudaDataType::CUDA_R_64I;
+};
+template <>
+struct DataTypeToCudaType<std::complex<float>> {
+    static constexpr cudaDataType cuda_data_type = cudaDataType::CUDA_C_32F;
+};
+template <>
+struct DataTypeToCudaType<std::complex<double>> {
+    static constexpr cudaDataType cuda_data_type = cudaDataType::CUDA_C_64F;
+};
+
+static inline
+cublasFillMode_t cublas_fill_mode(const char& uplo) {
+    if (uplo == 'U' || uplo == 'u')
+        return CUBLAS_FILL_MODE_UPPER;
+    else if (uplo == 'L' || uplo == 'l')
+        return CUBLAS_FILL_MODE_LOWER;
+    else
+        throw std::runtime_error("cublas_fill_mode: unknown uplo");
+}
+
+static inline
+cublasDiagType_t cublas_diag_type(const char& diag) {
+    if (diag == 'U' || diag == 'u')
+        return CUBLAS_DIAG_UNIT;
+    else if (diag == 'N' || diag == 'n')
+        return CUBLAS_DIAG_NON_UNIT;
+    else
+        throw std::runtime_error("cublas_diag_type: unknown diag");
+}
+
+static inline
+cusolverEigMode_t cublas_eig_mode(const char& jobz) {
+    if (jobz == 'N' || jobz == 'n')
+        return CUSOLVER_EIG_MODE_NOVECTOR;
+    else if (jobz == 'V' || jobz == 'v')
+        return CUSOLVER_EIG_MODE_VECTOR;
+    else
+        throw std::runtime_error("cublas_eig_mode: unknown diag");
+}
+
+static inline
+cusolverEigType_t cublas_eig_type(const int& itype) {
+    if (itype == 1)
+        return CUSOLVER_EIG_TYPE_1;
+    else if (itype == 2)
+        return CUSOLVER_EIG_TYPE_2;
+    else
+        throw std::runtime_error("cublas_eig_mode: unknown diag");
 }
 
 // cuSOLVER API errors
@@ -120,6 +189,4 @@ inline void cublasAssert(cublasStatus_t code, const char *file, int line, bool a
     }                                                                   \
 }
 
-#endif // __CUDA || __UT_USE_CUDA
-
-#endif // ATEN_KERNELS_GPU_UTILS_H_
+#endif // BASE_MACROS_CUDA_H_

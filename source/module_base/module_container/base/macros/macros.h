@@ -1,6 +1,10 @@
 #ifndef BASE_MACROS_MACROS_H_
 #define BASE_MACROS_MACROS_H_
 
+#if __CUDA
+#include <base/macros/cuda.h> 
+#endif 
+
 #include <ATen/core/tensor_types.h>
 // The macro TEMPLATE_1() expands to a switch statement conditioned on
 // TYPE_ENUM. Each case expands the STMTS after a typedef for T.
