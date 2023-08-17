@@ -1,23 +1,13 @@
 #ifndef ATEN_CORE_TENSOR_H_
 #define ATEN_CORE_TENSOR_H_
 
-#include <regex>
-#include <string>
-#include <vector>
-#include <numeric>
-#include <utility>
-#include <iomanip>
-#include <iostream>
-#include <stdexcept>
-#include <algorithm>
-#include <unordered_map>
-#include <initializer_list>
-
 #include <ATen/core/allocator.h>
 #include <ATen/core/tensor_types.h>
 #include <ATen/core/tensor_shape.h>
 #include <ATen/core/tensor_buffer.h>
 #include <ATen/kernels/memory_op.h>
+
+#include <base/macros/macros.h>
 
 namespace container {
 
@@ -408,12 +398,34 @@ class Tensor {
      */
     Tensor& operator=(Tensor&& other) noexcept;
 
-    /// \brief Copy the other tensor into this tensor and reshape it.
-    ///
-    /// This tensor shares other's underlying storage. Returns `true`
-    /// iff `other.shape()` has the same number of elements of the given
-    /// `shape`.
+    /**
+     * @brief Copy the data from another tensor into this tensor while reshaping it.
+     *
+     * This function copies the data from another tensor into the current tensor, and also reshapes
+     * the current tensor to match the specified shape. The underlying storage of the current tensor
+     * will be shared with the source tensor.
+     *
+     * @param other The source Tensor from which data will be copied.
+     * @param shape The desired TensorShape for the current tensor after reshaping.
+     * @return Returns true if the copy and reshaping were successful, false otherwise.
+     * @note The current tensor will share the same underlying storage as the source tensor.
+     * @note The function returns true if the number of elements in `other.shape()` matches the
+     *       number of elements in the given `shape`.
+     */
     bool CopyFrom(const Tensor& other, const TensorShape& shape);
+
+    /**
+     * @brief Copies data from another Tensor with memory allocation and specified shape.
+     *
+     * This function copies data from another Tensor while also allocating memory for the current Tensor
+     * based on the given shape. The data type and device of the current Tensor are set to match those
+     * of the source Tensor. The previous memory buffer, if any, is deallocated.
+     *
+     * @param other The source Tensor from which data will be copied.
+     * @param shape The TensorShape specifying the shape of the newly allocated memory.
+     * @return Returns true if the copy and allocation were successful, false otherwise.
+     */
+    bool CopyFromWithAllocate(const Tensor& other, const TensorShape& shape);
 
 protected:
 

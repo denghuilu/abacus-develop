@@ -16,21 +16,21 @@ namespace {
 TensorShape::TensorShape() : dims_(kDefaultDimSize) {}
 
 // Constructor for TensorShape class
-TensorShape::TensorShape(std::initializer_list<int> dims) : dims_(dims) {}
+TensorShape::TensorShape(std::initializer_list<int64_t> dims) : dims_(dims) {}
 
 // Constructor for TensorShape class
-TensorShape::TensorShape(const std::vector<int>& dims) : dims_(dims) {}
+TensorShape::TensorShape(const std::vector<int64_t>& dims) : dims_(dims) {}
 
 // Copy constructor for TensorShape class
 TensorShape::TensorShape(const TensorShape& other) = default;
 
 // Get size of a specific dimension in the tensor
-int TensorShape::dim_size(int dim) const {
+int64_t TensorShape::dim_size(int dim) const {
     return dims_[dim];
 }
 
 // Get all dimension sizes in the tensor
-const std::vector<int>& TensorShape::dims() const {
+const std::vector<int64_t>& TensorShape::dims() const {
     return dims_;
 }
 
@@ -45,16 +45,16 @@ int64_t TensorShape::NumElements() const {
     for (int i = 0; i < this->ndim(); ++i) {
         num_elements *= dims_[i];
     }
-    return num_elements;
+    return this->ndim() ? num_elements : 0;
 }
 
 // Modify size of a specific dimension in the tensor
-void TensorShape::set_dim_size(int dim, int size) {
+void TensorShape::set_dim_size(int dim, int64_t size) {
     dims_[dim] = size;
 }
 
 // Add a new dimension to the tensor
-void TensorShape::add_dim(int size) {
+void TensorShape::add_dim(int64_t size) {
     dims_.push_back(size);
 }
 

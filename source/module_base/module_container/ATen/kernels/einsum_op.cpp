@@ -1,5 +1,8 @@
+#include <ATen/core/tensor_types.h>
 #include <ATen/kernels/einsum_op.h>
 #include <ATen/kernels/linalg_op.h>
+
+#include <algorithm>
 
 namespace container {
 namespace einsum_utils {
@@ -28,8 +31,8 @@ struct BCast {
 
 // Do some initialization work for bcast dimensions
 static BCast prepare_bcast(
-    const std::vector<int>& x_, 
-    const std::vector<int>& y_) 
+    const std::vector<int64_t>& x_, 
+    const std::vector<int64_t>& y_) 
 {
     const std::vector<int64_t> x(x_.begin(), x_.end() - 2);
     const std::vector<int64_t> y(y_.begin(), y_.end() - 2);
@@ -183,7 +186,7 @@ static BCast prepare_bcast(
     return std::move(bcast);
 }
 
-static int64_t IPow(int64_t base, int64_t exponent) {
+static inline int64_t IPow(int64_t base, int64_t exponent) {
     int64_t result = 1;
     for (int64_t ii = 0; ii < exponent; ++ii) {
         result *= base;
@@ -192,10 +195,16 @@ static int64_t IPow(int64_t base, int64_t exponent) {
 }
 
 // Returns a reshaped input Tensor. The underlying buffer is not copied.
-static bool CopyFrom(const Tensor& input, const TensorShape& shape, Tensor& output)
-{
-    output = TensorMap(input.data(), input.data_type(), input.device_type(), input.shape());
-    return true;
+// Note: This method will not allocate memory for output tensor, 
+// intead use the reference of the input buffer.
+static inline bool CopyFrom(const Tensor& input, const TensorShape& shape, Tensor* output) {
+    return output->CopyFrom(input, shape);
+}
+
+// Note: This method will allocate memory with the given shape for output tensor,
+// also keep the data_type, device_type consistant with the input tensor.
+static inline bool CopyFromWithAllocate(const Tensor& input, const TensorShape& shape, Tensor* output) {
+    return output->CopyFromWithAllocate(input, shape);
 }
 
 // Reshapes a Tensor of shape [b0,b1...bk,N,M] to [prod(b0,b1...bk),N,M].
@@ -204,11 +213,14 @@ static bool ReshapeToRank3(Tensor& input, int batch_size, Tensor& output)
     const int rank = input.shape().ndim();
     TensorShape output_shape = {batch_size, input.shape().dim_size(rank - 2),
                                 input.shape().dim_size(rank - 1)};
-    return CopyFrom(input, output_shape, output);
+    return CopyFrom(input, output_shape, &output);
 }
 
 template <typename T>
-static bool all_of(const std::vector<T>& vec, bool (*predicate)(T)) {
+static inline bool all_of(
+    const std::vector<T>& vec, 
+    const std::function<bool(T)>& predicate) 
+{
     for (const auto& element : vec) {
         if (!predicate(element)) {
             return false;
@@ -219,8 +231,7 @@ static bool all_of(const std::vector<T>& vec, bool (*predicate)(T)) {
 
 // If there are repeated labels in either the input or output, then this
 // strides the input (e.g. iii->i) or inflates it (e.g. i->iii), respectively.
-template <typename T, typename Device>
-static bool StrideOrInflate(
+static bool StrideOrInflateOperand(
         Tensor& input,
         const std::vector<int>& labels,
         const std::vector<int>& label_counts,
@@ -228,7 +239,7 @@ static bool StrideOrInflate(
         Tensor& output) // output is the result of stride or inflate
 {
     // Return early if there are no repeated indices.
-    if (all_of(label_counts, [](int c) { return c <= 1; })) {
+    if (all_of<int>(label_counts, [](int var) {return var <= 1;})) {
         output = input;
         return true;
     }
@@ -237,41 +248,45 @@ static bool StrideOrInflate(
     // E.g. For iiij -> ij, The shape [3, 3, 3, 5] would be compressed to [27,
     // 5]. Striding appropriately (in this case with strides 14 (=1+3+9) and 1)
     // recovers the generalized diagonal of shape [3, 5].
-    std::vector<int64_t> reshape;
-    std::vector<int64_t> strides;
+    TensorShape reshape = {};
+    TensorShape strides = {};
     // Strided and inflated shapes correspond to input and output shapes,
     // respectively, should_inflate is true (vice-versa if should_inflate is
     // false). E.g. they are [3, 5] and [3, 3, 3, 5] in the above example.
-    std::vector<int64_t> strided_shape;
-    std::vector<int64_t> inflated_shape;
+    std::vector<int64_t> strided_shape = {};
+    std::vector<int64_t> inflated_shape = {};
     for (int label : labels) {
         const int count = label_counts[label];
         const int current_axis =
             should_inflate ? strided_shape.size() : inflated_shape.size();
-        const int64_t dim = input.shape().dim_size(current_axis);
+        const int dim = input.shape().dim_size(current_axis);
         strided_shape.push_back(dim);
         inflated_shape.insert(inflated_shape.end(), count, dim);
-        const int64_t reshape_dim = IPow(dim, count);
-        reshape.push_back(reshape_dim);
+        const int reshape_dim = IPow(dim, count);
+        reshape.add_dim(reshape_dim);
         // While taking the d-diagonal in a rank k Tensor, we take d
         // equally-spaced elements including the first and last element. Then, (k
         // - 1) * stride = d^k - 1, or, stride = (d^k - 1)/(d - 1).
-        const int64_t stride =
+        const int stride =
             (dim > 1 && count > 1) ? (reshape_dim - 1) / (dim - 1) : 1;
-        strides.push_back(stride);
+        strides.add_dim(stride);
     }
 
     TensorShape output_shape =
         TensorShape(should_inflate ? inflated_shape : strided_shape);
-    output.resize(output_shape);
-
+    // Also allocate memory for the output tensor with the given shape.
+    CopyFromWithAllocate(input, output_shape, &output);
+ 
     if (should_inflate) {
-        input.reshape(TensorShape(strided_shape));
-        output.reshape(TensorShape(reshape));
-        op::inflate_op<T, Device>()(input, strides, output);
-    } else {
-        input.reshape(TensorShape(reshape));
-        op::stride_op<T, Device>()(input, strides, output);
+        input.reshape(strided_shape);
+        output.reshape(reshape);
+        TEMPLATE_ALL_2(input.data_type(), input.device_type(),
+                   op::inflate_op<T_, DEVICE_>()(input, strides, output))
+    } 
+    else {
+        input.reshape(reshape);
+        TEMPLATE_ALL_2(input.data_type(), input.device_type(),
+                   op::stride_op<T_, DEVICE_>()(input, strides, output))
     }
 
     return true;     
@@ -305,14 +320,13 @@ static bool ShouldTranspose(
 
 // Transpose the input given a permutation. Returns a reference to the input
 // if transposing is not necessary.
-template <typename T, typename Device>
 static bool TransposeOperand(
         const Tensor& input,
         const std::vector<int>& permutation,
         Tensor& output)
 {
     if (!ShouldTranspose(input.shape(), permutation)) {
-        return CopyFrom(input, input.shape(), output);
+        return CopyFrom(input, input.shape(), &output);
     }
     TensorShape transposed_shape;
     for (int ii = 0; ii < input.shape().ndim(); ++ii) {
@@ -321,17 +335,13 @@ static bool TransposeOperand(
     // For empty Tensors, just change the shape. E.g. we may need to transpose
     // from shape [1, 0, 5] to [5, 1, 0].
     if (input.NumElements() == 0) {
-        return CopyFrom(input, input.shape(), output);
+        return CopyFrom(input, input.shape(), &output);
     }
 
-    // Allocate a temporary buffer for the transposed Tensor.
-    output.resize(transposed_shape);
-    if (input.data_type() != DataType::DT_COMPLEX || 
-        input.data_type() != DataType::DT_COMPLEX_DOUBLE) {
-        op::transpose_op<T, Device, false>()(input, permutation, output);
-    } else {
-        op::transpose_op<T, Device, true>()(input, permutation, output);
-    }
+    // Note: This functor will allocate a buffer for the transposed Tensor.
+    TEMPLATE_ALL_2(input.data_type(), input.device_type(),
+                   op::transpose_op<T_, DEVICE_, false>()(input, permutation, output))
+
     return true;
 }
 
@@ -344,7 +354,7 @@ static bool ShouldSwapFreeAndContract(
 {
     // Check that ordering is according to dimension type, with the role of
     // free and contract dimensions swapped.
-    std::vector<int> remap = {0, 1, 3, 2, 4};
+    std::array<int, 5> remap = {0, 1, 3, 2, 4};
     for (int ii = 0; ii < labels.size() - 1; ii++) {
         const int dimtype_a = remap[label_types[labels[ii]]];
         const int dimtype_b = remap[label_types[labels[ii + 1]]];
@@ -682,8 +692,6 @@ bool ReduceOperand(
     int& swap_free_and_contract,
     Tensor& output)
 {
-    return true;
-    /*
     // Find the permutation to transpose the input dimensions in the order of
     // EinsumDimensionType; i.e. batch, free, contract and reduce dimensions.
     // This makes it more convenient to invoke Reduce/Contract operations.
@@ -695,9 +703,10 @@ bool ReduceOperand(
     // flag during BatchMatMul. This is an extra optimization not necessary for
     // correctness.
     if(ShouldSwapFreeAndContract(labels, label_types)) {
-        *swap_free_and_contract = true;
-    } else {
-        std::sort(permutation, [&](int ii, int jj) {
+        swap_free_and_contract = 1;
+    }
+    else {
+        std::sort(permutation.begin(), permutation.end(), [&](int ii, int jj) {
             int label_ii = labels[ii];
             int label_jj = labels[jj];
             return std::tie(label_types[label_ii], label_ii) <
@@ -706,7 +715,7 @@ bool ReduceOperand(
     }
 
     // Transpose the input so that EinsumDimensionTypes are in order.
-    TransposeOperand<T, Device>(input, permutation, input_transposed);
+    TransposeOperand(input, permutation, input_transposed);
     // Permutes labels
     PermuteLabels(permutation, labels);
 
@@ -715,11 +724,12 @@ bool ReduceOperand(
     Tensor input_deduped;
     labels.erase(std::unique(labels.begin(), labels.end()), labels.end());
 
-    StrideOrInflate<T, Device>(input_transposed, labels, label_counts, false, input_deduped);
+
+    StrideOrInflateOperand(input_transposed, labels, label_counts, false, input_deduped);
 
     // Reshape denotes the rank-5 shape [broadcast, batch, free, contract,
     // reduce] where we've compacted the dimensions of each EinsumDimensionType.
-    std::vector<int64_t> reshape(5, 1);
+    std::array<int, 5> reshape = {1, 1, 1, 1, 1};
     // The output shape is [batch shape] + [free size, contract size]
     // That is, the batch shape is preserved (for broadcasting while
     // contracting) while the free dims and contract dims are compressed to one
@@ -727,7 +737,7 @@ bool ReduceOperand(
     TensorShape output_shape;
     for (int label_idx = 0; label_idx < labels.size(); label_idx++) {
         const int label = labels[label_idx];
-        int64_t dim = input_deduped.shape().dim_size(label_idx);
+        int dim = input_deduped.shape().dim_size(label_idx);
         if (label_types[label] == EinsumDimensionType::kBroadcasting ||
             label_types[label] == EinsumDimensionType::kBatch) {
               output_shape.add_dim(dim);
@@ -738,24 +748,26 @@ bool ReduceOperand(
         reshape[label_types[label]] *= dim;
     }
 
-    if (*swap_free_and_contract) {
+    if (swap_free_and_contract) {
         std::swap(reshape[EinsumDimensionType::kFree], reshape[EinsumDimensionType::kContract]);
     }
     output_shape.add_dim(reshape[EinsumDimensionType::kFree]);
     output_shape.add_dim(reshape[EinsumDimensionType::kContract]);
 
+
     if (reshape[EinsumDimensionType::kReduce] ==
         1) {  // No need to actually reduce.
-      return CopyFrom(input_deduped, output_shape, output);
+      return CopyFrom(input_deduped, output_shape, &output);
     }
 
-    output.resize(output_shape);
-    output.reshape({output.NumElements()});
-    input_deduped.reshape({output.NumElements(), reshape[EinsumDimensionType::kReduce]});
+    input_deduped.reshape({-1, reshape[EinsumDimensionType::kReduce]});
+    CopyFromWithAllocate(input_deduped, output_shape, &output);
+    output.reshape({-1});
     
-    op::reduce_op<T, Device>()(input_deduped, reshape[EinsumDimensionType::kReduce], output);
+    TEMPLATE_ALL_2(input_deduped.data_type(), input_deduped.device_type(),
+                   op::reduce_op<T_, DEVICE_>()(input_deduped, reshape[EinsumDimensionType::kReduce], output))
+
     return true;
-    */
 }
 
 // Contracts the inputs along the last axis (or the second last if the
@@ -765,14 +777,13 @@ bool ReduceOperand(
 // multiplication when the matrix shape is [1,1]; in this case BatchMatMul
 // functor would be very inefficient. The functor should detect if this is the
 // case and perform componentwise multiplication functor instead.
-template <typename T, typename Device>
-bool contract_oprands<T, Device>::operator()(
-        std::vector<Tensor>& inputs,
-        const std::vector<bool>& swap_free_and_contract,
-        Tensor& output)
+bool ContractOperands(
+    std::vector<Tensor>& inputs,
+    const std::vector<bool>& swap_free_and_contract,
+    Tensor& output)
 {
     if (inputs.size() == 1) {
-        return CopyFrom(inputs[0], inputs[0].shape(), output);
+        return CopyFrom(inputs[0], inputs[0].shape(), &output);
     }
     BCast bcast = prepare_bcast(inputs[0].shape().dims(), inputs[1].shape().dims());
 
@@ -800,7 +811,9 @@ bool contract_oprands<T, Device>::operator()(
 
     Tensor output_reshaped;
     ReshapeToRank3(output, bcast.z_batch_size, output_reshaped);
-    einsum_utils::contract_op<T, Device>()(lhs, rhs, trans_x, trans_y, bcast, output_reshaped);
+
+    // TEMPLATE_ALL_2(output_reshaped.data_type(), output_reshaped.device_type(),
+    //                einsum_utils::contract_op<T_, DEVICE_>()(lhs, rhs, trans_x, trans_y, bcast, output_reshaped))
 
     return true;
 }

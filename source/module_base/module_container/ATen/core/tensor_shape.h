@@ -21,13 +21,13 @@ public:
      * @brief Constructor with an initializer list of integers.
      * @param dims An initializer list of integers representing the dimensions of the tensor.
      */
-    TensorShape(std::initializer_list<int> dims);
+    TensorShape(std::initializer_list<int64_t> dims);
 
     /**
      * @brief Constructor with a vector of integers.
      * @param dims A vector of integers representing the dimensions of the tensor.
      */
-    explicit TensorShape(const std::vector<int>& dims);
+    TensorShape(const std::vector<int64_t>& dims);
 
     /**
      * @brief Copy constructor.
@@ -40,13 +40,13 @@ public:
      * @param dim The index of the dimension.
      * @return The size of the specified dimension.
      */
-    int dim_size(int dim) const;
+    int64_t dim_size(int dim) const;
 
     /**
      * @brief Get all dimension sizes in the tensor.
      * @return A const reference to the vector of dimension sizes.
      */
-    const std::vector<int>& dims() const;
+    const std::vector<int64_t>& dims() const;
 
     /**
      * @brief Get the ndim of the tensor.
@@ -59,13 +59,13 @@ public:
      * @param dim The index of the dimension to be modified.
      * @param size The new size of the dimension.
      */
-    void set_dim_size(int dim, int size);
+    void set_dim_size(int dim, int64_t size);
 
     /**
      * @brief Add a new dimension to the tensor.
      * @param size The size of the new dimension.
      */
-    void add_dim(int size);
+    void add_dim(int64_t size);
 
     /**
      * @brief Remove a dimension from the tensor.
@@ -95,7 +95,7 @@ public:
     bool operator!=(const TensorShape& other) const;
 
 private:
-    std::vector<int> dims_;  // Save dimension sizes of the tensor
+    std::vector<int64_t> dims_ = {};  // Save dimension sizes of the tensor
 };
 
 /**

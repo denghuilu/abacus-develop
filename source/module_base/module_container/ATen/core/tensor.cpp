@@ -265,6 +265,15 @@ bool Tensor::CopyFrom(const Tensor& other, const TensorShape& shape) {
     return false;
 }
 
+bool Tensor::CopyFromWithAllocate(const Tensor& other, const TensorShape& shape) {
+    data_type_ = other.data_type_;
+    device_ = other.device_;
+    shape_ = shape;
+    if (buffer_) buffer_->unref();
+    buffer_ = new TensorBuffer(GetAllocator(device_), shape_.NumElements() * SizeOfType(data_type_));
+    return true;
+}
+
 // Overloaded operator<< for the Tensor class.
 std::ostream& operator<<(std::ostream& os, const Tensor& tensor) {
     std::ios::fmtflags flag(os.flags());

@@ -16,10 +16,13 @@ TensorBuffer::TensorBuffer(void* data_ptr) : alloc_(), data_(data_ptr), owns_mem
 
 // Class members are initialized in the order of their declaration, 
 // rather than the order they appear in the initialization list!
-TensorBuffer::TensorBuffer(Allocator* alloc, size_t size) 
-        : alloc_(alloc), 
-          data_(alloc_->allocate(size)), 
-          owns_memory(true) {}
+TensorBuffer::TensorBuffer(Allocator* alloc, size_t size) {
+    alloc_ = alloc; 
+    if (size > 0) {
+        data_ = alloc_->allocate(size);
+        owns_memory = true;
+    }
+}
 
 // Move constructor.
 TensorBuffer::TensorBuffer(TensorBuffer&& other) noexcept

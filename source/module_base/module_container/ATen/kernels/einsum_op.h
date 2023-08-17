@@ -83,38 +83,18 @@ bool ReduceOperand(
     Tensor& output);
 
 /**
- * @brief A functor to perform contraction operation on multiple Tensors.
+ * @brief A function to perform contraction operation on multiple Tensors.
  *
  * This functor applies a contraction operation on multiple input Tensors and computes the result.
  * The contraction operation combines the input Tensors based on a specific contraction pattern to produce
  * a single output Tensor. The contraction pattern is defined by the `swap_free_and_contract` vector, which
  * specifies whether each input Tensor should be contracted or simply copied to the output.
  *
- * @tparam T The data type of the elements in the Tensors.
- * @tparam Device The device on which the Tensors reside (CPU/GPU).
  */
-template <typename T, typename Device>
-struct contract_oprands {
-    /**
-     * @brief Perform the contraction operation on the input Tensors.
-     *
-     * This function applies the contraction operation on the input Tensors based on the specified
-     * `swap_free_and_contract` pattern and stores the result in the output Tensor.
-     *
-     * @param inputs The vector of input Tensors to be contracted or copied.
-     * @param swap_free_and_contract A vector specifying the contraction pattern for the input Tensors.
-     *                              If an element is true, the corresponding input Tensor will be contracted;
-     *                              otherwise, it will be copied to the output.
-     * @param output The output Tensor to store the result of the contraction operation.
-     *
-     * @return True if the contraction operation was successful, false otherwise.
-     */
-    bool operator()(
-        std::vector<Tensor>& inputs,
-        const std::vector<bool>& swap_free_and_contract,
-        Tensor& output);
-};
-
+bool ContractOperands(
+    std::vector<Tensor>& inputs,
+    const std::vector<bool>& swap_free_and_contract,
+    Tensor& output);
 
 /**
  * @brief Functor for performing a contract operation between two tensors.

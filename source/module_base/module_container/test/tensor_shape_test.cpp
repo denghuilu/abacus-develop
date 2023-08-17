@@ -19,7 +19,7 @@ TEST(TensorShape, Constructor) {
     EXPECT_EQ(shape2.dim_size(2), 4);
 
     // Test vector constructor
-    std::vector<int> dims = {5, 6};
+    std::vector<int64_t> dims = {5, 6};
     container::TensorShape shape3(dims);
     EXPECT_EQ(shape3.ndim(), 2);
     EXPECT_EQ(shape3.dim_size(0), 5);
