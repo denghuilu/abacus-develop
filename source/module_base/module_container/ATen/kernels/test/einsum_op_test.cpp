@@ -103,6 +103,28 @@ TYPED_TEST(EinsumOpTest, Inflate) {
     EXPECT_EQ(A_inflated, expected);
 }
 
+TYPED_TEST(EinsumOpTest, Contract) {
+    using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
+
+    const int m = 2, k = 4, n = 2;
+    Tensor A = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0), static_cast<Type>(4.0),
+                                 static_cast<Type>(5.0), static_cast<Type>(6.0), static_cast<Type>(7.0), static_cast<Type>(8.0)}).to_device<Device>());
+    A.reshape({m, k});
+    Tensor B = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), 
+                                 static_cast<Type>(3.0), static_cast<Type>(4.0),
+                                 static_cast<Type>(5.0), static_cast<Type>(6.0), 
+                                 static_cast<Type>(7.0), static_cast<Type>(8.0)}).to_device<Device>());
+    B.reshape({k, n});
+    Tensor expected = std::move(Tensor(
+                                {static_cast<Type>(50.0), static_cast<Type>(60.0), 
+                                 static_cast<Type>(114.0),static_cast<Type>(140.0)}).to_device<Device>());
+    expected.reshape({m, n});
+
+    Tensor C = op::einsum("ij,jk->ik", A, B);
+    EXPECT_EQ(C, expected);
+}
+
 TYPED_TEST(EinsumOpTest, TransformEllipsis) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;

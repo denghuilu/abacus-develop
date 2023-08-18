@@ -1,6 +1,7 @@
 #include <ATen/core/tensor_types.h>
 #include <ATen/kernels/einsum_op.h>
 #include <ATen/kernels/linalg_op.h>
+#include <ATen/kernels/blas_op.h>
 
 #include <algorithm>
 
@@ -770,13 +771,112 @@ bool ReduceOperand(
     return true;
 }
 
+template <typename T, typename Device>
+static void DoContract(
+        const Tensor& in_x,
+        const Tensor& in_y,
+        const bool& trans_x,
+        const bool& trans_y,
+        const einsum_utils::BCast& bcast,
+        Tensor& out_z)
+{
+    const T alpha = static_cast<T>(1.0);
+    const T beta  = static_cast<T>(0.0);
+    const int m = in_x.shape().dim_size(trans_x ? 2 : 1);
+    const int k = in_x.shape().dim_size(trans_x ? 1 : 2);
+    const int n = in_y.shape().dim_size(trans_y ? 1 : 2);
+
+    const int64_t batch_size = bcast.z_batch_size;
+
+    std::vector<T*> x_device_memory_ptrs = {}; x_device_memory_ptrs.reserve(batch_size);
+    std::vector<T*> y_device_memory_ptrs = {}; y_device_memory_ptrs.reserve(batch_size);
+    std::vector<T*> z_device_memory_ptrs = {}; z_device_memory_ptrs.reserve(batch_size);
+
+    auto* x_base_ptr = in_x.data<T>();
+    auto* y_base_ptr = in_y.data<T>();
+    auto* z_base_ptr = out_z.data<T>();
+
+    int64_t x_stride = 0;
+    int64_t y_stride = 0;
+    int64_t z_stride = 0;
+
+    bool is_full_broadcast = 
+        std::min(bcast.x_batch_size, bcast.y_batch_size) == 1;
+
+    bool use_strided_batched = 
+        (!bcast.requires_broadcast || is_full_broadcast) && batch_size > 1;
+    
+    if (use_strided_batched) {
+        x_stride = bcast.x_batch_size != 1 ? m * k : 0;
+        y_stride = bcast.y_batch_size != 1 ? k * n : 0;
+        z_stride = m * n;
+
+        x_device_memory_ptrs.push_back(x_base_ptr);
+        y_device_memory_ptrs.push_back(y_base_ptr);
+        z_device_memory_ptrs.push_back(z_base_ptr);
+    }
+    else if (!bcast.requires_broadcast) {
+        for (int ii = 0; ii < batch_size; ii++) {
+            x_device_memory_ptrs.push_back(x_base_ptr + ii * m * k);
+            y_device_memory_ptrs.push_back(y_base_ptr + ii * k * n);
+            z_device_memory_ptrs.push_back(z_base_ptr + ii * m * n);
+        }
+    }
+    else {
+        std::vector<T*> x_device_memory = {};
+        std::vector<T*> y_device_memory = {};
+        for (int ii = 0; ii < bcast.x_batch_size; ii++) {
+            x_device_memory.push_back(x_base_ptr + ii * m * k);
+        }
+        for (int ii = 0; ii < bcast.y_batch_size; ii++) {
+            y_device_memory.push_back(y_base_ptr + ii * k * n);
+        }
+        for (int ii = 0; ii < bcast.z_batch_size; ii++) {
+            x_device_memory_ptrs.push_back(x_device_memory[bcast.x_batch_shape[ii]]);
+            y_device_memory_ptrs.push_back(y_device_memory[bcast.y_batch_shape[ii]]);
+            z_device_memory_ptrs.push_back(z_base_ptr + ii * m * n);
+        }
+    }
+
+    // Do GEMM operations finally!
+    // where A, B and C are assumed to be in column major.
+    // We want the output to be in row-major, so we can compute
+    // C' = B' x A', where ' stands for transpose (not adjoint).
+    if (batch_size == 1) {
+        // Dot product
+        if (m == 1 && n == 1) {
+
+        }
+        // Gemv
+        else if (n == 1) {
+            // op::gemv<>(m, n, k, x_device_memory_ptrs[0], y_device_memory_ptrs[0], z_device_memory_ptrs[0]);
+        }
+        // Gemm
+        else {
+            // Call the column-major Blas library
+            op::blas_gemm<T, Device>()(
+                trans_y ? 'T' : 'N', 
+                trans_x ? 'T' : 'N', 
+                n, m, k, 
+                &alpha, 
+                y_device_memory_ptrs[0], n, 
+                x_device_memory_ptrs[0], k, 
+                &beta, 
+                z_device_memory_ptrs[0], n);
+        }
+        return;
+    }
+    else if (use_strided_batched) {
+        // op::gemm_batched_strided<>(m, n, k, x_device_memory_ptrs, y_device_memory_ptrs, z_device_memory_ptrs, x_stride, y_stride, z_stride);
+    }
+    else {
+        // op::gemm_batched_scrach<> scratchpad(batch_size, m, n, k);
+    }
+}
+
 // Contracts the inputs along the last axis (or the second last if the
 // corresponding value of swap_free_and_contract is true). The batch
 // dimensions are broadcast to the output shape.
-// TODO(anudhyan): BatchMatMul might devolve into a component-wise
-// multiplication when the matrix shape is [1,1]; in this case BatchMatMul
-// functor would be very inefficient. The functor should detect if this is the
-// case and perform componentwise multiplication functor instead.
 bool ContractOperands(
     std::vector<Tensor>& inputs,
     const std::vector<int>& swap_free_and_contract,
@@ -792,7 +892,7 @@ bool ContractOperands(
     }
     Tensor lhs, rhs;
     ReshapeToRank3(inputs[0], bcast.x_batch_size, lhs);
-    ReshapeToRank3(inputs[1], bcast.y_batch_size, lhs);
+    ReshapeToRank3(inputs[1], bcast.y_batch_size, rhs);
 
     TensorShape output_shape = bcast.z_batch_shape;
     for (int ii = 0; ii < inputs.size(); ii++) {
@@ -803,7 +903,7 @@ bool ContractOperands(
     bool trans_x = swap_free_and_contract[0];
     bool trans_y = !swap_free_and_contract[1];
 
-    output.resize(output_shape);
+    CopyFromWithAllocate(inputs[0], output_shape, &output);
     if (lhs.NumElements() == 0 || rhs.NumElements() == 0) {
         output.zero();
         return true;
@@ -812,8 +912,8 @@ bool ContractOperands(
     Tensor output_reshaped;
     ReshapeToRank3(output, bcast.z_batch_size, output_reshaped);
 
-    // TEMPLATE_ALL_2(output_reshaped.data_type(), output_reshaped.device_type(),
-    //                einsum_utils::contract_op<T_, DEVICE_>()(lhs, rhs, trans_x, trans_y, bcast, output_reshaped))
+    TEMPLATE_BLAS_2(output_reshaped.data_type(), output_reshaped.device_type(),
+        einsum_utils::DoContract<T_, DEVICE_>(lhs, rhs, trans_x, trans_y, bcast, output_reshaped))
 
     return true;
 }
@@ -895,106 +995,6 @@ void ProcessOutput(
     }
 
     TransposeOperand(output_inflated, output_permutation, output);
-}
-
-template <typename T, typename Device>
-void contract_op<T, Device>::operator()(
-        const Tensor& in_x,
-        const Tensor& in_y,
-        const bool& trans_x,
-        const bool& trans_y,
-        const einsum_utils::BCast& bcast,
-        Tensor& out_z)
-{
-    const int64_t m = in_x.shape().dim_size(trans_x ? 2 : 1);
-    const int64_t k = in_x.shape().dim_size(trans_x ? 1 : 2);
-    const int64_t n = in_y.shape().dim_size(trans_y ? 1 : 2);
-
-    const int64_t batch_size = bcast.z_batch_size;
-
-    std::vector<T> x_device_memory = {}; x_device_memory.reserve(bcast.x_batch_size);
-    std::vector<T> y_device_memory = {}; y_device_memory.reserve(bcast.y_batch_size);
-    std::vector<T> z_device_memory = {}; z_device_memory.reserve(bcast.z_batch_size);
-
-    std::vector<T*> x_device_memory_ptrs = {}; x_device_memory_ptrs.reserve(batch_size);
-    std::vector<T*> y_device_memory_ptrs = {}; y_device_memory_ptrs.reserve(batch_size);
-    std::vector<T*> z_device_memory_ptrs = {}; z_device_memory_ptrs.reserve(batch_size);
-
-    auto* x_base_ptr = in_x.data<T>();
-    auto* y_base_ptr = in_y.data<T>();
-    auto* z_base_ptr = out_z.data<T>();
-
-    int64_t x_stride = 0;
-    int64_t y_stride = 0;
-    int64_t z_stride = 0;
-
-    bool is_full_broadcast = 
-        std::min(bcast.x_batch_size, bcast.y_batch_size) == 1;
-
-    bool use_strided_batched = 
-        (!bcast.requires_broadcast || is_full_broadcast) && batch_size > 1;
-    
-    if (use_strided_batched) {
-        x_stride = bcast.x_batch_size != 1 ? m * k : 0;
-        y_stride = bcast.y_batch_size != 1 ? k * n : 0;
-        z_stride = m * n;
-
-        x_device_memory.push_back(x_base_ptr);
-        y_device_memory.push_back(y_base_ptr);
-        z_device_memory.push_back(z_base_ptr);
-
-        x_device_memory_ptrs.push_back(&x_device_memory.back());
-        y_device_memory_ptrs.push_back(&y_device_memory.back());
-        z_device_memory_ptrs.push_back(&z_device_memory.back());
-    }
-    else if (!bcast.requires_broadcast) {
-        for (int ii = 0; ii < batch_size; ii++) {
-            x_device_memory.push_back(x_base_ptr + ii * m * k);
-            y_device_memory.push_back(y_base_ptr + ii * k * n);
-            z_device_memory.push_back(z_base_ptr + ii * m * n);
-
-            x_device_memory_ptrs.push_back(&x_device_memory.back());
-            y_device_memory_ptrs.push_back(&y_device_memory.back());
-            z_device_memory_ptrs.push_back(&z_device_memory.back());
-        }
-    }
-    else {
-        for (int ii = 0; ii < bcast.x_batch_size; ii++) {
-            x_device_memory.push_back(x_base_ptr + ii * m * k);
-        }
-        for (int ii = 0; ii < bcast.y_batch_size; ii++) {
-            y_device_memory.push_back(y_base_ptr + ii * k * n);
-        }
-        for (int ii = 0; ii < bcast.z_batch_size; ii++) {
-            z_device_memory.push_back(z_base_ptr + ii * m * n);
-            
-            x_device_memory_ptrs.push_back(&x_device_memory[bcast.x_batch_shape[ii]]);
-            y_device_memory_ptrs.push_back(&y_device_memory[bcast.y_batch_shape[ii]]);
-            z_device_memory_ptrs.push_back(&z_device_memory.back());
-        }
-    }
-
-    // Do GEMM operations finally!
-    // where A, B and C are assumed to be in column major.
-    // We want the output to be in row-major, so we can compute
-    // C' = B' x A', where ' stands for transpose (not adjoint).
-    // TODO (yangzihao): Choose the best of the three strategies using
-    // autotune.
-    if (batch_size == 1) {
-        if (n == 1) {
-            // op::gemv<>(m, n, k, x_device_memory_ptrs[0], y_device_memory_ptrs[0], z_device_memory_ptrs[0]);
-        }
-        else {
-            // op::gemm<>(m, n, k, x_device_memory_ptrs[0], y_device_memory_ptrs[0], z_device_memory_ptrs[0]);
-        }
-        return;
-    }
-    else if (use_strided_batched) {
-        // op::gemm_batched_strided<>(m, n, k, x_device_memory_ptrs, y_device_memory_ptrs, z_device_memory_ptrs, x_stride, y_stride, z_stride);
-    }
-    else {
-        // op::gemm_batched_scrach<> scratchpad(batch_size, m, n, k);
-    }
 }
 
 }   // namespace utils

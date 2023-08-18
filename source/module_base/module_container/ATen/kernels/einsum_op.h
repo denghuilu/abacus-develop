@@ -106,38 +106,6 @@ void ProcessOutput(
     const std::vector<int>& output_label_counts,
     Tensor& output);
 
-/**
- * @brief Functor for performing a contract operation between two tensors.
- *
- * This struct defines a functor that performs a contract operation between two tensors
- * and stores the result in an output tensor.
- *
- * @tparam T The data type of the elements in the tensors.
- * @tparam Device The device type (e.g., CPU, GPU) for the computation.
- */
-template <typename T, typename Device>
-struct contract_op {
-    /**
-     * @brief Perform the contract operation between two tensors.
-     *
-     * This function performs the contract operation between two tensors and stores the result in the output tensor.
-     *
-     * @param lhs The left-hand side tensor of the contract operation.
-     * @param rhs The right-hand side tensor of the contract operation.
-     * @param trans_x Flag indicating whether to transpose the left-hand side tensor before the contract operation.
-     * @param trans_y Flag indicating whether to transpose the right-hand side tensor before the contract operation.
-     * @param bcast The broadcast configuration for the contract operation.
-     * @param output The tensor to store the result of the contract operation.
-     */
-    void operator()(
-        const Tensor& lhs,
-        const Tensor& rhs,
-        const bool& trans_x,
-        const bool& trans_y,
-        const einsum_utils::BCast& bcast,
-        Tensor& output);
-};
-
 } // namespace einsum_utils
 
 namespace op {
