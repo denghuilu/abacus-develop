@@ -12,16 +12,16 @@ template <typename T>
 class EinsumOpTest : public testing::Test {
 public:
     EinsumOpTest() {
-        tests_utils::init_blas_handle();
-        tests_utils::init_cusolver_handle();
+        test_utils::init_blas_handle();
+        test_utils::init_cusolver_handle();
     }
     ~EinsumOpTest() override {
-        tests_utils::delete_blas_handle();
-        tests_utils::delete_cusolver_handle();
+        test_utils::delete_blas_handle();
+        test_utils::delete_cusolver_handle();
     }
 };
 
-TYPED_TEST_SUITE(EinsumOpTest, tests_utils::Types);
+TYPED_TEST_SUITE(EinsumOpTest, test_utils::Types);
 
 TYPED_TEST(EinsumOpTest, Transform) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
@@ -82,9 +82,7 @@ TYPED_TEST(EinsumOpTest, Stride) {
     A.reshape({-1, dim});
     Tensor expected = std::move(Tensor(
                                 {static_cast<Type>(1.0), static_cast<Type>(4.0), static_cast<Type>(6.0)}).to_device<Device>());
-    // const Tensor expected = std::move(Tensor({static_cast<Type>(21.0)}).to_device<Device>());
 
-    // Case 1: Normal reduction
     Tensor A_strided = op::einsum("ii->i", A);
     EXPECT_EQ(A_strided, expected);
 }
@@ -100,11 +98,87 @@ TYPED_TEST(EinsumOpTest, Inflate) {
                                  static_cast<Type>(0.0), static_cast<Type>(4.0), static_cast<Type>(0.0),
                                  static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(6.0)}).to_device<Device>());
     expected.reshape({-1, dim});
-    // const Tensor expected = std::move(Tensor({static_cast<Type>(21.0)}).to_device<Device>());
 
-    // Case 1: Normal reduction
     Tensor A_inflated = op::einsum("i->ii", A);
     EXPECT_EQ(A_inflated, expected);
+}
+
+TYPED_TEST(EinsumOpTest, TransformEllipsis) {
+    using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
+
+    const int dim = 3;
+    Tensor A = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(4.0), static_cast<Type>(5.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(6.0),
+                                 static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(4.0), static_cast<Type>(5.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(6.0)}).to_device<Device>());
+    A.reshape({-1, dim, dim});
+    Tensor expected = std::move(Tensor(
+                                {static_cast<Type>(1.0), static_cast<Type>(0.0), static_cast<Type>(0.0),
+                                 static_cast<Type>(2.0), static_cast<Type>(4.0), static_cast<Type>(0.0),
+                                 static_cast<Type>(3.0), static_cast<Type>(5.0), static_cast<Type>(6.0),
+                                 static_cast<Type>(1.0), static_cast<Type>(0.0), static_cast<Type>(0.0),
+                                 static_cast<Type>(2.0), static_cast<Type>(4.0), static_cast<Type>(0.0),
+                                 static_cast<Type>(3.0), static_cast<Type>(5.0), static_cast<Type>(6.0)}).to_device<Device>());
+    expected.reshape({-1, dim, dim});
+    Tensor expected_ellipsis = std::move(Tensor(
+                                {static_cast<Type>(1.0), static_cast<Type>(1.0), 
+                                 static_cast<Type>(0.0), static_cast<Type>(0.0), 
+                                 static_cast<Type>(0.0), static_cast<Type>(0.0),
+                                 static_cast<Type>(2.0), static_cast<Type>(2.0), 
+                                 static_cast<Type>(4.0), static_cast<Type>(4.0), 
+                                 static_cast<Type>(0.0), static_cast<Type>(0.0),
+                                 static_cast<Type>(3.0), static_cast<Type>(3.0), 
+                                 static_cast<Type>(5.0), static_cast<Type>(5.0), 
+                                 static_cast<Type>(6.0), static_cast<Type>(6.0)}).to_device<Device>());
+    expected_ellipsis.reshape({dim, dim, -1});
+
+    Tensor A_transformed = op::einsum("ijk->ikj", A);
+    EXPECT_EQ(A_transformed, expected);
+    Tensor A_transformed_ellipsis = op::einsum("...ij->...ji", A);
+    EXPECT_EQ(A_transformed_ellipsis, expected);
+    A_transformed_ellipsis = op::einsum("i...j->j...i", A);
+    EXPECT_EQ(A_transformed_ellipsis, expected_ellipsis);
+}
+
+TYPED_TEST(EinsumOpTest, ReduceEllipsis) {
+    using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
+
+    const int dim = 3;
+    Tensor A = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(4.0), static_cast<Type>(5.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(6.0),
+                                 static_cast<Type>(7.0), static_cast<Type>(8.0), static_cast<Type>(9.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(10.0),static_cast<Type>(11.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(12.0)}).to_device<Device>());
+    A.reshape({-1, dim, dim});
+    Tensor expected_1 = std::move(Tensor(
+                                {static_cast<Type>(6.0), static_cast<Type>(9.0), static_cast<Type>(6.0),
+                                 static_cast<Type>(24.0),static_cast<Type>(21.0),static_cast<Type>(12.0)}).to_device<Device>());
+    expected_1.reshape({-1, dim});
+    Tensor expected_2 = std::move(Tensor(
+                                {static_cast<Type>(1.0), static_cast<Type>(6.0), static_cast<Type>(14.0),
+                                 static_cast<Type>(7.0), static_cast<Type>(18.0),static_cast<Type>(32.0)}).to_device<Device>());
+    expected_2.reshape({-1, dim});
+
+    // Case 1: Normal reduction
+    Tensor A_reduced = op::einsum("ijk->ij", A);
+    EXPECT_EQ(A_reduced, expected_1);
+    Tensor A_reduced_ellipsis = op::einsum("...i->...", A);
+    EXPECT_EQ(A_reduced_ellipsis, expected_1);
+
+    // Case 2: Transpose reduction
+    A_reduced = op::einsum("ijk->ik", A);
+    EXPECT_EQ(A_reduced, expected_2);
+    A_reduced_ellipsis =  op::einsum("...jk->...k", A);
+    EXPECT_EQ(A_reduced_ellipsis, expected_2);
+
+    // Case 3: All reduction
+    A_reduced = op::einsum("ijk->", A);
+    EXPECT_EQ(A_reduced, Tensor({static_cast<Type>(78.0)}));
 }
 
 } // namespace op

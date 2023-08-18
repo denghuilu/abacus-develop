@@ -11,14 +11,14 @@ template <typename T>
 class BlasOpTest : public testing::Test {
 public:
     BlasOpTest() {
-        tests_utils::init_blas_handle();
+        test_utils::init_blas_handle();
     }
     ~BlasOpTest() override {
-        tests_utils::delete_blas_handle();
+        test_utils::delete_blas_handle();
     }
 };
 
-TYPED_TEST_SUITE(BlasOpTest, tests_utils::Types);
+TYPED_TEST_SUITE(BlasOpTest, test_utils::Types);
 
 TYPED_TEST(BlasOpTest, Dot) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;

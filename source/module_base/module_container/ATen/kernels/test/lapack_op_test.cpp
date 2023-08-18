@@ -11,16 +11,16 @@ template <typename T>
 class LapackOpTest : public testing::Test {
 public:
     LapackOpTest() {
-        tests_utils::init_blas_handle();
-        tests_utils::init_cusolver_handle();
+        test_utils::init_blas_handle();
+        test_utils::init_cusolver_handle();
     }
     ~LapackOpTest() override {
-        tests_utils::delete_blas_handle();
-        tests_utils::delete_cusolver_handle();
+        test_utils::delete_blas_handle();
+        test_utils::delete_cusolver_handle();
     }
 };
 
-TYPED_TEST_SUITE(LapackOpTest, tests_utils::Types);
+TYPED_TEST_SUITE(LapackOpTest, test_utils::Types);
 
 TYPED_TEST(LapackOpTest, Trtri) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;

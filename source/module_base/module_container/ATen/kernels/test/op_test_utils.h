@@ -5,7 +5,7 @@
 #include <ATen/kernels/lapack_op.h>
 
 namespace container {
-namespace tests_utils {
+namespace test_utils {
 
 # if __CUDA || __ROCM
 using Types = ::testing::Types<
@@ -45,7 +45,7 @@ static inline void delete_cusolver_handle() {
     #endif
 }
 
-} // namespace tests_utils
+} // namespace test_utils
 } // namespace container
 
 #endif // ATEN_KERNELS_TEST_OP_TEST_UTILS_H_
