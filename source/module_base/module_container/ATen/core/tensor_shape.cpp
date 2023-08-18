@@ -22,7 +22,9 @@ TensorShape::TensorShape(std::initializer_list<int64_t> dims) : dims_(dims) {}
 TensorShape::TensorShape(const std::vector<int64_t>& dims) : dims_(dims) {}
 
 // Copy constructor for TensorShape class
-TensorShape::TensorShape(const TensorShape& other) = default;
+TensorShape::TensorShape(const TensorShape& other) {
+    dims_ = other.dims();
+}
 
 // Get size of a specific dimension in the tensor
 int64_t TensorShape::dim_size(int dim) const {

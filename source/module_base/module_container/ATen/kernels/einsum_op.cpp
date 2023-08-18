@@ -240,8 +240,7 @@ static bool StrideOrInflateOperand(
 {
     // Return early if there are no repeated indices.
     if (all_of<int>(label_counts, [](int var) {return var <= 1;})) {
-        output = input;
-        return true;
+        return CopyFrom(input, input.shape(), &output);
     }
 
     // We reshape so that each repeated label is compressed to one dimension.
@@ -259,15 +258,15 @@ static bool StrideOrInflateOperand(
         const int count = label_counts[label];
         const int current_axis =
             should_inflate ? strided_shape.size() : inflated_shape.size();
-        const int dim = input.shape().dim_size(current_axis);
+        const int64_t dim = input.shape().dim_size(current_axis);
         strided_shape.push_back(dim);
         inflated_shape.insert(inflated_shape.end(), count, dim);
-        const int reshape_dim = IPow(dim, count);
+        const int64_t reshape_dim = IPow(dim, count);
         reshape.add_dim(reshape_dim);
         // While taking the d-diagonal in a rank k Tensor, we take d
         // equally-spaced elements including the first and last element. Then, (k
         // - 1) * stride = d^k - 1, or, stride = (d^k - 1)/(d - 1).
-        const int stride =
+        const int64_t stride =
             (dim > 1 && count > 1) ? (reshape_dim - 1) / (dim - 1) : 1;
         strides.add_dim(stride);
     }
@@ -278,15 +277,13 @@ static bool StrideOrInflateOperand(
     CopyFromWithAllocate(input, output_shape, &output);
  
     if (should_inflate) {
-        input.reshape(strided_shape);
-        output.reshape(reshape);
+        Tensor output_reshaped = output.shaped(reshape);
         TEMPLATE_ALL_2(input.data_type(), input.device_type(),
-                   op::inflate_op<T_, DEVICE_>()(input, strides, output))
-    } 
+                   op::inflate_op<T_, DEVICE_>()(input.shaped(strided_shape), strides, output_reshaped))
+    }
     else {
-        input.reshape(reshape);
         TEMPLATE_ALL_2(input.data_type(), input.device_type(),
-                   op::stride_op<T_, DEVICE_>()(input, strides, output))
+                   op::stride_op<T_, DEVICE_>()(input.shaped(reshape), strides, output))
     }
 
     return true;     
@@ -338,7 +335,8 @@ static bool TransposeOperand(
         return CopyFrom(input, input.shape(), &output);
     }
 
-    // Note: This functor will allocate a buffer for the transposed Tensor.
+    // Note: Allocate memory for the output tensor first.
+    CopyFromWithAllocate(input, transposed_shape, &output);
     TEMPLATE_ALL_2(input.data_type(), input.device_type(),
                    op::transpose_op<T_, DEVICE_, false>()(input, permutation, output))
 
@@ -729,7 +727,7 @@ bool ReduceOperand(
 
     // Reshape denotes the rank-5 shape [broadcast, batch, free, contract,
     // reduce] where we've compacted the dimensions of each EinsumDimensionType.
-    std::array<int, 5> reshape = {1, 1, 1, 1, 1};
+    std::array<int64_t, 5> reshape = {1, 1, 1, 1, 1};
     // The output shape is [batch shape] + [free size, contract size]
     // That is, the batch shape is preserved (for broadcasting while
     // contracting) while the free dims and contract dims are compressed to one
@@ -737,12 +735,13 @@ bool ReduceOperand(
     TensorShape output_shape;
     for (int label_idx = 0; label_idx < labels.size(); label_idx++) {
         const int label = labels[label_idx];
-        int dim = input_deduped.shape().dim_size(label_idx);
+        int64_t dim = input_deduped.shape().dim_size(label_idx);
         if (label_types[label] == EinsumDimensionType::kBroadcasting ||
             label_types[label] == EinsumDimensionType::kBatch) {
               output_shape.add_dim(dim);
-        } else if (label_types[label] == EinsumDimensionType::kFree) {
-              free_labels.push_back(label);
+        } 
+        else if (label_types[label] == EinsumDimensionType::kFree) {
+            free_labels.push_back(label);
         }
         // All together, the reshape is [broadcast, batch, free, contract, reduce]
         reshape[label_types[label]] *= dim;
@@ -760,12 +759,13 @@ bool ReduceOperand(
       return CopyFrom(input_deduped, output_shape, &output);
     }
 
-    input_deduped.reshape({-1, reshape[EinsumDimensionType::kReduce]});
+    // This command will actually allocate memory for the output tensor
     CopyFromWithAllocate(input_deduped, output_shape, &output);
-    output.reshape({-1});
-    
+    Tensor output_shaped = output.shaped({-1});
     TEMPLATE_ALL_2(input_deduped.data_type(), input_deduped.device_type(),
-                   op::reduce_op<T_, DEVICE_>()(input_deduped, reshape[EinsumDimensionType::kReduce], output))
+                   op::reduce_op<T_, DEVICE_>()(
+                        input_deduped.shaped({-1, reshape[EinsumDimensionType::kReduce]}), 
+                        reshape[EinsumDimensionType::kReduce], output_shaped))
 
     return true;
 }
@@ -779,7 +779,7 @@ bool ReduceOperand(
 // case and perform componentwise multiplication functor instead.
 bool ContractOperands(
     std::vector<Tensor>& inputs,
-    const std::vector<bool>& swap_free_and_contract,
+    const std::vector<int>& swap_free_and_contract,
     Tensor& output)
 {
     if (inputs.size() == 1) {
@@ -818,6 +818,84 @@ bool ContractOperands(
     return true;
 }
 
+void ProcessOutput(
+    const Tensor& input,
+    const std::vector<einsum_utils::EinsumDimensionType>& label_types,
+    const std::vector<std::vector<int>>& free_labels,
+    std::unordered_map<int, int64_t>& label_to_dim_sizes,
+    const std::vector<int>& output_labels,
+    const std::vector<int>& output_label_counts,
+    Tensor& output)
+{
+    TensorShape result_shape = input.shape();
+    result_shape.remove_dim(result_shape.ndim() - 1);
+    result_shape.remove_dim(result_shape.ndim() - 1);
+
+    int num_labels = label_types.size();
+    std::vector<int> result_labels = {};
+    // All batch dimensions should be present in the contracted result. First
+    // the broadcasting dimensions, then the named batch dimensions.
+    for (int label = 0; label < num_labels; ++label) {
+        if (label_types[label] == EinsumDimensionType::kBroadcasting || label_types[label] == EinsumDimensionType::kBatch) {
+            result_labels.push_back(label);
+        }
+    }
+
+    for (int ii = 0; ii < free_labels.size(); ii++) {
+        for (int label : free_labels[ii]) {
+            result_labels.push_back(label);
+            result_shape.add_dim(label_to_dim_sizes[label]);
+        }
+    }
+
+    // If the output is a zero dimensional scalar, use a 1 dimention vector instead.
+    // TODO: Use a scalar constructor in Tensor Object.
+    if (result_shape.ndim() == 0 && input.NumElements() == 1) {
+        result_shape.add_dim(1);
+    }
+    // Reshape the contraction (or reduction) result to its expanded shape:
+    // [(broadcasted) batch shape] + [free shape 0] + [free shape 1].
+    Tensor contraction_output;
+    CopyFrom(input, result_shape, &contraction_output);
+
+    // Inflate the output if necessary. (E.g. for the equation 'i->iii' which
+    // may arise while computing gradient of a regular Einsum).
+    Tensor output_inflated;
+    StrideOrInflateOperand(contraction_output, 
+        result_labels, output_label_counts, true /* should_inflate */, output_inflated);
+
+    if (output_inflated.shape().ndim() > contraction_output.shape().ndim()) {
+        // We inflated the output. Modify result labels accordingly.
+        std::vector<int> inflated_labels = {};
+        for (int label : result_labels) {
+            inflated_labels.insert(inflated_labels.end(), output_label_counts[label], label);
+        }
+        result_labels.swap(inflated_labels);
+    }
+
+    // Find the permutation to map the result labels to the output labels. Note
+    // that both the result and the final output may have the repeated labels,
+    // in which case the permutation preserves the left-to-right ordering.
+    // E.g. if result labels are [0, 0, 1] and output is [0, l, 0] then the
+    // permutation should be [0, 2, 1]. We also use the fact that repeated
+    // labels in the result are adjacent to each other.
+    std::vector<int> output_permutation(output_labels.size());
+    std::vector<int> label_to_position(num_labels, -1);
+
+    for (int ii = 0; ii < result_labels.size(); ii++) {
+        // Remember the position of only the leftmost result label.
+        if (label_to_position[result_labels[ii]] == -1) {
+            label_to_position[result_labels[ii]] = ii;
+        }
+    }
+    for (int ii = 0; ii < output_labels.size(); ii++) {
+        output_permutation[ii] = label_to_position[output_labels[ii]];
+        // We have found the leftmost occurrence. The next one would be adjacent.
+        label_to_position[output_labels[ii]] += 1;
+    }
+
+    TransposeOperand(output_inflated, output_permutation, output);
+}
 
 template <typename T, typename Device>
 void contract_op<T, Device>::operator()(

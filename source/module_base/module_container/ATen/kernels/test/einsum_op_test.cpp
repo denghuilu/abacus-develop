@@ -23,7 +23,7 @@ public:
 
 TYPED_TEST_SUITE(EinsumOpTest, tests_utils::Types);
 
-TYPED_TEST(EinsumOpTest, Trtri) {
+TYPED_TEST(EinsumOpTest, Transform) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
 
@@ -32,31 +32,79 @@ TYPED_TEST(EinsumOpTest, Trtri) {
                                  static_cast<Type>(0.0), static_cast<Type>(4.0), static_cast<Type>(5.0),
                                  static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(6.0)}).to_device<Device>());
     A.reshape({-1, dim});
-    Tensor B = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(0.0), static_cast<Type>(0.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(1.0), static_cast<Type>(0.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(1.0)}).to_device<Device>());
-    B.reshape({-1, dim});
-    Tensor C = op::einsum("ij->i", A);
-    
-    // std::cerr << "A = \t" << A << std::endl;
-    // std::cerr << "B = \t" << B << std::endl;
-    // std::cerr << "C = \t" << C << std::endl;
+    Tensor expected = std::move(Tensor(
+                                {static_cast<Type>(1.0), static_cast<Type>(0.0), static_cast<Type>(0.0),
+                                 static_cast<Type>(2.0), static_cast<Type>(4.0), static_cast<Type>(0.0),
+                                 static_cast<Type>(3.0), static_cast<Type>(5.0), static_cast<Type>(6.0)}).to_device<Device>());
+    expected.reshape({-1, dim});
+    // const Tensor expected = std::move(Tensor({static_cast<Type>(21.0)}).to_device<Device>());
 
-    // Tensor B = A;
-    // Tensor C = B;
-    // C.zero();
-    
-    // const char trans = 'N';
-    // const int m = 3;
-    // const int n = 3;
-    // const int k = 3;
-    // const Type alpha = static_cast<Type>(1.0);
-    // const Type beta  = static_cast<Type>(0.0);
-    // Note all blas and lapack operators within container are column major!
-    // For this reason, we should employ 'L' instead of 'U' in the subsequent line.
-    // gemmCalculator(trans, trans, m, n, k, &alpha, A.data<Type>(), k, I.data<Type>(), n, &beta, C.data<Type>(), n);
-    
-    // EXPECT_EQ(C, I);
+    Tensor A_transformed = op::einsum("ij->ji", A);
+    EXPECT_EQ(A_transformed, expected);
+}
+
+TYPED_TEST(EinsumOpTest, Reduce) {
+    using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
+
+    const int dim = 3;
+    Tensor A = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(4.0), static_cast<Type>(5.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(6.0)}).to_device<Device>());
+    A.reshape({-1, dim});
+    Tensor expected_1 = std::move(Tensor(
+                                {static_cast<Type>(6.0), static_cast<Type>(9.0), static_cast<Type>(6.0)}).to_device<Device>());
+    Tensor expected_2 = std::move(Tensor(
+                                {static_cast<Type>(1.0), static_cast<Type>(6.0), static_cast<Type>(14.0)}).to_device<Device>());
+    // const Tensor expected = std::move(Tensor({static_cast<Type>(21.0)}).to_device<Device>());
+
+    // Case 1: Normal reduction
+    Tensor A_reduced = op::einsum("ij->i", A);
+    EXPECT_EQ(A_reduced, expected_1);
+
+    // Case 2: Transpose reduction
+    A_reduced = op::einsum("ij->j", A);
+    EXPECT_EQ(A_reduced, expected_2);
+
+    // Case 3: All reduction
+    A_reduced = op::einsum("ij->", A);
+    EXPECT_EQ(A_reduced, Tensor({static_cast<Type>(21.0)}));
+}
+
+TYPED_TEST(EinsumOpTest, Stride) {
+    using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
+
+    const int dim = 3;
+    Tensor A = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(4.0), static_cast<Type>(5.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(6.0)}).to_device<Device>());
+    A.reshape({-1, dim});
+    Tensor expected = std::move(Tensor(
+                                {static_cast<Type>(1.0), static_cast<Type>(4.0), static_cast<Type>(6.0)}).to_device<Device>());
+    // const Tensor expected = std::move(Tensor({static_cast<Type>(21.0)}).to_device<Device>());
+
+    // Case 1: Normal reduction
+    Tensor A_strided = op::einsum("ii->i", A);
+    EXPECT_EQ(A_strided, expected);
+}
+
+TYPED_TEST(EinsumOpTest, Inflate) {
+    using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
+
+    const int dim = 3;
+    Tensor A = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(4.0), static_cast<Type>(6.0)}).to_device<Device>());
+    Tensor expected = std::move(Tensor(
+                                {static_cast<Type>(1.0), static_cast<Type>(0.0), static_cast<Type>(0.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(4.0), static_cast<Type>(0.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(6.0)}).to_device<Device>());
+    expected.reshape({-1, dim});
+    // const Tensor expected = std::move(Tensor({static_cast<Type>(21.0)}).to_device<Device>());
+
+    // Case 1: Normal reduction
+    Tensor A_inflated = op::einsum("i->ii", A);
+    EXPECT_EQ(A_inflated, expected);
 }
 
 } // namespace op

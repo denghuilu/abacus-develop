@@ -93,7 +93,17 @@ bool ReduceOperand(
  */
 bool ContractOperands(
     std::vector<Tensor>& inputs,
-    const std::vector<bool>& swap_free_and_contract,
+    const std::vector<int>& swap_free_and_contract,
+    Tensor& output);
+
+
+void ProcessOutput(
+    const Tensor& input,
+    const std::vector<einsum_utils::EinsumDimensionType>& label_types,
+    const std::vector<std::vector<int>>& free_labels,
+    std::unordered_map<int, int64_t>& label_to_dim_sizes,
+    const std::vector<int>& output_labels,
+    const std::vector<int>& output_label_counts,
     Tensor& output);
 
 /**
@@ -200,7 +210,23 @@ typename std::enable_if<std::is_same<
             free_labels[ii], swap_free_and_contract[ii], inputs_reduced[ii]);
     }
 
-    return std::move(Tensor(DataType::DT_INT, {}));
+    // After reduction, the inputs should be reshaped to Tensors suitable for
+    // contraction. If num_inputs is 1, the reduced input is simply forwarded to
+    // the output.
+    Tensor contraction_output_reshaped;
+    einsum_utils::ContractOperands(
+        inputs_reduced, swap_free_and_contract, contraction_output_reshaped);
+    
+    Tensor output;
+    // Copy the batch labels from the contraction output. Recover the batch
+    // shape, which may have been broadcasted.
+    einsum_utils::ProcessOutput(
+        contraction_output_reshaped, label_types,
+        free_labels, label_to_dim_sizes, 
+        output_labels, output_label_counts,
+        output);
+
+    return std::move(output);
 }
 
 } // namespace op

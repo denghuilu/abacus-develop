@@ -279,6 +279,15 @@ class Tensor {
     void reshape(TensorShape shape);
 
     /**
+     * @brief Set all elements in current tensor object to zero.
+     *
+     * @param shape The new shape of the tensor.
+     *
+     * @note There can be one -1 dimension in the input shape, indicates the auto reshape.
+     */
+    Tensor shaped(TensorShape shape);
+
+    /**
      * @brief Return a new Tensor slice starting at the specified indices with the given size.
      *
      * @param start A vector of integers representing the starting indices of the slice.

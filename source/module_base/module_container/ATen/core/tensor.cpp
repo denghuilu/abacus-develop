@@ -133,6 +133,15 @@ void Tensor::reshape(TensorShape shape) {
     this->shape_ = shape;
 }
 
+Tensor Tensor::shaped(TensorShape shape) {
+    Tensor output;
+    if (output.CopyFrom(*this, this->shape()) != true) {
+        throw std::runtime_error("Invalid shaped operation.");
+    }
+    output.reshape(shape);
+    return std::move(output);
+}
+
 // Slice the current tensor object.
 Tensor Tensor::slice(const std::vector<int> &start, const std::vector<int> &size) const {
     // check the ndim of input shape
@@ -190,7 +199,7 @@ Tensor Tensor::slice(const std::vector<int> &start, const std::vector<int> &size
             }
         }
     }
-    return output;
+    return std::move(output);
 }
 
 // Resize tensor object with the given tensor_shape
