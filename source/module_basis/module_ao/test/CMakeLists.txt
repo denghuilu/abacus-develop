@@ -111,7 +111,14 @@ AddTest(
 AddTest(
     TARGET parallel_2d_test
     SOURCES parallel_2d_test.cpp ../parallel_2d.cpp
-    LIBS ${math_libs} device base container
+    LIBS ${math_libs} device base
+)
+
+install(FILES parallel_orbitals_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+find_program(BASH bash)
+add_test(NAME parallel_orbitals_test_para
+      COMMAND ${BASH} parallel_orbitals_test.sh
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
 install(FILES parallel_2d_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
