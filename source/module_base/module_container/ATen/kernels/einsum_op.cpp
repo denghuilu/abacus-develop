@@ -66,10 +66,11 @@ static BCast prepare_bcast(
         }
         bcast.x_bcast_shape.push_back(1);
         bcast.y_bcast_shape.push_back(1);
-        bcast.z_batch_size = batch_size;
         bcast.x_batch_shape.push_back(batch_size);
         bcast.y_batch_shape.push_back(batch_size);
-        
+        bcast.z_batch_size = batch_size;
+        bcast.x_batch_size = TensorShape(bcast.x_batch_shape).NumElements();
+        bcast.y_batch_size = TensorShape(bcast.y_batch_shape).NumElements();
         return std::move(bcast);
     }
     
@@ -184,6 +185,9 @@ static BCast prepare_bcast(
     BCast::reverse(bcast.y_bcast_shape);
     BCast::reverse(bcast.z_batch_shape);
 
+    // Init batch_sizes
+    bcast.x_batch_size = TensorShape(bcast.x_batch_shape).NumElements();
+    bcast.y_batch_size = TensorShape(bcast.y_batch_shape).NumElements();
     return std::move(bcast);
 }
 
@@ -775,6 +779,8 @@ template <typename T, typename Device>
 static void DoContract(
         const Tensor& in_x,
         const Tensor& in_y,
+        const bool& adj_x,
+        const bool& adj_y,
         const bool& trans_x,
         const bool& trans_y,
         const einsum_utils::BCast& bcast,
@@ -782,9 +788,9 @@ static void DoContract(
 {
     const T alpha = static_cast<T>(1.0);
     const T beta  = static_cast<T>(0.0);
-    const int m = in_x.shape().dim_size(trans_x ? 2 : 1);
-    const int k = in_x.shape().dim_size(trans_x ? 1 : 2);
-    const int n = in_y.shape().dim_size(trans_y ? 1 : 2);
+    const int m = in_x.shape().dim_size(adj_x || trans_x ? 2 : 1);
+    const int k = in_x.shape().dim_size(adj_x || trans_x ? 1 : 2);
+    const int n = in_y.shape().dim_size(adj_y || trans_y ? 1 : 2);
 
     const int64_t batch_size = bcast.z_batch_size;
 
@@ -844,33 +850,66 @@ static void DoContract(
     // C' = B' x A', where ' stands for transpose (not adjoint).
     if (batch_size == 1) {
         // Dot product
-        if (m == 1 && n == 1) {
-
+        if (m == 1 && n == 1 && adj_x != true && adj_y != true) {
+            // Dot product
+            // TODO: implement the Conjugate version of Dot product.
+            op::blas_dot<T, Device>()(k, x_device_memory_ptrs[0], 1, y_device_memory_ptrs[0], 1, z_device_memory_ptrs[0]);
         }
         // Gemv
-        else if (n == 1) {
-            // op::gemv<>(m, n, k, x_device_memory_ptrs[0], y_device_memory_ptrs[0], z_device_memory_ptrs[0]);
+        else if (n == 1 && adj_x != true) {
+            // This is a matrix*vector multiply so use GEMV to compute A * x.
+            // Here we are multiplying in the natural order, so we have to flip
+            // the transposition flag to compensate for the tensor being stored
+            // row-major. Since GEMV doesn't provide a way to just conjugate an
+            // argument, we have to defer those cases to GEMM below.
+            op::blas_gemv<T, Device>()(
+                trans_x ? 'N' : 'T',
+                trans_x ? m : k,
+                trans_x ? k : m,
+                &alpha,
+                x_device_memory_ptrs[0], trans_x ? m : k,
+                y_device_memory_ptrs[0], 1, 
+                &beta, 
+                z_device_memory_ptrs[0], 1);
         }
         // Gemm
         else {
             // Call the column-major Blas library
             op::blas_gemm<T, Device>()(
-                trans_y ? 'T' : 'N', 
-                trans_x ? 'T' : 'N', 
+                adj_y ? 'C' : trans_y ? 'T' : 'N', 
+                adj_x ? 'C' : trans_x ? 'T' : 'N', 
                 n, m, k, 
                 &alpha, 
-                y_device_memory_ptrs[0], n, 
-                x_device_memory_ptrs[0], k, 
+                y_device_memory_ptrs[0], adj_y || trans_y ? k : n, 
+                x_device_memory_ptrs[0], adj_x || trans_x ? m : k, 
                 &beta, 
                 z_device_memory_ptrs[0], n);
         }
         return;
     }
     else if (use_strided_batched) {
-        // op::gemm_batched_strided<>(m, n, k, x_device_memory_ptrs, y_device_memory_ptrs, z_device_memory_ptrs, x_stride, y_stride, z_stride);
+        op::blas_gemm_batched_strided<T, Device>()(
+            adj_y ? 'C' : trans_y ? 'T' : 'N', 
+            adj_x ? 'C' : trans_x ? 'T' : 'N', 
+            n, m, k, 
+            &alpha, 
+            y_device_memory_ptrs[0], adj_y || trans_y ? k : n, y_stride,
+            x_device_memory_ptrs[0], adj_x || trans_x ? m : k, x_stride,
+            &beta, 
+            z_device_memory_ptrs[0], n, z_stride,
+            batch_size);
     }
     else {
-        // op::gemm_batched_scrach<> scratchpad(batch_size, m, n, k);
+        op::blas_gemm_batched<T, Device>()(
+            adj_y ? 'C' : trans_y ? 'T' : 'N', 
+            adj_x ? 'C' : trans_x ? 'T' : 'N', 
+            n, m, k, 
+            &alpha, 
+            y_device_memory_ptrs.data(), adj_y || trans_y ? k : n, 
+            x_device_memory_ptrs.data(), adj_x || trans_x ? m : k, 
+            &beta, 
+            z_device_memory_ptrs.data(), n,
+            batch_size);
     }
 }
 
@@ -913,7 +952,7 @@ bool ContractOperands(
     ReshapeToRank3(output, bcast.z_batch_size, output_reshaped);
 
     TEMPLATE_BLAS_2(output_reshaped.data_type(), output_reshaped.device_type(),
-        einsum_utils::DoContract<T_, DEVICE_>(lhs, rhs, trans_x, trans_y, bcast, output_reshaped))
+        einsum_utils::DoContract<T_, DEVICE_>(lhs, rhs, /*adj_x=*/false, /*adj_y=*/false, trans_x, trans_y, bcast, output_reshaped))
 
     return true;
 }
