@@ -96,13 +96,28 @@ struct stride_op {
         Tensor& output);
 };
 
+/**
+ * @brief A functor for inflating a tensor.
+ *
+ * This struct defines a functor that can be used to inflate a tensor using the specified stride.
+ */
 template <typename T, typename Device>
 struct inflate_op {
+    /**
+     * @brief Inflate the input tensor.
+     *
+     * This function inflates the input tensor using the given stride and stores the result in the output tensor.
+     *
+     * @param input The input tensor to be inflated.
+     * @param stride The stride to use for inflation.
+     * @param output The output tensor where the inflated data will be stored.
+     */
     void operator()(
         const Tensor& input,
         const TensorShape& stride,
         Tensor& output);
 };
+
 
 /**
  * @brief A functor to perform reduction operation on a Tensor along the inner-most dimension.

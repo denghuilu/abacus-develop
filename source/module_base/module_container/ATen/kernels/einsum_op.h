@@ -94,8 +94,8 @@ bool ReduceOperand(
 bool ContractOperands(
     std::vector<Tensor>& inputs,
     const std::vector<int>& swap_free_and_contract,
+    const std::array<bool,2>& conjugate_flag,
     Tensor& output);
-
 
 void ProcessOutput(
     const Tensor& input,
@@ -130,7 +130,7 @@ namespace op {
 template <typename... Tensors>
 typename std::enable_if<std::is_same<
         typename std::common_type<Tensors...>::type, Tensor>::value, Tensor>::type
-    einsum(const std::string& equation, const Tensors&... tensors)
+    einsum_impl(const std::string& equation, const bool& conj_x, const bool& conj_y, const Tensors&... tensors)
 {
     // Check the input dimension
     auto _tensors = std::make_tuple(tensors...);
@@ -147,6 +147,7 @@ typename std::enable_if<std::is_same<
     std::vector<int> output_label_counts = {};
     std::vector<bool> input_has_ellipsis = {};
     bool output_has_ellipsis = {};
+    std::array<bool, 2> input_conjugate_flag = {conj_x, conj_y};
 
     einsum_utils::ParseEinsumEquation(
         equation, label_types, 
@@ -175,7 +176,8 @@ typename std::enable_if<std::is_same<
         einsum_utils::ReduceOperand(
             *inputs[ii], label_types,
             input_labels[ii], input_label_counts[ii],
-            free_labels[ii], swap_free_and_contract[ii], inputs_reduced[ii]);
+            free_labels[ii], swap_free_and_contract[ii], 
+            inputs_reduced[ii]);
     }
 
     // After reduction, the inputs should be reshaped to Tensors suitable for
@@ -183,7 +185,8 @@ typename std::enable_if<std::is_same<
     // the output.
     Tensor contraction_output_reshaped;
     einsum_utils::ContractOperands(
-        inputs_reduced, swap_free_and_contract, contraction_output_reshaped);
+        inputs_reduced, swap_free_and_contract, 
+        input_conjugate_flag, contraction_output_reshaped);
     
     Tensor output;
     // Copy the batch labels from the contraction output. Recover the batch
@@ -195,6 +198,15 @@ typename std::enable_if<std::is_same<
         output);
 
     return std::move(output);
+}
+
+// Make the conj params only works for the matmul equations.
+inline Tensor einsum(const std::string& equation, const Tensor& A) {
+    return std::move(op::einsum_impl(equation,  /*conj_x=*/false, /*conj_y=*/false, A));
+}
+
+inline Tensor einsum(const std::string& equation, const Tensor& A, const Tensor& B, const bool& conj_x = false, const bool& conj_y = false) {
+    return std::move(op::einsum_impl(equation, conj_x, conj_y, A, B));
 }
 
 } // namespace op

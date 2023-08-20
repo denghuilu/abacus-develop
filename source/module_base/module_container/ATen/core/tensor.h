@@ -9,6 +9,11 @@
 
 #include <base/macros/macros.h>
 
+// TODO: 
+// 1. add log system
+// 2. add exception system
+// 3. refact cmake system, use cmake parament scope to construct the libraries
+
 namespace container {
 
 /**

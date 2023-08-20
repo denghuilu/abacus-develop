@@ -350,7 +350,7 @@ static bool TransposeOperand(
 
 // Returns true if the input dimensions are already sorted in the order
 // [broadcasting, batch, contract, free, reduce]. Used to implement an optimization to avoid
-// an extra transpose and instead uses (adj_x and adj_y) in BatchMatMul.
+// an extra transpose and instead uses (conj_x and conj_y) in BatchMatMul.
 static bool ShouldSwapFreeAndContract(
         const std::vector<int>& labels,
         const std::vector<EinsumDimensionType>& label_types)
@@ -702,7 +702,7 @@ bool ReduceOperand(
     std::iota(permutation.begin(), permutation.end(), 0);
 
     Tensor input_transposed;
-    // Check if we can avoid the transpose. We need to flip the adj_x (or adj_y)
+    // Check if we can avoid the transpose. We need to flip the conj_x (or conj_y)
     // flag during BatchMatMul. This is an extra optimization not necessary for
     // correctness.
     if(ShouldSwapFreeAndContract(labels, label_types)) {
@@ -779,8 +779,8 @@ template <typename T, typename Device>
 static void DoContract(
         const Tensor& in_x,
         const Tensor& in_y,
-        const bool& adj_x,
-        const bool& adj_y,
+        const bool& conj_x,
+        const bool& conj_y,
         const bool& trans_x,
         const bool& trans_y,
         const einsum_utils::BCast& bcast,
@@ -788,9 +788,9 @@ static void DoContract(
 {
     const T alpha = static_cast<T>(1.0);
     const T beta  = static_cast<T>(0.0);
-    const int m = in_x.shape().dim_size(adj_x || trans_x ? 2 : 1);
-    const int k = in_x.shape().dim_size(adj_x || trans_x ? 1 : 2);
-    const int n = in_y.shape().dim_size(adj_y || trans_y ? 1 : 2);
+    const int m = in_x.shape().dim_size(conj_x || trans_x ? 2 : 1);
+    const int k = in_x.shape().dim_size(conj_x || trans_x ? 1 : 2);
+    const int n = in_y.shape().dim_size(conj_y || trans_y ? 1 : 2);
 
     const int64_t batch_size = bcast.z_batch_size;
 
@@ -850,13 +850,13 @@ static void DoContract(
     // C' = B' x A', where ' stands for transpose (not adjoint).
     if (batch_size == 1) {
         // Dot product
-        if (m == 1 && n == 1 && adj_x != true && adj_y != true) {
+        if (m == 1 && n == 1 && conj_x != true && conj_y != true) {
             // Dot product
             // TODO: implement the Conjugate version of Dot product.
             op::blas_dot<T, Device>()(k, x_device_memory_ptrs[0], 1, y_device_memory_ptrs[0], 1, z_device_memory_ptrs[0]);
         }
         // Gemv
-        else if (n == 1 && adj_x != true) {
+        else if (n == 1 && conj_x != true) {
             // This is a matrix*vector multiply so use GEMV to compute A * x.
             // Here we are multiplying in the natural order, so we have to flip
             // the transposition flag to compensate for the tensor being stored
@@ -876,12 +876,12 @@ static void DoContract(
         else {
             // Call the column-major Blas library
             op::blas_gemm<T, Device>()(
-                adj_y ? 'C' : trans_y ? 'T' : 'N', 
-                adj_x ? 'C' : trans_x ? 'T' : 'N', 
+                conj_y ? 'C' : trans_y ? 'T' : 'N', 
+                conj_x ? 'C' : trans_x ? 'T' : 'N', 
                 n, m, k, 
                 &alpha, 
-                y_device_memory_ptrs[0], adj_y || trans_y ? k : n, 
-                x_device_memory_ptrs[0], adj_x || trans_x ? m : k, 
+                y_device_memory_ptrs[0], conj_y || trans_y ? k : n, 
+                x_device_memory_ptrs[0], conj_x || trans_x ? m : k, 
                 &beta, 
                 z_device_memory_ptrs[0], n);
         }
@@ -889,24 +889,24 @@ static void DoContract(
     }
     else if (use_strided_batched) {
         op::blas_gemm_batched_strided<T, Device>()(
-            adj_y ? 'C' : trans_y ? 'T' : 'N', 
-            adj_x ? 'C' : trans_x ? 'T' : 'N', 
+            conj_y ? 'C' : trans_y ? 'T' : 'N', 
+            conj_x ? 'C' : trans_x ? 'T' : 'N', 
             n, m, k, 
             &alpha, 
-            y_device_memory_ptrs[0], adj_y || trans_y ? k : n, y_stride,
-            x_device_memory_ptrs[0], adj_x || trans_x ? m : k, x_stride,
+            y_device_memory_ptrs[0], conj_y || trans_y ? k : n, y_stride,
+            x_device_memory_ptrs[0], conj_x || trans_x ? m : k, x_stride,
             &beta, 
             z_device_memory_ptrs[0], n, z_stride,
             batch_size);
     }
     else {
         op::blas_gemm_batched<T, Device>()(
-            adj_y ? 'C' : trans_y ? 'T' : 'N', 
-            adj_x ? 'C' : trans_x ? 'T' : 'N', 
+            conj_y ? 'C' : trans_y ? 'T' : 'N', 
+            conj_x ? 'C' : trans_x ? 'T' : 'N', 
             n, m, k, 
             &alpha, 
-            y_device_memory_ptrs.data(), adj_y || trans_y ? k : n, 
-            x_device_memory_ptrs.data(), adj_x || trans_x ? m : k, 
+            y_device_memory_ptrs.data(), conj_y || trans_y ? k : n, 
+            x_device_memory_ptrs.data(), conj_x || trans_x ? m : k, 
             &beta, 
             z_device_memory_ptrs.data(), n,
             batch_size);
@@ -919,6 +919,7 @@ static void DoContract(
 bool ContractOperands(
     std::vector<Tensor>& inputs,
     const std::vector<int>& swap_free_and_contract,
+    const std::array<bool,2>& conjugate_flag,
     Tensor& output)
 {
     if (inputs.size() == 1) {
@@ -952,7 +953,7 @@ bool ContractOperands(
     ReshapeToRank3(output, bcast.z_batch_size, output_reshaped);
 
     TEMPLATE_BLAS_2(output_reshaped.data_type(), output_reshaped.device_type(),
-        einsum_utils::DoContract<T_, DEVICE_>(lhs, rhs, /*adj_x=*/false, /*adj_y=*/false, trans_x, trans_y, bcast, output_reshaped))
+        einsum_utils::DoContract<T_, DEVICE_>(lhs, rhs, conjugate_flag[0], conjugate_flag[1], trans_x, trans_y, bcast, output_reshaped))
 
     return true;
 }

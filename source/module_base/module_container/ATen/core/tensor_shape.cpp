@@ -62,6 +62,9 @@ void TensorShape::add_dim(int64_t size) {
 
 // Remove a dimension from the tensor
 void TensorShape::remove_dim(int dim) {
+    if (dim < 0 && dim >= dims_.size()) {
+        throw std::runtime_error("Invalid axis to remove.");
+    }
     dims_.erase(dims_.begin() + dim);
 }
 
