@@ -11,13 +11,13 @@ static cublasHandle_t cublas_handle = nullptr;
 
 void createBlasHandle() {
     if (cublas_handle == nullptr) {
-        cublasErrcheck(cublasCreate(&cublas_handle));
+        cublasErrcheckInternal(cublasCreate(&cublas_handle));
     }
 }
 
 void destroyBlasHandle() {
     if (cublas_handle != nullptr) {
-        cublasErrcheck(cublasDestroy(cublas_handle));
+        cublasErrcheckInternal(cublasDestroy(cublas_handle));
         cublas_handle = nullptr;
     }
 }
@@ -33,7 +33,7 @@ struct blas_dot<T, DEVICE_GPU> {
         const int& incy,
         T* result)
     {
-        *result = cuBlasConnector::dot(cublas_handle, n, x, incx, y, incy);
+        cuBlasConnector::dot(cublas_handle, n, x, incx, y, incy, result);
     }
 };
 

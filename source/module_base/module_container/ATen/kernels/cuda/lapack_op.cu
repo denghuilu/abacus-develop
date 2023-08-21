@@ -34,7 +34,7 @@ __global__ void set_matrix_kernel(
     int bid = blockIdx.x;
     int tid = threadIdx.x;
 
-    for (int ii = tid; ii < bid + 1; ii += THREAD_PER_BLOCK) {
+    for (int ii = tid; ii < bid + 1; ii += THREADS_PER_BLOCK) {
         if (uplo == 'L') {
             A[ii * dim + bid + 1] = static_cast<T>(0);
         }
@@ -52,10 +52,8 @@ struct set_matrix<T, DEVICE_GPU> {
         T* A,
         const int& dim)
     {
-        set_matrix_kernel<Type><<<dim - 1, THREAD_PER_BLOCK>>>(
-            uplo, 
-            reinterpret_cast<Type*>(A), 
-            dim);
+        set_matrix_kernel<Type><<<dim - 1, THREADS_PER_BLOCK>>>(
+            uplo, reinterpret_cast<Type*>(A), dim);
     }
 };
 

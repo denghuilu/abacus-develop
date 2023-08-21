@@ -68,7 +68,7 @@ TYPED_TEST(EinsumOpTest, Reduce) {
 
     // Case 3: All reduction
     A_reduced = op::einsum("ij->", A);
-    EXPECT_EQ(A_reduced, Tensor({static_cast<Type>(21.0)}));
+    EXPECT_EQ(A_reduced, Tensor({static_cast<Type>(21.0)}).to_device<Device>());
 }
 
 TYPED_TEST(EinsumOpTest, Stride) {
@@ -246,7 +246,7 @@ TYPED_TEST(EinsumOpTest, ReduceEllipsis) {
 
     // Case 3: All reduction
     A_reduced = op::einsum("ijk->", A);
-    EXPECT_EQ(A_reduced, Tensor({static_cast<Type>(78.0)}));
+    EXPECT_EQ(A_reduced, Tensor({static_cast<Type>(78.0)}).to_device<Device>());
     // Not available
     // A_reduced = op::einsum("...->", A);
 }

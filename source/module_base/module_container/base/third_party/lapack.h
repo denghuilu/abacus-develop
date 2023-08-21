@@ -6,7 +6,7 @@
 #if __CUDA || __ROCM
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
-#include <ATen/kernels/gpu_utils.h>
+#include <base/macros/cuda.h>
 #endif // __CUDA || __ROCM
 
 //Naming convention of lapack subroutines : ammxxx, where

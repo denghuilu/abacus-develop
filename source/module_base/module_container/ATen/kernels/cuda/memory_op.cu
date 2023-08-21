@@ -1,18 +1,17 @@
 #include <ATen/kernels/memory_op.h>
+#include <base/macros/cuda.h>
 
 #include <cuda_runtime.h>
 #include <thrust/complex.h>
-
-#define THREADS_PER_BLOCK 256
 
 namespace container {
 namespace op {
 
 template <typename T_out, typename T_in>
 __global__ void cast_memory(
-        T_out* out,
-        const T_in* in,
-        const int size)
+    T_out* out,
+    const T_in* in,
+    const int size)
 {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if(idx >= size) {return;}
@@ -21,9 +20,9 @@ __global__ void cast_memory(
 
 template <typename T_out, typename T_in>
 __global__ void cast_memory(
-        std::complex<T_out>* out,
-        const std::complex<T_in>* in,
-        const int size)
+    std::complex<T_out>* out,
+    const std::complex<T_in>* in,
+    const int size)
 {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if(idx >= size) {return;}
@@ -39,10 +38,10 @@ void resize_memory_op<T, container::DEVICE_GPU>::operator()(
     const size_t size,
     const char* record_in)
 {
-  if (arr != nullptr) {
-    delete_memory_op<T, container::DEVICE_GPU>()(dev, arr);
-  }
-  cudaMalloc((void **)&arr, sizeof(T) * size);
+    if (arr != nullptr) {
+        delete_memory_op<T, container::DEVICE_GPU>()(dev, arr);
+    }
+    cudaMalloc((void **)&arr, sizeof(T) * size);
 }
 
 template <typename T>
@@ -51,7 +50,7 @@ void set_memory_op<T, container::DEVICE_GPU>::operator()(
     const int var, 
     const size_t size) 
 {
-  cudaMemset(arr, var, sizeof(T) * size);
+    cudaMemset(arr, var, sizeof(T) * size);
 }
 
 template <typename T>
@@ -60,7 +59,7 @@ void synchronize_memory_op<T, container::DEVICE_CPU, container::DEVICE_GPU>::ope
     const T* arr_in,
     const size_t size) 
 {
-  cudaMemcpy(arr_out, arr_in, sizeof(T) * size, cudaMemcpyDeviceToHost);
+    cudaMemcpy(arr_out, arr_in, sizeof(T) * size, cudaMemcpyDeviceToHost);
 }
 
 template <typename T>
@@ -69,7 +68,7 @@ void synchronize_memory_op<T, container::DEVICE_GPU, container::DEVICE_CPU>::ope
     const T* arr_in,
     const size_t size) 
 {
-  cudaMemcpy(arr_out, arr_in, sizeof(T) * size, cudaMemcpyHostToDevice);
+    cudaMemcpy(arr_out, arr_in, sizeof(T) * size, cudaMemcpyHostToDevice);
 }
 
 template <typename T>
@@ -78,14 +77,16 @@ void synchronize_memory_op<T, container::DEVICE_GPU, container::DEVICE_GPU>::ope
     const T* arr_in,
     const size_t size) 
 {
-  cudaMemcpy(arr_out, arr_in, sizeof(T) * size, cudaMemcpyDeviceToDevice);
+    cudaMemcpy(arr_out, arr_in, sizeof(T) * size, cudaMemcpyDeviceToDevice);
 }
 
 template <typename T_out, typename T_in>
 struct cast_memory_op<T_out, T_in, container::DEVICE_GPU, container::DEVICE_GPU> {
-    void operator()(T_out* arr_out,
-                    const T_in* arr_in,
-                    const size_t size) {
+    void operator()(
+        T_out* arr_out,
+        const T_in* arr_in,
+        const size_t size) 
+    {
         const int block = (size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
         cast_memory<<<block, THREADS_PER_BLOCK>>>(arr_out, arr_in, size);
     }
@@ -93,9 +94,11 @@ struct cast_memory_op<T_out, T_in, container::DEVICE_GPU, container::DEVICE_GPU>
 
 template <typename T_out, typename T_in>
 struct cast_memory_op<T_out, T_in, container::DEVICE_GPU, container::DEVICE_CPU> {
-    void operator()(T_out* arr_out,
-                    const T_in* arr_in,
-                    const size_t size) {
+    void operator()(
+        T_out* arr_out,
+        const T_in* arr_in,
+        const size_t size) 
+    {
         T_in * arr = nullptr;
         cudaMalloc((void **)&arr, sizeof(T_in) * size);
         cudaMemcpy(arr, arr_in, sizeof(T_in) * size, cudaMemcpyHostToDevice);
@@ -107,9 +110,11 @@ struct cast_memory_op<T_out, T_in, container::DEVICE_GPU, container::DEVICE_CPU>
 
 template <typename T_out, typename T_in>
 struct cast_memory_op<T_out, T_in, container::DEVICE_CPU, container::DEVICE_GPU> {
-    void operator()(T_out* arr_out,
-                    const T_in* arr_in,
-                    const size_t size) {
+    void operator()(
+        T_out* arr_out,
+        const T_in* arr_in,
+        const size_t size) 
+    {
         auto * arr = (T_in*) malloc(sizeof(T_in) * size);
         cudaMemcpy(arr, arr_in, sizeof(T_in) * size, cudaMemcpyDeviceToHost);
         for (int ii = 0; ii < size; ii++) {
@@ -124,7 +129,7 @@ void delete_memory_op<T, container::DEVICE_GPU>::operator() (
     const container::DEVICE_GPU* dev,
     T* arr)
 {
-  cudaFree(arr);
+    cudaFree(arr);
 }
 
 template struct resize_memory_op<int, container::DEVICE_GPU>;

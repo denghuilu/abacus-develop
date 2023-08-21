@@ -779,18 +779,17 @@ template <typename T, typename Device>
 static void DoContract(
         const Tensor& in_x,
         const Tensor& in_y,
-        const bool& conj_x,
-        const bool& conj_y,
+        const EinsumOption& option,
         const bool& trans_x,
         const bool& trans_y,
         const einsum_utils::BCast& bcast,
         Tensor& out_z)
 {
-    const T alpha = static_cast<T>(1.0);
-    const T beta  = static_cast<T>(0.0);
-    const int m = in_x.shape().dim_size(conj_x || trans_x ? 2 : 1);
-    const int k = in_x.shape().dim_size(conj_x || trans_x ? 1 : 2);
-    const int n = in_y.shape().dim_size(conj_y || trans_y ? 1 : 2);
+    const T alpha = static_cast<T>(option.alpha);
+    const T beta  = static_cast<T>(option.beta);
+    const int m = in_x.shape().dim_size(option.conj_x || trans_x ? 2 : 1);
+    const int k = in_x.shape().dim_size(option.conj_x || trans_x ? 1 : 2);
+    const int n = in_y.shape().dim_size(option.conj_y || trans_y ? 1 : 2);
 
     const int64_t batch_size = bcast.z_batch_size;
 
@@ -850,13 +849,13 @@ static void DoContract(
     // C' = B' x A', where ' stands for transpose (not adjoint).
     if (batch_size == 1) {
         // Dot product
-        if (m == 1 && n == 1 && conj_x != true && conj_y != true) {
+        if (m == 1 && n == 1 && option.conj_x != true && option.conj_y != true) {
             // Dot product
             // TODO: implement the Conjugate version of Dot product.
             op::blas_dot<T, Device>()(k, x_device_memory_ptrs[0], 1, y_device_memory_ptrs[0], 1, z_device_memory_ptrs[0]);
         }
         // Gemv
-        else if (n == 1 && conj_x != true) {
+        else if (n == 1 && option.conj_x != true) {
             // This is a matrix*vector multiply so use GEMV to compute A * x.
             // Here we are multiplying in the natural order, so we have to flip
             // the transposition flag to compensate for the tensor being stored
@@ -876,12 +875,12 @@ static void DoContract(
         else {
             // Call the column-major Blas library
             op::blas_gemm<T, Device>()(
-                conj_y ? 'C' : trans_y ? 'T' : 'N', 
-                conj_x ? 'C' : trans_x ? 'T' : 'N', 
+                option.conj_y ? 'C' : trans_y ? 'T' : 'N', 
+                option.conj_x ? 'C' : trans_x ? 'T' : 'N', 
                 n, m, k, 
                 &alpha, 
-                y_device_memory_ptrs[0], conj_y || trans_y ? k : n, 
-                x_device_memory_ptrs[0], conj_x || trans_x ? m : k, 
+                y_device_memory_ptrs[0], option.conj_y || trans_y ? k : n, 
+                x_device_memory_ptrs[0], option.conj_x || trans_x ? m : k, 
                 &beta, 
                 z_device_memory_ptrs[0], n);
         }
@@ -889,24 +888,24 @@ static void DoContract(
     }
     else if (use_strided_batched) {
         op::blas_gemm_batched_strided<T, Device>()(
-            conj_y ? 'C' : trans_y ? 'T' : 'N', 
-            conj_x ? 'C' : trans_x ? 'T' : 'N', 
+            option.conj_y ? 'C' : trans_y ? 'T' : 'N', 
+            option.conj_x ? 'C' : trans_x ? 'T' : 'N', 
             n, m, k, 
             &alpha, 
-            y_device_memory_ptrs[0], conj_y || trans_y ? k : n, y_stride,
-            x_device_memory_ptrs[0], conj_x || trans_x ? m : k, x_stride,
+            y_device_memory_ptrs[0], option.conj_y || trans_y ? k : n, y_stride,
+            x_device_memory_ptrs[0], option.conj_x || trans_x ? m : k, x_stride,
             &beta, 
             z_device_memory_ptrs[0], n, z_stride,
             batch_size);
     }
     else {
         op::blas_gemm_batched<T, Device>()(
-            conj_y ? 'C' : trans_y ? 'T' : 'N', 
-            conj_x ? 'C' : trans_x ? 'T' : 'N', 
+            option.conj_y ? 'C' : trans_y ? 'T' : 'N', 
+            option.conj_x ? 'C' : trans_x ? 'T' : 'N', 
             n, m, k, 
             &alpha, 
-            y_device_memory_ptrs.data(), conj_y || trans_y ? k : n, 
-            x_device_memory_ptrs.data(), conj_x || trans_x ? m : k, 
+            y_device_memory_ptrs.data(), option.conj_y || trans_y ? k : n, 
+            x_device_memory_ptrs.data(), option.conj_x || trans_x ? m : k, 
             &beta, 
             z_device_memory_ptrs.data(), n,
             batch_size);
@@ -919,7 +918,7 @@ static void DoContract(
 bool ContractOperands(
     std::vector<Tensor>& inputs,
     const std::vector<int>& swap_free_and_contract,
-    const std::array<bool,2>& conjugate_flag,
+    const EinsumOption& option,
     Tensor& output)
 {
     if (inputs.size() == 1) {
@@ -943,7 +942,15 @@ bool ContractOperands(
     bool trans_x = swap_free_and_contract[0];
     bool trans_y = !swap_free_and_contract[1];
 
-    CopyFromWithAllocate(inputs[0], output_shape, &output);
+    if (option.out != nullptr) {
+        if (output_shape.NumElements() != option.out->NumElements()) {
+            throw std::invalid_argument("Invalid option: output shape mismatch the requested shape");
+        }
+        CopyFrom(*option.out, output_shape, &output);
+    }
+    else {
+        CopyFromWithAllocate(inputs[0], output_shape, &output);
+    }
     if (lhs.NumElements() == 0 || rhs.NumElements() == 0) {
         output.zero();
         return true;
@@ -953,7 +960,7 @@ bool ContractOperands(
     ReshapeToRank3(output, bcast.z_batch_size, output_reshaped);
 
     TEMPLATE_BLAS_2(output_reshaped.data_type(), output_reshaped.device_type(),
-        einsum_utils::DoContract<T_, DEVICE_>(lhs, rhs, conjugate_flag[0], conjugate_flag[1], trans_x, trans_y, bcast, output_reshaped))
+        einsum_utils::DoContract<T_, DEVICE_>(lhs, rhs, option, trans_x, trans_y, bcast, output_reshaped))
 
     return true;
 }

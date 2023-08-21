@@ -11,6 +11,7 @@ if(USE_CUDA)
         cuda/memory_op.cu
         cuda/lapack_op.cu
         cuda/blas_op.cu
+        cuda/linalg_op.cu
     )
 endif()
 

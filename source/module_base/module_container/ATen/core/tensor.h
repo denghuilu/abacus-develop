@@ -14,6 +14,8 @@
 // 2. add exception system
 // 3. refact cmake system, use cmake parament scope to construct the libraries
 
+namespace ct = container;
+
 namespace container {
 
 /**

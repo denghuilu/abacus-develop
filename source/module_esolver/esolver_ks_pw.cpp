@@ -36,6 +36,8 @@
 #include "module_io/winput.h"
 #include "module_io/write_wfc_r.h"
 #include "module_psi/kernels/device.h"
+#include <ATen/kernels/blas_op.h>
+#include <ATen/kernels/lapack_op.h>
 
 namespace ModuleESolver
 {
@@ -51,6 +53,8 @@ ESolver_KS_PW<FPTYPE, Device>::ESolver_KS_PW()
     {
         hsolver::createBLAShandle();
         hsolver::createCUSOLVERhandle();
+        container::op::createBlasHandle();
+        container::op::createCusolverHandle();
     }
 #endif
 }
@@ -80,6 +84,8 @@ ESolver_KS_PW<FPTYPE, Device>::~ESolver_KS_PW()
 #if defined(__CUDA) || defined(__ROCM)
         hsolver::destoryBLAShandle();
         hsolver::destoryCUSOLVERhandle();
+        container::op::destroyBlasHandle();
+        container::op::destroyCusolverHandle();
 #endif
         delete reinterpret_cast<psi::Psi<std::complex<FPTYPE>, Device>*>(this->kspw_psi);
     }

@@ -1,5 +1,5 @@
-#ifndef ATEN_CORE_CPU_ALLOCATOR_H_
-#define ATEN_CORE_CPU_ALLOCATOR_H_
+#ifndef ATEN_CORE_GPU_ALLOCATOR_H_
+#define ATEN_CORE_GPU_ALLOCATOR_H_
 
 #include <ATen/core/allocator.h>
 
@@ -49,4 +49,4 @@ public:
 
 } // namespace ABACUS
 
-#endif // ATEN_CORE_CPU_ALLOCATOR_H_
+#endif // ATEN_CORE_GPU_ALLOCATOR_H_

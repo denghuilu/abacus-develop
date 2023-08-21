@@ -6,7 +6,7 @@
 #if __CUDA || __ROCM
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
-#include <ATen/kernels/gpu_utils.h>
+#include <base/macros/cuda.h>
 #endif // __CUDA || __ROCM
 
 extern "C"
@@ -101,6 +101,8 @@ void ztrsm_(char *side, char* uplo, char *transa, char *diag, int *m, int *n,
             std::complex<double>* alpha, std::complex<double>* a, int *lda, std::complex<double>*b, int *ldb);
 
 }
+
+namespace container {
 
 // Class BlasConnector provide the connector to fortran lapack routine.
 // The entire function in this class are static and inline function.
@@ -337,33 +339,24 @@ void copy(const long n, const std::complex<double> *a, const int incx, std::comp
 namespace cuBlasConnector {
     
 static inline
-float dot(cublasHandle_t& handle, const int& n, const float *x, const int& incx, const float *y, const int& incy)
+void dot(cublasHandle_t& handle, const int& n, const float *x, const int& incx, const float *y, const int& incy, float* result)
 {
-    float result = 0.f;
-    cublasSdot(handle, n, x, incx, y, incy, &result);
-    return result;
+    cublasSdot(handle, n, x, incx, y, incy, result);
 }
 static inline
-double dot(cublasHandle_t& handle, const int& n, const double *x, const int& incx, const double *y, const int& incy)
+void dot(cublasHandle_t& handle, const int& n, const double *x, const int& incx, const double *y, const int& incy, double* result)
 {
-    double result = 0;
-    cublasDdot(handle, n, x, incx, y, incy, &result);
-    return result;
-}
-// Denghui Lu add 2023-8-01
-static inline
-std::complex<float> dot(cublasHandle_t& handle, const int& n, const std::complex<float> *x, const int& incx, const std::complex<float> *y, const int& incy)
-{
-    std::complex<float> result = {0.f, 0.f};
-    cublasCdotc(handle, n, reinterpret_cast<const cuComplex*>(x), incx, reinterpret_cast<const cuComplex*>(y), incy, reinterpret_cast<cuComplex*>(&result));
-    return result;
+    cublasDdot(handle, n, x, incx, y, incy, result);
 }
 static inline
-std::complex<double> dot(cublasHandle_t& handle, const int& n, const std::complex<double> *x, const int& incx, const std::complex<double> *y, const int& incy)
+void dot(cublasHandle_t& handle, const int& n, const std::complex<float> *x, const int& incx, const std::complex<float> *y, const int& incy, std::complex<float>* result)
 {
-    std::complex<double> result = {0, 0};
-    cublasZdotc(handle, n, reinterpret_cast<const cuDoubleComplex*>(x), incx, reinterpret_cast<const cuDoubleComplex*>(y), incy, reinterpret_cast<cuDoubleComplex*>(&result));
-    return result;
+    cublasCdotc(handle, n, reinterpret_cast<const cuComplex*>(x), incx, reinterpret_cast<const cuComplex*>(y), incy, reinterpret_cast<cuComplex*>(result));
+}
+static inline
+void dot(cublasHandle_t& handle, const int& n, const std::complex<double> *x, const int& incx, const std::complex<double> *y, const int& incy, std::complex<double>* result)
+{
+    cublasZdotc(handle, n, reinterpret_cast<const cuDoubleComplex*>(x), incx, reinterpret_cast<const cuDoubleComplex*>(y), incy, reinterpret_cast<cuDoubleComplex*>(result));
 }
 
 static inline
@@ -652,6 +645,8 @@ void gemm_batched_strided(cublasHandle_t& handle, const char& transa, const char
             batch_size);
 }
 } // namespace cuBlasConnector
+
+} // namespace container
 
 #endif // __CUDA || __ROCM
 #endif // BASE_THIRD_PARTY_BLAS_H_

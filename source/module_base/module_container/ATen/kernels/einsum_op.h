@@ -6,6 +6,17 @@
 
 namespace container {
 
+struct EinsumOption {
+    bool conj_x = false;
+    bool conj_y = false;
+    float alpha = 1.0;
+    float beta  = 0.0;
+    Tensor* out = nullptr;
+
+    EinsumOption(bool conj_x_ = false, bool conj_y_ = false, float alpha_ = 1.0, float beta_ = 0.0, Tensor* out_ = nullptr)
+        : conj_x(conj_x_), conj_y(conj_y_), alpha(alpha_), beta(beta_), out(out_) {}
+};
+
 namespace einsum_utils {
 struct BCast;
 
@@ -94,7 +105,7 @@ bool ReduceOperand(
 bool ContractOperands(
     std::vector<Tensor>& inputs,
     const std::vector<int>& swap_free_and_contract,
-    const std::array<bool,2>& conjugate_flag,
+    const EinsumOption& option,
     Tensor& output);
 
 void ProcessOutput(
@@ -130,10 +141,9 @@ namespace op {
 template <typename... Tensors>
 typename std::enable_if<std::is_same<
         typename std::common_type<Tensors...>::type, Tensor>::value, Tensor>::type
-    einsum_impl(const std::string& equation, const bool& conj_x, const bool& conj_y, const Tensors&... tensors)
+    einsum_impl(const std::string& equation, const EinsumOption& option, const Tensors&... tensors)
 {
     // Check the input dimension
-    auto _tensors = std::make_tuple(tensors...);
     constexpr int num_inputs = sizeof...(Tensors);
     if (num_inputs > 2) {
         throw std::invalid_argument("Einstein notation only support two or less tensors!");
@@ -147,7 +157,6 @@ typename std::enable_if<std::is_same<
     std::vector<int> output_label_counts = {};
     std::vector<bool> input_has_ellipsis = {};
     bool output_has_ellipsis = {};
-    std::array<bool, 2> input_conjugate_flag = {conj_x, conj_y};
 
     einsum_utils::ParseEinsumEquation(
         equation, label_types, 
@@ -170,7 +179,7 @@ typename std::enable_if<std::is_same<
 
     std::vector<std::vector<int>> free_labels(num_inputs);
     std::vector<int> swap_free_and_contract(num_inputs);
-    std::vector<Tensor> inputs_reduced(num_inputs, Tensor(DataType::DT_INT, {}));
+    std::vector<Tensor> inputs_reduced(num_inputs, Tensor(DataType::DT_FLOAT, {}));
 
     for (int ii = 0; ii < num_inputs; ++ii) {
         einsum_utils::ReduceOperand(
@@ -186,7 +195,7 @@ typename std::enable_if<std::is_same<
     Tensor contraction_output_reshaped;
     einsum_utils::ContractOperands(
         inputs_reduced, swap_free_and_contract, 
-        input_conjugate_flag, contraction_output_reshaped);
+        option, contraction_output_reshaped);
     
     Tensor output;
     // Copy the batch labels from the contraction output. Recover the batch
@@ -202,11 +211,12 @@ typename std::enable_if<std::is_same<
 
 // Make the conj params only works for the matmul equations.
 inline Tensor einsum(const std::string& equation, const Tensor& A) {
-    return std::move(op::einsum_impl(equation,  /*conj_x=*/false, /*conj_y=*/false, A));
+    const EinsumOption& option = {};
+    return std::move(op::einsum_impl(equation, option, A));
 }
 
-inline Tensor einsum(const std::string& equation, const Tensor& A, const Tensor& B, const bool& conj_x = false, const bool& conj_y = false) {
-    return std::move(op::einsum_impl(equation, conj_x, conj_y, A, B));
+inline Tensor einsum(const std::string& equation, const Tensor& A, const Tensor& B, const EinsumOption& option = {}) {
+    return std::move(op::einsum_impl(equation, option, A, B));
 }
 
 } // namespace op

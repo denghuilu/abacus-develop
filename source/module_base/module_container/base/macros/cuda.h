@@ -6,7 +6,7 @@
 #include <cusolverDn.h>
 #include <thrust/complex.h>
 
-#define THREAD_PER_BLOCK 256
+#define THREADS_PER_BLOCK 256
 
 template <typename T>
 struct PossibleStdComplexToThrustComplex {
@@ -172,14 +172,17 @@ static const char * cublasGetErrorEnum(cublasStatus_t error) {
             return "Unknown";
     }
 }
-inline void cublasAssert(cublasStatus_t code, const char *file, int line, bool abort=true) {
+
+inline void cublasAssertInternal(cublasStatus_t code, const char *file, int line, bool abort=true) {
     if (code != CUBLAS_STATUS_SUCCESS) {
         fprintf(stderr,"cuBLAS Assert: %s %s %d\n", cublasGetErrorEnum(code), file, line);
         if (abort) exit(code);
     }
 }
 
-#define cublasErrcheck(res) { cublasAssert((res), __FILE__, __LINE__); }
+namespace container {
+
+#define cublasErrcheckInternal(res) { cublasAssertInternal((res), __FILE__, __LINE__); }
 
 // CUDA API errors
 #define cudaErrcheck(res) {                                             \
@@ -188,5 +191,7 @@ inline void cublasAssert(cublasStatus_t code, const char *file, int line, bool a
         exit(EXIT_FAILURE);                                             \
     }                                                                   \
 }
+
+} // namespace container
 
 #endif // BASE_MACROS_CUDA_H_
