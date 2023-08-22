@@ -334,6 +334,9 @@ class DiagoAllBandCG : public DiagH<FPTYPE, Device>
     using set_matrix_op = hsolver::set_matrix_op<FPTYPE, Device>;
     using calc_grad_all_band_op = hsolver::calc_grad_all_band_op<FPTYPE, Device>;
     using line_minimize_all_band_op = hsolver::line_minimize_all_band_op<FPTYPE, Device>;
+
+    using ct_Type   = std::complex<FPTYPE>;
+    using ct_Device = typename ct::PsiToContainer<Device>::type;
 };
 
 } // namespace hsolver

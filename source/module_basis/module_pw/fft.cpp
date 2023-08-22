@@ -715,13 +715,13 @@ void FFT::fft3D_forward(const psi::DEVICE_GPU * /*ctx*/, std::complex<float> * i
           reinterpret_cast<cufftComplex*>(in),
           reinterpret_cast<cufftComplex*>(out),
           CUFFT_FORWARD);
-    cudaDeviceSynchronize();
+    // cudaDeviceSynchronize();
 #elif defined(__ROCM)
     hipfftExecC2C(this->c_handle,
           reinterpret_cast<hipfftComplex*>(in),
           reinterpret_cast<hipfftComplex*>(out),
           HIPFFT_FORWARD);
-    hipDeviceSynchronize();
+    // hipDeviceSynchronize();
 #endif
 }
 template <>
@@ -732,13 +732,13 @@ void FFT::fft3D_forward(const psi::DEVICE_GPU * /*ctx*/, std::complex<double> * 
           reinterpret_cast<cufftDoubleComplex*>(in),
           reinterpret_cast<cufftDoubleComplex*>(out),
           CUFFT_FORWARD);
-    cudaDeviceSynchronize();
+    // cudaDeviceSynchronize();
 #elif defined(__ROCM)
     hipfftExecZ2Z(this->z_handle,
           reinterpret_cast<hipfftDoubleComplex*>(in),
           reinterpret_cast<hipfftDoubleComplex*>(out),
           HIPFFT_FORWARD);
-    hipDeviceSynchronize();
+    // hipDeviceSynchronize();
 #endif
 }
 
@@ -750,13 +750,13 @@ void FFT::fft3D_backward(const psi::DEVICE_GPU * /*ctx*/, std::complex<float>* i
              reinterpret_cast<cufftComplex*>(in),
              reinterpret_cast<cufftComplex*>(out),
              CUFFT_INVERSE);
-    cudaDeviceSynchronize();
+    // cudaDeviceSynchronize();
 #elif defined(__ROCM)
     hipfftExecC2C(this->c_handle,
              reinterpret_cast<hipfftComplex*>(in),
              reinterpret_cast<hipfftComplex*>(out),
              HIPFFT_BACKWARD);
-    hipDeviceSynchronize();
+    // hipDeviceSynchronize();
 #endif
 }
 template <>
@@ -767,13 +767,13 @@ void FFT::fft3D_backward(const psi::DEVICE_GPU * /*ctx*/, std::complex<double>* 
              reinterpret_cast<cufftDoubleComplex*>(in),
              reinterpret_cast<cufftDoubleComplex*>(out),
              CUFFT_INVERSE);
-    cudaDeviceSynchronize();
+    // cudaDeviceSynchronize();
 #elif defined(__ROCM)
     hipfftExecZ2Z(this->z_handle,
              reinterpret_cast<hipfftDoubleComplex*>(in),
              reinterpret_cast<hipfftDoubleComplex*>(out),
              HIPFFT_BACKWARD);
-    hipDeviceSynchronize();
+    // hipDeviceSynchronize();
 #endif
 }
 #endif

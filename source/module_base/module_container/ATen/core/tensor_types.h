@@ -103,6 +103,22 @@ struct PossibleComplexToReal<std::complex<double>> {
     using type = double; /**< The return type specialization for std::complex<double>. */
 };
 
+template <typename T> 
+struct PsiToContainer {
+    using type = T; /**< The return type based on the input type. */
+};
+
+template <>
+struct PsiToContainer<psi::DEVICE_CPU> {
+    using type = container::DEVICE_CPU; /**< The return type specialization for std::complex<float>. */
+};
+
+template <>
+struct PsiToContainer<psi::DEVICE_GPU> {
+    using type = container::DEVICE_GPU; /**< The return type specialization for std::complex<double>. */
+};
+
+
 
 /**
  * @brief Template struct for mapping a Device Type to its corresponding enum value.

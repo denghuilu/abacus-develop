@@ -91,11 +91,13 @@ void DiagoAllBandCG<FPTYPE, Device>::orth_cholesky(ct::Tensor& workspace_in, ct:
     hsub_out = ct::op::einsum("ij,kj->ik", psi_out, psi_out, option);
 
     // set hsub matrix to lower format;
-    ct::op::set_matrix<std::complex<FPTYPE>, ct::DEVICE_GPU>()(
+    ct::op::set_matrix<ct_Type, ct_Device>()(
         'L', hsub_out.data<std::complex<FPTYPE>>(), this->n_band);
 
-    zpotrf_op()(this->ctx, hsub_out.data<std::complex<FPTYPE>>(), this->n_band);
-    ztrtri_op()(this->ctx, hsub_out.data<std::complex<FPTYPE>>(), this->n_band);
+    ct::op::lapack_potrf<ct_Type, ct_Device>()(
+        'U', this->n_band, hsub_out.data<std::complex<FPTYPE>>(), this->n_band);
+    ct::op::lapack_trtri<ct_Type, ct_Device>()(
+        'U', 'N', this->n_band, hsub_out.data<std::complex<FPTYPE>>(), this->n_band);
 
     this->rotate_wf(hsub_out, psi_out, workspace_in);
     this->rotate_wf(hsub_out, hpsi_out, workspace_in);
