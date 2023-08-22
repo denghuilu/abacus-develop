@@ -76,49 +76,27 @@ class DiagoAllBandCG : public DiagH<FPTYPE, Device>
     ct::DataType cx_type  = ct::DataType::DT_INVALID;
     ct::DeviceType device_type = ct::DeviceType::UnKnown;
 
-    /// Precondition data, reference to h_prec pointer or d_prec pointer.
-    /// Note: this pointer does not own memory but instead references either h_prec (for CPU runtime)
-    /// or d_prec (for GPU runtime), depending on the device type used in this class.
-    /// Dim: n_basis_max, column major.
-    ct::Tensor prec = {};
+    ct::Tensor prec = {}, h_prec = {};
 
-    /// Host precondition data, reference to the `precondition` parameter of the constructor.
-    /// Note: this object does not own memory.
-    /// Dim: n_basis_max, column major.
-    ct::Tensor h_prec = {};
     /// The coefficient for mixing the current and previous step gradients, used in iterative methods.
-    /// Dim: n_band, column major.
     ct::Tensor beta = {};
     /// Error state value, if it is smaller than the given threshold, then exit the iteration.
-    /// Dim: n_band, column major.
     ct::Tensor err_st = {};
     /// Calculated eigen
-    /// Dim: n_band, column major.
     ct::Tensor eigen = {};
 
     /// Pointer to the input wavefunction.
     /// Note: this pointer does not own memory, instead it ref the psi_in object.
-    /// Dim: n_basis * n_band, column major, lda = n_basis_max.
-    ct::Tensor psi = {};
     /// H|psi> matrix.
-    /// wDim: n_basis * n_band, column major, lda = n_basis_max.
-    ct::Tensor hpsi = {};
-    /// <psi_i|H|psi_j> matrix.
-    /// Dim: n_basis * n_band, column major, lda = n_basis_max.
+    ct::Tensor psi = {}, hpsi = {};
+    
     ct::Tensor hsub = {};
 
     /// H|psi> - epsilo * psi, grad of the given problem.
     /// Dim: n_basis * n_band, column major, lda = n_basis_max.
-    ct::Tensor grad = {};
-    /// H|grad> matrix.
-    /// Dim: n_basis * n_band, column major, lda = n_basis_max.
-    ct::Tensor hgrad = {};
+    ct::Tensor grad = {}, hgrad = {}, grad_old = {};
 
-    /// Store the last step grad, used in iterative methods.
-    /// Dim: n_basis * n_band, column major, lda = n_basis_max.
-    ct::Tensor grad_old = {};
     /// work for some calculations within this class, including rotate_wf call
-    /// Dim: n_basis x n_band, column major, lda = n_basis_max.
     ct::Tensor work = {};
 
     /**
@@ -166,7 +144,10 @@ class DiagoAllBandCG : public DiagH<FPTYPE, Device>
      * @param psi_in The input wavefunction psi.
      * @param hpsi_out Pointer to the array where the resulting hpsi matrix will be stored.
      */
-    void calc_hpsi_all_band (hamilt::Hamilt<FPTYPE, Device>* hamilt_in, const psi::Psi<std::complex<FPTYPE>, Device>& psi_in,  ct::Tensor& hpsi_out);
+    void calc_hpsi_all_band(
+        hamilt::Hamilt<FPTYPE, Device>* hamilt_in, 
+        const psi::Psi<std::complex<FPTYPE>, Device>& psi_in,  
+        ct::Tensor& hpsi_out);
 
     /**
      * @brief Diagonalization of the subspace matrix.
@@ -182,8 +163,11 @@ class DiagoAllBandCG : public DiagH<FPTYPE, Device>
      * @param hsub_out Output Hamiltonian subtracted matrix with [dim: n_band x n_band, column major]
      * @param eigenvalue_out Computed eigen array with [dim: n_band]
      */
-    void diag_hsub(const ct::Tensor& psi_in, const ct::Tensor& hpsi_in,
-                   ct::Tensor& hsub_out, ct::Tensor& eigenvalue_out);
+    void diag_hsub(
+        const ct::Tensor& psi_in, 
+        const ct::Tensor& hpsi_in,
+        ct::Tensor& hsub_out, 
+        ct::Tensor& eigenvalue_out);
 
     /**
      * @brief Inplace matrix multiplication to obtain the initial guessed wavefunction.
@@ -196,8 +180,10 @@ class DiagoAllBandCG : public DiagH<FPTYPE, Device>
      * @param workspace_in Workspace matrix, dim [n_basis, n_band] with column major..
      * @param psi_out output wavefunction matrix with dim [n_basis, n_band], column major.
      */
-    void rotate_wf(const ct::Tensor& hsub_in,
-                   ct::Tensor& psi_out, ct::Tensor& workspace_in);
+    void rotate_wf(
+        const ct::Tensor& hsub_in,
+        ct::Tensor& psi_out, 
+        ct::Tensor& workspace_in);
 
     /**
      * @brief Calculate the gradient for all bands used in CG method.
@@ -224,9 +210,12 @@ class DiagoAllBandCG : public DiagH<FPTYPE, Device>
      *   4. gradient mix with the previous gradient
      *   5. Do precondition
      */
-    void calc_grad_all_band(const ct::Tensor& prec_in, ct::Tensor& err_out, ct::Tensor& beta_out,
-                            ct::Tensor& psi_in, ct::Tensor& hpsi_in,
-                            ct::Tensor& grad_out, ct::Tensor& grad_old_out);
+    void calc_grad_all_band(
+        const ct::Tensor& prec_in, 
+        ct::Tensor& err_out, 
+        ct::Tensor& beta_out,
+        ct::Tensor& psi_in, ct::Tensor& hpsi_in,
+        ct::Tensor& grad_out, ct::Tensor& grad_old_out);
 
     /**
      *
@@ -244,11 +233,35 @@ class DiagoAllBandCG : public DiagH<FPTYPE, Device>
      * @param hsub_out Subspace matrix output.
      * @param eigenvalue_out Computed eigen.
      */
-    void calc_hsub_all_band(hamilt::Hamilt<FPTYPE, Device>* hamilt_in,
-                        const psi::Psi<std::complex<FPTYPE>, Device>& psi_in,
-                        ct::Tensor& psi_out, ct::Tensor& hpsi_out,
-                        ct::Tensor& hsub_out, ct::Tensor& workspace_in,
-                        ct::Tensor& eigenvalue_out);
+    void calc_hsub_all_band(
+        hamilt::Hamilt<FPTYPE, Device>* hamilt_in,
+        const psi::Psi<std::complex<FPTYPE>, Device>& psi_in,
+        ct::Tensor& psi_out, ct::Tensor& hpsi_out,
+        ct::Tensor& hsub_out, ct::Tensor& workspace_in,
+        ct::Tensor& eigenvalue_out);
+    
+    /**
+     *
+     * @brief Apply the Hamiltonian operator to psi and obtain the hpsi matrix.
+     *
+     * psi_out[dim: n_basis x n_band, column major, lda = n_basis_max],
+     * hpsi_out[dim: n_basis x n_band, column major, lda = n_basis_max],
+     * hsub_out[dim: n_band x n_band, column major, lda = n_band],
+     * eigenvalue_out[dim: n_basis_max, column major].
+     *
+     * @param hamilt_in Pointer to the Hamiltonian object.
+     * @param psi_in Input wavefunction.
+     * @param psi_out Output wavefunction.
+     * @param hpsi_out Product of psi_out and Hamiltonian.
+     * @param hsub_out Subspace matrix output.
+     * @param eigenvalue_out Computed eigen.
+     */
+    void calc_hsub_all_band_exit(
+        ct::Tensor& psi_out, 
+        ct::Tensor& hpsi_out,
+        ct::Tensor& hsub_out, 
+        ct::Tensor& workspace_in,
+        ct::Tensor& eigenvalue_out);
 
     /**
      * @brief Orthogonalize column vectors in grad to column vectors in psi.
@@ -260,9 +273,10 @@ class DiagoAllBandCG : public DiagH<FPTYPE, Device>
      * @param grad_out Input and output gradient array, [dim: n_basis x n_band, column major, lda = n_basis_max]..
      * @note This function is a member of the DiagoAllBandCG class.
      */
-    void orth_projection(const ct::Tensor& psi_in,
-            ct::Tensor& hsub_in,
-            ct::Tensor& grad_out);
+    void orth_projection(
+        const ct::Tensor& psi_in,
+        ct::Tensor& hsub_in,
+        ct::Tensor& grad_out);
 
     /**
      *

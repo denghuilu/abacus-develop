@@ -6,6 +6,7 @@
 #include "module_hsolver/kernels/math_kernel_op.h"
 
 #include <ATen/kernels/blas_op.h>
+#include <ATen/kernels/lapack_op.h>
 #include <ATen/kernels/einsum_op.h>
 
 namespace hsolver {
@@ -90,7 +91,8 @@ void DiagoAllBandCG<FPTYPE, Device>::orth_cholesky(ct::Tensor& workspace_in, ct:
     hsub_out = ct::op::einsum("ij,kj->ik", psi_out, psi_out, option);
 
     // set hsub matrix to lower format;
-    set_matrix_op()(this->ctx, 'L', hsub_out.data<std::complex<FPTYPE>>(), this->n_band);
+    ct::op::set_matrix<std::complex<FPTYPE>, ct::DEVICE_GPU>()(
+        'L', hsub_out.data<std::complex<FPTYPE>>(), this->n_band);
 
     zpotrf_op()(this->ctx, hsub_out.data<std::complex<FPTYPE>>(), this->n_band);
     ztrtri_op()(this->ctx, hsub_out.data<std::complex<FPTYPE>>(), this->n_band);
@@ -176,9 +178,9 @@ void DiagoAllBandCG<FPTYPE, Device>::diag_hsub(
     // it controls the ops to use the corresponding device to calculate results
     ct::EinsumOption option(
         /*conj_x=*/false, /*conj_y=*/true, /*alpha=*/1.0, /*beta=*/0.0, /*Tensor out=*/&hsub_out);
-    hsub_out = ct::op::einsum("ij,kj->ik", hpsi_in, psi_in, option);
+    hsub_out = ct::op::einsum("ij,kj->ik", psi_in, hpsi_in, option);
 
-     dnevd_op()(this->ctx, hsub_out.data<std::complex<FPTYPE>>(), this->n_band, eigenvalue_out.data<FPTYPE>());
+    dnevd_op()(this->ctx, hsub_out.data<std::complex<FPTYPE>>(), this->n_band, eigenvalue_out.data<FPTYPE>());
 }
 
 template<typename FPTYPE, typename Device>
@@ -202,6 +204,22 @@ void DiagoAllBandCG<FPTYPE, Device>::calc_hsub_all_band(
     // hpsi_out[n_basis, n_band] = psi_out[n_basis, n_band] x hsub_out[n_band, n_band]
     this->rotate_wf(hsub_out, psi_out, workspace_in);
     this->rotate_wf(hsub_out, hpsi_out, workspace_in);
+}
+
+template<typename FPTYPE, typename Device>
+void DiagoAllBandCG<FPTYPE, Device>::calc_hsub_all_band_exit(
+        ct::Tensor& psi_out, 
+        ct::Tensor& hpsi_out,
+        ct::Tensor& hsub_out, 
+        ct::Tensor& workspace_in,
+        ct::Tensor& eigenvalue_out)
+{
+    // Diagonalization of the subspace matrix.
+    this->diag_hsub(psi_out, hpsi_out, hsub_out, eigenvalue_out);
+
+    // inplace matmul to get the initial guessed wavefunction psi.
+    // psi_out[n_basis, n_band] = psi_out[n_basis, n_band] x hsub_out[n_band, n_band]
+    this->rotate_wf(hsub_out, psi_out, workspace_in);
 }
 
 template<typename FPTYPE, typename Device>
@@ -261,7 +279,7 @@ void DiagoAllBandCG<FPTYPE, Device>::diag(
             this->calc_hsub_all_band(hamilt_in, psi_in, this->psi, this->hpsi, this->hsub, this->work, this->eigen);
         }
     } while (ntry < max_iter && this->test_error(this->err_st, this->all_band_cg_thr));
-    this->calc_hsub_all_band(hamilt_in, psi_in, this->psi, this->hpsi, this->hsub, this->work, this->eigen);
+    this->calc_hsub_all_band_exit(this->psi, this->hpsi, this->hsub, this->work, this->eigen);
     syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, eigenvalue_in, this->eigen.data<FPTYPE>(), this->n_band);
 }
 
