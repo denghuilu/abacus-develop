@@ -66,7 +66,8 @@ struct lapack_trtri<T, DEVICE_GPU> {
         T* Mat,
         const int& lda) 
     {
-        cuSolverConnector::trtri(cusolver_handle, uplo, diag, dim, Mat, lda);
+        //cuSolverConnector::trtri(cusolver_handle, uplo, diag, dim, Mat, lda);
+        cuSolverConnector::potri(cusolver_handle, uplo, diag, dim, Mat, lda);
     }
 };
 

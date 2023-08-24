@@ -291,10 +291,11 @@ class DiagoAllBandCG : public DiagH<FPTYPE, Device>
      *  2. Calculate theta.
      *  3. Update psi as well as hpsi.
      */
-    void line_minimize(ct::Tensor& grad_in,
-            ct::Tensor& hgrad_in,
-            ct::Tensor& psi_out,
-            ct::Tensor& hpsi_out);
+    void line_minimize(
+        ct::Tensor& grad_in,
+        ct::Tensor& hgrad_in,
+        ct::Tensor& psi_out,
+        ct::Tensor& hpsi_out);
 
     /**
      * @brief Orthogonalize and normalize the column vectors in psi_out using Cholesky decomposition.
@@ -304,7 +305,11 @@ class DiagoAllBandCG : public DiagH<FPTYPE, Device>
      * @param hpsi_out Input and output hpsi array. [dim: n_basis x n_band, column major, lda = n_basis_max].
      * @param hsub_out Input Hamiltonian product array. [dim: n_band x n_band, column major, lda = n_band].
      */
-    void orth_cholesky(ct::Tensor& workspace_in, ct::Tensor& psi_out, ct::Tensor& hpsi_out, ct::Tensor& hsub_out);
+    void orth_cholesky(
+        ct::Tensor& workspace_in, 
+        ct::Tensor& psi_out, 
+        ct::Tensor& hpsi_out, 
+        ct::Tensor& hsub_out);
 
     /**
      * @brief Checks if the error satisfies the given threshold.

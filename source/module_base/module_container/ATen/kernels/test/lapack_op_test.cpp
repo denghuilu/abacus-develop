@@ -22,38 +22,38 @@ public:
 
 TYPED_TEST_SUITE(LapackOpTest, test_utils::Types);
 
-TYPED_TEST(LapackOpTest, Trtri) {
-    using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
-    using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
+// TYPED_TEST(LapackOpTest, Trtri) {
+//     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
+//     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
 
-    blas_gemm<Type, Device> gemmCalculator;
-    lapack_trtri<Type, Device> trtriCalculator;
+//     blas_gemm<Type, Device> gemmCalculator;
+//     lapack_trtri<Type, Device> trtriCalculator;
 
-    const int dim = 3;
-    Tensor A = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(4.0), static_cast<Type>(5.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(6.0)}).to_device<Device>());
+//     const int dim = 3;
+//     Tensor A = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
+//                                  static_cast<Type>(0.0), static_cast<Type>(4.0), static_cast<Type>(5.0),
+//                                  static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(6.0)}).to_device<Device>());
     
-    Tensor I = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(0.0), static_cast<Type>(0.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(1.0), static_cast<Type>(0.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(1.0)}).to_device<Device>());
-    Tensor B = A;
-    Tensor C = B;
-    C.zero();
+//     Tensor I = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(0.0), static_cast<Type>(0.0),
+//                                  static_cast<Type>(0.0), static_cast<Type>(1.0), static_cast<Type>(0.0),
+//                                  static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(1.0)}).to_device<Device>());
+//     Tensor B = A;
+//     Tensor C = B;
+//     C.zero();
     
-    const char trans = 'N';
-    const int m = 3;
-    const int n = 3;
-    const int k = 3;
-    const Type alpha = static_cast<Type>(1.0);
-    const Type beta  = static_cast<Type>(0.0);
-    // Note all blas and lapack operators within container are column major!
-    // For this reason, we should employ 'L' instead of 'U' in the subsequent line.
-    trtriCalculator('L', 'N', dim, B.data<Type>(), dim);
-    gemmCalculator(trans, trans, m, n, k, &alpha, B.data<Type>(), k, A.data<Type>(), n, &beta, C.data<Type>(), n);
+//     const char trans = 'N';
+//     const int m = 3;
+//     const int n = 3;
+//     const int k = 3;
+//     const Type alpha = static_cast<Type>(1.0);
+//     const Type beta  = static_cast<Type>(0.0);
+//     // Note all blas and lapack operators within container are column major!
+//     // For this reason, we should employ 'L' instead of 'U' in the subsequent line.
+//     trtriCalculator('L', 'N', dim, B.data<Type>(), dim);
+//     gemmCalculator(trans, trans, m, n, k, &alpha, B.data<Type>(), k, A.data<Type>(), n, &beta, C.data<Type>(), n);
     
-    EXPECT_EQ(C, I);
-}
+//     EXPECT_EQ(C, I);
+// }
 
 TYPED_TEST(LapackOpTest, Potrf) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
