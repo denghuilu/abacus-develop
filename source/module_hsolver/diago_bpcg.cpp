@@ -1,4 +1,4 @@
-#include "module_hsolver/diago_allband_cg.h"
+#include "module_hsolver/diago_bpcg.h"
 
 #include "diago_iter_assist.h"
 #include "module_base/blas_connector.h"
@@ -12,7 +12,7 @@
 namespace hsolver {
 
 template<typename FPTYPE, typename Device>
-DiagoAllBandCG<FPTYPE, Device>::DiagoAllBandCG(const FPTYPE* precondition_in)
+DiagoBPCG<FPTYPE, Device>::DiagoBPCG(const FPTYPE* precondition_in)
 {
     this->fp_type   = ct::DataTypeToEnum<FPTYPE>::value;
     this->cx_type   = ct::DataTypeToEnum<std::complex<FPTYPE>>::value;
@@ -23,13 +23,13 @@ DiagoAllBandCG<FPTYPE, Device>::DiagoAllBandCG(const FPTYPE* precondition_in)
 }
 
 template<typename FPTYPE, typename Device>
-DiagoAllBandCG<FPTYPE, Device>::~DiagoAllBandCG() {
+DiagoBPCG<FPTYPE, Device>::~DiagoBPCG() {
     // Note, we do not need to free the h_prec and psi pointer as they are refs to the outside data
     delete this->grad_wrapper;
 }
 
 template<typename FPTYPE, typename Device>
-void DiagoAllBandCG<FPTYPE, Device>::init_iter(const psi::Psi<std::complex<FPTYPE>, Device> &psi_in) {
+void DiagoBPCG<FPTYPE, Device>::init_iter(const psi::Psi<std::complex<FPTYPE>, Device> &psi_in) {
     // Specify the problem size n_basis, n_band, while lda is n_basis
     this->n_band        = psi_in.get_nbands();
     this->n_basis       = psi_in.get_nbasis();
@@ -55,7 +55,7 @@ void DiagoAllBandCG<FPTYPE, Device>::init_iter(const psi::Psi<std::complex<FPTYP
 }
 
 template<typename FPTYPE, typename Device>
-bool DiagoAllBandCG<FPTYPE, Device>::test_error(const ct::Tensor& err_in, FPTYPE thr_in)
+bool DiagoBPCG<FPTYPE, Device>::test_error(const ct::Tensor& err_in, FPTYPE thr_in)
 {
     const FPTYPE * _err_st = err_in.data<FPTYPE>();
     if (this->device == psi::GpuDevice) {
@@ -72,7 +72,7 @@ bool DiagoAllBandCG<FPTYPE, Device>::test_error(const ct::Tensor& err_in, FPTYPE
 
 // Finally, the last one!
 template<typename FPTYPE, typename Device>
-void DiagoAllBandCG<FPTYPE, Device>::line_minimize(
+void DiagoBPCG<FPTYPE, Device>::line_minimize(
     ct::Tensor& grad_in,
     ct::Tensor& hgrad_in,
     ct::Tensor& psi_out,
@@ -83,7 +83,7 @@ void DiagoAllBandCG<FPTYPE, Device>::line_minimize(
 
 // Finally, the last two!
 template<typename FPTYPE, typename Device>
-void DiagoAllBandCG<FPTYPE, Device>::orth_cholesky(ct::Tensor& workspace_in, ct::Tensor& psi_out, ct::Tensor& hpsi_out, ct::Tensor& hsub_out)
+void DiagoBPCG<FPTYPE, Device>::orth_cholesky(ct::Tensor& workspace_in, ct::Tensor& psi_out, ct::Tensor& hpsi_out, ct::Tensor& hsub_out)
 {
     // hsub_out = psi_out * transc(psi_out)
     ct::EinsumOption option(
@@ -104,7 +104,7 @@ void DiagoAllBandCG<FPTYPE, Device>::orth_cholesky(ct::Tensor& workspace_in, ct:
 }
 
 template<typename FPTYPE, typename Device>
-void DiagoAllBandCG<FPTYPE, Device>::calc_grad_all_band(
+void DiagoBPCG<FPTYPE, Device>::calc_grad_all_band(
         const ct::Tensor& prec_in,
         ct::Tensor& err_out,
         ct::Tensor& beta_out,
@@ -117,7 +117,7 @@ void DiagoAllBandCG<FPTYPE, Device>::calc_grad_all_band(
 }
 
 template<typename FPTYPE, typename Device>
-void DiagoAllBandCG<FPTYPE, Device>::calc_prec()
+void DiagoBPCG<FPTYPE, Device>::calc_prec()
 {
     syncmem_var_h2d_op()(
         this->ctx,
@@ -128,7 +128,7 @@ void DiagoAllBandCG<FPTYPE, Device>::calc_prec()
 }
 
 template<typename FPTYPE, typename Device>
-void DiagoAllBandCG<FPTYPE, Device>::orth_projection(
+void DiagoBPCG<FPTYPE, Device>::orth_projection(
         const ct::Tensor& psi_in,
         ct::Tensor& hsub_in,
         ct::Tensor& grad_out)
@@ -144,7 +144,7 @@ void DiagoAllBandCG<FPTYPE, Device>::orth_projection(
 }
 
 template<typename FPTYPE, typename Device>
-void DiagoAllBandCG<FPTYPE, Device>::rotate_wf(
+void DiagoBPCG<FPTYPE, Device>::rotate_wf(
         const ct::Tensor& hsub_in,
         ct::Tensor& psi_out,
         ct::Tensor& workspace_in)
@@ -157,7 +157,7 @@ void DiagoAllBandCG<FPTYPE, Device>::rotate_wf(
 }
 
 template<typename FPTYPE, typename Device>
-void DiagoAllBandCG<FPTYPE, Device>::calc_hpsi_all_band(
+void DiagoBPCG<FPTYPE, Device>::calc_hpsi_all_band(
         hamilt::Hamilt<FPTYPE, Device>* hamilt_in,
         const psi::Psi<std::complex<FPTYPE>, Device>& psi_in,
         ct::Tensor& hpsi_out)
@@ -169,7 +169,7 @@ void DiagoAllBandCG<FPTYPE, Device>::calc_hpsi_all_band(
 }
 
 template<typename FPTYPE, typename Device>
-void DiagoAllBandCG<FPTYPE, Device>::diag_hsub(
+void DiagoBPCG<FPTYPE, Device>::diag_hsub(
         const ct::Tensor& psi_in,
         const ct::Tensor& hpsi_in,
         ct::Tensor& hsub_out,
@@ -186,7 +186,7 @@ void DiagoAllBandCG<FPTYPE, Device>::diag_hsub(
 }
 
 template<typename FPTYPE, typename Device>
-void DiagoAllBandCG<FPTYPE, Device>::calc_hsub_all_band(
+void DiagoBPCG<FPTYPE, Device>::calc_hsub_all_band(
         hamilt::Hamilt<FPTYPE, Device> *hamilt_in,
         const psi::Psi<std::complex<FPTYPE>, Device> &psi_in,
         ct::Tensor& psi_out,
@@ -209,7 +209,7 @@ void DiagoAllBandCG<FPTYPE, Device>::calc_hsub_all_band(
 }
 
 template<typename FPTYPE, typename Device>
-void DiagoAllBandCG<FPTYPE, Device>::calc_hsub_all_band_exit(
+void DiagoBPCG<FPTYPE, Device>::calc_hsub_all_band_exit(
         ct::Tensor& psi_out, 
         ct::Tensor& hpsi_out,
         ct::Tensor& hsub_out, 
@@ -225,7 +225,7 @@ void DiagoAllBandCG<FPTYPE, Device>::calc_hsub_all_band_exit(
 }
 
 template<typename FPTYPE, typename Device>
-void DiagoAllBandCG<FPTYPE, Device>::diag(
+void DiagoBPCG<FPTYPE, Device>::diag(
         hamilt::Hamilt<FPTYPE, Device>* hamilt_in,
         psi::Psi<std::complex<FPTYPE>, Device>& psi_in,
         FPTYPE* eigenvalue_in)
@@ -285,11 +285,11 @@ void DiagoAllBandCG<FPTYPE, Device>::diag(
     syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, eigenvalue_in, this->eigen.data<FPTYPE>(), this->n_band);
 }
 
-template class DiagoAllBandCG<float, psi::DEVICE_CPU>;
-template class DiagoAllBandCG<double, psi::DEVICE_CPU>;
+template class DiagoBPCG<float, psi::DEVICE_CPU>;
+template class DiagoBPCG<double, psi::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class DiagoAllBandCG<float, psi::DEVICE_GPU>;
-template class DiagoAllBandCG<double, psi::DEVICE_GPU>;
+template class DiagoBPCG<float, psi::DEVICE_GPU>;
+template class DiagoBPCG<double, psi::DEVICE_GPU>;
 #endif
 
 } // namespace hsolver

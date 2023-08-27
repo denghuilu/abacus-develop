@@ -437,7 +437,7 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_GPU *ctx,
     }
 
     std::complex<float> *c_wfcatom = nullptr;
-    if (GlobalV::KS_SOLVER!="all-band-cg") {
+    if (GlobalV::KS_SOLVER!="bpcg") {
         // store wfcatom on the GPU
         resmem_cd_op()(gpu_ctx, c_wfcatom, wfcatom.nr * wfcatom.nc);
         castmem_z2c_h2d_op()(gpu_ctx, cpu_ctx, c_wfcatom, wfcatom.c, wfcatom.nr * wfcatom.nc);
@@ -475,10 +475,10 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_GPU *ctx,
                 nbasis
         );
     }
-    else if (GlobalV::KS_SOLVER=="all-band-cg") {
+    else if (GlobalV::KS_SOLVER=="bpcg") {
         castmem_z2c_h2d_op()(gpu_ctx, cpu_ctx, &wvf(0,0), wfcatom.c, wfcatom.nr * wfcatom.nc);
     }
-    if (GlobalV::KS_SOLVER!="all-band-cg") {
+    if (GlobalV::KS_SOLVER!="bpcg") {
         delmem_cd_op()(gpu_ctx, c_wfcatom);
     }
 }
@@ -530,7 +530,7 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_GPU *ctx,
     }
 
     std::complex<double> *z_wfcatom = nullptr;
-    if (GlobalV::KS_SOLVER!="all-band-cg") {
+    if (GlobalV::KS_SOLVER!="bpcg") {
         // store wfcatom on the GPU
         resmem_zd_op()(gpu_ctx, z_wfcatom, wfcatom.nr * wfcatom.nc);
         syncmem_z2z_h2d_op()(gpu_ctx, cpu_ctx, z_wfcatom, wfcatom.c, wfcatom.nr * wfcatom.nc);
@@ -568,11 +568,11 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_GPU *ctx,
 			nbasis
 		);
 	}
-    else if(GlobalV::KS_SOLVER=="all-band-cg") {
+    else if(GlobalV::KS_SOLVER=="bpcg") {
         castmem_z2z_h2d_op()(gpu_ctx, cpu_ctx, &wvf(0,0), wfcatom.c, wfcatom.nr * wfcatom.nc);
     }
 
-    if (GlobalV::KS_SOLVER!="all-band-cg") {
+    if (GlobalV::KS_SOLVER!="bpcg") {
         delmem_zd_op()(gpu_ctx, z_wfcatom);
     }
 }

@@ -1,7 +1,7 @@
 list(APPEND objects
     diago_cg.cpp
     diago_david.cpp
-    diago_allband_cg.cpp
+    diago_bpcg.cpp
     hsolver_pw.cpp
     hsolver_pw_sdft.cpp
     diago_iter_assist.cpp

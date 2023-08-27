@@ -1,7 +1,7 @@
 #include "hsolver_pw.h"
 
 #include "diago_cg.h"
-#include "diago_allband_cg.h"
+#include "diago_bpcg.h"
 #include "diago_david.h"
 #include "diago_iter_assist.h"
 #include "module_base/tool_quit.h"
@@ -70,19 +70,19 @@ void HSolverPW<FPTYPE, Device>::initDiagh(const psi::Psi<std::complex<FPTYPE>, D
             this->pdiagh->method = this->method;
         }
     }
-    else if (this->method == "all-band-cg") {
+    else if (this->method == "bpcg") {
         if(this->pdiagh!=nullptr) {
             if(this->pdiagh->method != this->method) {
-                delete (DiagoAllBandCG<FPTYPE, Device>*)this->pdiagh;
-                this->pdiagh = new DiagoAllBandCG<FPTYPE, Device>(precondition.data());
+                delete (DiagoBPCG<FPTYPE, Device>*)this->pdiagh;
+                this->pdiagh = new DiagoBPCG<FPTYPE, Device>(precondition.data());
                 this->pdiagh->method = this->method;
-                reinterpret_cast<DiagoAllBandCG<FPTYPE, Device>*>(this->pdiagh)->init_iter(psi_in);
+                reinterpret_cast<DiagoBPCG<FPTYPE, Device>*>(this->pdiagh)->init_iter(psi_in);
             }
         }
         else {
-            this->pdiagh = new DiagoAllBandCG<FPTYPE, Device>(precondition.data());
+            this->pdiagh = new DiagoBPCG<FPTYPE, Device>(precondition.data());
             this->pdiagh->method = this->method;
-            reinterpret_cast<DiagoAllBandCG<FPTYPE, Device>*>(this->pdiagh)->init_iter(psi_in);
+            reinterpret_cast<DiagoBPCG<FPTYPE, Device>*>(this->pdiagh)->init_iter(psi_in);
         }
     }
     else
@@ -160,7 +160,7 @@ void HSolverPW<FPTYPE, Device>::endDiagh()
     }
     if(this->method == "all-band cg")
     {
-        delete (DiagoAllBandCG<FPTYPE, Device>*)this->pdiagh;
+        delete (DiagoBPCG<FPTYPE, Device>*)this->pdiagh;
         this->pdiagh = nullptr;
     }
 

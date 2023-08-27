@@ -283,9 +283,9 @@ void ElecState::print_etot(const bool converged,
     {
         label = "CU";
     }
-    else if (ks_solver_type == "all-band-cg")
+    else if (ks_solver_type == "bpcg")
     {
-        label = "AB";
+        label = "BP";
     }
     else
     {

@@ -1,5 +1,5 @@
-#ifndef DIAGO_ALL_BAND_CG_H
-#define DIAGO_ALL_BAND_CG_H
+#ifndef DIAGO_BPCG_H
+#define DIAGO_BPCG_H
 
 #include "diagh.h"
 #include "module_base/complexmatrix.h"
@@ -18,27 +18,27 @@
 namespace hsolver {
 
 /**
- * @class DiagoAllBandCG
+ * @class DiagoBPCG
  * @brief A class for diagonalization  using the All-Band CG method.
  * @tparam FPTYPE The floating-point type used for calculations.
  * @tparam Device The device used for calculations (e.g., cpu or gpu).
  */
 template<typename FPTYPE = double, typename Device = psi::DEVICE_CPU>
-class DiagoAllBandCG : public DiagH<FPTYPE, Device>
+class DiagoBPCG : public DiagH<FPTYPE, Device>
 {
   // Column major psi in this class
   public:
     /**
-     * @brief Constructor for DiagoAllBandCG class.
+     * @brief Constructor for DiagoBPCG class.
      *
      * @param precondition precondition data passed by the "Hamilt_PW" class.
      */
-    explicit DiagoAllBandCG(const FPTYPE * precondition);
+    explicit DiagoBPCG(const FPTYPE * precondition);
 
     /**
-     * @brief Destructor for DiagoAllBandCG class.
+     * @brief Destructor for DiagoBPCG class.
      */
-    ~DiagoAllBandCG();
+    ~DiagoBPCG();
 
     /**
      * @brief Initialize the class before diagonalization.
@@ -117,7 +117,7 @@ class DiagoAllBandCG : public DiagH<FPTYPE, Device>
      * This function updates the precondition array by copying the host precondition
      * to the device in a 'gpu' runtime environment. The address of the precondition
      * array is passed by the constructor function called by hsolver::HSolverPW::initDiagh.
-     * The precondition will be updated before the DiagoAllBandCG<FPTYPE, Device>::diag call.
+     * The precondition will be updated before the DiagoBPCG<FPTYPE, Device>::diag call.
      *
      * @note prec[dim: n_band]
      *
@@ -271,7 +271,7 @@ class DiagoAllBandCG : public DiagH<FPTYPE, Device>
      * @param psi_in Input wavefunction array, [dim: n_basis x n_band, column major, lda = n_basis_max].
      * @param hsub_in Subspace matrix input, [dim: n_band x n_band, column major, lda = n_band].
      * @param grad_out Input and output gradient array, [dim: n_basis x n_band, column major, lda = n_basis_max]..
-     * @note This function is a member of the DiagoAllBandCG class.
+     * @note This function is a member of the DiagoBPCG class.
      */
     void orth_projection(
         const ct::Tensor& psi_in,
@@ -345,4 +345,4 @@ class DiagoAllBandCG : public DiagH<FPTYPE, Device>
 };
 
 } // namespace hsolver
-#endif // DIAGO_ALL_BAND_CG_H
+#endif // DIAGO_BPCG_H
