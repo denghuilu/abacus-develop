@@ -24,7 +24,7 @@ struct resize_memory_op {
      * @param size New size of the allocated memory.
      * @param record_in Optional message to record the resize operation.
      */
-    void operator()(const Device* dev, T*& arr, const size_t size, const char* record_in = nullptr);
+    void operator()(T*& arr, const size_t size, const char* record_in = nullptr);
 };
 
 /**
@@ -120,14 +120,14 @@ struct delete_memory_op {
      * @param dev The device.
      * @param arr The array to be deleted.
      */
-    void operator()(const Device* dev, T* arr);
+    void operator()(T* arr);
 };
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 // Partially specialize operator for container::GpuDevice.
 template <typename T>
 struct resize_memory_op<T, container::DEVICE_GPU> {
-void operator()(const container::DEVICE_GPU* dev, T*& arr, const size_t size, const char* record_in = nullptr);
+void operator()(T*& arr, const size_t size, const char* record_in = nullptr);
 };
 
 template <typename T>
@@ -161,7 +161,7 @@ void operator()(
 
 template <typename T>
 struct delete_memory_op<T, container::DEVICE_GPU> {
-void operator()(const container::DEVICE_GPU* dev, T* arr);
+void operator()(T* arr);
 };
 #endif
 // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM

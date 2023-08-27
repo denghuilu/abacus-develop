@@ -8,7 +8,7 @@ namespace op {
 
 template <typename T>
 struct resize_memory_op<T, DEVICE_CPU> {
-  void operator()(const DEVICE_CPU* dev, T*& arr, const size_t size, const char* /*record_in*/) {
+  void operator()(T*& arr, const size_t size, const char* /*record_in*/) {
     if (arr != nullptr) {
       free(arr);
     }
@@ -45,7 +45,7 @@ struct cast_memory_op<FPTYPE_out, FPTYPE_in, DEVICE_CPU, DEVICE_CPU> {
 
 template <typename T>
 struct delete_memory_op<T, DEVICE_CPU> {
-  void operator()(const DEVICE_CPU* dev, T* arr) {
+  void operator()(T* arr) {
     free(arr);
   }
 };
@@ -90,7 +90,7 @@ template struct delete_memory_op<std::complex<double>, DEVICE_CPU>;
 #if !(defined(__CUDA) || defined(__ROCM))
 template <typename T>
 struct resize_memory_op<T, DEVICE_GPU> {
-    void operator()(const DEVICE_GPU* dev, T*& arr, const size_t size, const char* record_in = nullptr) {}
+    void operator()(T*& arr, const size_t size, const char* record_in = nullptr) {}
 };
 
 template <typename T>
@@ -100,49 +100,37 @@ struct set_memory_op<T, DEVICE_GPU> {
 
 template <typename T>
 struct synchronize_memory_op<T, DEVICE_GPU, DEVICE_GPU> {
-    void operator()(T* arr_out,
-                    const T* arr_in,
-                    const size_t size) {}
+    void operator()(T* arr_out, const T* arr_in, const size_t size) {}
 };
 
 template <typename T>
 struct synchronize_memory_op<T, DEVICE_GPU, DEVICE_CPU> {
-    void operator()(T* arr_out,
-                    const T* arr_in,
-                    const size_t size) {}
+    void operator()(T* arr_out, const T* arr_in, const size_t size) {}
 };
 
 template <typename T>
 struct synchronize_memory_op<T, DEVICE_CPU, DEVICE_GPU> {
-    void operator()(T* arr_out,
-                    const T* arr_in,
-                    const size_t size) {}
+    void operator()(T* arr_out, const T* arr_in, const size_t size) {}
 };
 
 template <typename FPTYPE_out, typename FPTYPE_in>
 struct cast_memory_op<FPTYPE_out, FPTYPE_in, DEVICE_GPU, DEVICE_GPU> {
-    void operator()(FPTYPE_out* arr_out,
-                    const FPTYPE_in* arr_in,
-                    const size_t size) {}
+    void operator()(FPTYPE_out* arr_out, const FPTYPE_in* arr_in, const size_t size) {}
 };
 
 template <typename FPTYPE_out, typename FPTYPE_in>
 struct cast_memory_op<FPTYPE_out, FPTYPE_in, DEVICE_GPU, DEVICE_CPU> {
-    void operator()(FPTYPE_out* arr_out,
-                    const FPTYPE_in* arr_in,
-                    const size_t size) {}
+    void operator()(FPTYPE_out* arr_out, const FPTYPE_in* arr_in, const size_t size) {}
 };
 
 template <typename FPTYPE_out, typename FPTYPE_in>
 struct cast_memory_op<FPTYPE_out, FPTYPE_in, DEVICE_CPU, DEVICE_GPU> {
-    void operator()(FPTYPE_out* arr_out,
-                    const FPTYPE_in* arr_in,
-                    const size_t size) {}
+    void operator()(FPTYPE_out* arr_out, const FPTYPE_in* arr_in, const size_t size) {}
 };
 
 template <typename T>
 struct delete_memory_op<T, DEVICE_GPU> {
-    void operator()(const DEVICE_GPU* dev, T* arr) {}
+    void operator()(T* arr) {}
 };
 
 template struct resize_memory_op<int, DEVICE_GPU>;

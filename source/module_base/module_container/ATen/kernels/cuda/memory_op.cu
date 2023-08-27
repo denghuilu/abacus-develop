@@ -33,13 +33,12 @@ __global__ void cast_memory(
 
 template <typename T>
 void resize_memory_op<T, container::DEVICE_GPU>::operator()(
-    const container::DEVICE_GPU* dev,
     T*& arr,
     const size_t size,
     const char* record_in)
 {
     if (arr != nullptr) {
-        delete_memory_op<T, container::DEVICE_GPU>()(dev, arr);
+        delete_memory_op<T, container::DEVICE_GPU>()(arr);
     }
     cudaMalloc((void **)&arr, sizeof(T) * size);
 }
@@ -126,7 +125,6 @@ struct cast_memory_op<T_out, T_in, container::DEVICE_CPU, container::DEVICE_GPU>
 
 template <typename T>
 void delete_memory_op<T, container::DEVICE_GPU>::operator() (
-    const container::DEVICE_GPU* dev,
     T* arr)
 {
     cudaFree(arr);

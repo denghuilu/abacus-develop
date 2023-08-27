@@ -12,7 +12,7 @@
 // TODO: 
 // 1. add log system
 // 2. add exception system
-// 3. refact cmake system, use cmake parament scope to construct the libraries
+// 3. refact cmake system, use cmake parant scope to construct the libraries
 
 namespace ct = container;
 
@@ -69,16 +69,6 @@ class Tensor {
     Tensor(DataType data_type, DeviceType device, const TensorShape& shape);
 
     Tensor(Allocator* a, DataType data_type, DeviceType device, const TensorShape& shape);
-
-    // /// \brief Creates a tensor with the input datatype, shape and buf.
-    // ///
-    // /// Acquires a ref on buf that belongs to this Tensor.
-    // Tensor(DataType type, const TensorShape& shape, TensorBuffer* buf);
-
-    // /// \brief Creates a tensor with the input datatype, shape and buf.
-    // ///
-    // /// Takes an ownership of the bufffer from the reference counted pointer.
-    // Tensor(DataType type, TensorShape shape, core::RefCountPtr<TensorBuffer> buf);
 
     /**
      * @brief Construct a new Tensor object by copying another Tensor.
