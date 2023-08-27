@@ -28,7 +28,7 @@ struct set_matrix_op<FPTYPE, psi::DEVICE_CPU> {
 };
 
 template <typename FPTYPE>
-struct line_minimize_all_band_op<FPTYPE, psi::DEVICE_CPU> {
+struct line_minimize_with_block_op<FPTYPE, psi::DEVICE_CPU> {
     void operator() (
         const psi::DEVICE_CPU* /* dev */,
         std::complex<FPTYPE>* grad_out,
@@ -84,7 +84,7 @@ struct mat_add_inplace_op<FPTYPE, psi::DEVICE_CPU> {
 };
 
 template <typename FPTYPE>
-struct calc_grad_all_band_op<FPTYPE, psi::DEVICE_CPU> {
+struct calc_grad_with_block_op<FPTYPE, psi::DEVICE_CPU> {
     void operator() (
         const psi::DEVICE_CPU* /* dev */,
         const FPTYPE* prec_in,
@@ -367,8 +367,8 @@ template struct matrixTranspose_op<float, psi::DEVICE_CPU>;
 template struct matrixSetToAnother<float, psi::DEVICE_CPU>;
 template struct set_matrix_op<float, psi::DEVICE_CPU>;
 template struct mat_add_inplace_op<float, psi::DEVICE_CPU>;
-template struct calc_grad_all_band_op<float, psi::DEVICE_CPU>;
-template struct line_minimize_all_band_op<float, psi::DEVICE_CPU>;
+template struct calc_grad_with_block_op<float, psi::DEVICE_CPU>;
+template struct line_minimize_with_block_op<float, psi::DEVICE_CPU>;
 
 template struct scal_op<double, psi::DEVICE_CPU>;
 template struct axpy_op<double, psi::DEVICE_CPU>;
@@ -383,6 +383,6 @@ template struct matrixTranspose_op<double, psi::DEVICE_CPU>;
 template struct matrixSetToAnother<double, psi::DEVICE_CPU>;
 template struct set_matrix_op<double, psi::DEVICE_CPU>;
 template struct mat_add_inplace_op<double, psi::DEVICE_CPU>;
-template struct calc_grad_all_band_op<double, psi::DEVICE_CPU>;
-template struct line_minimize_all_band_op<double, psi::DEVICE_CPU>;
+template struct calc_grad_with_block_op<double, psi::DEVICE_CPU>;
+template struct line_minimize_with_block_op<double, psi::DEVICE_CPU>;
 } // namespace hsolver

@@ -75,7 +75,7 @@ struct set_matrix_op {
 };
 
 template <typename FPTYPE, typename Device>
-struct line_minimize_all_band_op {
+struct line_minimize_with_block_op {
     /// @brief zdot_real_op computes the dot product of the given complex arrays(treated as float arrays).
     /// And there's may have MPI communications while enabling planewave parallization strategy.
     ///
@@ -123,7 +123,7 @@ struct mat_add_inplace_op {
 };
 
 template <typename FPTYPE, typename Device>
-struct calc_grad_all_band_op {
+struct calc_grad_with_block_op {
     /// @brief zdot_real_op computes the dot product of the given complex arrays(treated as float arrays).
     /// And there's may have MPI communications while enabling planewave parallization strategy.
     ///
@@ -429,7 +429,7 @@ struct set_matrix_op<FPTYPE, psi::DEVICE_GPU> {
 };
 
 template <typename FPTYPE>
-struct line_minimize_all_band_op<FPTYPE, psi::DEVICE_GPU> {
+struct line_minimize_with_block_op<FPTYPE, psi::DEVICE_GPU> {
   void operator()(
     const psi::DEVICE_GPU* /* dev */,
     std::complex<FPTYPE>* grad_out,
@@ -453,7 +453,7 @@ struct mat_add_inplace_op<FPTYPE, psi::DEVICE_GPU> {
 };
 
 template <typename FPTYPE>
-struct calc_grad_all_band_op<FPTYPE, psi::DEVICE_GPU> {
+struct calc_grad_with_block_op<FPTYPE, psi::DEVICE_GPU> {
   void operator()(
     const psi::DEVICE_GPU* /* dev */,
     const FPTYPE* prec_in,

@@ -78,7 +78,7 @@ void DiagoBPCG<FPTYPE, Device>::line_minimize(
     ct::Tensor& psi_out,
     ct::Tensor& hpsi_out)
 {
-    line_minimize_all_band_op()(this->ctx, grad_in.data<std::complex<FPTYPE>>(), hgrad_in.data<std::complex<FPTYPE>>(), psi_out.data<std::complex<FPTYPE>>(), hpsi_out.data<std::complex<FPTYPE>>(), this->n_basis, this->n_basis, this->n_band);
+    line_minimize_with_block_op()(this->ctx, grad_in.data<std::complex<FPTYPE>>(), hgrad_in.data<std::complex<FPTYPE>>(), psi_out.data<std::complex<FPTYPE>>(), hpsi_out.data<std::complex<FPTYPE>>(), this->n_basis, this->n_basis, this->n_band);
 }
 
 // Finally, the last two!
@@ -104,7 +104,7 @@ void DiagoBPCG<FPTYPE, Device>::orth_cholesky(ct::Tensor& workspace_in, ct::Tens
 }
 
 template<typename FPTYPE, typename Device>
-void DiagoBPCG<FPTYPE, Device>::calc_grad_all_band(
+void DiagoBPCG<FPTYPE, Device>::calc_grad_with_block(
         const ct::Tensor& prec_in,
         ct::Tensor& err_out,
         ct::Tensor& beta_out,
@@ -113,7 +113,7 @@ void DiagoBPCG<FPTYPE, Device>::calc_grad_all_band(
         ct::Tensor& grad_out,
         ct::Tensor& grad_old_out)
 {
-    calc_grad_all_band_op()(this->ctx, prec_in.data<FPTYPE>(), err_out.data<FPTYPE>(), beta_out.data<FPTYPE>(), psi_in.data<std::complex<FPTYPE>>(), hpsi_in.data<std::complex<FPTYPE>>(), grad_out.data<std::complex<FPTYPE>>(), grad_old_out.data<std::complex<FPTYPE>>(), this->n_basis, this->n_basis, this->n_band);
+    calc_grad_with_block_op()(this->ctx, prec_in.data<FPTYPE>(), err_out.data<FPTYPE>(), beta_out.data<FPTYPE>(), psi_in.data<std::complex<FPTYPE>>(), hpsi_in.data<std::complex<FPTYPE>>(), grad_out.data<std::complex<FPTYPE>>(), grad_old_out.data<std::complex<FPTYPE>>(), this->n_basis, this->n_basis, this->n_band);
 }
 
 template<typename FPTYPE, typename Device>
@@ -157,7 +157,7 @@ void DiagoBPCG<FPTYPE, Device>::rotate_wf(
 }
 
 template<typename FPTYPE, typename Device>
-void DiagoBPCG<FPTYPE, Device>::calc_hpsi_all_band(
+void DiagoBPCG<FPTYPE, Device>::calc_hpsi_with_block(
         hamilt::Hamilt<FPTYPE, Device>* hamilt_in,
         const psi::Psi<std::complex<FPTYPE>, Device>& psi_in,
         ct::Tensor& hpsi_out)
@@ -186,7 +186,7 @@ void DiagoBPCG<FPTYPE, Device>::diag_hsub(
 }
 
 template<typename FPTYPE, typename Device>
-void DiagoBPCG<FPTYPE, Device>::calc_hsub_all_band(
+void DiagoBPCG<FPTYPE, Device>::calc_hsub_with_block(
         hamilt::Hamilt<FPTYPE, Device> *hamilt_in,
         const psi::Psi<std::complex<FPTYPE>, Device> &psi_in,
         ct::Tensor& psi_out,
@@ -196,7 +196,7 @@ void DiagoBPCG<FPTYPE, Device>::calc_hsub_all_band(
         ct::Tensor& eigenvalue_out)
 {
     // Apply the H operator to psi and obtain the hpsi matrix.
-    this->calc_hpsi_all_band(hamilt_in, psi_in, hpsi_out);
+    this->calc_hpsi_with_block(hamilt_in, psi_in, hpsi_out);
 
     // Diagonalization of the subspace matrix.
     this->diag_hsub(psi_out,hpsi_out, hsub_out, eigenvalue_out);
@@ -209,7 +209,7 @@ void DiagoBPCG<FPTYPE, Device>::calc_hsub_all_band(
 }
 
 template<typename FPTYPE, typename Device>
-void DiagoBPCG<FPTYPE, Device>::calc_hsub_all_band_exit(
+void DiagoBPCG<FPTYPE, Device>::calc_hsub_with_block_exit(
         ct::Tensor& psi_out, 
         ct::Tensor& hpsi_out,
         ct::Tensor& hsub_out, 
@@ -237,7 +237,7 @@ void DiagoBPCG<FPTYPE, Device>::diag(
     this->calc_prec();
 
     // Improving the initial guess of the wave function psi through a subspace diagonalization.
-    this->calc_hsub_all_band(hamilt_in, psi_in, this->psi, this->hpsi, this->hsub, this->work, this->eigen);
+    this->calc_hsub_with_block(hamilt_in, psi_in, this->psi, this->hpsi, this->hsub, this->work, this->eigen);
 
     setmem_complex_op()(this->ctx, this->grad_old.data<std::complex<FPTYPE>>(), 0, this->n_basis * this->n_band);
     setmem_var_op()(this->ctx, this->beta.data<FPTYPE>(), 1E+40, this->n_band);
@@ -254,7 +254,7 @@ void DiagoBPCG<FPTYPE, Device>::diag(
         // 3. calculate the gradient by hpsi - epsilo * psi
         // 4. gradient mix with the previous gradient
         // 5. Do precondition
-        this->calc_grad_all_band(this->prec, this->err_st, this->beta,
+        this->calc_grad_with_block(this->prec, this->err_st, this->beta,
                                  this->psi, this->hpsi, this->grad, this->grad_old);
 
         // Orthogonalize column vectors g_i in matrix grad to column vectors p_j in matrix psi
@@ -266,7 +266,7 @@ void DiagoBPCG<FPTYPE, Device>::diag(
         syncmem_complex_op()(this->ctx, this->ctx, this->grad_old.data<std::complex<FPTYPE>>(), this->grad.data<std::complex<FPTYPE>>(), n_basis * n_band);
 
         // Calculate H|grad> matrix
-        this->calc_hpsi_all_band(hamilt_in, this->grad_wrapper[0], this->hgrad);
+        this->calc_hpsi_with_block(hamilt_in, this->grad_wrapper[0], this->hgrad);
 
         // optimize psi as well as the hpsi
         // 1. normalize grad
@@ -278,10 +278,10 @@ void DiagoBPCG<FPTYPE, Device>::diag(
         this->orth_cholesky(this->work, this->psi, this->hpsi, this->hsub);
 
         if (current_scf_iter == 1 && ntry % this->nline == 0) {
-            this->calc_hsub_all_band(hamilt_in, psi_in, this->psi, this->hpsi, this->hsub, this->work, this->eigen);
+            this->calc_hsub_with_block(hamilt_in, psi_in, this->psi, this->hpsi, this->hsub, this->work, this->eigen);
         }
     } while (ntry < max_iter && this->test_error(this->err_st, this->all_band_cg_thr));
-    this->calc_hsub_all_band_exit(this->psi, this->hpsi, this->hsub, this->work, this->eigen);
+    this->calc_hsub_with_block_exit(this->psi, this->hpsi, this->hsub, this->work, this->eigen);
     syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, eigenvalue_in, this->eigen.data<FPTYPE>(), this->n_band);
 }
 

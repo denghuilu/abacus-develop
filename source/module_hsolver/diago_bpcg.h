@@ -144,7 +144,7 @@ class DiagoBPCG : public DiagH<FPTYPE, Device>
      * @param psi_in The input wavefunction psi.
      * @param hpsi_out Pointer to the array where the resulting hpsi matrix will be stored.
      */
-    void calc_hpsi_all_band(
+    void calc_hpsi_with_block(
         hamilt::Hamilt<FPTYPE, Device>* hamilt_in, 
         const psi::Psi<std::complex<FPTYPE>, Device>& psi_in,  
         ct::Tensor& hpsi_out);
@@ -210,7 +210,7 @@ class DiagoBPCG : public DiagH<FPTYPE, Device>
      *   4. gradient mix with the previous gradient
      *   5. Do precondition
      */
-    void calc_grad_all_band(
+    void calc_grad_with_block(
         const ct::Tensor& prec_in, 
         ct::Tensor& err_out, 
         ct::Tensor& beta_out,
@@ -233,7 +233,7 @@ class DiagoBPCG : public DiagH<FPTYPE, Device>
      * @param hsub_out Subspace matrix output.
      * @param eigenvalue_out Computed eigen.
      */
-    void calc_hsub_all_band(
+    void calc_hsub_with_block(
         hamilt::Hamilt<FPTYPE, Device>* hamilt_in,
         const psi::Psi<std::complex<FPTYPE>, Device>& psi_in,
         ct::Tensor& psi_out, ct::Tensor& hpsi_out,
@@ -256,7 +256,7 @@ class DiagoBPCG : public DiagH<FPTYPE, Device>
      * @param hsub_out Subspace matrix output.
      * @param eigenvalue_out Computed eigen.
      */
-    void calc_hsub_all_band_exit(
+    void calc_hsub_with_block_exit(
         ct::Tensor& psi_out, 
         ct::Tensor& hpsi_out,
         ct::Tensor& hsub_out, 
@@ -337,8 +337,8 @@ class DiagoBPCG : public DiagH<FPTYPE, Device>
     using zpotrf_op = hsolver::zpotrf_op<FPTYPE, Device>;
     using ztrtri_op = hsolver::ztrtri_op<FPTYPE, Device>;
     using set_matrix_op = hsolver::set_matrix_op<FPTYPE, Device>;
-    using calc_grad_all_band_op = hsolver::calc_grad_all_band_op<FPTYPE, Device>;
-    using line_minimize_all_band_op = hsolver::line_minimize_all_band_op<FPTYPE, Device>;
+    using calc_grad_with_block_op = hsolver::calc_grad_with_block_op<FPTYPE, Device>;
+    using line_minimize_with_block_op = hsolver::line_minimize_with_block_op<FPTYPE, Device>;
 
     using ct_Type   = std::complex<FPTYPE>;
     using ct_Device = typename ct::PsiToContainer<Device>::type;

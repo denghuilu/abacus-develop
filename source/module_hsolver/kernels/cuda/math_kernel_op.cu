@@ -81,7 +81,7 @@ __global__ void mat_add_inplace(
 
 // All clear!
 template <typename FPTYPE>
-__global__ void line_minimize_all_band(
+__global__ void line_minimize_with_block(
         thrust::complex<FPTYPE>* grad,
         thrust::complex<FPTYPE>* hgrad,
         thrust::complex<FPTYPE>* psi,
@@ -151,7 +151,7 @@ __global__ void line_minimize_all_band(
 }
 
 template <typename FPTYPE>
-__global__ void calc_grad_all_band(
+__global__ void calc_grad_with_block(
         const FPTYPE* prec,
         FPTYPE* err,
         FPTYPE* beta,
@@ -351,7 +351,7 @@ void set_matrix_op<FPTYPE, psi::DEVICE_GPU>::operator()(
 }
 
 template <typename FPTYPE>
-void line_minimize_all_band_op<FPTYPE, psi::DEVICE_GPU>::operator()(
+void line_minimize_with_block_op<FPTYPE, psi::DEVICE_GPU>::operator()(
         const psi::DEVICE_GPU* /* dev */,
         std::complex<FPTYPE>* grad_out,
         std::complex<FPTYPE>* hgrad_out,
@@ -366,7 +366,7 @@ void line_minimize_all_band_op<FPTYPE, psi::DEVICE_GPU>::operator()(
     auto C = reinterpret_cast<thrust::complex<FPTYPE>*>(psi_out);
     auto D = reinterpret_cast<thrust::complex<FPTYPE>*>(hpsi_out);
 
-    line_minimize_all_band<FPTYPE><<<n_band, THREAD_PER_BLOCK>>>(
+    line_minimize_with_block<FPTYPE><<<n_band, THREAD_PER_BLOCK>>>(
             A, B, C, D,
             n_basis, n_basis_max);
 }
@@ -386,7 +386,7 @@ void mat_add_inplace_op<FPTYPE, psi::DEVICE_GPU>::operator()(
 }
 
 template <typename FPTYPE>
-void calc_grad_all_band_op<FPTYPE, psi::DEVICE_GPU>::operator()(
+void calc_grad_with_block_op<FPTYPE, psi::DEVICE_GPU>::operator()(
         const psi::DEVICE_GPU* /* dev */,
         const FPTYPE* prec_in,
         FPTYPE* err_out,
@@ -404,7 +404,7 @@ void calc_grad_all_band_op<FPTYPE, psi::DEVICE_GPU>::operator()(
     auto C = reinterpret_cast<thrust::complex<FPTYPE>*>(grad_out);
     auto D = reinterpret_cast<thrust::complex<FPTYPE>*>(grad_old_out);
 
-    calc_grad_all_band<FPTYPE><<<n_band, THREAD_PER_BLOCK>>>(
+    calc_grad_with_block<FPTYPE><<<n_band, THREAD_PER_BLOCK>>>(
             prec_in, err_out, beta_out,
             A, B, C, D,
             n_basis, n_basis_max);
@@ -778,8 +778,8 @@ void matrixSetToAnother<FPTYPE, psi::DEVICE_GPU>::operator()(
 template struct zdot_real_op<float, psi::DEVICE_GPU>;
 template struct set_matrix_op<float, psi::DEVICE_GPU>;
 template struct mat_add_inplace_op<float, psi::DEVICE_GPU>;
-template struct calc_grad_all_band_op<float, psi::DEVICE_GPU>;
-template struct line_minimize_all_band_op<float, psi::DEVICE_GPU>;
+template struct calc_grad_with_block_op<float, psi::DEVICE_GPU>;
+template struct line_minimize_with_block_op<float, psi::DEVICE_GPU>;
 template struct vector_div_constant_op<float, psi::DEVICE_GPU>;
 template struct vector_mul_vector_op<float, psi::DEVICE_GPU>;
 template struct vector_div_vector_op<float, psi::DEVICE_GPU>;
@@ -789,8 +789,8 @@ template struct matrixSetToAnother<float, psi::DEVICE_GPU>;
 template struct zdot_real_op<double, psi::DEVICE_GPU>;
 template struct set_matrix_op<double, psi::DEVICE_GPU>;
 template struct mat_add_inplace_op<double, psi::DEVICE_GPU>;
-template struct calc_grad_all_band_op<double, psi::DEVICE_GPU>;
-template struct line_minimize_all_band_op<double, psi::DEVICE_GPU>;
+template struct calc_grad_with_block_op<double, psi::DEVICE_GPU>;
+template struct line_minimize_with_block_op<double, psi::DEVICE_GPU>;
 template struct vector_div_constant_op<double, psi::DEVICE_GPU>;
 template struct vector_mul_vector_op<double, psi::DEVICE_GPU>;
 template struct vector_div_vector_op<double, psi::DEVICE_GPU>;
