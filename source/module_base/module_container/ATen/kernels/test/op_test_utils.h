@@ -8,12 +8,18 @@ namespace container {
 namespace test_utils {
 
 # if __CUDA || __ROCM
+using ComplexTypes = ::testing::Types<
+        std::tuple<std::complex<float>, DEVICE_CPU>, std::tuple<std::complex<float>, DEVICE_GPU>,
+        std::tuple<std::complex<double>, DEVICE_CPU>,  std::tuple<std::complex<double>, DEVICE_GPU>>;
 using Types = ::testing::Types<
         std::tuple<float, DEVICE_CPU>, std::tuple<float, DEVICE_GPU>,
         std::tuple<double, DEVICE_CPU>, std::tuple<double, DEVICE_GPU>,
         std::tuple<std::complex<float>, DEVICE_CPU>, std::tuple<std::complex<float>, DEVICE_GPU>,
         std::tuple<std::complex<double>, DEVICE_CPU>,  std::tuple<std::complex<double>, DEVICE_GPU>>;
 #else 
+using ComplexTypes = ::testing::Types<
+        std::tuple<std::complex<float>, DEVICE_CPU>,
+        std::tuple<std::complex<double>, DEVICE_CPU>>;
 using Types = ::testing::Types<
         std::tuple<float, DEVICE_CPU>, 
         std::tuple<double, DEVICE_CPU>,

@@ -1,5 +1,5 @@
-#ifndef DIAGO_BPCG_H
-#define DIAGO_BPCG_H
+#ifndef DIAGO_BPCG_H_
+#define DIAGO_BPCG_H_
 
 #include "diagh.h"
 #include "module_base/complexmatrix.h"
@@ -19,12 +19,12 @@ namespace hsolver {
 
 /**
  * @class DiagoBPCG
- * @brief A class for diagonalization  using the All-Band CG method.
- * @tparam FPTYPE The floating-point type used for calculations.
+ * @brief A class for diagonalization  using the Blocked-PCG method.
+ * @tparam T The floating-point type used for calculations.
  * @tparam Device The device used for calculations (e.g., cpu or gpu).
  */
-template<typename FPTYPE = double, typename Device = psi::DEVICE_CPU>
-class DiagoBPCG : public DiagH<FPTYPE, Device>
+template<typename T = double, typename Device = psi::DEVICE_CPU>
+class DiagoBPCG : public DiagH<T, Device>
 {
   // Column major psi in this class
   public:
@@ -33,7 +33,7 @@ class DiagoBPCG : public DiagH<FPTYPE, Device>
      *
      * @param precondition precondition data passed by the "Hamilt_PW" class.
      */
-    explicit DiagoBPCG(const FPTYPE * precondition);
+    explicit DiagoBPCG(const T * precondition);
 
     /**
      * @brief Destructor for DiagoBPCG class.
@@ -48,7 +48,7 @@ class DiagoBPCG : public DiagH<FPTYPE, Device>
      *
      * @param psi_in The input wavefunction psi.
      */
-    void init_iter(const psi::Psi<std::complex<FPTYPE>, Device> &psi_in);
+    void init_iter(const psi::Psi<std::complex<T>, Device> &psi_in);
 
     /**
      * @brief Diagonalize the Hamiltonian using the CG method.
@@ -59,7 +59,7 @@ class DiagoBPCG : public DiagH<FPTYPE, Device>
      * @param psi The input wavefunction psi matrix with [dim: n_basis x n_band, column major].
      * @param eigenvalue_in Pointer to the eigen array with [dim: n_band, column major].
      */
-    void diag(hamilt::Hamilt<FPTYPE, Device> *phm_in, psi::Psi<std::complex<FPTYPE>, Device> &psi, FPTYPE *eigenvalue_in) override;
+    void diag(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<std::complex<T>, Device> &psi, T *eigenvalue_in) override;
 
 
   private:
@@ -70,7 +70,7 @@ class DiagoBPCG : public DiagH<FPTYPE, Device>
     /// max iter steps for all-band cg loop
     int nline = 4;
     /// cg convergence thr
-    FPTYPE all_band_cg_thr = 1E-5;
+    T all_band_cg_thr = 1E-5;
 
     ct::DataType fp_type  = ct::DataType::DT_INVALID;
     ct::DataType cx_type  = ct::DataType::DT_INVALID;
@@ -110,14 +110,14 @@ class DiagoBPCG : public DiagH<FPTYPE, Device>
     /// Current device used in this class
     psi::AbacusDevice_t device = {};
 
-    psi::Psi<std::complex<FPTYPE>, Device>* grad_wrapper;
+    psi::Psi<std::complex<T>, Device>* grad_wrapper;
     /**
      * @brief Update the precondition array.
      *
      * This function updates the precondition array by copying the host precondition
      * to the device in a 'gpu' runtime environment. The address of the precondition
      * array is passed by the constructor function called by hsolver::HSolverPW::initDiagh.
-     * The precondition will be updated before the DiagoBPCG<FPTYPE, Device>::diag call.
+     * The precondition will be updated before the DiagoBPCG<T, Device>::diag call.
      *
      * @note prec[dim: n_band]
      *
@@ -145,8 +145,8 @@ class DiagoBPCG : public DiagH<FPTYPE, Device>
      * @param hpsi_out Pointer to the array where the resulting hpsi matrix will be stored.
      */
     void calc_hpsi_with_block(
-        hamilt::Hamilt<FPTYPE, Device>* hamilt_in, 
-        const psi::Psi<std::complex<FPTYPE>, Device>& psi_in,  
+        hamilt::Hamilt<T, Device>* hamilt_in, 
+        const psi::Psi<std::complex<T>, Device>& psi_in,  
         ct::Tensor& hpsi_out);
 
     /**
@@ -234,8 +234,8 @@ class DiagoBPCG : public DiagH<FPTYPE, Device>
      * @param eigenvalue_out Computed eigen.
      */
     void calc_hsub_with_block(
-        hamilt::Hamilt<FPTYPE, Device>* hamilt_in,
-        const psi::Psi<std::complex<FPTYPE>, Device>& psi_in,
+        hamilt::Hamilt<T, Device>* hamilt_in,
+        const psi::Psi<std::complex<T>, Device>& psi_in,
         ct::Tensor& psi_out, ct::Tensor& hpsi_out,
         ct::Tensor& hsub_out, ct::Tensor& workspace_in,
         ct::Tensor& eigenvalue_out);
@@ -318,31 +318,31 @@ class DiagoBPCG : public DiagH<FPTYPE, Device>
      * @param thr_in The threshold.
      * @return Returns true if all error values are less than or equal to the threshold, false otherwise.
      */
-    bool test_error(const ct::Tensor& err_in, FPTYPE thr_in);
+    bool test_error(const ct::Tensor& err_in, T thr_in);
 
-    using hpsi_info = typename hamilt::Operator<std::complex<FPTYPE>, Device>::hpsi_info;
+    using hpsi_info = typename hamilt::Operator<std::complex<T>, Device>::hpsi_info;
 
-    using setmem_var_op = psi::memory::set_memory_op<FPTYPE, Device>;
-    using resmem_var_op = psi::memory::resize_memory_op<FPTYPE, Device>;
-    using delmem_var_op = psi::memory::delete_memory_op<FPTYPE, Device>;
-    using syncmem_var_h2d_op = psi::memory::synchronize_memory_op<FPTYPE, Device, psi::DEVICE_CPU>;
-    using syncmem_var_d2h_op = psi::memory::synchronize_memory_op<FPTYPE, psi::DEVICE_CPU, Device>;
+    using setmem_var_op = psi::memory::set_memory_op<T, Device>;
+    using resmem_var_op = psi::memory::resize_memory_op<T, Device>;
+    using delmem_var_op = psi::memory::delete_memory_op<T, Device>;
+    using syncmem_var_h2d_op = psi::memory::synchronize_memory_op<T, Device, psi::DEVICE_CPU>;
+    using syncmem_var_d2h_op = psi::memory::synchronize_memory_op<T, psi::DEVICE_CPU, Device>;
 
-    using setmem_complex_op = psi::memory::set_memory_op<std::complex<FPTYPE>, Device>;
-    using delmem_complex_op = psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
-    using resmem_complex_op = psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
-    using syncmem_complex_op = psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, Device>;
+    using setmem_complex_op = psi::memory::set_memory_op<std::complex<T>, Device>;
+    using delmem_complex_op = psi::memory::delete_memory_op<std::complex<T>, Device>;
+    using resmem_complex_op = psi::memory::resize_memory_op<std::complex<T>, Device>;
+    using syncmem_complex_op = psi::memory::synchronize_memory_op<std::complex<T>, Device, Device>;
 
-    using dnevd_op = hsolver::dnevd_op<FPTYPE, Device>;
-    using zpotrf_op = hsolver::zpotrf_op<FPTYPE, Device>;
-    using ztrtri_op = hsolver::ztrtri_op<FPTYPE, Device>;
-    using set_matrix_op = hsolver::set_matrix_op<FPTYPE, Device>;
-    using calc_grad_with_block_op = hsolver::calc_grad_with_block_op<FPTYPE, Device>;
-    using line_minimize_with_block_op = hsolver::line_minimize_with_block_op<FPTYPE, Device>;
+    using dnevd_op = hsolver::dnevd_op<T, Device>;
+    using zpotrf_op = hsolver::zpotrf_op<T, Device>;
+    using ztrtri_op = hsolver::ztrtri_op<T, Device>;
+    using set_matrix_op = hsolver::set_matrix_op<T, Device>;
+    using calc_grad_with_block_op = hsolver::calc_grad_with_block_op<T, Device>;
+    using line_minimize_with_block_op = hsolver::line_minimize_with_block_op<T, Device>;
 
-    using ct_Type   = std::complex<FPTYPE>;
+    using ct_Type   = std::complex<T>;
     using ct_Device = typename ct::PsiToContainer<Device>::type;
 };
 
 } // namespace hsolver
-#endif // DIAGO_BPCG_H
+#endif // DIAGO_BPCG_H_

@@ -1,6 +1,14 @@
 remove_definitions(-D__CUDA)
 remove_definitions(-D__ROCM)
 AddTest(
+  TARGET HSolver_bpcg
+  LIBS ${math_libs} base psi device container kernels
+  SOURCES diago_bpcg_test.cpp ../diago_iter_assist.cpp ../diago_bpcg.cpp
+          ../../module_basis/module_pw/test/test_tool.cpp
+          ../../module_hamilt_general/operator.cpp
+          ../../module_hamilt_pw/hamilt_pwdft/operator_pw/operator_pw.cpp
+)
+AddTest(
   TARGET HSolver_cg
   LIBS ${math_libs} base psi device
   SOURCES diago_cg_test.cpp ../diago_cg.cpp  ../diago_iter_assist.cpp  

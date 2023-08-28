@@ -645,8 +645,7 @@ void gemm_batched_strided(cublasHandle_t& handle, const char& transa, const char
             batch_size);
 }
 } // namespace cuBlasConnector
-
+#endif // __CUDA || __ROCM
 } // namespace container
 
-#endif // __CUDA || __ROCM
 #endif // BASE_THIRD_PARTY_BLAS_H_
