@@ -1,22 +1,23 @@
-list(APPEND container_srcs
-    ATen/core/tensor.cpp
-    ATen/core/tensor_map.cpp
-    ATen/core/cpu_allocator.cpp
-    ATen/core/tensor_buffer.cpp
-    ATen/core/tensor_shape.cpp
-    ATen/core/tensor_types.cpp
-    base/core/refcount.cpp
-)
+set(ATen_CPU_SRCS)
+set(ATen_CUDA_SRCS)
+set(ATen_ROCM_SRCS)
+set(ATen_CPU_DEPENDENCY_LIBS)
+set(ATen_CUDA_DEPENDENCY_LIBS)
+set(ATen_ROCM_DEPENDENCY_LIBS)
 
-if(USE_CUDA)
-    list(APPEND container_srcs ATen/core/gpu_allocator.cpp)
-endif()
-
-add_library(container OBJECT ${container_srcs})
-
+add_subdirectory(base/core)
+add_subdirectory(ATen/core)
 add_subdirectory(ATen/kernels)
 
-target_link_libraries(container kernels)
+# Pass source, includes, and libs to parent
+set(ATen_CPU_SRCS ${ATen_CPU_SRCS} PARENT_SCOPE)
+set(ATen_CUDA_SRCS ${ATen_CUDA_SRCS} PARENT_SCOPE)
+set(ATen_ROCM_SRCS ${ATen_ROCM_SRCS} PARENT_SCOPE)
+set(ATen_CPU_DEPENDENCY_LIBS ${ATen_CPU_DEPENDENCY_LIBS} PARENT_SCOPE)
+set(ATen_CUDA_DEPENDENCY_LIBS ${ATen_CUDA_DEPENDENCY_LIBS} PARENT_SCOPE)
+set(ATen_ROCM_DEPENDENCY_LIBS ${ATen_ROCM_DEPENDENCY_LIBS} PARENT_SCOPE)
+
+add_library(container OBJECT ${ATen_CPU_SRCS} ${ATen_CUDA_SRCS})
 
 if(ENABLE_COVERAGE)
   add_coverage(container)

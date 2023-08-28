@@ -581,7 +581,6 @@ target_link_libraries(${ABACUS_BIN_NAME}
     vdw
     device
     container
-    kernels
 )
 
 if(ENABLE_LCAO)

@@ -1,27 +1,16 @@
-list(APPEND kernels_srcs
-    blas_op.cpp
-    lapack_op.cpp
-    memory_op.cpp
-    linalg_op.cpp
-    einsum_op.cpp
-)
+file(GLOB ATen_KERNELS_SRCS "*.cpp")
 
 if(USE_CUDA)
-    list(APPEND kernels_srcs
-        cuda/memory_op.cu
-        cuda/lapack_op.cu
-        cuda/blas_op.cu
-        cuda/linalg_op.cu
-    )
+    file(GLOB ATen_KERNELS_CUDA_SRCS "cuda/*.cu")
+    set(ATen_CUDA_SRCS ${ATen_CUDA_SRCS} ${ATen_KERNELS_CUDA_SRCS} PARENT_SCOPE)
 endif()
 
 if(USE_ROCM)
-    hip_add_library(kernels_rocm STATIC
-        rocm/memory_op.hip.cu
-    )
+    file(GLOB ATen_KERNELS_ROCM_SRCS "cuda/*.hip.cu")
+    set(ATen_ROCM_SRCS ${ATen_ROCM_SRCS} ${ATen_KERNELS_ROCM_SRCS} PARENT_SCOPE)
 endif()
 
-add_library(kernels OBJECT ${kernels_srcs})
+set(ATen_CPU_SRCS ${ATen_CPU_SRCS} ${ATen_KERNELS_SRCS} PARENT_SCOPE)
 
 if(BUILD_TESTING)
   add_subdirectory(test)

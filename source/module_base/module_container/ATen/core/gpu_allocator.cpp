@@ -1,5 +1,6 @@
-#include <cuda_runtime.h> // for CUDA APIs
+#ifdef __CUDA || __ROCM
 
+#include <cuda_runtime.h> // for CUDA APIs
 #include <ATen/core/gpu_allocator.h>
 
 namespace container {
@@ -38,3 +39,5 @@ DeviceType GPUAllocator::GetDeviceType() {
 }
 
 } // namespace container
+
+#endif // __CUDA || __ROCM
