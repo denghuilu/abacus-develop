@@ -118,7 +118,7 @@ void DiagoBPCG<T, Device>::calc_grad_with_block(
 template<typename T, typename Device>
 void DiagoBPCG<T, Device>::calc_prec()
 {
-    syncmem_var_h2d_op()(this->prec.data<T>(), this->h_prec.data<T>(), this->n_basis);
+    syncmem_var_h2d_op()(this->prec.template data<T>(), this->h_prec.template data<T>(), this->n_basis);
 }
 
 template<typename T, typename Device>
@@ -147,7 +147,7 @@ void DiagoBPCG<T, Device>::rotate_wf(
         /*conj_x=*/false, /*conj_y=*/false, /*alpha=*/1.0, /*beta=*/0.0, /*Tensor out=*/&workspace_in);
     workspace_in = ct::op::einsum("ij,jk->ik", hsub_in, psi_out, option);
 
-    syncmem_complex_op()(psi_out.data<std::complex<T>>(), workspace_in.data<std::complex<T>>(), this->n_band * this->n_basis);
+    syncmem_complex_op()(psi_out.template data<std::complex<T>>(), workspace_in.template data<std::complex<T>>(), this->n_band * this->n_basis);
 }
 
 template<typename T, typename Device>
@@ -233,8 +233,8 @@ void DiagoBPCG<T, Device>::diag(
     // Improving the initial guess of the wave function psi through a subspace diagonalization.
     this->calc_hsub_with_block(hamilt_in, psi_in, this->psi, this->hpsi, this->hsub, this->work, this->eigen);
 
-    setmem_complex_op()(this->grad_old.data<std::complex<T>>(), 0, this->n_basis * this->n_band);
-    setmem_var_op()(this->beta.data<T>(), 1E+40, this->n_band);
+    setmem_complex_op()(this->grad_old.template data<std::complex<T>>(), 0, this->n_basis * this->n_band);
+    setmem_var_op()(this->beta.template data<T>(), 1E+40, this->n_band);
     int ntry = 0;
     int max_iter = current_scf_iter > 1 ?
                    this->nline :
@@ -257,7 +257,7 @@ void DiagoBPCG<T, Device>::diag(
         this->orth_projection(this->psi, this->hsub, this->grad);
 
         // this->grad_old = this->grad;
-        syncmem_complex_op()(this->grad_old.data<std::complex<T>>(), this->grad.data<std::complex<T>>(), n_basis * n_band);
+        syncmem_complex_op()(this->grad_old.template data<std::complex<T>>(), this->grad.template data<std::complex<T>>(), n_basis * n_band);
 
         // Calculate H|grad> matrix
         this->calc_hpsi_with_block(hamilt_in, this->grad_wrapper[0], this->hgrad);
@@ -276,7 +276,7 @@ void DiagoBPCG<T, Device>::diag(
         }
     } while (ntry < max_iter && this->test_error(this->err_st, this->all_band_cg_thr));
     this->calc_hsub_with_block_exit(this->psi, this->hpsi, this->hsub, this->work, this->eigen);
-    syncmem_var_d2h_op()(eigenvalue_in, this->eigen.data<T>(), this->n_band);
+    syncmem_var_d2h_op()(eigenvalue_in, this->eigen.template data<T>(), this->n_band);
 }
 
 template class DiagoBPCG<float, psi::DEVICE_CPU>;
