@@ -57,6 +57,9 @@ public:
 
     private:
 
+    // The sub allocator to use for extending the BFC's memory pool.
+    std::unique_ptr<Allocator> sub_alloc_;
+
     struct bin;
     mutable std::mutex mtx_;
 
@@ -103,12 +106,27 @@ public:
         chunk_handle_t first_chunk_handle = kInvalidChunkHandle;
         // The handle of the last chunk in the bin.
         chunk_handle_t last_chunk_handle = kInvalidChunkHandle;
-    };
 
-    /*
-     * @brief The sub allocator to use for extending the BFC's memory pool.
-     */
-    std::unique_ptr<Allocator> sub_alloc_;
+        class chunk_comparator {
+          public:
+            explicit chunk_comparator(BFCAllocator* allocator) : allocator_(allocator) {}
+            // Sort first by size and then use pointer address as a tie breaker.
+            bool operator()(const chunk_handle_t ha,
+                            const chunk_handle_t hb) const {
+                const chunk* a = allocator_->chunk_from_handle(ha);
+                const chunk* b = allocator_->chunk_from_handle(hb);
+                if (a->size != b->size) {
+                    return a->size < b->size;
+                }
+                return a->ptr < b->ptr;
+            }
+
+          private:
+            BFCAllocator* allocator_;  // The parent allocator
+        };
+
+        using free_chunk_set_t = std::set<ChunkHandle, ChunkComparator>;
+    };
 
     
 };

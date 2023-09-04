@@ -4,7 +4,7 @@ include Makefile.vars
 # Compiler information 
 #==========================
 INCLUDES = -I. -Icommands -I../ -Imodule_base/module_container
-LIBS = -lm -lpthread
+LIBS = -lm -lpthread -L/root/abacus-develop/toolchain/install/scalapack-2.2.1/lib
 OPTS = -std=c++14 -pedantic -m64 ${INCLUDES}
 HONG = -D__LCAO
 HONG += -D__ELPA
