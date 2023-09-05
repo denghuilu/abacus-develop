@@ -4,6 +4,6 @@ This test for:
 *kpoints 2*2*2
 *sg15 pseudopotential
 *smearing_method gauss
-*ks_solver cg
+*ks_solver bpcg
 *mixing_type pulay-kerker
 *mixing_beta 0.4
