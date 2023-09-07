@@ -2,6 +2,7 @@
 #define BASE_MACROS_MACROS_H_
 
 #include <stdint.h>
+#include <base/utils/logging.h>
 
 #if __CUDA
 #include <base/macros/cuda.h> 
@@ -26,6 +27,31 @@
   DISALLOW_COPY_MOVE_AND_ASSIGN(TypeName)
 
 #define MAX_SIZE_T UINT64_MAX
+
+#if defined(__GNUC__) || defined(__ICL) || defined(__clang__)
+#define PREDICT_TRUE(expr) (__builtin_expect(static_cast<bool>(expr), 1))
+#define PREDICT_FALSE(expr) (__builtin_expect(static_cast<bool>(expr), 0))
+#else
+#define PREDICT_TRUE(expr) (expr)
+#define PREDICT_FALSE(expr) (expr)
+#endif
+
+#define CHECK_MSG(cond, ...)                                \
+  (::base::utils::check_msg_impl(                           \
+      "Expected " #cond                                     \
+      " to be true, but got false.  "                       \
+      "(Could this error message be improved?  If so, "     \
+      "please report an enhancement request to Container)"  \
+      ##__VA_ARGS__))
+
+#define REQUIRES_OK(expr, ...)            \
+  if(PREDICT_FALSE(!(expr))) {            \
+    ::base::utils::check_exit_impl(       \
+      __func__,                           \
+      __FILE__,                           \
+      static_cast<uint32_t>(__LINE__),    \
+      CHECK_MSG(cond, ##__VA_ARGS__));    \
+  }
 
 
 // The macro TEMPLATE_1() expands to a switch statement conditioned on

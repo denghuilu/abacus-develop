@@ -1,6 +1,9 @@
 #ifndef BASE_CORE_BFC_ALLOCATOR_H_
 #define BASE_CORE_BFC_ALLOCATOR_H_
 
+#include <set>
+
+#include <base/macros/macros.h>
 #include <base/core/allocator.h>
 
 namespace container {
@@ -55,13 +58,12 @@ public:
      */
     DeviceType GetDeviceType() override;
 
-    private:
+  private:
 
-    // The sub allocator to use for extending the BFC's memory pool.
-    std::unique_ptr<Allocator> sub_alloc_;
 
     struct bin;
-    mutable std::mutex mtx_;
+    //
+    mutable std::mutex lock_;
 
     // A chunk_handle is an index into the chunks_ vector in BFCAllocator
     // kInvalidChunkHandle means an invalid chunk index.
@@ -125,10 +127,230 @@ public:
             BFCAllocator* allocator_;  // The parent allocator
         };
 
-        using free_chunk_set_t = std::set<ChunkHandle, ChunkComparator>;
+        using free_chunk_set_t = std::set<chunk_handle_t, chunk_comparator>;
+
+        free_chunk_set_t free_chunks = {};
+        bin(BFCAllocator* allocator, size_t bs)
+            : bin_size(bs), free_chunks(chunk_comparator(allocator)) {}
     };
 
+    static constexpr size_t kMinAllocationBits = 8;
+    static constexpr size_t kMinAllocationSize = 1 << kMinAllocationBits;
+
+    // BFCAllocator allocates memory into a collection of disjoint
+    // AllocationRegions.  Each AllocationRegion corresponds to one call to
+    // SubAllocator::Alloc().  (Actually, if a subsequent call to
+    // SubAllocator::Alloc() returns another region immediately adjacent to the
+    // last, it will be used to extend the first AllocationRegion, not create a
+    // separate one.)
+    //
+    // An AllocationRegion contains one or more Chunks, covering all of its
+    // memory.  Its primary job is to map pointers to ChunkHandles.
+    //
+    // This class is thread-compatible.
+    class allocation_region {
+      public:
+        allocation_region(void* ptr, size_t memory_size)
+        : ptr_(ptr),
+          memory_size_(memory_size),
+          end_ptr_(
+              static_cast<void*>(static_cast<char*>(ptr_) + memory_size_)) 
+        {
+            // DCHECK_EQ(0, memory_size % kMinAllocationSize);
+            // TODO: Implement a check macro for container tensors.
+            const size_t n_handles =
+                (memory_size + kMinAllocationSize - 1) / kMinAllocationSize;
+            handles_.resize(n_handles, kInvalidChunkHandle);
+        }
+
+        allocation_region() = default;
+        allocation_region(allocation_region&& other) {this->swap(&other);}
+        allocation_region& operator=(allocation_region&& other) {
+            this->swap(&other);
+            return *this;
+        }
+
+        void* ptr() const { return ptr_; }
+        void* end_ptr() const { return end_ptr_; }
+        size_t memory_size() const { return memory_size_; }
+
+        void extend(size_t new_memory_size) {
+            memory_size_ += new_memory_size;
+            // DCHECK_EQ(0, memory_size_ % kMinAllocationSize);
+
+            end_ptr_ = static_cast<void*>(static_cast<char*>(ptr_) + memory_size_);
+            const int n_handles =
+                (memory_size_ + kMinAllocationSize - 1) / kMinAllocationSize;
+            handles_.resize(n_handles, kInvalidChunkHandle);
+
+        }
+
+        chunk_handle_t handle_for_ptr(const void* ptr) const {
+            return handles_[index_for_handle(ptr)];
+        }
+
+        void set_handle_for_ptr(const void* ptr, chunk_handle_t handle) {
+            handles_[index_for_handle(ptr)] = handle;
+        }
+
+        void erase (const void* ptr) {
+            set_handle_for_ptr(ptr, kInvalidChunkHandle);
+        }
+
+      private:
+        void swap(allocation_region* other) {
+            std::swap(ptr_, other->ptr_);
+            std::swap(memory_size_, other->memory_size_);
+            std::swap(end_ptr_, other->end_ptr_);
+            std::swap(handles_, other->handles_);
+        }
+
+        size_t index_for_handle(const void* ptr) const {
+            const size_t offset = reinterpret_cast<const std::uintptr_t>(ptr) - reinterpret_cast<const std::uintptr_t>(ptr_);
+            // Do the checks
+            return static_cast<size_t>(offset >> kMinAllocationBits);
+        }
+
+        // The pointer to the start of the memory region.
+        void* ptr_;
+        // The size of the memory region.
+        size_t memory_size_;
+        // The pointer to the end of the memory region.
+        void* end_ptr_;
+        // The vector of chunk handles.
+        std::vector<chunk_handle_t> handles_;
+
+        DISALLOW_COPY_AND_ASSIGN(allocation_region);
+    };
     
+    // RegionManager aggregates one or more "AllocationRegions" and provides
+    // a layer of indirection from pointers to the underlying ChunkHandle,
+    // allowing allocation across multiple discontiguous memory regions.
+    //
+    // This class is thread-compatible.
+
+    class region_manager {
+      public:
+        region_manager() {}
+        ~region_manager() {}
+
+        void add_allocation_region(void* ptr, size_t memory_size) {
+            auto entry =
+                std::upper_bound(regions_.begin(), regions_.end(), ptr, &comparator);
+            regions_.insert(entry, allocation_region(ptr, memory_size));
+        }
+
+        // Adds an alloation region for the given ptr and size, potentially
+        // extending a region if ptr matches the end_ptr of an existing region.
+        // If a region is extended, returns a pointer to the extended region so that
+        // the BFC allocator can reason about chunkification.
+        allocation_region* add_allocation_region_or_extend(
+            void* ptr, 
+            size_t memory_size) 
+        {
+            auto entry =
+                std::upper_bound(regions_.begin(), regions_.end(), ptr, &comparator);
+            if (entry != regions_.begin()) {
+                auto prev = entry - 1;
+                prev->extend(memory_size);
+                return &(*prev);
+            }
+            regions_.insert(entry, allocation_region(ptr, memory_size));
+            return nullptr;
+        }
+
+        std::vector<allocation_region>::iterator remove_allocation_region(
+            std::vector<allocation_region>::iterator it) {
+            return regions_.erase(it);
+        }
+
+        chunk_handle_t handle_for_ptr(const void* ptr) const {
+            return index_for_region(ptr)->handle_for_ptr(ptr);
+        }
+
+        void set_handle_for_ptr(const void* ptr, chunk_handle_t handle) {
+            mutable_index_for_region(ptr)->set_handle_for_ptr(ptr, handle);
+        }
+
+        void erase(const void* ptr) {
+            mutable_index_for_region(ptr)->erase(ptr);
+        }
+
+        const std::vector<allocation_region>& regions() const { return regions_; }
+
+      private:
+        static bool comparator(const void* ptr, const allocation_region& other) {
+            return ptr < other.end_ptr();
+        }
+
+        const allocation_region* index_for_region(const void* ptr) const {
+            auto entry =
+                std::upper_bound(regions_.begin(), regions_.end(), ptr, &comparator);
+            if (entry != regions_.end()) {
+                return &(*entry);
+            }
+            // LOG(FATAL) << "Could not find Region for " << p;
+            return nullptr;
+        }
+
+        allocation_region* mutable_index_for_region(const void* ptr) {
+            return const_cast<allocation_region*>(index_for_region(ptr));
+        }
+
+        std::vector<allocation_region> regions_;
+    };
+
+    // Returns 'bytes' rounded up to the next highest kMinAllocationSize.
+    static size_t rounded_bytes(size_t bytes);
+
+    // Returns floor(log2(n)).
+    inline int log2_floor_non_zero(uint64_t n) {
+        int r = 0;
+        while (n > 0) {
+            r++;
+            n >>= 1;
+        }
+        return r - 1;
+    }
+
+    size_t bin_num_to_size(bin_index_t index) {
+        return static_cast<size_t>(256) << index;
+    }
+
+    // This is actually a reference of the bin.
+    bin* bin_from_index(bin_index_t index) {
+        return reinterpret_cast<bin*>(&(bins_space_[index * sizeof(bin)]));
+    }
+
+    bin_index_t bin_num_for_size(size_t bytes) {
+        uint64_t v = std::max<size_t>(bytes, 256) >> kMinAllocationBits;
+        int b = std::min(kNumBins - 1, log2_floor_non_zero(v));
+        return b;
+    }
+
+    bin* bin_for_size(size_t bytes) { return bin_from_index(bin_num_for_size(bytes)); }
+
+    chunk* chunk_from_handle(chunk_handle_t h);
+    const chunk* chunk_from_handle(chunk_handle_t h) const;
+
+    bool extend(size_t alignment, size_t rounded_bytes);
+
+    // record the allocated memory;
+    region_manager region_manager_;
+
+    char bins_space_[sizeof(bin) * kNumBins];
+    // Params for BFCAllocator 
+    Options options_ = {};
+    // Sub allocator for BFCAllocator 
+    std::unique_ptr<Allocator> sub_alloc_ = nullptr;
+    // The size of the current region allocation.
+    size_t curr_region_allocation_bytes_ = 0;
+    // Record the memory allocate operations
+    AllocatorStats stats_ = {};
+    // Allocate the requested amount of memory.
+    size_t memory_limit_ = 0;
+    // empty chunk handle
+    std::vector<chunk> chunks_ = {};
 };
 
 } // namespace base

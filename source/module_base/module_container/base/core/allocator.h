@@ -6,6 +6,42 @@
 namespace container {
 
 namespace base {
+
+struct AllocatorStats {
+  int64_t num_allocs;          // Number of allocations.
+  int64_t bytes_in_use;        // Number of bytes in use.
+  int64_t peak_bytes_in_use;   // The peak bytes in use.
+  int64_t largest_alloc_size;  // The largest single allocation seen.
+
+  int64_t bytes_limit;
+
+  // Stats for reserved memory usage.
+  int64_t bytes_reserved;       // Number of bytes reserved.
+  int64_t peak_bytes_reserved;  // The peak number of bytes reserved.
+  // The upper limit on the number bytes of reservable memory,
+  int64_t bytes_reservable_limit;
+
+  int64_t largest_free_block_bytes;  // Largest free block's size in heap.
+
+  // Number of bytes of memory held by the allocator.  This may be higher than
+  // bytes_in_use if the allocator holds a pool of memory (e.g. BFCAllocator).
+  int64_t pool_bytes;
+  int64_t peak_pool_bytes;
+
+  AllocatorStats()
+      : num_allocs(0),
+        bytes_in_use(0),
+        peak_bytes_in_use(0),
+        largest_alloc_size(0),
+        bytes_limit(0),
+        bytes_reserved(0),
+        peak_bytes_reserved(0),
+        bytes_reservable_limit(0),
+        largest_free_block_bytes(0),
+        pool_bytes(0),
+        peak_pool_bytes(0) {}
+};
+
 /**
  * @brief An abstract base class for memory allocators.
  *
