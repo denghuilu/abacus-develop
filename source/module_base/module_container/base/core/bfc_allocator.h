@@ -2,6 +2,7 @@
 #define BASE_CORE_BFC_ALLOCATOR_H_
 
 #include <set>
+#include <mutex>
 
 #include <base/macros/macros.h>
 #include <base/core/allocator.h>
@@ -20,11 +21,12 @@ public:
     struct Options {
         bool allow_growth = true;
         double fragment_fraction = 0.0;
+        Options() : allow_growth(true), fragment_fraction(0.0) {}
     };
 
     BFCAllocator(std::unique_ptr<Allocator> sub_alloc, const size_t& total_memory, const Options& options = Options());
 
-    ~BFCAllocator();
+    virtual ~BFCAllocator();
     /**
      * @brief Allocate a block of memory with the given size and default alignment on GPU.
      *
@@ -32,7 +34,7 @@ public:
      *
      * @return A pointer to the allocated memory block, or nullptr if the allocation fails.
      */
-    void* allocate(size_t size) override;
+    void* allocate(size_t size) override {return allocate(size, 256);}
 
     /**
      * @brief Allocate a block of memory with the given size and alignment on GPU.
@@ -63,7 +65,7 @@ public:
 
     struct bin;
     //
-    mutable std::mutex lock_;
+    mutable std::mutex mtx_;
 
     // A chunk_handle is an index into the chunks_ vector in BFCAllocator
     // kInvalidChunkHandle means an invalid chunk index.
@@ -95,8 +97,10 @@ public:
         chunk_handle_t next_chunk_handle = kInvalidChunkHandle;
         // The handle of the previous chunk in the bin.
         chunk_handle_t prev_chunk_handle = kInvalidChunkHandle;
+        // The freed count of the chunk.
+        uint64_t freed_at_count = 0;
         // Whether the chunk is allocated.
-        bool allocated() const { return allocation_id > 0; }
+        bool is_allocated() const { return allocation_id > 0; }
     };
 
     struct bin {
@@ -129,7 +133,7 @@ public:
 
         using free_chunk_set_t = std::set<chunk_handle_t, chunk_comparator>;
 
-        free_chunk_set_t free_chunks = {};
+        free_chunk_set_t free_chunks;
         bin(BFCAllocator* allocator, size_t bs)
             : bin_size(bs), free_chunks(chunk_comparator(allocator)) {}
     };
@@ -313,7 +317,7 @@ public:
         return r - 1;
     }
 
-    size_t bin_num_to_size(bin_index_t index) {
+    size_t bin_index_to_size(bin_index_t index) {
         return static_cast<size_t>(256) << index;
     }
 
@@ -322,19 +326,38 @@ public:
         return reinterpret_cast<bin*>(&(bins_space_[index * sizeof(bin)]));
     }
 
-    bin_index_t bin_num_for_size(size_t bytes) {
+    bin_index_t bin_index_for_size(size_t bytes) {
         uint64_t v = std::max<size_t>(bytes, 256) >> kMinAllocationBits;
         int b = std::min(kNumBins - 1, log2_floor_non_zero(v));
         return b;
     }
 
-    bin* bin_for_size(size_t bytes) { return bin_from_index(bin_num_for_size(bytes)); }
+    bin* bin_for_size(size_t bytes) { return bin_from_index(bin_index_for_size(bytes)); }
 
     chunk* chunk_from_handle(chunk_handle_t h);
     const chunk* chunk_from_handle(chunk_handle_t h) const;
 
+    void merge(chunk_handle_t handle_1, chunk_handle_t handle_2);
+
+    void split_chunk(chunk_handle_t handle, size_t size);
+
     bool extend(size_t alignment, size_t rounded_bytes);
 
+    chunk_handle_t allocate_chunk();
+
+    void deallocate_chunk(chunk_handle_t handle);
+
+    void insert_free_chunk_into_bin(chunk_handle_t handle);
+
+    void remove_free_chunk_from_bin(chunk_handle_t handle);
+
+    void remove_free_chunk_iter_from_bin(bin::free_chunk_set_t* free_chunks, bin::free_chunk_set_t::iterator iter);
+
+    chunk_handle_t try_to_coalesce_with_nbor_chunk(chunk_handle_t handle, bool ignore_freed_at);
+
+    void* find_chunk_ptr(bin_index_t bin_index, size_t rounded_bytes, size_t size, uint64_t freed_before);
+
+    void mark_free(chunk_handle_t handle);
     // record the allocated memory;
     region_manager region_manager_;
 
@@ -351,6 +374,9 @@ public:
     size_t memory_limit_ = 0;
     // empty chunk handle
     std::vector<chunk> chunks_ = {};
+    chunk_handle_t free_chunks_list_ = kInvalidChunkHandle;
+    // mark the allocation counter 
+    int64_t next_allocation_id_ = 0;
 };
 
 } // namespace base

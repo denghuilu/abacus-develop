@@ -6,11 +6,11 @@
 namespace base {
 namespace utils {
 
-inline const char* check_msg_impl(const char* msg) {
+inline static const char* check_msg_impl(const char* msg) {
   return msg;
 }
 
-void check_exit_impl(const char* func, const char* file, uint32_t line, const char* msg) {
+inline static void check_exit_impl(const char* func, const char* file, uint32_t line, const char* msg) {
     fprintf(stderr, "Fatal error in function %s, file %s, line %u:\nwith message: %s\n", func, file, line, msg);
     std::abort();
 }
