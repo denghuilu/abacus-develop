@@ -36,13 +36,14 @@
 #define PREDICT_FALSE(expr) (expr)
 #endif
 
-#define CHECK_MSG(cond, ...)                                \
+#define CHECK_MSG(expr, ...)                                \
   (::base::utils::check_msg_impl(                           \
-      "Expected " #cond                                     \
+      "Expected " #expr                                     \
       " to be true, but got false.  "                       \
+      __VA_ARGS__ " "                                       \
       "(Could this error message be improved?  If so, "     \
       "please report an enhancement request to Container)"  \
-      ##__VA_ARGS__))
+      ))
 
 #define REQUIRES_OK(expr, ...)            \
   if(PREDICT_FALSE(!(expr))) {            \
@@ -50,7 +51,7 @@
       __func__,                           \
       __FILE__,                           \
       static_cast<uint32_t>(__LINE__),    \
-      CHECK_MSG(cond, ##__VA_ARGS__));    \
+      CHECK_MSG(expr, ##__VA_ARGS__));    \
   }
 
 

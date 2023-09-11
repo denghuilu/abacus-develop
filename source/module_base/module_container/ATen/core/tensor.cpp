@@ -1,9 +1,6 @@
 #include <ATen/core/tensor.h>
 #include <ATen/core/tensor_utils.h>
-#include <base/core/cpu_allocator.h>
-#if defined(__CUDA) || defined(__ROCM)
-#include <base/core/gpu_allocator.h>
-#endif // __CUDA || __ROCM
+#include <base/core/allocator.h>
 namespace container {
 
 Tensor::Tensor() : Tensor(DataType::DT_FLOAT) {}
@@ -12,11 +9,11 @@ Tensor::Tensor(DataType data_type) : Tensor(data_type, TensorShape({})) {}
 
 // Constructor that creates a tensor with the given data type and shape using the default allocator.
 Tensor::Tensor(DataType data_type, const TensorShape& shape)
-        : Tensor(GetAllocator(DeviceType::CpuDevice), data_type, DeviceType::CpuDevice, shape) {}
+        : Tensor(base::Allocator::GetAllocator(DeviceType::CpuDevice), data_type, DeviceType::CpuDevice, shape) {}
 
 // Construct a new Tensor object with the given data type and shape.
 Tensor::Tensor(DataType data_type, DeviceType device, const TensorShape& shape)
-        : Tensor(GetAllocator(device), data_type, device, shape) {}
+        : Tensor(base::Allocator::GetAllocator(device), data_type, device, shape) {}
 
 Tensor::Tensor(base::Allocator* a, DataType data_type, DeviceType device, const TensorShape& shape)
         : data_type_(data_type),
@@ -29,7 +26,7 @@ Tensor::Tensor(const Tensor& other)
         : data_type_(other.data_type_),
           shape_(other.shape_),
           device_(other.device_),
-          buffer_(new TensorBuffer(GetAllocator(device_), shape_.NumElements() * SizeOfType(data_type_)))
+          buffer_(new TensorBuffer(base::Allocator::GetAllocator(device_), shape_.NumElements() * SizeOfType(data_type_)))
 {
     TEMPLATE_ALL_2(data_type_, device_,
             op::synchronize_memory_op<T_, DEVICE_, DEVICE_>()(
@@ -72,24 +69,6 @@ void* Tensor::data() const { return buffer_->data(); }
 
 // Get the TensorBuffer object that holds the data of the tensor.
 const TensorBuffer& Tensor::buffer() const { return *buffer_; }
-
-// Get the Allocator object according to the given device type.
-base::Allocator* Tensor::GetAllocator(DeviceType device) {
-    base::Allocator * allocator;
-    if (device == DeviceType::CpuDevice) {
-        allocator = new base::CPUAllocator();
-    }
-#if defined(__CUDA) || defined(__ROCM)
-    else if (device == DeviceType::GpuDevice) {
-        allocator = new base::GPUAllocator();
-    }
-#endif // __CUDA || __ROCM
-    else {
-        std::cerr << "Tensor device type " << device << " does not match requested type." << std::endl;
-        exit(EXIT_FAILURE);
-    }
-    return allocator;
-}
 
 // Set the tensor to zero
 void Tensor::zero() {
@@ -210,7 +189,7 @@ void Tensor::resize(const TensorShape& new_shape) {
     shape_ = new_shape;
 
     if (buffer_) buffer_->unref();
-    this->buffer_ = new TensorBuffer(GetAllocator(device_), shape_.NumElements() * SizeOfType(data_type_));
+    this->buffer_ = new TensorBuffer(base::Allocator::GetAllocator(device_), shape_.NumElements() * SizeOfType(data_type_));
 
     this->zero();
 }
@@ -224,7 +203,7 @@ Tensor& Tensor::operator=(const Tensor& other) {
     this->shape_ = other.shape_;
     if (buffer_) buffer_->unref();
 
-    this->buffer_ = new TensorBuffer(GetAllocator(device_), shape_.NumElements() * SizeOfType(data_type_));
+    this->buffer_ = new TensorBuffer(base::Allocator::GetAllocator(device_), shape_.NumElements() * SizeOfType(data_type_));
 
     TEMPLATE_ALL_2(this->data_type_, this->device_,
                    container::op::synchronize_memory_op<T_, DEVICE_, DEVICE_>()(
@@ -266,6 +245,10 @@ bool Tensor::operator==(const Tensor& other) const {
     return result;
 }
 
+bool Tensor::operator!=(const Tensor& other) const {
+    return !(*this == other);
+}
+
 bool Tensor::CopyFrom(const Tensor& other, const TensorShape& shape) {
     if (other.NumElements() == shape.NumElements()) {
         CopyFromInternal(other, shape);
@@ -279,7 +262,7 @@ bool Tensor::CopyFromWithAllocate(const Tensor& other, const TensorShape& shape)
     device_ = other.device_;
     shape_ = shape;
     if (buffer_) buffer_->unref();
-    buffer_ = new TensorBuffer(GetAllocator(device_), shape_.NumElements() * SizeOfType(data_type_));
+    buffer_ = new TensorBuffer(base::Allocator::GetAllocator(device_), shape_.NumElements() * SizeOfType(data_type_));
     return true;
 }
 

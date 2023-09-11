@@ -312,15 +312,6 @@ class Tensor {
     virtual void resize(const TensorShape& new_shape);
 
     /**
-     * @brief Get the Allocator object according to the given device type.
-     *
-     * @param device The device type.
-     *
-     * @return The related Allocator class pointer.
-     */
-    static base::Allocator* GetAllocator(DeviceType device);
-
-    /**
      * @brief Get the element at the specified indices.
      *
      * @param indices A vector of integers representing the indices of the element.
@@ -379,6 +370,18 @@ class Tensor {
      * @return True if the tensors are equal, otherwise false.
      */
     bool operator==(const Tensor& other) const;
+
+    /**
+     * @brief Inequality operator for comparing this Tensor with another Tensor.
+     *
+     * This operator checks if the current Tensor is not equal to another Tensor
+     * based on their content and properties.
+     *
+     * @param other The Tensor to compare with.
+     * @return True if the Tensors are not equal, false otherwise.
+     */
+    bool operator!=(const Tensor& other) const;
+
 
     /**
      * @brief Assignment operator overload for the Tensor class.

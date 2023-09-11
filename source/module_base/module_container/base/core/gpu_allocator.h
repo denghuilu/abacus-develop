@@ -45,6 +45,16 @@ public:
      * @return MemoryType The type of memory used by the TensorBuffer.
      */
     DeviceType GetDeviceType() override;
+
+    /**
+     * @brief Get the type of allocator.
+     *
+     * This function returns an enum or identifier representing the type of allocator.
+     *
+     * @return AllocatorType The type of allocator.
+     */
+    AllocatorType GetAllocatorType() override;
+
 };
 
 } // namespace base

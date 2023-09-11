@@ -49,6 +49,15 @@ class CPUAllocator : public Allocator {
      */
     DeviceType GetDeviceType() override;
 
+    /**
+     * @brief Get the type of allocator.
+     *
+     * This function returns an enum or identifier representing the type of allocator.
+     *
+     * @return AllocatorType The type of allocator.
+     */
+    AllocatorType GetAllocatorType() override;
+
 };
 
 } // namespace base

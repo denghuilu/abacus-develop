@@ -30,5 +30,9 @@ DeviceType CPUAllocator::GetDeviceType() {
     return DeviceType::CpuDevice;
 }
 
+AllocatorType CPUAllocator::GetAllocatorType() {
+    return AllocatorType::CPU;
+}
+
 } // namespace base
 } // namespace container

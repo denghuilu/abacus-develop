@@ -7,6 +7,13 @@ namespace container {
 
 namespace base {
 
+enum AllocatorType {
+    CPU,
+    GPU,
+    BFC,
+    UNKNOWN
+};
+
 struct AllocatorStats {
   int64_t num_allocs;          // Number of allocations.
   int64_t bytes_in_use;        // Number of bytes in use.
@@ -95,6 +102,28 @@ class Allocator {
      * @return MemoryType The type of memory used by the TensorBuffer.
      */
     virtual DeviceType GetDeviceType() = 0;
+
+    /**
+     * @brief Get the type of allocator.
+     *
+     * This function returns an enum or identifier representing the type of allocator.
+     * Subclasses should provide an implementation that specifies the specific
+     * allocator type using their own custom enum or identifier.
+     *
+     * @return AllocatorType The type of allocator.
+     */
+    virtual AllocatorType GetAllocatorType() = 0;
+
+    
+    // TODO:: using factory function/class to inplement the following function.
+    /**
+     * @brief Get the Allocator object according to the given device type.
+     *
+     * @param device The device type.
+     *
+     * @return The related Allocator class pointer.
+     */
+    static Allocator* GetAllocator(DeviceType device);
 
   protected:
     /**

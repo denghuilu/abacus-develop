@@ -1,6 +1,10 @@
 #include <base/core/allocator.h>
 #include <base/core/bfc_allocator.h>
 #include <base/macros/macros.h>
+#include <ATen/core/tensor.h>
+#if defined(__CUDA) || defined(__ROCM)
+#include <base/core/gpu_allocator.h>
+#endif
 
 namespace container {
 namespace base {
@@ -9,11 +13,14 @@ namespace base {
 constexpr BFCAllocator::chunk_handle_t BFCAllocator::kInvalidChunkHandle;
 
 BFCAllocator::BFCAllocator(
-    std::unique_ptr<Allocator> sub_alloc, 
+    DeviceType device, 
     const size_t& total_memory, 
     const Options& options) 
-    : options_(options), sub_alloc_(std::move(sub_alloc)), next_allocation_id_(1)
-{
+    : options_(options), next_allocation_id_(1)
+{   
+#if defined(__CUDA) || defined(__ROCM)
+    sub_alloc_ = new GPUAllocator();
+#endif
     if (options_.allow_growth) {
         // Allow growth, so start with a small region and grow as needed.
         // Note the minimum region size is 2MiB.
@@ -52,6 +59,12 @@ BFCAllocator::~BFCAllocator() noexcept {
     for (bin_index_t b = 0; b < kNumBins; b++) {
         bin_from_index(b)->~bin();
     }
+
+    delete sub_alloc_;
+}
+
+AllocatorType BFCAllocator::GetAllocatorType() {
+    return AllocatorType::BFC;
 }
 
 BFCAllocator::chunk* BFCAllocator::chunk_from_handle(chunk_handle_t h) {
@@ -333,8 +346,8 @@ void* BFCAllocator::find_chunk_ptr(
 
                 return c->ptr;
             }
-            bin_index++;
         }
+        bin_index++;
     }
     return nullptr;
 }
@@ -408,6 +421,9 @@ void BFCAllocator::free(void* mem_addr) {
     REQUIRES_OK(handle != kInvalidChunkHandle);
 
     mark_free(handle);
+
+    // Insert the chunk into the free bin.
+    insert_free_chunk_into_bin(try_to_coalesce_with_nbor_chunk(handle, /*ignore_freed_at=*/false));
 }
 
 DeviceType BFCAllocator::GetDeviceType() {

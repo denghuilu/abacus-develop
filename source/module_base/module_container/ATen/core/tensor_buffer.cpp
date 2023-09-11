@@ -1,3 +1,4 @@
+#include <base/core/allocator.h>
 #include <base/core/cpu_allocator.h>
 #include <ATen/core/tensor_buffer.h>
 
@@ -40,7 +41,7 @@ TensorBuffer::~TensorBuffer() {
     if (this->OwnsMemory() && data_ != nullptr) {
         alloc_->free(data_);
     }
-    if (alloc_ != nullptr) {
+    if (alloc_ != nullptr && alloc_->GetAllocatorType() != base::AllocatorType::BFC) {
         delete alloc_;
     }
 }

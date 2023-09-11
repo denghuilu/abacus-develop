@@ -38,6 +38,10 @@ DeviceType GPUAllocator::GetDeviceType() {
     return DeviceType::GpuDevice;
 }
 
+AllocatorType GPUAllocator::GetAllocatorType() {
+    return AllocatorType::GPU;
+}
+
 } // namespace base
 } // namespace container
 

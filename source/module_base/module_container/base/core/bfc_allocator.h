@@ -17,15 +17,14 @@ namespace base {
  */
 class BFCAllocator : public Allocator {
 public:
-
     struct Options {
         bool allow_growth = true;
         double fragment_fraction = 0.0;
         Options() : allow_growth(true), fragment_fraction(0.0) {}
     };
-
-    BFCAllocator(std::unique_ptr<Allocator> sub_alloc, const size_t& total_memory, const Options& options = Options());
-
+    
+    BFCAllocator(DeviceType device, const size_t& total_memory, const Options& options = Options());
+    
     virtual ~BFCAllocator();
     /**
      * @brief Allocate a block of memory with the given size and default alignment on GPU.
@@ -59,6 +58,16 @@ public:
      * @return MemoryType The type of memory used by the TensorBuffer.
      */
     DeviceType GetDeviceType() override;
+
+    /**
+     * @brief Get the type of allocator.
+     *
+     * This function returns an enum or identifier representing the type of allocator.
+     *
+     * @return AllocatorType The type of allocator.
+     */
+    AllocatorType GetAllocatorType() override;
+
 
   private:
 
@@ -365,7 +374,7 @@ public:
     // Params for BFCAllocator 
     Options options_ = {};
     // Sub allocator for BFCAllocator 
-    std::unique_ptr<Allocator> sub_alloc_ = nullptr;
+    Allocator* sub_alloc_ = nullptr;
     // The size of the current region allocation.
     size_t curr_region_allocation_bytes_ = 0;
     // Record the memory allocate operations
@@ -377,6 +386,8 @@ public:
     chunk_handle_t free_chunks_list_ = kInvalidChunkHandle;
     // mark the allocation counter 
     int64_t next_allocation_id_ = 0;
+
+    // DISALLOW_COPY_AND_ASSIGN(BFCAllocator);
 };
 
 } // namespace base
