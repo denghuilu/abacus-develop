@@ -3,6 +3,6 @@ remove_definitions(-D__CUDA)
 remove_definitions(-D__ROCM)
 AddTest(
   TARGET dm_mixing_test
-  LIBS base ${math_libs} device
+  LIBS base ${math_libs} device container
   SOURCES dm_mixing_test.cpp ../Mix_DMk_2D.cpp
 )

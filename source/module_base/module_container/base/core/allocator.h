@@ -2,6 +2,7 @@
 #define BASE_CORE_ALLOCATOR_H_
 
 #include <ATen/core/tensor_types.h>
+#include <base/macros/macros.h>
 
 namespace container {
 
@@ -114,22 +115,29 @@ class Allocator {
      */
     virtual AllocatorType GetAllocatorType() = 0;
 
+    virtual size_t get_available_memory() = 0;
     
-    // TODO:: using factory function/class to inplement the following function.
     /**
-     * @brief Get the Allocator object according to the given device type.
+     * @brief Retrieves a singleton instance of the Allocator.
      *
-     * @param device The device type.
+     * This function returns a singleton instance of the Allocator based on the specified
+     * AllocatorType. If an instance does not exist for the given type, it will create one.
+     * Note: This function is thread-compatible. and will return the same instance for the same
+     * AllocatorType. It means that the returned instance is shared by all callers.
      *
-     * @return The related Allocator class pointer.
+     * @param type The DeviceType to specify the type of Allocator instance to retrieve.
+     * @return A pointer to the singleton instance of the Allocator.
      */
-    static Allocator* GetAllocator(DeviceType device);
+    static Allocator* get_singleton_instance(DeviceType type);
 
   protected:
     /**
      * @brief The total number of bytes allocated by this allocator.
      */
     size_t allocated_size_ = 0;
+
+    DEFAULT_CONSTRUCTORS(Allocator);
+    DISALLOW_COPY_AND_ASSIGN(Allocator);
 };
 
 } // namespace base

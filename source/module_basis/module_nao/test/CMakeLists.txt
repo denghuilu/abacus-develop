@@ -3,7 +3,7 @@ AddTest(
   SOURCES
     numerical_radial_test.cpp
     ../numerical_radial.cpp
-  LIBS ${math_libs} device base
+  LIBS ${math_libs} device base container
 )
 
 AddTest(
@@ -13,7 +13,7 @@ AddTest(
     ../atomic_radials.cpp
     ../radial_set.cpp
     ../numerical_radial.cpp
-  LIBS ${math_libs} device base
+  LIBS ${math_libs} device base container
 )
 
 AddTest(
@@ -23,7 +23,7 @@ AddTest(
     ../beta_radials.cpp
     ../radial_set.cpp
     ../numerical_radial.cpp
-  LIBS ${math_libs} device base
+  LIBS ${math_libs} device base container
 )
 
 AddTest(
@@ -35,7 +35,7 @@ AddTest(
     ../beta_radials.cpp
     ../radial_set.cpp
     ../numerical_radial.cpp
-  LIBS ${math_libs} device base
+  LIBS ${math_libs} device base container
 )
 
 AddTest(
@@ -51,7 +51,7 @@ AddTest(
     ../two_center_bundle.cpp
     ../two_center_integrator.cpp
     ../real_gaunt_table.cpp
-  LIBS ${math_libs} device base container orb
+  LIBS ${math_libs} device base container container orb
 )
 
 AddTest(
@@ -60,7 +60,7 @@ AddTest(
     real_gaunt_table_test.cpp
     ../real_gaunt_table.cpp
     ../../module_ao/ORB_gaunt_table.cpp
-  LIBS ${math_libs} device base container
+  LIBS ${math_libs} device base container container
 )
 
 AddTest(
@@ -76,7 +76,7 @@ AddTest(
     ../radial_set.cpp
     ../numerical_radial.cpp
     ../two_center_bundle.cpp
-  LIBS ${math_libs} device base container orb
+  LIBS ${math_libs} device base container container orb
 )
 
 AddTest(
@@ -92,5 +92,5 @@ AddTest(
     ../beta_radials.cpp
     ../radial_set.cpp
     ../numerical_radial.cpp
-  LIBS ${math_libs} device base container orb
+  LIBS ${math_libs} device base container container orb
 )

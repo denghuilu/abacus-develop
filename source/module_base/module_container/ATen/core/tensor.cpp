@@ -9,11 +9,11 @@ Tensor::Tensor(DataType data_type) : Tensor(data_type, TensorShape({})) {}
 
 // Constructor that creates a tensor with the given data type and shape using the default allocator.
 Tensor::Tensor(DataType data_type, const TensorShape& shape)
-        : Tensor(base::Allocator::GetAllocator(DeviceType::CpuDevice), data_type, DeviceType::CpuDevice, shape) {}
+        : Tensor(base::Allocator::get_singleton_instance(DeviceType::CpuDevice), data_type, DeviceType::CpuDevice, shape) {}
 
 // Construct a new Tensor object with the given data type and shape.
 Tensor::Tensor(DataType data_type, DeviceType device, const TensorShape& shape)
-        : Tensor(base::Allocator::GetAllocator(device), data_type, device, shape) {}
+        : Tensor(base::Allocator::get_singleton_instance(device), data_type, device, shape) {}
 
 Tensor::Tensor(base::Allocator* a, DataType data_type, DeviceType device, const TensorShape& shape)
         : data_type_(data_type),
@@ -26,7 +26,7 @@ Tensor::Tensor(const Tensor& other)
         : data_type_(other.data_type_),
           shape_(other.shape_),
           device_(other.device_),
-          buffer_(new TensorBuffer(base::Allocator::GetAllocator(device_), shape_.NumElements() * SizeOfType(data_type_)))
+          buffer_(new TensorBuffer(base::Allocator::get_singleton_instance(device_), shape_.NumElements() * SizeOfType(data_type_)))
 {
     TEMPLATE_ALL_2(data_type_, device_,
             op::synchronize_memory_op<T_, DEVICE_, DEVICE_>()(
@@ -189,7 +189,7 @@ void Tensor::resize(const TensorShape& new_shape) {
     shape_ = new_shape;
 
     if (buffer_) buffer_->unref();
-    this->buffer_ = new TensorBuffer(base::Allocator::GetAllocator(device_), shape_.NumElements() * SizeOfType(data_type_));
+    this->buffer_ = new TensorBuffer(base::Allocator::get_singleton_instance(device_), shape_.NumElements() * SizeOfType(data_type_));
 
     this->zero();
 }
@@ -203,7 +203,7 @@ Tensor& Tensor::operator=(const Tensor& other) {
     this->shape_ = other.shape_;
     if (buffer_) buffer_->unref();
 
-    this->buffer_ = new TensorBuffer(base::Allocator::GetAllocator(device_), shape_.NumElements() * SizeOfType(data_type_));
+    this->buffer_ = new TensorBuffer(base::Allocator::get_singleton_instance(device_), shape_.NumElements() * SizeOfType(data_type_));
 
     TEMPLATE_ALL_2(this->data_type_, this->device_,
                    container::op::synchronize_memory_op<T_, DEVICE_, DEVICE_>()(
@@ -262,7 +262,7 @@ bool Tensor::CopyFromWithAllocate(const Tensor& other, const TensorShape& shape)
     device_ = other.device_;
     shape_ = shape;
     if (buffer_) buffer_->unref();
-    buffer_ = new TensorBuffer(base::Allocator::GetAllocator(device_), shape_.NumElements() * SizeOfType(data_type_));
+    buffer_ = new TensorBuffer(base::Allocator::get_singleton_instance(device_), shape_.NumElements() * SizeOfType(data_type_));
     return true;
 }
 

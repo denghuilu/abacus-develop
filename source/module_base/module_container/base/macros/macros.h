@@ -14,6 +14,10 @@
   TypeName(const TypeName&) = delete;      \
   void operator=(const TypeName&) = delete
 
+#define DEFAULT_CONSTRUCTORS(TypeName) \
+  TypeName() = default;                                \
+  ~TypeName() = default;                                
+
 #define DISALLOW_MOVE_AND_ASSIGN(TypeName) \
   TypeName(TypeName&&) = delete;           \
   void operator=(TypeName&&) = delete

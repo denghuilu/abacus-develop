@@ -8,13 +8,13 @@ install(FILES INPUTs DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 AddTest(
   TARGET io_input_test
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base device container
   SOURCES input_test.cpp ../input.cpp
 )
 
 AddTest(
   TARGET io_input_test_para
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base device container
   SOURCES input_test_para.cpp ../input.cpp
 )
 
@@ -27,19 +27,19 @@ add_test(NAME io_input_test_para4
 
 AddTest(
   TARGET io_input_conv
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base device container
   SOURCES input_conv_test.cpp ../input.cpp ../input_conv.cpp
 )
 
 AddTest(
   TARGET io_winput_test
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base device container
   SOURCES winput_test.cpp ../winput.cpp
 )
 
 AddTest(
   TARGET io_output_test
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base device container
   SOURCES output_test.cpp ../output.cpp
 )
 
@@ -50,31 +50,31 @@ AddTest(
 
 AddTest(
   TARGET io_write_istate_info_test
-  LIBS ${math_libs} base device symmetry
+  LIBS ${math_libs} base device container symmetry
   SOURCES write_istate_info_test.cpp ../write_istate_info.cpp ../output.cpp ../../module_cell/parallel_kpoints.cpp ../../module_cell/klist.cpp
 )
 
 AddTest(
   TARGET io_cal_dos
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base device container
   SOURCES cal_dos_test.cpp ../cal_dos.cpp
 )
 
 AddTest(
   TARGET io_write_dos_pw
-  LIBS ${math_libs} base device symmetry
+  LIBS ${math_libs} base device container symmetry
   SOURCES write_dos_pw_test.cpp ../cal_dos.cpp ../write_dos_pw.cpp ../output.cpp ../../module_cell/parallel_kpoints.cpp ../../module_cell/klist.cpp
 )
 
 AddTest(
   TARGET io_print_info
-  LIBS ${math_libs} base device symmetry cell_info
+  LIBS ${math_libs} base device container symmetry cell_info
   SOURCES print_info_test.cpp ../print_info.cpp ../input.cpp ../output.cpp ../../module_cell/klist.cpp ../../module_cell/parallel_kpoints.cpp
 )
 
 AddTest(
   TARGET io_write_input_test
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base device container
   SOURCES write_input_test.cpp ../write_input.cpp ../input.cpp
 )
 
@@ -90,13 +90,13 @@ AddTest(
 
 AddTest(
   TARGET io_write_wfc_nao
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base device container
   SOURCES write_wfc_nao_test.cpp ../write_wfc_nao.cpp
 )
 
 AddTest(
   TARGET io_write_orb_info
-  LIBS ${math_libs} base device cell_info
+  LIBS ${math_libs} base device container cell_info
   SOURCES write_orb_info_test.cpp ../write_orb_info.cpp ../output.cpp
 )
 
@@ -107,36 +107,36 @@ AddTest(
 
 AddTest(
   TARGET io_bessel_basis_test
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base device container
   SOURCES bessel_basis_test.cpp ../bessel_basis.cpp
 )
 
 AddTest(
   TARGET io_output_log_test
-  LIBS base ${math_libs} device
+  LIBS base ${math_libs} device container
   SOURCES ../output_log.cpp outputlog_test.cpp
 )
 
 AddTest(
   TARGET io_new_parse_set_test
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base device container
   SOURCES parameter_pool_set_test.cpp  ../parameter_pool.cpp ../input.cpp
 )
 
 AddTest(
   TARGET io_sparse_matrix_test
-  LIBS base ${math_libs} device
+  LIBS base ${math_libs} device container
   SOURCES sparse_matrix_test.cpp ../sparse_matrix.cpp
 )
 
 AddTest(
   TARGET io_file_reader_test
-  LIBS base ${math_libs} device
+  LIBS base ${math_libs} device container
   SOURCES file_reader_test.cpp ../file_reader.cpp
 )
 
 AddTest(
   TARGET io_csr_reader_test
-  LIBS base ${math_libs} device
+  LIBS base ${math_libs} device container
   SOURCES csr_reader_test.cpp ../csr_reader.cpp ../file_reader.cpp ../sparse_matrix.cpp
 )

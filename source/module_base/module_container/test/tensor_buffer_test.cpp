@@ -6,7 +6,7 @@
 // Test the GetAllocatedBytes() method.
 TEST(TensorBuffer, GetAllocatedBytes) {
     // Create an allocator and allocate memory for a TensorBuffer.
-    container::base::Allocator* alloc = new container::base::CPUAllocator();
+    container::base::Allocator* alloc = container::base::CPUAllocator::get_singleton_instance();
     const size_t buffer_size = 100;
 
     // Create a TensorBuffer.
@@ -25,7 +25,7 @@ TEST(TensorBuffer, GetAllocatedBytes) {
 // Test the resize() method.
 TEST(TensorBuffer, resize) {
     // Create an allocator and allocate memory for a TensorBuffer.
-    container::base::Allocator* alloc = new container::base::CPUAllocator();
+    container::base::Allocator* alloc = container::base::CPUAllocator::get_singleton_instance();
     const size_t initial_buffer_size = 100;
 
     // Create a TensorBuffer.
@@ -49,7 +49,7 @@ TEST(TensorBuffer, resize) {
 // Test the root_buffer() method.
 TEST(TensorBuffer, root_buffer) {
     // Create an allocator and allocate memory for a TensorBuffer.
-    container::base::Allocator* alloc = new container::base::CPUAllocator();
+    container::base::Allocator* alloc = container::base::CPUAllocator::get_singleton_instance();
     const size_t buffer_size = 100;
 
     // Create a root TensorBuffer.
@@ -70,9 +70,9 @@ TEST(TensorBuffer, root_buffer) {
 
 TEST(TensorBuffer, empty_allocator) {
     // Create an allocator and allocate memory for a TensorBuffer.
-    container::base::CPUAllocator alloc;
+    auto alloc = container::base::CPUAllocator::get_singleton_instance();
     const size_t buffer_size = 100;
-    void* buffer = alloc.allocate(buffer_size);
+    void* buffer = alloc->allocate(buffer_size);
 
     // Create a root TensorBuffer.
     container::TensorBuffer root_buffer(buffer);
@@ -81,5 +81,5 @@ TEST(TensorBuffer, empty_allocator) {
     EXPECT_EQ(container::DeviceType::UnKnown, root_buffer.GetDeviceType());
 
     // Free the memory.
-    alloc.free(buffer);
+    alloc->free(buffer);
 }

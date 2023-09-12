@@ -6,6 +6,6 @@ remove_definitions(-D__DEEPKS)
 
 AddTest(
     TARGET Elecstate_Kernels_UTs
-    LIBS ${math_libs} psi base device
+    LIBS ${math_libs} psi base device container
     SOURCES elecstate_op_test.cpp
 )

@@ -6,6 +6,7 @@
 
 #include <base/macros/macros.h>
 #include <base/core/allocator.h>
+#include <base/core/gpu_allocator.h>
 
 namespace container {
 namespace base {
@@ -16,16 +17,21 @@ namespace base {
  * on a GPU device using CUDA APIs.
  */
 class BFCAllocator : public Allocator {
-public:
+  public:
     struct Options {
         bool allow_growth = true;
-        double fragment_fraction = 0.0;
+        float init_allocation_fraction = 0.6;
+        float fragment_fraction = 0.0;
         Options() : allow_growth(true), fragment_fraction(0.0) {}
     };
-    
-    BFCAllocator(DeviceType device, const size_t& total_memory, const Options& options = Options());
-    
+
+  private:
+    // Singleton pattern: hide the constructor and copy constructor
+    BFCAllocator(const Options& options = Options());
     virtual ~BFCAllocator();
+
+  public:
+    static Allocator* get_singleton_instance();
     /**
      * @brief Allocate a block of memory with the given size and default alignment on GPU.
      *
@@ -68,6 +74,7 @@ public:
      */
     AllocatorType GetAllocatorType() override;
 
+    size_t get_available_memory() override;
 
   private:
 
@@ -219,7 +226,7 @@ public:
         }
 
         size_t index_for_handle(const void* ptr) const {
-            const size_t offset = reinterpret_cast<const std::uintptr_t>(ptr) - reinterpret_cast<const std::uintptr_t>(ptr_);
+            const size_t offset = reinterpret_cast<std::uintptr_t>(ptr) - reinterpret_cast<std::uintptr_t>(ptr_);
             // Do the checks
             return static_cast<size_t>(offset >> kMinAllocationBits);
         }
@@ -387,7 +394,7 @@ public:
     // mark the allocation counter 
     int64_t next_allocation_id_ = 0;
 
-    // DISALLOW_COPY_AND_ASSIGN(BFCAllocator);
+    DISALLOW_COPY_AND_ASSIGN(BFCAllocator);
 };
 
 } // namespace base

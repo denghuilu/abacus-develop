@@ -57,21 +57,21 @@ AddTest(
     SOURCES ORB_nonlocal_test.cpp
         ../ORB_nonlocal.cpp
         ../ORB_nonlocal_lm.cpp
-    LIBS ${math_libs} device base
+    LIBS ${math_libs} device base container
 )
 
 AddTest(
     TARGET ORB_nonlocal_lm_test
     SOURCES ORB_nonlocal_lm_test.cpp
         ../ORB_nonlocal_lm.cpp
-    LIBS ${math_libs} device base
+    LIBS ${math_libs} device base container
 )
 
 AddTest(
     TARGET ORB_atomic_lm_test
     SOURCES ORB_atomic_lm_test.cpp
         ../ORB_atomic_lm.cpp
-    LIBS ${math_libs} device base
+    LIBS ${math_libs} device base container
 )
 
 AddTest(
@@ -80,14 +80,14 @@ AddTest(
         ../ORB_read.cpp
         ../ORB_atomic.cpp
         ../ORB_atomic_lm.cpp
-    LIBS ${math_libs} device base
+    LIBS ${math_libs} device base container
 )
 
 #AddTest(
 #    TARGET ORB_gaunt_table_test
 #    SOURCES ORB_gaunt_table_test.cpp
 #        ../ORB_gaunt_table.cpp
-#    LIBS ${math_libs} device base
+#    LIBS ${math_libs} device base container
 #)
 
 AddTest(
@@ -97,7 +97,7 @@ AddTest(
         ../ORB_read.cpp
         ../ORB_atomic.cpp
         ../ORB_atomic_lm.cpp
-    LIBS ${math_libs} device base
+    LIBS ${math_libs} device base container
 )
 
 AddTest(
@@ -107,13 +107,13 @@ AddTest(
         ../ORB_read.cpp
         ../ORB_atomic.cpp
         ../ORB_atomic_lm.cpp
-    LIBS ${math_libs} device base
+    LIBS ${math_libs} device base container
 )
 
 AddTest(
     TARGET parallel_2d_test
     SOURCES parallel_2d_test.cpp ../parallel_2d.cpp
-    LIBS ${math_libs} device base
+    LIBS ${math_libs} device base container
 )
 
 install(FILES parallel_2d_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
@@ -126,7 +126,7 @@ add_test(NAME parallel_2d_test_para
 AddTest(
     TARGET parallel_orbitals_test
     SOURCES parallel_orbitals_test.cpp ../parallel_2d.cpp ../parallel_orbitals.cpp
-    LIBS ${math_libs} device base
+    LIBS ${math_libs} device base container
 )
 
 install(FILES parallel_orbitals_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

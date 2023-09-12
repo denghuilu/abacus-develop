@@ -30,41 +30,41 @@ add_library(cell_info OBJECT ${cell_simple_srcs})
 
 AddTest(
   TARGET cell_read_pp
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base device container
   SOURCES read_pp_test.cpp ../read_pp.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp ../read_pp_vwr.cpp ../read_pp_blps.cpp 
   ../../module_io/output.cpp
 )
 
 AddTest(
   TARGET cell_pseudo_nc
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base device container
   SOURCES pseudo_nc_test.cpp ../pseudo_nc.cpp ../read_pp.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp ../read_pp_vwr.cpp 
   	../read_pp_blps.cpp ../../module_io/output.cpp
 )
 
 AddTest(
   TARGET cell_atom_pseudo
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base device container
   SOURCES atom_pseudo_test.cpp ../atom_pseudo.cpp ../pseudo_nc.cpp ../read_pp.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp 
   	../read_pp_vwr.cpp ../read_pp_blps.cpp ../../module_io/output.cpp
 )
 
 AddTest(
   TARGET cell_atom_spec
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base device container
   SOURCES atom_spec_test.cpp ../atom_spec.cpp ../atom_pseudo.cpp ../pseudo_nc.cpp ../read_pp.cpp ../read_pp_upf201.cpp 
   	../read_pp_upf100.cpp ../read_pp_vwr.cpp ../read_pp_blps.cpp ../../module_io/output.cpp
 )
 
 AddTest(
   TARGET cell_klist_test
-  LIBS ${math_libs} base device symmetry
+  LIBS ${math_libs} base device container symmetry
   SOURCES klist_test.cpp ../klist.cpp ../parallel_kpoints.cpp ../../module_io/output.cpp
 )
 
 AddTest(
   TARGET cell_klist_test_para1
-  LIBS ${math_libs} base device symmetry
+  LIBS ${math_libs} base device container symmetry
   SOURCES klist_test_para.cpp ../klist.cpp ../parallel_kpoints.cpp ../../module_io/output.cpp
 )
 
@@ -99,25 +99,25 @@ add_test(NAME cell_parallel_kpoints_test
 
 AddTest(
   TARGET cell_unitcell_test
-  LIBS ${math_libs} base device cell_info
+  LIBS ${math_libs} base device container cell_info
   SOURCES unitcell_test.cpp ../../module_io/output.cpp
 )
 
 AddTest(
   TARGET cell_unitcell_test_readpp
-  LIBS ${math_libs} base device cell_info
+  LIBS ${math_libs} base device container cell_info
   SOURCES unitcell_test_readpp.cpp ../../module_io/output.cpp
 )
 
 AddTest(
   TARGET cell_unitcell_test_para
-  LIBS ${math_libs} base device cell_info
+  LIBS ${math_libs} base device container cell_info
   SOURCES unitcell_test_para.cpp ../../module_io/output.cpp
 )
 
 AddTest(
   TARGET cell_unitcell_test_setupcell
-  LIBS ${math_libs} base device cell_info
+  LIBS ${math_libs} base device container cell_info
   SOURCES unitcell_test_setupcell.cpp ../../module_io/output.cpp
 )
 

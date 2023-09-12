@@ -1,10 +1,6 @@
-#include <base/core/allocator.h>
-#include <base/core/bfc_allocator.h>
-#include <base/macros/macros.h>
 #include <ATen/core/tensor.h>
-#if defined(__CUDA) || defined(__ROCM)
-#include <base/core/gpu_allocator.h>
-#endif
+#include <base/macros/macros.h>
+#include <base/core/bfc_allocator.h>
 
 namespace container {
 namespace base {
@@ -12,26 +8,23 @@ namespace base {
 // Mark as a constant value
 constexpr BFCAllocator::chunk_handle_t BFCAllocator::kInvalidChunkHandle;
 
-BFCAllocator::BFCAllocator(
-    DeviceType device, 
-    const size_t& total_memory, 
-    const Options& options) 
+BFCAllocator::BFCAllocator(const Options& options) 
     : options_(options), next_allocation_id_(1)
 {   
-#if defined(__CUDA) || defined(__ROCM)
-    sub_alloc_ = new GPUAllocator();
-#endif
+    sub_alloc_ = GPUAllocator::get_singleton_instance();
+    size_t avail_memory = sub_alloc_->get_available_memory();
+
+    memory_limit_ = avail_memory * options_.init_allocation_fraction;
     if (options_.allow_growth) {
         // Allow growth, so start with a small region and grow as needed.
         // Note the minimum region size is 2MiB.
-        curr_region_allocation_bytes_ = rounded_bytes(std::min(total_memory, size_t{2 << 20}));
+        curr_region_allocation_bytes_ = rounded_bytes(std::max(avail_memory, size_t{2 << 20}));
     }
     else {
-        curr_region_allocation_bytes_ = rounded_bytes(total_memory);
+        curr_region_allocation_bytes_ = rounded_bytes(avail_memory);
     }
-
-    memory_limit_ = total_memory;
-    stats_.bytes_limit = static_cast<int64_t>(total_memory);
+    // memory_limit_ = total_memory;
+    stats_.bytes_limit = static_cast<int64_t>(curr_region_allocation_bytes_);
 
     // Create Bins 
     for (bin_index_t b = 0; b < kNumBins; b++) {
@@ -47,7 +40,6 @@ BFCAllocator::BFCAllocator(
         }
     }
 }
-
 // noexcept: Indicates that the function does not throw any exceptions.
 // https://en.cppreference.com/w/cpp/language/noexcept
 BFCAllocator::~BFCAllocator() noexcept {
@@ -59,9 +51,15 @@ BFCAllocator::~BFCAllocator() noexcept {
     for (bin_index_t b = 0; b < kNumBins; b++) {
         bin_from_index(b)->~bin();
     }
-
-    delete sub_alloc_;
 }
+
+Allocator* BFCAllocator::get_singleton_instance()
+{
+    // guranteed to be freed when the program exits
+    static BFCAllocator instance_{};
+    return &instance_;
+}
+
 
 AllocatorType BFCAllocator::GetAllocatorType() {
     return AllocatorType::BFC;
@@ -395,7 +393,8 @@ void* BFCAllocator::allocate(size_t size, size_t alignment) {
     // }
 
     // fail to allocate memory
-    return nullptr;
+    REQUIRES_OK(mem_addr != nullptr);
+    return mem_addr;
 }
 
 void BFCAllocator::mark_free(chunk_handle_t handle) {
@@ -430,6 +429,16 @@ DeviceType BFCAllocator::GetDeviceType() {
     return sub_alloc_->GetDeviceType();
 }
 
+/**
+ * @brief Gets the available memory size.
+ *
+ * This function returns the size of available memory as a size_t value.
+ *
+ * @return The size of available memory.
+ */
+size_t BFCAllocator::get_available_memory() {
+    return sub_alloc_->get_available_memory();
+}
 
 } // namespace base
 } // namespace container

@@ -325,15 +325,6 @@ TEST(Tensor, Resize) {
     ASSERT_NO_THROW(t2.resize(new_shape2));
 }
 
-TEST(Tensor, GetAllocatorDeathTest) {
-    container::Tensor t1(container::DataType::DT_FLOAT, container::TensorShape({2, 2}));
-    ASSERT_EXIT(
-      container::base::Allocator* alloc = container::base::Allocator::GetAllocator(container::DeviceType::UnKnown),
-      ::testing::ExitedWithCode(EXIT_FAILURE),
-      "Tensor device type unknown does not match requested type."
-    );
-}
-
 TEST(Tensor, OutputOperator) {
     // Create a tensor of shape [2, 2] with random values
     const int64_t num_elements = 4;

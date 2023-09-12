@@ -1,10 +1,14 @@
-#if defined(__CUDA) || defined(__ROCM)
-
-#include <cuda_runtime.h> // for CUDA APIs
 #include <base/core/gpu_allocator.h>
 
 namespace container {
 namespace base {
+
+// Get the singleton instance of the GPUAllocator.
+Allocator* GPUAllocator::get_singleton_instance() {
+    static GPUAllocator instance_{};
+    return &instance_;
+}
+
 // Allocate a block of memory with the given size and default alignment on GPU.
 void* GPUAllocator::allocate(size_t size) {
     void* ptr;
@@ -42,7 +46,12 @@ AllocatorType GPUAllocator::GetAllocatorType() {
     return AllocatorType::GPU;
 }
 
+size_t GPUAllocator::get_available_memory() {
+    size_t free_memory = 0, max_memory = 0;
+    cudaError_t result = cudaMemGetInfo(&free_memory, &max_memory);
+    REQUIRES_OK(result == cudaSuccess, "Failed to get the available GPU memory.");
+    return free_memory;
+}
+
 } // namespace base
 } // namespace container
-
-#endif // __CUDA || __ROCM

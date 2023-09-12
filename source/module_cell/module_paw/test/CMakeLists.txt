@@ -15,30 +15,30 @@ DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 AddTest(
   TARGET Test_Paw
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base device container
   SOURCES test_paw.cpp ../paw_element.cpp ../paw_sphbes.cpp ../paw_atom.cpp
 )
 
 AddTest(
   TARGET Test_Paw1
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base device container
   SOURCES test_paw1.cpp ../paw_element.cpp ../paw_sphbes.cpp ../paw_cell.cpp ../paw_atom.cpp
 )
 
 AddTest(
   TARGET Test_Paw2
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base device container
   SOURCES test_paw2.cpp ../paw_atom.cpp
 )
 
 AddTest(
   TARGET Test_Paw3
-  LIBS ${math_libs} base device libpaw_interface -lifcore
+  LIBS ${math_libs} base device container libpaw_interface -lifcore
   SOURCES test_paw3.cpp ../paw_atom.cpp ../paw_cell_libpaw.cpp
 )
 AddTest(
   TARGET Test_Paw4
-  LIBS ${math_libs} base device libpaw_interface -lifcore
+  LIBS ${math_libs} base device container libpaw_interface -lifcore
   SOURCES test_paw4.cpp ../paw_atom.cpp ../paw_cell_libpaw.cpp ../paw_element.cpp ../paw_sphbes.cpp ../paw_cell.cpp
 )
 add_dependencies(Test_Paw3 libpaw_interface)

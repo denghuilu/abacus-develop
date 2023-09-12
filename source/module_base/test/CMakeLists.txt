@@ -79,7 +79,7 @@ AddTest(
 )
 AddTest(
   TARGET base_ylmreal
-  LIBS ${math_libs} device formatter
+  LIBS ${math_libs} device formatter container
   SOURCES math_ylmreal_test.cpp ../math_ylmreal.cpp ../complexmatrix.cpp ../global_variable.cpp ../ylm.cpp ../realarray.cpp ../timer.cpp  ../matrix.cpp ../vector3.h
           ../parallel_reduce.cpp ../parallel_global.cpp ../parallel_common.cpp
           ../memory.cpp ../libm/branred.cpp ../libm/sincos.cpp

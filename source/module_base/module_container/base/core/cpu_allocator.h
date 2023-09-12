@@ -1,6 +1,7 @@
 #ifndef BASE_CORE_CPU_ALLOCATOR_H_
 #define BASE_CORE_CPU_ALLOCATOR_H_
 
+#include <mutex>
 #include <base/core/allocator.h>
 
 namespace container {
@@ -58,6 +59,29 @@ class CPUAllocator : public Allocator {
      */
     AllocatorType GetAllocatorType() override;
 
+    /**
+     * @brief Gets the singleton instance of the Allocator.
+     *
+     * This function returns a pointer to the singleton instance of the Allocator.
+     *
+     * @return A pointer to the singleton instance of the Allocator.
+     */
+    static Allocator* get_singleton_instance();
+    
+    /**
+     * @brief Gets the available memory size.
+     *
+     * This function returns the size of available memory as a size_t value.
+     *
+     * @return The size of available memory.
+     */
+    size_t get_available_memory() override;
+
+
+  private:
+
+    DEFAULT_CONSTRUCTORS(CPUAllocator);
+    DISALLOW_COPY_AND_ASSIGN(CPUAllocator);
 };
 
 } // namespace base

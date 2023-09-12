@@ -5,8 +5,14 @@
 #include <cuda_runtime.h>
 #include <thrust/complex.h>
 
+#include <base/core/allocator.h>
+#include <base/core/bfc_allocator.h>
+
 #define THREADS_PER_BLOCK 256
 
+namespace local {
+    static container::base::Allocator* alloc_ = container::base::Allocator::get_singleton_instance(container::DeviceType::GpuDevice);
+}
 namespace psi {
 namespace memory {
 
@@ -44,7 +50,7 @@ void resize_memory_op<FPTYPE, psi::DEVICE_GPU>::operator()(
   if (arr != nullptr) {
     delete_memory_op<FPTYPE, psi::DEVICE_GPU>()(dev, arr);
   }
-  cudaMalloc((void **)&arr, sizeof(FPTYPE) * size);
+  arr = reinterpret_cast<FPTYPE*>(local::alloc_->allocate(size * sizeof(FPTYPE)));
 }
 
 template <typename FPTYPE>
@@ -110,11 +116,11 @@ struct cast_memory_op<FPTYPE_out, FPTYPE_in, psi::DEVICE_GPU, psi::DEVICE_CPU> {
                     const FPTYPE_in* arr_in,
                     const size_t size) {
         FPTYPE_in * arr = nullptr;
-        cudaMalloc((void **)&arr, sizeof(FPTYPE_in) * size);
+        arr = reinterpret_cast<FPTYPE_in*>(local::alloc_->allocate(size * sizeof(FPTYPE_in)));
         cudaMemcpy(arr, arr_in, sizeof(FPTYPE_in) * size, cudaMemcpyHostToDevice);
         const int block = (size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
         cast_memory<<<block, THREADS_PER_BLOCK>>>(arr_out, arr, size);
-        cudaFree(arr);
+        local::alloc_->free(arr);
     }
 };
 
@@ -139,7 +145,7 @@ void delete_memory_op<FPTYPE, psi::DEVICE_GPU>::operator() (
     const psi::DEVICE_GPU* dev, 
     FPTYPE* arr) 
 {
-  cudaFree(arr);
+  local::alloc_->free(arr);
 }
 
 template struct resize_memory_op<int, psi::DEVICE_GPU>;

@@ -41,9 +41,6 @@ TensorBuffer::~TensorBuffer() {
     if (this->OwnsMemory() && data_ != nullptr) {
         alloc_->free(data_);
     }
-    if (alloc_ != nullptr && alloc_->GetAllocatorType() != base::AllocatorType::BFC) {
-        delete alloc_;
-    }
 }
 
 // Get the raw data pointer.
@@ -98,19 +95,9 @@ TensorBuffer& TensorBuffer::operator=(const TensorBuffer& other) {
         this->alloc_->free(data_);
     }
 
-    delete this->alloc_;
-    if (other.GetDeviceType() == DeviceType::CpuDevice) {
-        this->alloc_ = new base::CPUAllocator();
-    }
-    #if defined(__CUDA) || defined(__ROCM)
-    else if (other.GetDeviceType() == DeviceType::GpuDevice) {
-        this->alloc_ = new base::GPUAllocator();
-    }
-    #endif // __CUDA || __ROCM
-
-
-    this->data_ = this->alloc_->allocate(other.GetAllocatedBytes());
     this->owns_memory = true;
+    this->alloc_ = other.alloc_;
+    this->data_ = this->alloc_->allocate(other.GetAllocatedBytes());
     return *this;
 }
 
@@ -118,7 +105,6 @@ TensorBuffer& TensorBuffer::operator=(TensorBuffer&& other) noexcept {
     if (this->OwnsMemory()) {
         this->alloc_->free(data_);
     }
-    delete this->alloc_;
     this->alloc_ = other.alloc_;
     this->data_ = other.data_;
     this->owns_memory = other.owns_memory;

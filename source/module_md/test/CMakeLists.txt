@@ -47,21 +47,21 @@ list(APPEND depend_files
 
 AddTest(
   TARGET md_LJ_pot
-  LIBS ${math_libs} psi device formatter
+  LIBS ${math_libs} psi device container formatter
   SOURCES lj_pot_test.cpp  
   ${depend_files}
 )
 
 AddTest(
   TARGET md_func
-  LIBS ${math_libs} psi device formatter
+  LIBS ${math_libs} psi device container formatter
   SOURCES md_func_test.cpp  
   ${depend_files}
 )
 
 AddTest(
   TARGET md_fire
-  LIBS ${math_libs} psi device formatter
+  LIBS ${math_libs} psi device container formatter
   SOURCES fire_test.cpp
   ../md_base.cpp
   ../fire.cpp
@@ -70,7 +70,7 @@ AddTest(
 
 AddTest(
   TARGET md_verlet
-  LIBS ${math_libs} psi device formatter
+  LIBS ${math_libs} psi device container formatter
   SOURCES verlet_test.cpp
   ../md_base.cpp
   ../verlet.cpp
@@ -79,7 +79,7 @@ AddTest(
 
 AddTest(
   TARGET md_nhc
-  LIBS ${math_libs} psi device formatter
+  LIBS ${math_libs} psi device container formatter
   SOURCES nhchain_test.cpp
   ../md_base.cpp
   ../nhchain.cpp
@@ -88,7 +88,7 @@ AddTest(
 
 AddTest(
   TARGET md_msst
-  LIBS ${math_libs} psi device formatter
+  LIBS ${math_libs} psi device container formatter
   SOURCES msst_test.cpp
   ../md_base.cpp
   ../msst.cpp
@@ -97,7 +97,7 @@ AddTest(
 
 AddTest(
   TARGET md_lgv
-  LIBS ${math_libs} psi device formatter
+  LIBS ${math_libs} psi device container formatter
   SOURCES langevin_test.cpp
   ../md_base.cpp
   ../langevin.cpp
