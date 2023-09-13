@@ -20,7 +20,7 @@ class BFCAllocator : public Allocator {
   public:
     struct Options {
         bool allow_growth = true;
-        float init_allocation_fraction = 0.6;
+        float init_allocation_fraction = 0.1;
         float fragment_fraction = 0.0;
         Options() : allow_growth(true), fragment_fraction(0.0) {}
     };
@@ -392,7 +392,7 @@ class BFCAllocator : public Allocator {
     std::vector<chunk> chunks_ = {};
     chunk_handle_t free_chunks_list_ = kInvalidChunkHandle;
     // mark the allocation counter 
-    int64_t next_allocation_id_ = 0;
+    int64_t next_allocation_id_ = 1;
 
     DISALLOW_COPY_AND_ASSIGN(BFCAllocator);
 };

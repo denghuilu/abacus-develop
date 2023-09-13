@@ -4,8 +4,15 @@
 #include <cuda_runtime.h>
 #include <thrust/complex.h>
 
+#include <base/core/allocator.h>
+#include <base/core/bfc_allocator.h>
+
 namespace container {
 namespace op {
+
+namespace local {
+    static container::base::Allocator* alloc_ = container::base::Allocator::get_singleton_instance(container::DeviceType::GpuDevice);
+}
 
 template <typename T>
 __global__ void set_memory(
@@ -51,7 +58,7 @@ void resize_memory_op<T, container::DEVICE_GPU>::operator()(
     if (arr != nullptr) {
         delete_memory_op<T, container::DEVICE_GPU>()(arr);
     }
-    cudaMalloc((void **)&arr, sizeof(T) * size);
+    arr = reinterpret_cast<T*>(local::alloc_->allocate(size * sizeof(T)));
 }
 
 template <typename T>
@@ -111,11 +118,11 @@ struct cast_memory_op<T_out, T_in, container::DEVICE_GPU, container::DEVICE_CPU>
         const size_t size) 
     {
         T_in * arr = nullptr;
-        cudaMalloc((void **)&arr, sizeof(T_in) * size);
+        arr = reinterpret_cast<T_in*>(local::alloc_->allocate(size * sizeof(T_in)));
         cudaMemcpy(arr, arr_in, sizeof(T_in) * size, cudaMemcpyHostToDevice);
         const int block = (size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
         cast_memory<<<block, THREADS_PER_BLOCK>>>(arr_out, arr, size);
-        cudaFree(arr);
+        local::alloc_->free(arr);
     }
 };
 
@@ -139,7 +146,7 @@ template <typename T>
 void delete_memory_op<T, container::DEVICE_GPU>::operator() (
     T* arr)
 {
-    cudaFree(arr);
+    local::alloc_->free(arr);
 }
 
 template struct resize_memory_op<int, container::DEVICE_GPU>;

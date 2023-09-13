@@ -8,7 +8,6 @@
 #include <cublas_v2.h>
 #include <base/macros/cuda.h>
 #include <base/core/allocator.h>
-#include <base/core/bfc_allocator.h>
 #endif // __CUDA || __ROCM
 
 //Naming convention of lapack subroutines : ammxxx, where

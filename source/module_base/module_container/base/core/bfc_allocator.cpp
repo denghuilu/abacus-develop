@@ -9,22 +9,25 @@ namespace base {
 constexpr BFCAllocator::chunk_handle_t BFCAllocator::kInvalidChunkHandle;
 
 BFCAllocator::BFCAllocator(const Options& options) 
-    : options_(options), next_allocation_id_(1)
+    : options_(options), 
+    next_allocation_id_(1),
+    free_chunks_list_(kInvalidChunkHandle)
 {   
     sub_alloc_ = GPUAllocator::get_singleton_instance();
-    size_t avail_memory = sub_alloc_->get_available_memory();
+    memory_limit_ = sub_alloc_->get_available_memory();
 
-    memory_limit_ = avail_memory * options_.init_allocation_fraction;
+    auto init_memory = static_cast<size_t>(memory_limit_ * options_.init_allocation_fraction);
     if (options_.allow_growth) {
         // Allow growth, so start with a small region and grow as needed.
         // Note the minimum region size is 2MiB.
-        curr_region_allocation_bytes_ = rounded_bytes(std::max(avail_memory, size_t{2 << 20}));
+        curr_region_allocation_bytes_ = rounded_bytes(std::max(init_memory, size_t{2 << 20}));
     }
     else {
-        curr_region_allocation_bytes_ = rounded_bytes(avail_memory);
+        curr_region_allocation_bytes_ = rounded_bytes(memory_limit_);
     }
-    // memory_limit_ = total_memory;
-    stats_.bytes_limit = static_cast<int64_t>(curr_region_allocation_bytes_);
+    stats_.pool_bytes = 0;
+    stats_.peak_pool_bytes = 0;
+    stats_.bytes_limit = static_cast<int64_t>(memory_limit_);
 
     // Create Bins 
     for (bin_index_t b = 0; b < kNumBins; b++) {

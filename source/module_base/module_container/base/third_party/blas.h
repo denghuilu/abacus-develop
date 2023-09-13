@@ -7,6 +7,7 @@
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
 #include <base/macros/cuda.h>
+#include <base/core/allocator.h>
 #endif // __CUDA || __ROCM
 
 extern "C"
@@ -337,7 +338,11 @@ void copy(const long n, const std::complex<double> *a, const int incx, std::comp
 
 #if __CUDA || __ROCM
 namespace cuBlasConnector {
-    
+
+namespace local {
+    static container::base::Allocator* alloc_ = container::base::Allocator::get_singleton_instance(container::DeviceType::GpuDevice);
+}
+
 static inline
 void dot(cublasHandle_t& handle, const int& n, const float *x, const int& incx, const float *y, const int& incy, float* result)
 {
@@ -503,8 +508,7 @@ template <typename T>
 static inline 
 T** allocate_(T** in, const int& batch_size)
 {
-    T** out = nullptr;
-    cudaMalloc(reinterpret_cast<void **>(&out), sizeof(T*) * batch_size);
+    T** out = reinterpret_cast<T**>(local::alloc_->allocate(sizeof(T*) * batch_size));
     cudaMemcpy(out, in, sizeof(T*) * batch_size, cudaMemcpyHostToDevice);
     return out;
 }
@@ -519,9 +523,9 @@ void gemm_batched(cublasHandle_t& handle, const char& transa, const char& transb
     float** d_C = allocate_(C, batch_size);
     cublasSgemmBatched(handle, GetCublasOperation(transa), GetCublasOperation(transb),
                        m, n, k, &alpha, d_A, lda, d_B, ldb, &beta, d_C, ldc, batch_size);
-    cudaFree(d_A);
-    cudaFree(d_B);
-    cudaFree(d_C);
+    local::alloc_->free(d_A);
+    local::alloc_->free(d_B);
+    local::alloc_->free(d_C);
 }
 static inline
 void gemm_batched(cublasHandle_t& handle, const char& transa, const char& transb, const int& m, const int& n, const int& k,
@@ -533,9 +537,9 @@ void gemm_batched(cublasHandle_t& handle, const char& transa, const char& transb
     double** d_C = allocate_(C, batch_size);
     cublasDgemmBatched(handle, GetCublasOperation(transa), GetCublasOperation(transb),
                        m, n, k, &alpha, d_A, lda, d_B, ldb, &beta, d_C, ldc, batch_size);
-    cudaFree(d_A);
-    cudaFree(d_B);
-    cudaFree(d_C);
+    local::alloc_->free(d_A);
+    local::alloc_->free(d_B);
+    local::alloc_->free(d_C);
 }
 static inline
 void gemm_batched(cublasHandle_t& handle, const char& transa, const char& transb, const int& m, const int& n, const int& k,
@@ -552,9 +556,9 @@ void gemm_batched(cublasHandle_t& handle, const char& transa, const char& transb
                        reinterpret_cast<cuComplex**>(d_B), ldb, 
                        reinterpret_cast<const cuComplex*>(&beta), 
                        reinterpret_cast<cuComplex**>(d_C), ldc, batch_size);
-    cudaFree(d_A);
-    cudaFree(d_B);
-    cudaFree(d_C);
+    local::alloc_->free(d_A);
+    local::alloc_->free(d_B);
+    local::alloc_->free(d_C);
 }
 static inline
 void gemm_batched(cublasHandle_t& handle, const char& transa, const char& transb, const int& m, const int& n, const int& k,
@@ -571,9 +575,9 @@ void gemm_batched(cublasHandle_t& handle, const char& transa, const char& transb
                        reinterpret_cast<cuDoubleComplex**>(d_B), ldb, 
                        reinterpret_cast<const cuDoubleComplex*>(&beta), 
                        reinterpret_cast<cuDoubleComplex**>(d_C), ldc, batch_size);
-    cudaFree(d_A);
-    cudaFree(d_B);
-    cudaFree(d_C);
+    local::alloc_->free(d_A);
+    local::alloc_->free(d_B);
+    local::alloc_->free(d_C);
 }
 
 static inline
