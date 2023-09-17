@@ -449,7 +449,7 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_GPU *ctx,
         if(phm_in!= nullptr)
         {
             std::vector<float> etatom(starting_nw, 0.0);
-            hsolver::DiagoIterAssist<float, psi::DEVICE_GPU>::diagH_subspace_init(
+            hsolver::DiagoIterAssist<std::complex<float>, psi::DEVICE_GPU>::diagH_subspace_init(
                     phm_in,
                     c_wfcatom,
                     wfcatom.nr,
@@ -542,7 +542,7 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_GPU *ctx,
 		if(phm_in!= nullptr)
 		{
 			std::vector<double> etatom(starting_nw, 0.0);
-			hsolver::DiagoIterAssist<double, psi::DEVICE_GPU>::diagH_subspace_init(
+			hsolver::DiagoIterAssist<std::complex<double>, psi::DEVICE_GPU>::diagH_subspace_init(
 					     phm_in,
                          z_wfcatom,
 						 wfcatom.nr,
