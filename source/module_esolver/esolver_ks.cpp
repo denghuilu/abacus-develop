@@ -353,7 +353,7 @@ namespace ModuleESolver
                 //they do not occupy all processors, for example wavefunctions uses 20 processors while density uses 10.
                 if(GlobalV::MY_STOGROUP == 0)
                 {
-                    // FPTYPE drho = this->estate.caldr2(); 
+                    // double drho = this->estate.caldr2(); 
                     // EState should be used after it is constructed.
 
                     drho = p_chgmix->get_drho(pelec->charge, GlobalV::nelec);
@@ -416,7 +416,7 @@ namespace ModuleESolver
 #ifdef __MPI
                 double duration = (double)(MPI_Wtime() - iterstart);
 #else
-                FPTYPE duration = (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - iterstart)).count() / static_cast<FPTYPE>(1e6);
+                double duration = (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - iterstart)).count() / static_cast<double>(1e6);
 #endif
                 printiter(iter, drho, duration, diag_ethr);
                 if (this->conv_elec)
