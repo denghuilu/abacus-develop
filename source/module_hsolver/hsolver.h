@@ -89,7 +89,7 @@ class HSolver
     };
 
   protected:
-    DiagH<FPTYPE, Device>* pdiagh = nullptr; // for single Hamiltonian matrix diagonal solver
+    DiagH<std::complex<FPTYPE>, Device>* pdiagh = nullptr; // for single Hamiltonian matrix diagonal solver
 
 };
 

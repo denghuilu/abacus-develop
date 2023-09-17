@@ -7,7 +7,7 @@
 namespace hsolver
 {
 
-class DiagoElpa : public DiagH<double>
+class DiagoElpa : public DiagH<std::complex<double>>
 {
 
   public:

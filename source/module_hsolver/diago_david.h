@@ -21,7 +21,7 @@ namespace hsolver
 {
 
 template <typename T = std::complex<double>, typename Device = psi::DEVICE_CPU> 
-class DiagoDavid : public DiagH<typename PossibleComplexToReal<T>::type, Device>
+class DiagoDavid : public DiagH<T, Device>
 {
   private:
     // Note PossibleComplexToReal<T>::type will 

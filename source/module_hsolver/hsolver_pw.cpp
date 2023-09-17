@@ -57,7 +57,7 @@ void HSolverPW<FPTYPE, Device>::initDiagh(const psi::Psi<std::complex<FPTYPE>, D
     }
     else if (this->method == "dav")
     {
-        DiagoDavid<double>::PW_DIAG_NDIM = GlobalV::PW_DIAG_NDIM;
+        DiagoDavid<std::complex<FPTYPE>>::PW_DIAG_NDIM = GlobalV::PW_DIAG_NDIM;
         if (this->pdiagh != nullptr)
         {
             if (this->pdiagh->method != this->method)

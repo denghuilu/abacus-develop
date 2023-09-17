@@ -7,7 +7,7 @@
 namespace hsolver
 {
 
-class DiagoLapack : public DiagH<double>
+class DiagoLapack : public DiagH<std::complex<double>>
 {
 
   public:

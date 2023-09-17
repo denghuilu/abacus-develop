@@ -6,6 +6,8 @@
 #include "module_hsolver/hsolver.h"
 #include "hsolver_supplementary_mock.h"
 
+#include <module_base/macros.h>
+
 template class hsolver::HSolver<double, psi::DEVICE_CPU>;
 template class hsolver::HSolver<float, psi::DEVICE_CPU>;
 
@@ -98,29 +100,31 @@ TEST_F(TestHSolver, diagethr)
 }
 namespace hsolver
 {
-	template <typename FPTYPE, typename Device = psi::DEVICE_CPU>
-	class DiagH_mock : public DiagH<FPTYPE, Device>
+	template <typename T, typename Device = psi::DEVICE_CPU>
+	class DiagH_mock : public DiagH<T, Device>
 	{
+	  private:
+	    using R = typename PossibleComplexToReal<T>::type;
 		public:
 		DiagH_mock(){}
 		~DiagH_mock(){}
 
-		void diag(hamilt::Hamilt<FPTYPE, Device> *phm_in, psi::Psi<std::complex<FPTYPE>, Device> &psi, FPTYPE *eigenvalue_in)
+		void diag(hamilt::Hamilt<R, Device> *phm_in, psi::Psi<T, Device> &psi, R *eigenvalue_in)
 		{
 			return;
 		}
 	};
-	template class DiagH_mock<double>;
-	template class DiagH_mock<float>;
+	template class DiagH_mock<std::complex<float>>;
+	template class DiagH_mock<std::complex<double>>;
 }
 
 TEST_F(TestHSolver, diagh)
 {
-	this->hs_f.pdiagh = new hsolver::DiagH_mock<float>;
+	this->hs_f.pdiagh = new hsolver::DiagH_mock<std::complex<float>>;
 	//test DiagH::diag
 	this->hs_f.pdiagh->diag(nullptr, this->psi_test_f, nullptr);
 	EXPECT_EQ(this->hs_f.pdiagh->method, "none");
-	this->hs_d.pdiagh = new hsolver::DiagH_mock<double>;
+	this->hs_d.pdiagh = new hsolver::DiagH_mock<std::complex<double>>;
 	//test DiagH::diag
 	this->hs_d.pdiagh->diag(nullptr, this->psi_test_d, nullptr);
 	EXPECT_EQ(this->hs_d.pdiagh->method, "none");

@@ -20,7 +20,7 @@
 namespace hsolver
 {
 
-class DiagoBlas : public DiagH<double>
+class DiagoBlas : public DiagH<std::complex<double>>
 {
 
   public:

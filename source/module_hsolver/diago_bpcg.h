@@ -25,7 +25,7 @@ namespace hsolver {
  * @tparam Device The device used for calculations (e.g., cpu or gpu).
  */
 template<typename T = std::complex<double>, typename Device = psi::DEVICE_CPU>
-class DiagoBPCG : public DiagH<typename PossibleComplexToReal<T>::type, Device>
+class DiagoBPCG : public DiagH<T, Device>
 {
   private:
     // Note PossibleComplexToReal<T>::type will 
