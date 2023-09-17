@@ -183,7 +183,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
         ModuleBase::timer::tick("HSolverPW", "solve");
         return;
     }
-    reinterpret_cast<elecstate::ElecStatePW<R, Device>*>(pes)->psiToRho(psi);
+    reinterpret_cast<elecstate::ElecStatePW<T, Device>*>(pes)->psiToRho(psi);
 
 #ifdef USE_PAW
     if(GlobalV::use_paw)

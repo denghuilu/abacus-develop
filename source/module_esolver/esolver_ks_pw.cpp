@@ -74,7 +74,7 @@ ESolver_KS_PW<FPTYPE, Device>::~ESolver_KS_PW()
     }
     if (this->pelec != nullptr)
     {
-        delete reinterpret_cast<elecstate::ElecStatePW<FPTYPE, Device>*>(this->pelec);
+        delete reinterpret_cast<elecstate::ElecStatePW<std::complex<FPTYPE>, Device>*>(this->pelec);
         this->pelec = nullptr;
     }
     // delete Hamilt
@@ -173,7 +173,7 @@ void ESolver_KS_PW<FPTYPE, Device>::Init(Input& inp, UnitCell& ucell)
     // init ElecState,
     if (this->pelec == nullptr)
     {
-        this->pelec = new elecstate::ElecStatePW<FPTYPE, Device>(this->pw_wfc,
+        this->pelec = new elecstate::ElecStatePW<std::complex<FPTYPE>, Device>(this->pw_wfc,
                                                                  &(this->chr),
                                                                  &(this->kv),
                                                                  this->pw_rho,
@@ -231,7 +231,7 @@ void ESolver_KS_PW<FPTYPE, Device>::init_after_vc(Input& inp, UnitCell& ucell)
         this->phsol = new hsolver::HSolverPW<std::complex<FPTYPE>, Device>(this->pw_wfc, &this->wf);
 
         delete this->pelec;
-        this->pelec = new elecstate::ElecStatePW<FPTYPE, Device>(this->pw_wfc,
+        this->pelec = new elecstate::ElecStatePW<std::complex<FPTYPE>, Device>(this->pw_wfc,
                                                                  &(this->chr),
                                                                  (K_Vectors*)(&(this->kv)),
                                                                  this->pw_rho,
