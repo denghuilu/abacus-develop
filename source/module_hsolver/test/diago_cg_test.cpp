@@ -126,7 +126,7 @@ class DiagoCGPrepare
 	    precondition_local = new double[DIAGOTEST::npw];
 	    for(int i=0;i<DIAGOTEST::npw;i++) precondition_local[i] = precondition[i];
 #endif
-        hsolver::DiagoCG<double> cg(precondition_local);
+        hsolver::DiagoCG<std::complex<double>> cg(precondition_local);
         psi_local.fix_k(0);
         double start, end;
         start = MPI_Wtime();

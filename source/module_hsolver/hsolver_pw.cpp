@@ -44,14 +44,14 @@ void HSolverPW<FPTYPE, Device>::initDiagh(const psi::Psi<std::complex<FPTYPE>, D
         {
             if(this->pdiagh->method != this->method)
             {
-                delete (DiagoCG<FPTYPE, Device>*)this->pdiagh;
-                this->pdiagh = new DiagoCG<FPTYPE, Device>(precondition.data());
+                delete (DiagoCG<std::complex<FPTYPE>, Device>*)this->pdiagh;
+                this->pdiagh = new DiagoCG<std::complex<FPTYPE>, Device>(precondition.data());
                 this->pdiagh->method = this->method;
             }
         }
         else
         {
-            this->pdiagh = new DiagoCG<FPTYPE, Device>(precondition.data());
+            this->pdiagh = new DiagoCG<std::complex<FPTYPE>, Device>(precondition.data());
             this->pdiagh->method = this->method;
         }
     }
@@ -62,30 +62,30 @@ void HSolverPW<FPTYPE, Device>::initDiagh(const psi::Psi<std::complex<FPTYPE>, D
         {
             if (this->pdiagh->method != this->method)
             {
-                delete (DiagoDavid<FPTYPE, Device>*)this->pdiagh;
-                this->pdiagh = new DiagoDavid<FPTYPE, Device>(precondition.data());
+                delete (DiagoDavid<std::complex<FPTYPE>, Device>*)this->pdiagh;
+                this->pdiagh = new DiagoDavid<std::complex<FPTYPE>, Device>(precondition.data());
                 this->pdiagh->method = this->method;
             }
         }
         else
         {
-            this->pdiagh = new DiagoDavid<FPTYPE, Device>( precondition.data());
+            this->pdiagh = new DiagoDavid<std::complex<FPTYPE>, Device>( precondition.data());
             this->pdiagh->method = this->method;
         }
     }
     else if (this->method == "bpcg") {
         if(this->pdiagh!=nullptr) {
             if(this->pdiagh->method != this->method) {
-                delete (DiagoBPCG<FPTYPE, Device>*)this->pdiagh;
-                this->pdiagh = new DiagoBPCG<FPTYPE, Device>(precondition.data());
+                delete (DiagoBPCG<std::complex<FPTYPE>, Device>*)this->pdiagh;
+                this->pdiagh = new DiagoBPCG<std::complex<FPTYPE>, Device>(precondition.data());
                 this->pdiagh->method = this->method;
-                reinterpret_cast<DiagoBPCG<FPTYPE, Device>*>(this->pdiagh)->init_iter(psi_in);
+                reinterpret_cast<DiagoBPCG<std::complex<FPTYPE>, Device>*>(this->pdiagh)->init_iter(psi_in);
             }
         }
         else {
-            this->pdiagh = new DiagoBPCG<FPTYPE, Device>(precondition.data());
+            this->pdiagh = new DiagoBPCG<std::complex<FPTYPE>, Device>(precondition.data());
             this->pdiagh->method = this->method;
-            reinterpret_cast<DiagoBPCG<FPTYPE, Device>*>(this->pdiagh)->init_iter(psi_in);
+            reinterpret_cast<DiagoBPCG<std::complex<FPTYPE>, Device>*>(this->pdiagh)->init_iter(psi_in);
         }
     }
     else
@@ -233,17 +233,17 @@ void HSolverPW<FPTYPE, Device>::endDiagh()
     // it should be deleted before calculating charge
     if(this->method == "cg")
     {
-        delete (DiagoCG<FPTYPE, Device>*)this->pdiagh;
+        delete (DiagoCG<std::complex<FPTYPE>, Device>*)this->pdiagh;
         this->pdiagh = nullptr;
     }
     if(this->method == "dav")
     {
-        delete (DiagoDavid<FPTYPE, Device>*)this->pdiagh;
+        delete (DiagoDavid<std::complex<FPTYPE>, Device>*)this->pdiagh;
         this->pdiagh = nullptr;
     }
     if(this->method == "all-band cg")
     {
-        delete (DiagoBPCG<FPTYPE, Device>*)this->pdiagh;
+        delete (DiagoBPCG<std::complex<FPTYPE>, Device>*)this->pdiagh;
         this->pdiagh = nullptr;
     }
 

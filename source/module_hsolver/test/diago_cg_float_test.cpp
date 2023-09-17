@@ -130,7 +130,7 @@ class DiagoCGPrepare
 	    precondition_local = new float[DIAGOTEST::npw];
 	    for(int i=0;i<DIAGOTEST::npw;i++) precondition_local[i] = precondition[i];
 #endif
-        hsolver::DiagoCG<float> cg(precondition_local);
+        hsolver::DiagoCG<std::complex<float>> cg(precondition_local);
         psi_local.fix_k(0);
         float start, end;
         start = MPI_Wtime();
