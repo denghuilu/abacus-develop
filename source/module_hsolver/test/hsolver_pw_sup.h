@@ -211,5 +211,5 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_CPU* ctx,
 
 }//namespace hsolver
 
-template class hsolver::HSolverPW<float, psi::DEVICE_CPU>;
-template class hsolver::HSolverPW<double, psi::DEVICE_CPU>;
+template class hsolver::HSolverPW<std::complex<float>, psi::DEVICE_CPU>;
+template class hsolver::HSolverPW<std::complex<double>, psi::DEVICE_CPU>;

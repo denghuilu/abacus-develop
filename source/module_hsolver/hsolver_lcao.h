@@ -7,7 +7,7 @@
 namespace hsolver
 {
 
-class HSolverLCAO : public HSolver<double>
+class HSolverLCAO : public HSolver<std::complex<double>>
 {
   public:
     HSolverLCAO(const Parallel_Orbitals* ParaV_in)

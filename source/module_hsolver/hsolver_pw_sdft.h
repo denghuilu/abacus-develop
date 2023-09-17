@@ -4,7 +4,7 @@
 #include "module_hamilt_pw/hamilt_stodft/sto_iter.h"
 namespace hsolver
 {
-    class HSolverPW_SDFT : public HSolverPW<double>
+    class HSolverPW_SDFT : public HSolverPW<std::complex<double>>
     {
         public:
           HSolverPW_SDFT(K_Vectors* pkv,

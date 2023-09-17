@@ -81,7 +81,7 @@ namespace ModuleESolver
         ModuleIO::Output_Potential create_Output_Potential(int iter, const std::string& prefix = "None");
         // TODO: control single precision at input files
 
-        hsolver::HSolver<FPTYPE, Device>* phsol = nullptr;
+        hsolver::HSolver<std::complex<FPTYPE>, Device>* phsol = nullptr;
         hamilt::Hamilt<FPTYPE, Device>* p_hamilt = nullptr;
         ModulePW::PW_Basis_K* pw_wfc = nullptr;
         Charge_Mixing* p_chgmix = nullptr;

@@ -33,8 +33,8 @@ class TestHSolverPW : public ::testing::Test
 {
 	public:
     ModulePW::PW_Basis_K pwbk;
-    hsolver::HSolverPW<float, psi::DEVICE_CPU> hs_f = hsolver::HSolverPW<float, psi::DEVICE_CPU>(&pwbk, nullptr);
-    hsolver::HSolverPW<double, psi::DEVICE_CPU> hs_d = hsolver::HSolverPW<double, psi::DEVICE_CPU>(&pwbk, nullptr);
+    hsolver::HSolverPW<std::complex<float>, psi::DEVICE_CPU> hs_f = hsolver::HSolverPW<std::complex<float>, psi::DEVICE_CPU>(&pwbk, nullptr);
+    hsolver::HSolverPW<std::complex<double>, psi::DEVICE_CPU> hs_d = hsolver::HSolverPW<std::complex<double>, psi::DEVICE_CPU>(&pwbk, nullptr);
 
     hamilt::Hamilt<double> hamilt_test_d;
     hamilt::Hamilt<float> hamilt_test_f;

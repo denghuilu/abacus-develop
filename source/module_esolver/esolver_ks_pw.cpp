@@ -69,7 +69,7 @@ ESolver_KS_PW<FPTYPE, Device>::~ESolver_KS_PW()
     // delete HSolver and ElecState
     if (this->phsol != nullptr)
     {
-        delete reinterpret_cast<hsolver::HSolverPW<FPTYPE, Device>*>(this->phsol);
+        delete reinterpret_cast<hsolver::HSolverPW<std::complex<FPTYPE>, Device>*>(this->phsol);
         this->phsol = nullptr;
     }
     if (this->pelec != nullptr)
@@ -167,7 +167,7 @@ void ESolver_KS_PW<FPTYPE, Device>::Init(Input& inp, UnitCell& ucell)
     // init HSolver
     if (this->phsol == nullptr)
     {
-        this->phsol = new hsolver::HSolverPW<FPTYPE, Device>(this->pw_wfc, &this->wf);
+        this->phsol = new hsolver::HSolverPW<std::complex<FPTYPE>, Device>(this->pw_wfc, &this->wf);
     }
 
     // init ElecState,
@@ -228,7 +228,7 @@ void ESolver_KS_PW<FPTYPE, Device>::init_after_vc(Input& inp, UnitCell& ucell)
         this->pw_wfc->collect_local_pw(inp.erf_ecut, inp.erf_height, inp.erf_sigma);
 
         delete this->phsol;
-        this->phsol = new hsolver::HSolverPW<FPTYPE, Device>(this->pw_wfc, &this->wf);
+        this->phsol = new hsolver::HSolverPW<std::complex<FPTYPE>, Device>(this->pw_wfc, &this->wf);
 
         delete this->pelec;
         this->pelec = new elecstate::ElecStatePW<FPTYPE, Device>(this->pw_wfc,

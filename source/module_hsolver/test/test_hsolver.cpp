@@ -8,8 +8,8 @@
 
 #include <module_base/macros.h>
 
-template class hsolver::HSolver<double, psi::DEVICE_CPU>;
-template class hsolver::HSolver<float, psi::DEVICE_CPU>;
+template class hsolver::HSolver<std::complex<float>, psi::DEVICE_CPU>;
+template class hsolver::HSolver<std::complex<double>, psi::DEVICE_CPU>;
 
 /************************************************
  *  unit test of HSolver base class
@@ -36,8 +36,8 @@ template class hsolver::HSolver<float, psi::DEVICE_CPU>;
 class TestHSolver : public ::testing::Test
 {
 	public:
-	hsolver::HSolver<float, psi::DEVICE_CPU> hs_f;
-	hsolver::HSolver<double, psi::DEVICE_CPU> hs_d;
+	hsolver::HSolver<std::complex<float>, psi::DEVICE_CPU> hs_f;
+	hsolver::HSolver<std::complex<double>, psi::DEVICE_CPU> hs_d;
 
 	hamilt::Hamilt<double> hamilt_test_d;
 	hamilt::Hamilt<float> hamilt_test_f;
