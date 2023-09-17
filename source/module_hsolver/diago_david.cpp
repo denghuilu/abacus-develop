@@ -186,7 +186,7 @@ void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
         this->notconv = 0;
         for (int m = 0; m < this->n_band; m++)
         {
-            convflag[m] = (std::abs(this->eigenvalue[m] - eigenvalue_in[m]) < DiagoIterAssist<R, Device>::PW_DIAG_THR);
+            convflag[m] = (std::abs(this->eigenvalue[m] - eigenvalue_in[m]) < DiagoIterAssist<T, Device>::PW_DIAG_THR);
 
             if (!convflag[m])
             {
@@ -199,7 +199,7 @@ void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
 
         ModuleBase::timer::tick("DiagoDavid", "check_update");
         if (!this->notconv || (nbase + this->notconv > this->nbase_x)
-            || (dav_iter == DiagoIterAssist<R, Device>::PW_DIAG_NMAX))
+            || (dav_iter == DiagoIterAssist<T, Device>::PW_DIAG_NMAX))
         {
             ModuleBase::timer::tick("DiagoDavid", "last");
 
@@ -225,7 +225,7 @@ void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
                                       this->dmx
             );
 
-            if (!this->notconv || (dav_iter == DiagoIterAssist<R, Device>::PW_DIAG_NMAX))
+            if (!this->notconv || (dav_iter == DiagoIterAssist<T, Device>::PW_DIAG_NMAX))
             {
                 // overall convergence or last iteration: exit the iteration
 
@@ -256,7 +256,7 @@ void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
 
     } while (1);
 
-    DiagoIterAssist<R, Device>::avg_iter += static_cast<double>(dav_iter);
+    DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(dav_iter);
 
     ModuleBase::timer::tick("DiagoDavid", "diag_mock");
 
@@ -979,7 +979,7 @@ void DiagoDavid<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
     {
         this->diag_mock(phm_in, psi, eigenvalue_in);
         ++ntry;
-    } while (DiagoIterAssist<R, Device>::test_exit_cond(ntry, this->notconv));
+    } while (DiagoIterAssist<T, Device>::test_exit_cond(ntry, this->notconv));
 
     if (notconv > std::max(5, psi.get_nbands() / 4))
     {

@@ -159,10 +159,10 @@ TEST_P(DiagoBPCGTest, RandomHamilt)
     DiagoBPCGPrepare dcp = GetParam();
     //std::cout << "npw=" << dcp.npw << ", nband=" << dcp.nband << ", sparsity="
     //		  << dcp.sparsity << ", eps=" << dcp.eps << std::endl;
-    hsolver::DiagoIterAssist<double>::PW_DIAG_NMAX = dcp.maxiter;
-    hsolver::DiagoIterAssist<double>::PW_DIAG_THR = dcp.eps;
-    //std::cout<<"maxiter "<<hsolver::DiagoIterAssist<double>::PW_DIAG_NMAX<<std::endl;
-    //std::cout<<"eps "<<hsolver::DiagoIterAssist<double>::PW_DIAG_THR<<std::endl;
+    hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX = dcp.maxiter;
+    hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR = dcp.eps;
+    //std::cout<<"maxiter "<<hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX<<std::endl;
+    //std::cout<<"eps "<<hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR<<std::endl;
     HPsi hpsi(dcp.nband, dcp.npw, dcp.sparsity);
     DIAGOTEST::hmatrix = hpsi.hamilt();
 
@@ -233,8 +233,8 @@ TEST(DiagoBPCGTest, TwoByTwo)
     hm(1, 1) = std::complex<double>{3.0, 0.0};
     // nband, npw, sub, sparsity, reorder, eps, maxiter, threshold
     DiagoBPCGPrepare dcp(nband, dim, 0, true, 1e-4, 50, 1e-10);
-    hsolver::DiagoIterAssist<double>::PW_DIAG_NMAX = dcp.maxiter;
-    hsolver::DiagoIterAssist<double>::PW_DIAG_THR = dcp.eps;
+    hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX = dcp.maxiter;
+    hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR = dcp.eps;
     HPsi hpsi;
     hpsi.create(nband, dim);
     DIAGOTEST::hmatrix = hm;
@@ -255,9 +255,9 @@ TEST(DiagoBPCGTest, readH)
     int nband = 10; // not nband < dim, here dim = 26 in data-H
     // nband, npw, sub, sparsity, reorder, eps, maxiter, threshold
     DiagoBPCGPrepare dcp(nband, dim, 0, true, 1e-5, 500, 1e-1);
-    hsolver::DiagoIterAssist<double>::PW_DIAG_NMAX = dcp.maxiter;
-    hsolver::DiagoIterAssist<double>::PW_DIAG_THR = dcp.eps;
-    hsolver::DiagoIterAssist<double>::SCF_ITER = 1;
+    hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX = dcp.maxiter;
+    hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR = dcp.eps;
+    hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER = 1;
     HPsi hpsi;
     hpsi.create(nband, dim);
     DIAGOTEST::hmatrix = hpsi.hamilt();

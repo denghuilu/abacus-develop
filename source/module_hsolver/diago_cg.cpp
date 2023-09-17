@@ -133,7 +133,7 @@ void DiagoCG<T, Device>::diag_mock(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T
         R cg_norm = 0.0;
         R theta = 0.0;
         bool converged = false;
-        for (iter = 0; iter < DiagoIterAssist<R, Device>::PW_DIAG_NMAX; iter++)
+        for (iter = 0; iter < DiagoIterAssist<T, Device>::PW_DIAG_NMAX; iter++)
         {
             this->calculate_gradient();
             this->orthogonal_gradient(phm_in, phi, m);
@@ -166,13 +166,13 @@ void DiagoCG<T, Device>::diag_mock(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T
         if (m > 0 && reorder)
         {
             ModuleBase::GlobalFunc::NOTE("reorder bands!");
-            if (eigenvalue[m] - eigenvalue[m - 1] < -2.0 * DiagoIterAssist<R, Device>::PW_DIAG_THR)
+            if (eigenvalue[m] - eigenvalue[m - 1] < -2.0 * DiagoIterAssist<T, Device>::PW_DIAG_THR)
             {
                 // if the last calculated eigenvalue is not the largest...
                 int i = 0;
                 for (i = m - 2; i >= 0; i--)
                 {
-                    if (eigenvalue[m] - eigenvalue[i] > 2.0 * DiagoIterAssist<R, Device>::PW_DIAG_THR)
+                    if (eigenvalue[m] - eigenvalue[i] > 2.0 * DiagoIterAssist<T, Device>::PW_DIAG_THR)
                         break;
                 }
                 i++;
@@ -200,7 +200,7 @@ void DiagoCG<T, Device>::diag_mock(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T
     } // end m
 
     avg /= this->n_band;
-    DiagoIterAssist<R, Device>::avg_iter += avg;
+    DiagoIterAssist<T, Device>::avg_iter += avg;
 
     delete this->phi_m;
     delete this->cg;
@@ -441,7 +441,7 @@ bool DiagoCG<T, Device>::update_psi(R &cg_norm, R &theta, R &eigenvalue)
 
     //	std::cout << "\n overlap2 = "  << this->ddot(dim, phi_m, phi_m);
 
-    if (std::abs(eigenvalue - e0) < DiagoIterAssist<R, Device>::PW_DIAG_THR)
+    if (std::abs(eigenvalue - e0) < DiagoIterAssist<T, Device>::PW_DIAG_THR)
     {
         // ModuleBase::timer::tick("DiagoCG","update");
         return 1;
@@ -573,18 +573,18 @@ void DiagoCG<T, Device>::diag(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T, Dev
     }
     do
     {
-        if(DiagoIterAssist<R, Device>::need_subspace || ntry > 0)
+        if(DiagoIterAssist<T, Device>::need_subspace || ntry > 0)
         {
-            DiagoIterAssist<R, Device>::diagH_subspace(phm_in, psi, psi, eigenvalue_in);
+            DiagoIterAssist<T, Device>::diagH_subspace(phm_in, psi, psi, eigenvalue_in);
         }
 
-        DiagoIterAssist<R, Device>::avg_iter += 1.0;
+        DiagoIterAssist<T, Device>::avg_iter += 1.0;
         this->reorder = true;
 
         this->diag_mock(phm_in, psi, eigenvalue_in);
 
         ++ntry;
-    } while (DiagoIterAssist<R, Device>::test_exit_cond(ntry, this->notconv));
+    } while (DiagoIterAssist<T, Device>::test_exit_cond(ntry, this->notconv));
 
     if (notconv > std::max(5, psi.get_nbands() / 4)) {
         std::cout << "\n notconv = " << this->notconv;

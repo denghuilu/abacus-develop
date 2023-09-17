@@ -178,7 +178,7 @@ TEST_F(TestHSolverPW_SDFT, solve)
         false
     );
 	EXPECT_EQ(this->hs_d.initialed_psi, true);
-	EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<double>::avg_iter, 0.0);
+	EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<double>>::avg_iter, 0.0);
 	EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[0], 4.0);
 	EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[1], 7.0);
     for(int i=0;i<psi_test_cd.size();i++)
@@ -260,7 +260,7 @@ TEST_F(TestHSolverPW_SDFT, solve_noband_skipcharge)
         method_test, 
         false
     );
-	EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<double>::avg_iter, 0.0);
+	EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<double>>::avg_iter, 0.0);
     EXPECT_EQ(stowf.nbands_diag, 2);
     EXPECT_EQ(stowf.nbands_total, 1);
     EXPECT_EQ(stowf.nchi, 2);

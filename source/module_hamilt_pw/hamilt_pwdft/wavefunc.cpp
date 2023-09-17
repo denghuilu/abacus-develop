@@ -196,7 +196,7 @@ void diago_PAO_in_pw_k2(const int &ik,
 		{
 			if(phm_in!= nullptr)
 			{
-				hsolver::DiagoIterAssist<float>::diagH_subspace(phm_in, wvf, wvf, etatom.data());
+				hsolver::DiagoIterAssist<std::complex<float>>::diagH_subspace(phm_in, wvf, wvf, etatom.data());
 				return;
 			}
 			else
@@ -230,11 +230,11 @@ void diago_PAO_in_pw_k2(const int &ik,
 		{
 			if(phm_in!= nullptr)
 			{
-				// hsolver::DiagoIterAssist<double>::diagH_subspace_init(phm_in,
+				// hsolver::DiagoIterAssist<std::complex<double>>::diagH_subspace_init(phm_in,
 				//                          wfcatom,
 				//                          wvf,
 				//                          etatom.data());
-				hsolver::DiagoIterAssist<float>::diagH_subspace_init(phm_in,
+				hsolver::DiagoIterAssist<std::complex<float>>::diagH_subspace_init(phm_in,
 																	s_wfcatom.data(),
 																	wfcatom.nr,
 																	wfcatom.nc,
@@ -303,7 +303,7 @@ void diago_PAO_in_pw_k2(const int &ik,
 		{
 			if(phm_in!= nullptr)
 			{
-				hsolver::DiagoIterAssist<double>::diagH_subspace(phm_in, wvf, wvf, etatom.data());
+				hsolver::DiagoIterAssist<std::complex<double>>::diagH_subspace(phm_in, wvf, wvf, etatom.data());
 				return;
 			}
 			else
@@ -343,7 +343,7 @@ void diago_PAO_in_pw_k2(const int &ik,
 		{
 			if(phm_in!= nullptr)
 			{
-				hsolver::DiagoIterAssist<double>::diagH_subspace_init(phm_in,
+				hsolver::DiagoIterAssist<std::complex<double>>::diagH_subspace_init(phm_in,
 							wfcatom.c,
 							wfcatom.nr,
 							wfcatom.nc,

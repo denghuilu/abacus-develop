@@ -110,7 +110,7 @@ void DiagoCG<T, Device>::diag(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T, Dev
         }
         eigenvalue_in[ib] /= psi.get_nbasis();
     }
-    DiagoIterAssist<R, Device>::avg_iter += 1.0;
+    DiagoIterAssist<T, Device>::avg_iter += 1.0;
     return;
 }
 
@@ -165,7 +165,7 @@ void DiagoDavid<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
         }
         eigenvalue_in[ib] /= psi.get_nbasis();
     }
-    DiagoIterAssist<R, Device>::avg_iter += 1.0;
+    DiagoIterAssist<T, Device>::avg_iter += 1.0;
     return;
 }
 

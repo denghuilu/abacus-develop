@@ -75,11 +75,11 @@ TEST_F(TestHSolverPW, solve)
     }
     EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[0], 4.0);
     EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[1], 7.0);
-    EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<float>::avg_iter, 0.0);
+    EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<float>>::avg_iter, 0.0);
 
     this->hs_d.solve(&hamilt_test_d, psi_test_cd, &elecstate_test, method_test, true);
     EXPECT_EQ(this->hs_d.initialed_psi, true);
-    EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<double>::avg_iter, 0.0);
+    EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<double>>::avg_iter, 0.0);
     for (int i = 0; i < psi_test_cd.size(); i++)
     {
         EXPECT_DOUBLE_EQ(psi_test_cd.get_pointer()[i].real(), i + 3);
