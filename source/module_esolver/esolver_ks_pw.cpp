@@ -80,7 +80,7 @@ ESolver_KS_PW<FPTYPE, Device>::~ESolver_KS_PW()
     // delete Hamilt
     if (this->p_hamilt != nullptr)
     {
-        delete reinterpret_cast<hamilt::HamiltPW<FPTYPE, Device>*>(this->p_hamilt);
+        delete reinterpret_cast<hamilt::HamiltPW<std::complex<FPTYPE>, Device>*>(this->p_hamilt);
         this->p_hamilt = nullptr;
     }
     if (this->device == psi::GpuDevice)
@@ -308,13 +308,13 @@ void ESolver_KS_PW<FPTYPE, Device>::beforescf(int istep)
     // delete Hamilt if not first scf
     if (this->p_hamilt != nullptr)
     {
-        delete reinterpret_cast<hamilt::HamiltPW<FPTYPE, Device>*>(this->p_hamilt);
+        delete reinterpret_cast<hamilt::HamiltPW<std::complex<FPTYPE>, Device>*>(this->p_hamilt);
         this->p_hamilt = nullptr;
     }
     // allocate HamiltPW
     if (this->p_hamilt == nullptr)
     {
-        this->p_hamilt = new hamilt::HamiltPW<FPTYPE, Device>(this->pelec->pot, this->pw_wfc, &this->kv);
+        this->p_hamilt = new hamilt::HamiltPW<std::complex<FPTYPE>, Device>(this->pelec->pot, this->pw_wfc, &this->kv);
     }
 
     //----------------------------------------------------------

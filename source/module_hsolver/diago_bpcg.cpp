@@ -152,7 +152,7 @@ void DiagoBPCG<T, Device>::rotate_wf(
 
 template<typename T, typename Device>
 void DiagoBPCG<T, Device>::calc_hpsi_with_block(
-        hamilt::Hamilt<R, Device>* hamilt_in,
+        hamilt::Hamilt<T, Device>* hamilt_in,
         const psi::Psi<T, Device>& psi_in,
         ct::Tensor& hpsi_out)
 {
@@ -181,7 +181,7 @@ void DiagoBPCG<T, Device>::diag_hsub(
 
 template<typename T, typename Device>
 void DiagoBPCG<T, Device>::calc_hsub_with_block(
-        hamilt::Hamilt<R, Device> *hamilt_in,
+        hamilt::Hamilt<T, Device> *hamilt_in,
         const psi::Psi<T, Device> &psi_in,
         ct::Tensor& psi_out,
         ct::Tensor& hpsi_out,
@@ -220,7 +220,7 @@ void DiagoBPCG<T, Device>::calc_hsub_with_block_exit(
 
 template<typename T, typename Device>
 void DiagoBPCG<T, Device>::diag(
-        hamilt::Hamilt<R, Device>* hamilt_in,
+        hamilt::Hamilt<T, Device>* hamilt_in,
         psi::Psi<T, Device>& psi_in,
         R* eigenvalue_in)
 {

@@ -41,7 +41,7 @@ DiagoCG<T, Device>::~DiagoCG() {
 }
 
 template<typename T, typename Device>
-void DiagoCG<T, Device>::diag_mock(hamilt::Hamilt<R, Device> *phm_in, psi::Psi<T, Device> &phi, R *eigenvalue_in)
+void DiagoCG<T, Device>::diag_mock(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T, Device> &phi, R *eigenvalue_in)
 {
     ModuleBase::TITLE("DiagoCG", "diag_once");
     ModuleBase::timer::tick("DiagoCG", "diag_once");
@@ -254,7 +254,7 @@ void DiagoCG<T, Device>::calculate_gradient()
 }
 
 template<typename T, typename Device>
-void DiagoCG<T, Device>::orthogonal_gradient(hamilt::Hamilt<R, Device> *phm_in, const psi::Psi<T, Device> &eigenfunction, const int m)
+void DiagoCG<T, Device>::orthogonal_gradient(hamilt::Hamilt<T, Device> *phm_in, const psi::Psi<T, Device> &eigenfunction, const int m)
 {
     if (test_cg == 1) {
         ModuleBase::TITLE("DiagoCG", "orthogonal_gradient");
@@ -562,7 +562,7 @@ void DiagoCG<T, Device>::schmit_orth(
 }
 
 template<typename T, typename Device>
-void DiagoCG<T, Device>::diag(hamilt::Hamilt<R, Device> *phm_in, psi::Psi<T, Device> &psi, R *eigenvalue_in)
+void DiagoCG<T, Device>::diag(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T, Device> &psi, R *eigenvalue_in)
 {
     /// record the times of trying iterative diagonalization
     int ntry = 0;

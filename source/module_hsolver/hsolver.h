@@ -35,7 +35,7 @@ class HSolver
         Input &in )=0;*/
 
     // solve Hamiltonian to electronic density in ElecState
-    virtual void solve(hamilt::Hamilt<R, Device>* phm,
+    virtual void solve(hamilt::Hamilt<T, Device>* phm,
                        psi::Psi<T, Device>& ppsi,
                        elecstate::ElecState* pes,
                        const std::string method,
@@ -44,7 +44,7 @@ class HSolver
         return;
     }
 
-    virtual void solve(hamilt::Hamilt<R, Device>* phm,
+    virtual void solve(hamilt::Hamilt<T, Device>* phm,
                        psi::Psi<R, Device>& ppsi,
                        elecstate::ElecState* pes,
                        const std::string method,
@@ -53,7 +53,7 @@ class HSolver
         return;
     }
 
-    virtual void solve(hamilt::Hamilt<R, Device>* phm,
+    virtual void solve(hamilt::Hamilt<T, Device>* phm,
                        psi::Psi<T, Device>& ppsi,
                        elecstate::ElecState* pes,
                        ModulePW::PW_Basis_K* wfc_basis,

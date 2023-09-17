@@ -99,7 +99,7 @@ void Stochastic_Iter::calHsqrtchi(Stochastic_WF &stowf)
 void Stochastic_Iter::sum_stoband(
     Stochastic_WF &stowf, 
     elecstate::ElecState *pes, 
-    hamilt::Hamilt<double, psi::DEVICE_CPU> *pHamilt,
+    hamilt::Hamilt<std::complex<double>, psi::DEVICE_CPU> *pHamilt,
     ModulePW::PW_Basis_K* wfc_basis
 )
 {
@@ -134,7 +134,7 @@ class TestHSolverPW_SDFT : public ::testing::Test
     wavefunc wf;
     hsolver::HSolverPW_SDFT hs_d = hsolver::HSolverPW_SDFT(&kv, &pwbk, &wf, stowf, 0);
 
-    hamilt::Hamilt<double> hamilt_test_d;
+    hamilt::Hamilt<std::complex<double>> hamilt_test_d;
 
 	psi::Psi<std::complex<double>> psi_test_cd;
     psi::Psi<std::complex<double>> psi_test_no;

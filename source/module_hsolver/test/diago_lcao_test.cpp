@@ -26,7 +26,7 @@
  * self-realized functions in module_hsolver/test/diago_elpa_utils.h
  */
 
-template <typename T> class HamiltTEST : public hamilt::Hamilt<double>
+template <typename T> class HamiltTEST : public hamilt::Hamilt<std::complex<double>>
 {
     public:
     int desc[9];

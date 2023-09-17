@@ -82,7 +82,7 @@ namespace ModuleESolver
         // TODO: control single precision at input files
 
         hsolver::HSolver<std::complex<FPTYPE>, Device>* phsol = nullptr;
-        hamilt::Hamilt<FPTYPE, Device>* p_hamilt = nullptr;
+        hamilt::Hamilt<std::complex<FPTYPE>, Device>* p_hamilt = nullptr;
         ModulePW::PW_Basis_K* pw_wfc = nullptr;
         Charge_Mixing* p_chgmix = nullptr;
         wavefunc wf;

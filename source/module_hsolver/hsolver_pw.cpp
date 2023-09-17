@@ -95,7 +95,7 @@ void HSolverPW<T, Device>::initDiagh(const psi::Psi<T, Device>& psi_in)
 }
 
 template <typename T, typename Device>
-void HSolverPW<T, Device>::solve(hamilt::Hamilt<R, Device>* pHamilt,
+void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                       psi::Psi<T, Device>& psi,
                                       elecstate::ElecState* pes,
                                       const std::string method_in,
@@ -263,7 +263,7 @@ void HSolverPW<T, Device>::endDiagh()
 }
 
 template <typename T, typename Device>
-void HSolverPW<T, Device>::updatePsiK(hamilt::Hamilt<R, Device>* pHamilt,
+void HSolverPW<T, Device>::updatePsiK(hamilt::Hamilt<T, Device>* pHamilt,
                                            psi::Psi<T, Device>& psi,
                                            const int ik)
 {
@@ -284,7 +284,7 @@ void HSolverPW<T, Device>::updatePsiK(hamilt::Hamilt<R, Device>* pHamilt,
 }
 
 template<typename T, typename Device>
-void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<R, Device>* hm, psi::Psi<T, Device>& psi, R* eigenvalue)
+void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::Psi<T, Device>& psi, R* eigenvalue)
 {
     this->pdiagh->diag(hm, psi, eigenvalue);
 }

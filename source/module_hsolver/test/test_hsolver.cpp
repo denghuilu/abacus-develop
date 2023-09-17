@@ -39,8 +39,8 @@ class TestHSolver : public ::testing::Test
 	hsolver::HSolver<std::complex<float>, psi::DEVICE_CPU> hs_f;
 	hsolver::HSolver<std::complex<double>, psi::DEVICE_CPU> hs_d;
 
-	hamilt::Hamilt<double> hamilt_test_d;
-	hamilt::Hamilt<float> hamilt_test_f;
+	hamilt::Hamilt<std::complex<double>> hamilt_test_d;
+	hamilt::Hamilt<std::complex<float>> hamilt_test_f;
 
 	psi::Psi<std::complex<double>> psi_test_cd;
 	psi::Psi<std::complex<float>> psi_test_cf;
@@ -109,7 +109,7 @@ namespace hsolver
 		DiagH_mock(){}
 		~DiagH_mock(){}
 
-		void diag(hamilt::Hamilt<R, Device> *phm_in, psi::Psi<T, Device> &psi, R *eigenvalue_in)
+		void diag(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T, Device> &psi, R *eigenvalue_in)
 		{
 			return;
 		}

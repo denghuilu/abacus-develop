@@ -20,7 +20,7 @@ namespace hsolver{
 //----------------------------------------------------------------------
 template<typename FPTYPE, typename Device>
 void DiagoIterAssist<FPTYPE, Device>::diagH_subspace(
-    hamilt::Hamilt<FPTYPE, Device>* pHamilt,
+    hamilt::Hamilt<std::complex<FPTYPE>, Device>* pHamilt,
     const psi::Psi<std::complex<FPTYPE>, Device> &psi,
     psi::Psi<std::complex<FPTYPE>, Device> &evc,
     FPTYPE *en,
@@ -182,7 +182,7 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace(
 
 template<typename FPTYPE, typename Device>
 void DiagoIterAssist<FPTYPE, Device>::diagH_subspace_init(
-    hamilt::Hamilt<FPTYPE, Device>* pHamilt,
+    hamilt::Hamilt<std::complex<FPTYPE>, Device>* pHamilt,
     const std::complex<FPTYPE>* psi,
     int psi_nr,
     int psi_nc,

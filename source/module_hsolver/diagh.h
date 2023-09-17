@@ -21,9 +21,9 @@ class DiagH
     // virtual void init()=0;
     std::string method = "none";
 
-    virtual void diag(hamilt::Hamilt<R, Device> *phm_in, psi::Psi<T, Device> &psi, R *eigenvalue_in) = 0;
+    virtual void diag(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T, Device> &psi, R *eigenvalue_in) = 0;
 
-    virtual void diag(hamilt::Hamilt<R, Device> *phm_in, psi::Psi<R, Device> &psi, R *eigenvalue_in) {
+    virtual void diag(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<R, Device> &psi, R *eigenvalue_in) {
         return;
     }
 };

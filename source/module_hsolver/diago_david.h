@@ -33,7 +33,7 @@ class DiagoDavid : public DiagH<T, Device>
     ~DiagoDavid();
 
     // this is the override function diag() for CG method
-    void diag(hamilt::Hamilt<R, Device>* phm_in,
+    void diag(hamilt::Hamilt<T, Device>* phm_in,
               psi::Psi<T, Device>& phi,
               R* eigenvalue_in);
 
@@ -77,7 +77,7 @@ class DiagoDavid : public DiagH<T, Device>
     psi::DEVICE_CPU* cpu_ctx = {};
     psi::AbacusDevice_t device = {};
 
-    void cal_grad(hamilt::Hamilt<R, Device>* phm_in,
+    void cal_grad(hamilt::Hamilt<T, Device>* phm_in,
                   const int& dim,
                   const int& nbase,
                   const int& notconv,
@@ -128,7 +128,7 @@ class DiagoDavid : public DiagH<T, Device>
                      R* eigenvalue,
                      T* vcc);
 
-    void diag_mock(hamilt::Hamilt<R, Device>* phm_in,
+    void diag_mock(hamilt::Hamilt<T, Device>* phm_in,
                    psi::Psi<T, Device>& psi,
                    R* eigenvalue_in);
 

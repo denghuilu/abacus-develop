@@ -46,7 +46,7 @@ template <typename T, typename Device> DiagoDavid<T, Device>::~DiagoDavid()
 }
 
 template <typename T, typename Device>
-void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<R, Device>* phm_in,
+void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
                                            psi::Psi<T, Device>& psi,
                                            R* eigenvalue_in)
 {
@@ -264,7 +264,7 @@ void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<R, Device>* phm_in,
 }
 
 template <typename T, typename Device>
-void DiagoDavid<T, Device>::cal_grad(hamilt::Hamilt<R, Device>* phm_in,
+void DiagoDavid<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
                                           const int& dim,
                                           const int& nbase, // current dimension of the reduced basis
                                           const int& notconv,
@@ -959,7 +959,7 @@ void DiagoDavid<T, Device>::planSchmitOrth(const int nband, int* pre_matrix_mm_m
 }
 
 template <typename T, typename Device>
-void DiagoDavid<T, Device>::diag(hamilt::Hamilt<R, Device>* phm_in,
+void DiagoDavid<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
                                       psi::Psi<T, Device>& psi,
                                       R* eigenvalue_in)
 {

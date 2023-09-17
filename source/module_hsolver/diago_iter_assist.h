@@ -23,14 +23,14 @@ class DiagoIterAssist
 
     // for CG diagonalization only
     static void diagH_subspace(
-        hamilt::Hamilt<FPTYPE, Device>* pHamilt,
+        hamilt::Hamilt<std::complex<FPTYPE>, Device>* pHamilt,
         const psi::Psi<std::complex<FPTYPE>, Device> &psi,
         psi::Psi<std::complex<FPTYPE>, Device> &evc,
         FPTYPE *en,
         int n_band = 0);
 
     static void diagH_subspace_init(
-        hamilt::Hamilt<FPTYPE, Device>* pHamilt,
+        hamilt::Hamilt<std::complex<FPTYPE>, Device>* pHamilt,
         const std::complex<FPTYPE>* psi,
         int psi_nr,
         int psi_nc,

@@ -27,7 +27,7 @@ class HSolverPW: public HSolver<T, Device>
     void update(//Input &in
     ) override;*/
 
-    void solve(hamilt::Hamilt<R, Device>* pHamilt,
+    void solve(hamilt::Hamilt<T, Device>* pHamilt,
                psi::Psi<T, Device>& psi,
                elecstate::ElecState* pes,
                const std::string method_in,
@@ -39,9 +39,9 @@ class HSolverPW: public HSolver<T, Device>
   protected:
     void initDiagh(const psi::Psi<T, Device>& psi_in);
     void endDiagh();
-    void hamiltSolvePsiK(hamilt::Hamilt<R, Device>* hm, psi::Psi<T, Device>& psi, R* eigenvalue);
+    void hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::Psi<T, Device>& psi, R* eigenvalue);
 
-    void updatePsiK(hamilt::Hamilt<R, Device>* pHamilt,
+    void updatePsiK(hamilt::Hamilt<T, Device>* pHamilt,
                     psi::Psi<T, Device>& psi,
                     const int ik);
 

@@ -32,7 +32,7 @@ class DiagoCG : public DiagH<T, Device>
     // virtual void init(){};
     // refactor hpsi_info
     // this is the override function diag() for CG method
-    void diag(hamilt::Hamilt<R, Device> *phm_in, psi::Psi<T, Device> &psi, R *eigenvalue_in) override;
+    void diag(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T, Device> &psi, R *eigenvalue_in) override;
 
   private:
     /// static variables, used for passing control variables
@@ -86,7 +86,7 @@ class DiagoCG : public DiagH<T, Device>
 
     void calculate_gradient();
 
-    void orthogonal_gradient(hamilt::Hamilt<R, Device> *phm_in, const psi::Psi<T, Device> &eigenfunction, const int m);
+    void orthogonal_gradient(hamilt::Hamilt<T, Device> *phm_in, const psi::Psi<T, Device> &eigenfunction, const int m);
 
     void calculate_gamma_cg(const int iter, R &gg_last, const R &cg0, const R &theta);
 
@@ -95,7 +95,7 @@ class DiagoCG : public DiagH<T, Device>
     void schmit_orth(const int &m, const psi::Psi<T, Device> &psi);
 
     // used in diag() for template replace Hamilt with Hamilt_PW
-    void diag_mock(hamilt::Hamilt<R, Device> *phm_in, psi::Psi<T, Device> &phi, R *eigenvalue_in);
+    void diag_mock(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T, Device> &phi, R *eigenvalue_in);
 
     using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
     using zdot_real_op = hsolver::zdot_real_op<R, Device>;

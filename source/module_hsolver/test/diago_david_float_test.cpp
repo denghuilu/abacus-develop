@@ -78,8 +78,8 @@ public:
 
 		//do Diago_David::diag()
 		float* en = new float[npw];		
-		hamilt::Hamilt<float> *phm;
-		phm = new hamilt::HamiltPW<float>(nullptr, nullptr, nullptr);
+		hamilt::Hamilt<std::complex<float>> *phm;
+		phm = new hamilt::HamiltPW<std::complex<float>>(nullptr, nullptr, nullptr);
 		hsolver::DiagoDavid<std::complex<float>> dav(precondition);
 		hsolver::DiagoDavid<std::complex<float>>::PW_DIAG_NDIM = order;
 		hsolver::DiagoIterAssist<float>::PW_DIAG_NMAX = maxiter;
