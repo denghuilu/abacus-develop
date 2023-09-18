@@ -172,8 +172,8 @@ void DiagoDavid<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
 template class DiagoDavid<std::complex<float>, psi::DEVICE_CPU>;
 template class DiagoDavid<std::complex<double>, psi::DEVICE_CPU>;
 
-template class DiagoIterAssist<float, psi::DEVICE_CPU>;
-template class DiagoIterAssist<double, psi::DEVICE_CPU>;
+template class DiagoIterAssist<std::complex<float>, psi::DEVICE_CPU>;
+template class DiagoIterAssist<std::complex<float>, psi::DEVICE_CPU>;
 
 }//namespace hsolver
 

@@ -6,7 +6,6 @@
 #include "module_hamilt_general/hamilt.h"
 
 #include <module_base/macros.h>
-
 namespace hsolver
 {
 
@@ -91,10 +90,10 @@ template<typename T, typename Device>
 int DiagoIterAssist<T, Device>::SCF_ITER = 0;
 
 template<typename T, typename Device>
-T DiagoIterAssist<T, Device>::one = static_cast<T>(1, 0);
+T DiagoIterAssist<T, Device>::one = static_cast<T>(1.0);
 
 template<typename T, typename Device>
-T DiagoIterAssist<T, Device>::zero = static_cast<T>(0, 0);
+T DiagoIterAssist<T, Device>::zero = static_cast<T>(0.0);
 } // namespace hsolver
 
 #endif

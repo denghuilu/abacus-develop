@@ -2,6 +2,8 @@
 #define ESOLVER_KS_PW_H
 #include "./esolver_ks.h"
 #include "module_hamilt_pw/hamilt_pwdft/operator_pw/velocity_pw.h"
+
+#include <module_base/macros.h>
 // #include "Basis_PW.h"
 // #include "Estate_PW.h"
 // #include "Hamilton_PW.h"
@@ -14,6 +16,8 @@ namespace ModuleESolver
     template<typename T, typename Device = psi::DEVICE_CPU>
     class ESolver_KS_PW : public ESolver_KS<T, Device>
     {
+    private:
+        using R = typename PossibleComplexToReal<T>::type;
     public:
         ESolver_KS_PW();
         ~ESolver_KS_PW();
