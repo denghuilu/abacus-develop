@@ -173,7 +173,7 @@ template class DiagoDavid<std::complex<float>, psi::DEVICE_CPU>;
 template class DiagoDavid<std::complex<double>, psi::DEVICE_CPU>;
 
 template class DiagoIterAssist<std::complex<float>, psi::DEVICE_CPU>;
-template class DiagoIterAssist<std::complex<float>, psi::DEVICE_CPU>;
+template class DiagoIterAssist<std::complex<double>, psi::DEVICE_CPU>;
 
 }//namespace hsolver
 
