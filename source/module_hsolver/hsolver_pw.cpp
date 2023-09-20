@@ -109,7 +109,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     // select the method of diagonalization
     this->method = method_in;
     this->initDiagh(psi);
-    std::vector<R> eigenvalues(pes->ekb.nr * pes->ekb.nc, 0);
+    std::vector<Real> eigenvalues(pes->ekb.nr * pes->ekb.nc, 0);
     /// Loop over k points for solve Hamiltonian to charge density
     for (int ik = 0; ik < this->wfc_basis->nks; ++ik)
     {
@@ -188,7 +188,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
 #ifdef USE_PAW
     if(GlobalV::use_paw)
     {
-        if(typeid(R) != typeid(double))
+        if(typeid(Real) != typeid(double))
         {
             ModuleBase::WARNING_QUIT("HSolverPW::solve", "PAW is only supported for double precision!");
         }
@@ -284,17 +284,17 @@ void HSolverPW<T, Device>::updatePsiK(hamilt::Hamilt<T, Device>* pHamilt,
 }
 
 template<typename T, typename Device>
-void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::Psi<T, Device>& psi, R* eigenvalue)
+void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::Psi<T, Device>& psi, Real* eigenvalue)
 {
     this->pdiagh->diag(hm, psi, eigenvalue);
 }
 
 template<typename T, typename Device>
-void HSolverPW<T, Device>::update_precondition(std::vector<R> &h_diag, const int ik, const int npw)
+void HSolverPW<T, Device>::update_precondition(std::vector<Real> &h_diag, const int ik, const int npw)
 {
     h_diag.assign(h_diag.size(), 1.0);
     int precondition_type = 2;
-    const auto tpiba2 = static_cast<R>(this->wfc_basis->tpiba2);
+    const auto tpiba2 = static_cast<Real>(this->wfc_basis->tpiba2);
 
     //===========================================
     // Conjugate-Gradient diagonalization
@@ -305,15 +305,15 @@ void HSolverPW<T, Device>::update_precondition(std::vector<R> &h_diag, const int
     {
         for (int ig = 0; ig < npw; ig++)
         {
-            R g2kin = static_cast<R>(this->wfc_basis->getgk2(ik,ig)) * tpiba2;
-            h_diag[ig] = std::max(static_cast<R>(1.0), g2kin);
+            Real g2kin = static_cast<Real>(this->wfc_basis->getgk2(ik,ig)) * tpiba2;
+            h_diag[ig] = std::max(static_cast<Real>(1.0), g2kin);
         }
     }
     else if (precondition_type == 2)
     {
         for (int ig = 0; ig < npw; ig++)
         {
-            R g2kin = static_cast<R>(this->wfc_basis->getgk2(ik,ig)) * tpiba2;
+            Real g2kin = static_cast<Real>(this->wfc_basis->getgk2(ik,ig)) * tpiba2;
             h_diag[ig] = 1 + g2kin + sqrt(1 + (g2kin - 1) * (g2kin - 1));
         }
     }
@@ -328,13 +328,13 @@ void HSolverPW<T, Device>::update_precondition(std::vector<R> &h_diag, const int
 }
 
 template<typename T, typename Device>
-typename HSolverPW<T, Device>::R HSolverPW<T, Device>::cal_hsolerror()
+typename HSolverPW<T, Device>::Real HSolverPW<T, Device>::cal_hsolerror()
 {
-    return this->diag_ethr * static_cast<R>(std::max(1.0, GlobalV::nelec));
+    return this->diag_ethr * static_cast<Real>(std::max(1.0, GlobalV::nelec));
 }
 
 template<typename T, typename Device>
-typename HSolverPW<T, Device>::R HSolverPW<T, Device>::set_diagethr(const int istep, const int iter, const R drho)
+typename HSolverPW<T, Device>::Real HSolverPW<T, Device>::set_diagethr(const int istep, const int iter, const Real drho)
 {
     //It is too complex now and should be modified.
     if (iter == 1)
@@ -362,7 +362,7 @@ typename HSolverPW<T, Device>::R HSolverPW<T, Device>::set_diagethr(const int is
         // if (GlobalV::FINAL_SCF) this->diag_ethr = 1.0e-2;
         if (GlobalV::CALCULATION == "md" || GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax")
         {
-            this->diag_ethr = std::max(this->diag_ethr, static_cast<R>(GlobalV::PW_DIAG_THR));
+            this->diag_ethr = std::max(this->diag_ethr, static_cast<Real>(GlobalV::PW_DIAG_THR));
         }
     }
     else
@@ -371,19 +371,19 @@ typename HSolverPW<T, Device>::R HSolverPW<T, Device>::set_diagethr(const int is
         {
             this->diag_ethr = 1.e-2;
         }
-        this->diag_ethr = std::min(this->diag_ethr, static_cast<R>(0.1) * drho / std::max(static_cast<R>(1.0), static_cast<R>(GlobalV::nelec)));
+        this->diag_ethr = std::min(this->diag_ethr, static_cast<Real>(0.1) * drho / std::max(static_cast<Real>(1.0), static_cast<Real>(GlobalV::nelec)));
     }
     // It is essential for single precision implementation to keep the diag_ethr value
     // less or equal to the single-precision limit of convergence(0.5e-4).
     // modified by denghuilu at 2023-05-15
     if (GlobalV::precision_flag == "single") {
-        this->diag_ethr = std::max(this->diag_ethr, static_cast<R>(0.5e-4));
+        this->diag_ethr = std::max(this->diag_ethr, static_cast<Real>(0.5e-4));
     }
     return this->diag_ethr;
 }
 
 template<typename T, typename Device>
-typename HSolverPW<T, Device>::R HSolverPW<T, Device>::reset_diagethr(std::ofstream& ofs_running, const R hsover_error, const R drho)
+typename HSolverPW<T, Device>::Real HSolverPW<T, Device>::reset_diagethr(std::ofstream& ofs_running, const Real hsover_error, const Real drho)
 {
     ofs_running << " Notice: Threshold on eigenvalues was too large.\n";
     ModuleBase::WARNING("scf", "Threshold on eigenvalues was too large.");

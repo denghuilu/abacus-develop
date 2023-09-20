@@ -95,11 +95,11 @@ struct calc_grad_with_block_op {
     ///
     /// \return res : the result vector
     /// T : dot product result
-    using R = typename PossibleComplexToReal<T>::type;
+    using Real = typename GetTypeReal<T>::type;
     void operator() (
-        const R* prec_in,
-        R* err_out,
-        R* beta_out,
+        const Real* prec_in,
+        Real* err_out,
+        Real* beta_out,
         T* psi_out,
         T* hpsi_out,
         T* grad_out,
@@ -380,7 +380,7 @@ template <typename FPTYPE, typename Device> struct matrixSetToAnother
 
 template <typename T>
 struct line_minimize_with_block_op<T, psi::DEVICE_GPU> {
-  using R = typename PossibleComplexToReal<T>::type;
+  using Real = typename GetTypeReal<T>::type;
   void operator()(
     T* grad_out,
     T* hgrad_out,
@@ -393,11 +393,11 @@ struct line_minimize_with_block_op<T, psi::DEVICE_GPU> {
 
 template <typename T>
 struct calc_grad_with_block_op<T, psi::DEVICE_GPU> {
-  using R = typename PossibleComplexToReal<T>::type;
+  using Real = typename GetTypeReal<T>::type;
   void operator()(
-    const R* prec_in,
-    R* err_out,
-    R* beta_out,
+    const Real* prec_in,
+    Real* err_out,
+    Real* beta_out,
     T* psi_out,
     T* hpsi_out,
     T* grad_out,

@@ -14,10 +14,10 @@ template<typename T, typename Device = psi::DEVICE_CPU>
 class HamiltPW : public Hamilt<T, Device>
 {
   private:
-    // Note PossibleComplexToReal<T>::type will 
+    // Note GetTypeReal<T>::type will 
     // return T if T is real type(float, double), 
     // otherwise return the real type of T(complex<float>, complex<double>)
-    using R = typename PossibleComplexToReal<T>::type;
+    using Real = typename GetTypeReal<T>::type;
   public:
     HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K* wfc_basis, K_Vectors* p_kv);
     template<typename T_in, typename Device_in = Device>

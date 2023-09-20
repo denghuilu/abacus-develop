@@ -17,7 +17,7 @@ namespace ModuleESolver
     class ESolver_KS_PW : public ESolver_KS<T, Device>
     {
     private:
-        using R = typename PossibleComplexToReal<T>::type;
+        using Real = typename GetTypeReal<T>::type;
     public:
         ESolver_KS_PW();
         ~ESolver_KS_PW();

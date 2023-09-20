@@ -17,10 +17,10 @@ template<typename T, typename Device>
 HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K* wfc_basis, K_Vectors* pkv)
 {
     this->classname = "HamiltPW";
-    const auto tpiba2 = static_cast<R>(GlobalC::ucell.tpiba2);
-    const auto tpiba = static_cast<R>(GlobalC::ucell.tpiba);
+    const auto tpiba2 = static_cast<Real>(GlobalC::ucell.tpiba2);
+    const auto tpiba = static_cast<Real>(GlobalC::ucell.tpiba);
     const int* isk = pkv->isk.data();
-    const R* gk2 = wfc_basis->get_gk2_data<R>();
+    const Real* gk2 = wfc_basis->get_gk2_data<Real>();
 
     if (GlobalV::T_IN_H)
     {
@@ -68,7 +68,7 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K
             pot_in->pot_register(pot_register_in);
             Operator<T, Device>* veff
                 = new Veff<OperatorPW<T, Device>>(isk,
-                                                       pot_in->get_v_effective_data<R>(),
+                                                       pot_in->get_v_effective_data<Real>(),
                                                        pot_in->get_effective_v().nr,
                                                        pot_in->get_effective_v().nc,
                                                        wfc_basis);
@@ -83,7 +83,7 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K
             Operator<T, Device>* meta
                 = new Meta<OperatorPW<T, Device>>(tpiba,
                                                        isk,
-                                                       pot_in->get_vofk_effective_data<R>(),
+                                                       pot_in->get_vofk_effective_data<Real>(),
                                                        pot_in->get_effective_vofk().nr,
                                                        pot_in->get_effective_vofk().nc,
                                                        wfc_basis);

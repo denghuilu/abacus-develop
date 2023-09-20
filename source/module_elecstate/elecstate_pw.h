@@ -14,7 +14,7 @@ template<typename T, typename Device = psi::DEVICE_CPU>
 class ElecStatePW : public ElecState
 {
   private:
-    using R = typename PossibleComplexToReal<T>::type;
+    using Real = typename GetTypeReal<T>::type;
   public:
     ElecStatePW(
       ModulePW::PW_Basis_K *wfc_basis_in, 
@@ -49,17 +49,17 @@ class ElecStatePW : public ElecState
 
     Device * ctx = {};
     bool init_rho = false;
-    R ** rho = nullptr, ** kin_r = nullptr;
-    R * rho_data = nullptr, * kin_r_data = nullptr;
+    Real ** rho = nullptr, ** kin_r = nullptr;
+    Real * rho_data = nullptr, * kin_r_data = nullptr;
     T * wfcr = nullptr, * wfcr_another_spin = nullptr;
 
-    using meta_op = hamilt::meta_pw_op<R, Device>;
-    using elecstate_pw_op = elecstate::elecstate_pw_op<R, Device>;
+    using meta_op = hamilt::meta_pw_op<Real, Device>;
+    using elecstate_pw_op = elecstate::elecstate_pw_op<Real, Device>;
 
-    using setmem_var_op = psi::memory::set_memory_op<R, Device>;
-    using resmem_var_op = psi::memory::resize_memory_op<R, Device>;
-    using delmem_var_op = psi::memory::delete_memory_op<R, Device>;
-    using castmem_var_d2h_op = psi::memory::cast_memory_op<double, R, psi::DEVICE_CPU, Device>;
+    using setmem_var_op = psi::memory::set_memory_op<Real, Device>;
+    using resmem_var_op = psi::memory::resize_memory_op<Real, Device>;
+    using delmem_var_op = psi::memory::delete_memory_op<Real, Device>;
+    using castmem_var_d2h_op = psi::memory::cast_memory_op<double, Real, psi::DEVICE_CPU, Device>;
 
     using setmem_complex_op = psi::memory::set_memory_op<T, Device>;
     using resmem_complex_op = psi::memory::resize_memory_op<T, Device>;

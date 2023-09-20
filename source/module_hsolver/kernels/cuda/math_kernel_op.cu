@@ -47,21 +47,21 @@ __forceinline__ __device__ void warp_reduce(FPTYPE& val) {
 }
 
 // All clear!
-template <typename R>
+template <typename Real>
 __global__ void line_minimize_with_block(
-        thrust::complex<R>* grad,
-        thrust::complex<R>* hgrad,
-        thrust::complex<R>* psi,
-        thrust::complex<R>* hpsi,
+        thrust::complex<Real>* grad,
+        thrust::complex<Real>* hgrad,
+        thrust::complex<Real>* psi,
+        thrust::complex<Real>* hpsi,
         const int n_basis,
         const int n_basis_max)
 {
     int band_idx = blockIdx.x; // band_idx
     int tid = threadIdx.x; // basis_idx
     int item = 0;
-    R epsilo_0 = 0.0, epsilo_1 = 0.0, epsilo_2 = 0.0;
-    R theta = 0.0, cos_theta = 0.0, sin_theta = 0.0;
-    __shared__ R data[THREAD_PER_BLOCK * 3];
+    Real epsilo_0 = 0.0, epsilo_1 = 0.0, epsilo_2 = 0.0;
+    Real theta = 0.0, cos_theta = 0.0, sin_theta = 0.0;
+    __shared__ Real data[THREAD_PER_BLOCK * 3];
 
     data[tid] = 0;
 
@@ -78,7 +78,7 @@ __global__ void line_minimize_with_block(
         __syncthreads();
     }
 
-    R norm = 1.0 / sqrt(data[0]);
+    Real norm = 1.0 / sqrt(data[0]);
     __syncthreads();
 
     data[tid] = 0;
@@ -117,27 +117,27 @@ __global__ void line_minimize_with_block(
     }
 }
 
-template <typename R>
+template <typename Real>
 __global__ void calc_grad_with_block(
-        const R* prec,
-        R* err,
-        R* beta,
-        thrust::complex<R>* psi,
-        thrust::complex<R>* hpsi,
-        thrust::complex<R>* grad,
-        thrust::complex<R>* grad_old,
+        const Real* prec,
+        Real* err,
+        Real* beta,
+        thrust::complex<Real>* psi,
+        thrust::complex<Real>* hpsi,
+        thrust::complex<Real>* grad,
+        thrust::complex<Real>* grad_old,
         const int n_basis,
         const int n_basis_max)
 {
     int band_idx = blockIdx.x; // band_idx
     int tid = threadIdx.x; // basis_idx
     int item = 0;
-    R err_st = 0.0;
-    R beta_st = 0.0;
-    R epsilo = 0.0;
-    R grad_2 = 0.0;
-    thrust::complex<R> grad_1 = {0, 0};
-    __shared__ R data[THREAD_PER_BLOCK * 2];
+    Real err_st = 0.0;
+    Real beta_st = 0.0;
+    Real epsilo = 0.0;
+    Real grad_2 = 0.0;
+    thrust::complex<Real> grad_1 = {0, 0};
+    __shared__ Real data[THREAD_PER_BLOCK * 2];
 
     // Init shared memory
     data[tid] = 0;
@@ -155,7 +155,7 @@ __global__ void calc_grad_with_block(
         __syncthreads();
     }
 
-    R norm = 1.0 / sqrt(data[0]);
+    Real norm = 1.0 / sqrt(data[0]);
     __syncthreads();
 
     data[tid] = 0;
@@ -316,21 +316,21 @@ void line_minimize_with_block_op<T, psi::DEVICE_GPU>::operator()(
         const int &n_basis_max,
         const int &n_band)
 {
-    auto A = reinterpret_cast<thrust::complex<R>*>(grad_out);
-    auto B = reinterpret_cast<thrust::complex<R>*>(hgrad_out);
-    auto C = reinterpret_cast<thrust::complex<R>*>(psi_out);
-    auto D = reinterpret_cast<thrust::complex<R>*>(hpsi_out);
+    auto A = reinterpret_cast<thrust::complex<Real>*>(grad_out);
+    auto B = reinterpret_cast<thrust::complex<Real>*>(hgrad_out);
+    auto C = reinterpret_cast<thrust::complex<Real>*>(psi_out);
+    auto D = reinterpret_cast<thrust::complex<Real>*>(hpsi_out);
 
-    line_minimize_with_block<R><<<n_band, THREAD_PER_BLOCK>>>(
+    line_minimize_with_block<Real><<<n_band, THREAD_PER_BLOCK>>>(
             A, B, C, D,
             n_basis, n_basis_max);
 }
 
 template <typename T>
 void calc_grad_with_block_op<T, psi::DEVICE_GPU>::operator()(
-        const R* prec_in,
-        R* err_out,
-        R* beta_out,
+        const Real* prec_in,
+        Real* err_out,
+        Real* beta_out,
         T* psi_out,
         T* hpsi_out,
         T* grad_out,
@@ -339,12 +339,12 @@ void calc_grad_with_block_op<T, psi::DEVICE_GPU>::operator()(
         const int &n_basis_max,
         const int &n_band)
 {
-    auto A = reinterpret_cast<thrust::complex<R>*>(psi_out);
-    auto B = reinterpret_cast<thrust::complex<R>*>(hpsi_out);
-    auto C = reinterpret_cast<thrust::complex<R>*>(grad_out);
-    auto D = reinterpret_cast<thrust::complex<R>*>(grad_old_out);
+    auto A = reinterpret_cast<thrust::complex<Real>*>(psi_out);
+    auto B = reinterpret_cast<thrust::complex<Real>*>(hpsi_out);
+    auto C = reinterpret_cast<thrust::complex<Real>*>(grad_out);
+    auto D = reinterpret_cast<thrust::complex<Real>*>(grad_old_out);
 
-    calc_grad_with_block<R><<<n_band, THREAD_PER_BLOCK>>>(
+    calc_grad_with_block<Real><<<n_band, THREAD_PER_BLOCK>>>(
             prec_in, err_out, beta_out,
             A, B, C, D,
             n_basis, n_basis_max);

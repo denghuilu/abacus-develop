@@ -8,9 +8,9 @@
 namespace hamilt {
 
 template<typename T, typename Device>
-Meta<OperatorPW<T, Device>>::Meta(R tpiba_in,
+Meta<OperatorPW<T, Device>>::Meta(Real tpiba_in,
                                        const int* isk_in,
-                                       const R* vk_in,
+                                       const Real* vk_in,
                                        const int vk_row,
                                        const int vk_col,
                                        const ModulePW::PW_Basis_K* wfcpw_in)
@@ -60,7 +60,7 @@ void Meta<OperatorPW<T, Device>>::act(
     {
         for (int j = 0; j < 3; j++)
         {
-            meta_op()(this->ctx, this->ik, j, ngk_ik, this->wfcpw->npwk_max, this->tpiba, wfcpw->get_gcar_data<R>(), wfcpw->get_kvec_c_data<R>(), tmpsi_in, this->porter);
+            meta_op()(this->ctx, this->ik, j, ngk_ik, this->wfcpw->npwk_max, this->tpiba, wfcpw->get_gcar_data<Real>(), wfcpw->get_kvec_c_data<Real>(), tmpsi_in, this->porter);
             wfcpw->recip_to_real(this->ctx, this->porter, this->porter, this->ik);
 
             if(this->vk_col != 0) {
@@ -68,7 +68,7 @@ void Meta<OperatorPW<T, Device>>::act(
             }
 
             wfcpw->real_to_recip(this->ctx, this->porter, this->porter, this->ik);
-            meta_op()(this->ctx, this->ik, j, ngk_ik, this->wfcpw->npwk_max, this->tpiba, wfcpw->get_gcar_data<R>(), wfcpw->get_kvec_c_data<R>(), this->porter, tmhpsi, true);
+            meta_op()(this->ctx, this->ik, j, ngk_ik, this->wfcpw->npwk_max, this->tpiba, wfcpw->get_gcar_data<Real>(), wfcpw->get_kvec_c_data<Real>(), this->porter, tmhpsi, true);
 
         } // x,y,z directions
         tmhpsi += max_npw;

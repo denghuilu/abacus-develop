@@ -104,12 +104,12 @@ namespace hsolver
 	class DiagH_mock : public DiagH<T, Device>
 	{
 	  private:
-	    using R = typename PossibleComplexToReal<T>::type;
+	    using Real = typename GetTypeReal<T>::type;
 		public:
 		DiagH_mock(){}
 		~DiagH_mock(){}
 
-		void diag(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T, Device> &psi, R *eigenvalue_in)
+		void diag(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T, Device> &psi, Real *eigenvalue_in)
 		{
 			return;
 		}

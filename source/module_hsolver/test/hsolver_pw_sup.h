@@ -69,7 +69,7 @@ namespace hsolver
 {
 
 template<typename T, typename Device>
-DiagoCG<T, Device>::DiagoCG(const R* precondition_in)
+DiagoCG<T, Device>::DiagoCG(const Real* precondition_in)
 {
     this->device = psi::device::get_device_type<Device>(this->ctx);
     this->precondition = precondition_in;
@@ -97,7 +97,7 @@ DiagoCG<T, Device>::~DiagoCG() {
 }
 
 template<typename T, typename Device>
-void DiagoCG<T, Device>::diag(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T, Device> &psi, R *eigenvalue_in)
+void DiagoCG<T, Device>::diag(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T, Device> &psi, Real *eigenvalue_in)
 {
     //do something
     for(int ib = 0;ib<psi.get_nbands();ib++)
@@ -117,7 +117,7 @@ void DiagoCG<T, Device>::diag(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T, Dev
 template class DiagoCG<std::complex<float>, psi::DEVICE_CPU>;
 template class DiagoCG<std::complex<double>, psi::DEVICE_CPU>;
 
-template <typename T, typename Device> DiagoDavid<T, Device>::DiagoDavid(const R* precondition_in)
+template <typename T, typename Device> DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in)
 {
     this->device = psi::device::get_device_type<Device>(this->ctx);
     this->precondition = precondition_in;
@@ -140,7 +140,7 @@ template <typename T, typename Device> DiagoDavid<T, Device>::~DiagoDavid()
     delmem_complex_op()(this->ctx, this->scc);
     delmem_complex_op()(this->ctx, this->vcc);
     delmem_complex_op()(this->ctx, this->lagrange_matrix);
-    psi::memory::delete_memory_op<R, psi::DEVICE_CPU>()(this->cpu_ctx, this->eigenvalue);
+    psi::memory::delete_memory_op<Real, psi::DEVICE_CPU>()(this->cpu_ctx, this->eigenvalue);
     if (this->device == psi::GpuDevice) {
         delmem_var_op()(this->ctx, this->d_precondition);
     }
@@ -152,7 +152,7 @@ template <typename T, typename Device> DiagoDavid<T, Device>::~DiagoDavid()
 template <typename T, typename Device>
 void DiagoDavid<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
                                       psi::Psi<T, Device>& psi,
-                                      R* eigenvalue_in)
+                                      Real* eigenvalue_in)
 {
     //do something
     for(int ib = 0;ib<psi.get_nbands();ib++)

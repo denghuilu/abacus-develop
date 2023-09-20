@@ -24,18 +24,18 @@ template <typename T = std::complex<double>, typename Device = psi::DEVICE_CPU>
 class DiagoDavid : public DiagH<T, Device>
 {
   private:
-    // Note PossibleComplexToReal<T>::type will 
+    // Note GetTypeReal<T>::type will 
     // return T if T is real type(float, double), 
     // otherwise return the real type of T(complex<float>, complex<double>)
-    using R = typename PossibleComplexToReal<T>::type;
+    using Real = typename GetTypeReal<T>::type;
   public:
-    DiagoDavid(const R* precondition_in);
+    DiagoDavid(const Real* precondition_in);
     ~DiagoDavid();
 
     // this is the override function diag() for CG method
     void diag(hamilt::Hamilt<T, Device>* phm_in,
               psi::Psi<T, Device>& phi,
-              R* eigenvalue_in);
+              Real* eigenvalue_in);
 
     static int PW_DIAG_NDIM;
 
@@ -54,11 +54,11 @@ class DiagoDavid : public DiagH<T, Device>
     // maximum dimension of the reduced basis set
     int nbase_x = 0;
     /// precondition for cg diag
-    const R* precondition = nullptr;
-    R* d_precondition = nullptr;
+    const Real* precondition = nullptr;
+    Real* d_precondition = nullptr;
 
     /// eigenvalue results
-    R* eigenvalue = nullptr;
+    Real* eigenvalue = nullptr;
 
     T* hphi = nullptr; // the product of H and psi in the reduced basis set
 
@@ -86,7 +86,7 @@ class DiagoDavid : public DiagH<T, Device>
                   T* sphi,
                   const T* vcc,
                   const int* unconv,
-                  const R* eigenvalue);
+                  const Real* eigenvalue);
 
     void cal_elem(const int& dim,
                   int& nbase,
@@ -100,7 +100,7 @@ class DiagoDavid : public DiagH<T, Device>
     void refresh(const int& dim,
                  const int& nband,
                  int& nbase,
-                 const R* eigenvalue,
+                 const Real* eigenvalue,
                  const psi::Psi<T, Device>& psi,
                  psi::Psi<T, Device>& basis,
                  T* hphi,
@@ -125,22 +125,22 @@ class DiagoDavid : public DiagH<T, Device>
                      const T* hcc,
                      const T* scc,
                      const int& nbase_x,
-                     R* eigenvalue,
+                     Real* eigenvalue,
                      T* vcc);
 
     void diag_mock(hamilt::Hamilt<T, Device>* phm_in,
                    psi::Psi<T, Device>& psi,
-                   R* eigenvalue_in);
+                   Real* eigenvalue_in);
 
     using resmem_complex_op = psi::memory::resize_memory_op<T, Device>;
     using delmem_complex_op = psi::memory::delete_memory_op<T, Device>;
     using setmem_complex_op = psi::memory::set_memory_op<T, Device>;
-    using resmem_var_op = psi::memory::resize_memory_op<R, Device>;
-    using delmem_var_op = psi::memory::delete_memory_op<R, Device>;
-    using setmem_var_op = psi::memory::set_memory_op<R, Device>;
+    using resmem_var_op = psi::memory::resize_memory_op<Real, Device>;
+    using delmem_var_op = psi::memory::delete_memory_op<Real, Device>;
+    using setmem_var_op = psi::memory::set_memory_op<Real, Device>;
 
-    using syncmem_var_h2d_op = psi::memory::synchronize_memory_op<R, Device, psi::DEVICE_CPU>;
-    using syncmem_var_d2h_op = psi::memory::synchronize_memory_op<R, psi::DEVICE_CPU, Device>;
+    using syncmem_var_h2d_op = psi::memory::synchronize_memory_op<Real, Device, psi::DEVICE_CPU>;
+    using syncmem_var_d2h_op = psi::memory::synchronize_memory_op<Real, psi::DEVICE_CPU, Device>;
     using syncmem_complex_op = psi::memory::synchronize_memory_op<T, Device, Device>;
     using castmem_complex_op = psi::memory::cast_memory_op<std::complex<double>, T, Device, Device>;
     using syncmem_complex_h2d_op = psi::memory::synchronize_memory_op<T, Device, psi::DEVICE_CPU>;
@@ -150,7 +150,7 @@ class DiagoDavid : public DiagH<T, Device>
 
     const T * one = nullptr, * zero = nullptr, * neg_one = nullptr;
 };
-template <typename R, typename Device> int DiagoDavid<R, Device>::PW_DIAG_NDIM = 4;
+template <typename Real, typename Device> int DiagoDavid<Real, Device>::PW_DIAG_NDIM = 4;
 } // namespace hsolver
 
 #endif

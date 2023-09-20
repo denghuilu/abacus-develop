@@ -8,7 +8,7 @@ namespace hsolver
 
 template <typename T>
 struct line_minimize_with_block_op<T, psi::DEVICE_CPU> {
-    using R = typename PossibleComplexToReal<T>::type;
+    using Real = typename GetTypeReal<T>::type;
     void operator() (
         T* grad_out,
         T* hgrad_out,
@@ -19,10 +19,10 @@ struct line_minimize_with_block_op<T, psi::DEVICE_CPU> {
         const int &n_band)
     {
         for (int band_idx = 0; band_idx < n_band; band_idx++) {
-            R epsilo_0 = 0.0, epsilo_1 = 0.0, epsilo_2 = 0.0;
-            R theta = 0.0, cos_theta = 0.0, sin_theta = 0.0;
-            auto A = reinterpret_cast<const R *>(grad_out + band_idx * n_basis_max);
-            R norm = BlasConnector::dot(2 * n_basis, A, 1, A, 1);
+            Real epsilo_0 = 0.0, epsilo_1 = 0.0, epsilo_2 = 0.0;
+            Real theta = 0.0, cos_theta = 0.0, sin_theta = 0.0;
+            auto A = reinterpret_cast<const Real *>(grad_out + band_idx * n_basis_max);
+            Real norm = BlasConnector::dot(2 * n_basis, A, 1, A, 1);
             norm = 1.0 / sqrt(norm);
             for (int basis_idx = 0; basis_idx < n_basis; basis_idx++) {
                 auto item = band_idx * n_basis_max + basis_idx;
@@ -46,11 +46,11 @@ struct line_minimize_with_block_op<T, psi::DEVICE_CPU> {
 
 template <typename T>
 struct calc_grad_with_block_op<T, psi::DEVICE_CPU> {
-    using R = typename PossibleComplexToReal<T>::type;
+    using Real = typename GetTypeReal<T>::type;
     void operator() (
-        const R* prec_in,
-        R* err_out,
-        R* beta_out,
+        const Real* prec_in,
+        Real* err_out,
+        Real* beta_out,
         T* psi_out,
         T* hpsi_out,
         T* grad_out,
@@ -60,13 +60,13 @@ struct calc_grad_with_block_op<T, psi::DEVICE_CPU> {
         const int &n_band)
     {
         for (int band_idx = 0; band_idx < n_band; band_idx++) {
-            R err = 0.0;
-            R beta = 0.0;
-            R epsilo = 0.0;
-            R grad_2 = {0.0};
+            Real err = 0.0;
+            Real beta = 0.0;
+            Real epsilo = 0.0;
+            Real grad_2 = {0.0};
             T grad_1 = {0.0, 0.0};
-            auto A = reinterpret_cast<const R *>(psi_out + band_idx * n_basis_max);
-            R norm = BlasConnector::dot(2 * n_basis, A, 1, A, 1);
+            auto A = reinterpret_cast<const Real *>(psi_out + band_idx * n_basis_max);
+            Real norm = BlasConnector::dot(2 * n_basis, A, 1, A, 1);
             norm = 1.0 / sqrt(norm);
             for (int basis_idx = 0; basis_idx < n_basis; basis_idx++) {
                 auto item = band_idx * n_basis_max + basis_idx;

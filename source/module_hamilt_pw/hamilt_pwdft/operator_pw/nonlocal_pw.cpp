@@ -23,9 +23,9 @@ Nonlocal<OperatorPW<T, Device>>::Nonlocal(const int* isk_in,
     this->isk = isk_in;
     this->ppcell = ppcell_in;
     this->ucell = ucell_in;
-    this->deeq = this->ppcell->template get_deeq_data<R>();
-    this->deeq_nc = this->ppcell->template get_deeq_nc_data<R>();
-    this->vkb = this->ppcell->template get_vkb_data<R>();
+    this->deeq = this->ppcell->template get_deeq_data<Real>();
+    this->deeq_nc = this->ppcell->template get_deeq_nc_data<Real>();
+    this->vkb = this->ppcell->template get_vkb_data<Real>();
     if( this->isk == nullptr || this->ppcell == nullptr || this->ucell == nullptr)
     {
         ModuleBase::WARNING_QUIT("NonlocalPW", "Constuctor of Operator::NonlocalPW is failed, please check your code!");
@@ -313,8 +313,8 @@ hamilt::Nonlocal<OperatorPW<T, Device>>::Nonlocal(const Nonlocal<OperatorPW<T_in
     this->ppcell = nonlocal->get_ppcell();
     this->ucell = nonlocal->get_ucell();
     this->deeq = this->ppcell->d_deeq;
-    this->deeq_nc = this->ppcell->template get_deeq_nc_data<R>();
-    this->vkb = this->ppcell->template get_vkb_data<R>();
+    this->deeq_nc = this->ppcell->template get_deeq_nc_data<Real>();
+    this->vkb = this->ppcell->template get_vkb_data<Real>();
     if( this->isk == nullptr || this->ppcell == nullptr || this->ucell == nullptr)
     {
         ModuleBase::WARNING_QUIT("NonlocalPW", "Constuctor of Operator::NonlocalPW is failed, please check your code!");

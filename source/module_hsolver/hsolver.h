@@ -18,7 +18,7 @@ template<typename T, typename Device = psi::DEVICE_CPU>
 class HSolver
 {
   private:
-    using R = typename PossibleComplexToReal<T>::type;
+    using Real = typename GetTypeReal<T>::type;
   public:
     HSolver(){};
     virtual ~HSolver(){
@@ -45,7 +45,7 @@ class HSolver
     }
 
     virtual void solve(hamilt::Hamilt<T, Device>* phm,
-                       psi::Psi<R, Device>& ppsi,
+                       psi::Psi<Real, Device>& ppsi,
                        elecstate::ElecState* pes,
                        const std::string method,
                        const bool skip_charge = false)
@@ -71,22 +71,22 @@ class HSolver
     // cg, dav, elpa, scalapack-gvx, cusolver
     std::string method = "none";
   public:
-    R diag_ethr=0.0; //threshold for diagonalization
+    Real diag_ethr=0.0; //threshold for diagonalization
     //set diag_ethr according to drho
     //for lcao, we suppose the error is zero and we set diag_ethr to 0
-    virtual R set_diagethr(const int istep, const int iter, const R drho)
+    virtual Real set_diagethr(const int istep, const int iter, const Real drho)
     {
         return 0.0;
     }
     //reset diag_ethr according to drho and hsolver_error
-    virtual R reset_diagethr(std::ofstream& ofs_running, const R hsover_error, const R drho)
+    virtual Real reset_diagethr(std::ofstream& ofs_running, const Real hsover_error, const Real drho)
     {
         return 0.0;
     }
 
     // calculate hsolver_error
     // for sdft and lcao, we suppose the error is zero 
-    virtual R cal_hsolerror()
+    virtual Real cal_hsolerror()
     {
         return 0.0;
     };

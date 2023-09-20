@@ -28,10 +28,10 @@ template<typename T = std::complex<double>, typename Device = psi::DEVICE_CPU>
 class DiagoBPCG : public DiagH<T, Device>
 {
   private:
-    // Note PossibleComplexToReal<T>::type will 
+    // Note GetTypeReal<T>::type will 
     // return T if T is real type(float, double), 
     // otherwise return the real type of T(complex<float>, complex<double>)
-    using R = typename PossibleComplexToReal<T>::type;
+    using Real = typename GetTypeReal<T>::type;
   // Column major psi in this class
   public:
     /**
@@ -39,7 +39,7 @@ class DiagoBPCG : public DiagH<T, Device>
      *
      * @param precondition precondition data passed by the "Hamilt_PW" class.
      */
-    explicit DiagoBPCG(const R * precondition);
+    explicit DiagoBPCG(const Real* precondition);
 
     /**
      * @brief Destructor for DiagoBPCG class.
@@ -65,7 +65,7 @@ class DiagoBPCG : public DiagH<T, Device>
      * @param psi The input wavefunction psi matrix with [dim: n_basis x n_band, column major].
      * @param eigenvalue_in Pointer to the eigen array with [dim: n_band, column major].
      */
-    void diag(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T, Device> &psi, R *eigenvalue_in) override;
+    void diag(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T, Device> &psi, Real *eigenvalue_in) override;
 
 
   private:
@@ -76,7 +76,7 @@ class DiagoBPCG : public DiagH<T, Device>
     /// max iter steps for all-band cg loop
     int nline = 4;
     /// cg convergence thr
-    R all_band_cg_thr = 1E-5;
+    Real all_band_cg_thr = 1E-5;
 
     ct::DataType r_type  = ct::DataType::DT_INVALID;
     ct::DataType t_type  = ct::DataType::DT_INVALID;
@@ -313,16 +313,16 @@ class DiagoBPCG : public DiagH<T, Device>
      * @param thr_in The threshold.
      * @return Returns true if all error values are less than or equal to the threshold, false otherwise.
      */
-    bool test_error(const ct::Tensor& err_in, R thr_in);
+    bool test_error(const ct::Tensor& err_in, Real thr_in);
 
     using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
 
     using ct_Device = typename ct::PsiToContainer<Device>::type;
-    using setmem_var_op = ct::op::set_memory_op<R, ct_Device>;
-    using resmem_var_op = ct::op::resize_memory_op<R, ct_Device>;
-    using delmem_var_op = ct::op::delete_memory_op<R, ct_Device>;
-    using syncmem_var_h2d_op = ct::op::synchronize_memory_op<R, ct_Device, ct::DEVICE_CPU>;
-    using syncmem_var_d2h_op = ct::op::synchronize_memory_op<R, ct::DEVICE_CPU, ct_Device>;
+    using setmem_var_op = ct::op::set_memory_op<Real, ct_Device>;
+    using resmem_var_op = ct::op::resize_memory_op<Real, ct_Device>;
+    using delmem_var_op = ct::op::delete_memory_op<Real, ct_Device>;
+    using syncmem_var_h2d_op = ct::op::synchronize_memory_op<Real, ct_Device, ct::DEVICE_CPU>;
+    using syncmem_var_d2h_op = ct::op::synchronize_memory_op<Real, ct::DEVICE_CPU, ct_Device>;
 
     using setmem_complex_op = ct::op::set_memory_op<T, ct_Device>;
     using delmem_complex_op = ct::op::delete_memory_op<T, ct_Device>;

@@ -24,11 +24,11 @@ template<typename T, typename Device>
 class Ekinetic<OperatorPW<T, Device>> : public OperatorPW<T, Device>
 {
   private: 
-    using R = typename PossibleComplexToReal<T>::type;
+    using Real = typename GetTypeReal<T>::type;
   public:
     Ekinetic(
-        R tpiba2_in, 
-        const R* gk2_in,
+        Real tpiba2_in, 
+        const Real* gk2_in,
         const int gk2_row, 
         const int gk2_col);
 
@@ -47,14 +47,14 @@ class Ekinetic<OperatorPW<T, Device>> : public OperatorPW<T, Device>
     // denghuilu added for copy construct at 20221105
     int get_gk2_row() const {return this->gk2_row;}
     int get_gk2_col() const {return this->gk2_col;}
-    R get_tpiba2() const {return this->tpiba2;}
-    const R* get_gk2() const {return this->gk2;}
+    Real get_tpiba2() const {return this->tpiba2;}
+    const Real* get_gk2() const {return this->gk2;}
     Device* get_ctx() const {return this->ctx;}
 
   private:
 
-    R tpiba2 = 0.0;
-    const R* gk2 = nullptr;
+    Real tpiba2 = 0.0;
+    const Real* gk2 = nullptr;
     int gk2_row = 0;
     int gk2_col = 0;
 
@@ -62,10 +62,10 @@ class Ekinetic<OperatorPW<T, Device>> : public OperatorPW<T, Device>
     psi::DEVICE_CPU* cpu_ctx = {};
     psi::AbacusDevice_t device = {};
 
-    using ekinetic_op = ekinetic_pw_op<R, Device>;
-    using resmem_var_op = psi::memory::resize_memory_op<R, Device>;
-    using delmem_var_op = psi::memory::delete_memory_op<R, Device>;
-    using syncmem_var_h2d_op = psi::memory::synchronize_memory_op<R, Device, psi::DEVICE_CPU>;
+    using ekinetic_op = ekinetic_pw_op<Real, Device>;
+    using resmem_var_op = psi::memory::resize_memory_op<Real, Device>;
+    using delmem_var_op = psi::memory::delete_memory_op<Real, Device>;
+    using syncmem_var_h2d_op = psi::memory::synchronize_memory_op<Real, Device, psi::DEVICE_CPU>;
 };
 
 } // namespace hamilt

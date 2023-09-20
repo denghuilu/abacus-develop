@@ -8,7 +8,7 @@ namespace hamilt {
 
 template<typename T, typename Device>
 Veff<OperatorPW<T, Device>>::Veff(const int* isk_in,
-                                       const R* veff_in,
+                                       const Real* veff_in,
                                        const int veff_row,
                                        const int veff_col,
                                        const ModulePW::PW_Basis_K* wfcpw_in)
@@ -62,7 +62,7 @@ void Veff<OperatorPW<T, Device>>::act(
             if(this->veff_col != 0)
             {
                 veff_op()(this->ctx, this->veff_col, this->porter, this->veff + current_spin * this->veff_col);
-                // const R* current_veff = &(this->veff[0](current_spin, 0));
+                // const Real* current_veff = &(this->veff[0](current_spin, 0));
                 // for (int ir = 0; ir < this->veff->nc; ++ir)
                 // {
                 //     porter[ir] *= current_veff[ir];
@@ -80,7 +80,7 @@ void Veff<OperatorPW<T, Device>>::act(
             if(this->veff_col != 0)
             {
                 /// denghui added at 20221109
-                const R* current_veff[4];
+                const Real* current_veff[4];
                 for(int is = 0; is < 4; is++) {
                     current_veff[is] = this->veff + is * this->veff_col ; // for CPU device
                 }

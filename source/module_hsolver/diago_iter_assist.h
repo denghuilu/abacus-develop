@@ -13,13 +13,13 @@ template<typename T, typename Device = psi::DEVICE_CPU>
 class DiagoIterAssist
 {
   private:
-    using R = typename PossibleComplexToReal<T>::type;
+    using Real = typename GetTypeReal<T>::type;
   public:
-    static R PW_DIAG_THR;
+    static Real PW_DIAG_THR;
     static int PW_DIAG_NMAX;
 
     /// average steps of last cg diagonalization for each band.
-    static R avg_iter;
+    static Real avg_iter;
     static bool need_subspace;
 
     static int SCF_ITER;
@@ -29,7 +29,7 @@ class DiagoIterAssist
         hamilt::Hamilt<T, Device>* pHamilt,
         const psi::Psi<T, Device> &psi,
         psi::Psi<T, Device> &evc,
-        R *en,
+        Real *en,
         int n_band = 0);
 
     static void diagH_subspace_init(
@@ -38,7 +38,7 @@ class DiagoIterAssist
         int psi_nr,
         int psi_nc,
         psi::Psi<T, Device> &evc,
-        R *en);
+        Real *en);
 
     static void diagH_LAPACK(
         const int nstart,
@@ -46,7 +46,7 @@ class DiagoIterAssist
         const T* hcc,
         const T* sc,
         const int ldh, // nstart
-        R *e,
+        Real *e,
         T* vcc);
 
     static bool test_exit_cond(const int &ntry, const int &notconv);
@@ -56,12 +56,12 @@ class DiagoIterAssist
 
     using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
 
-    using setmem_var_op = psi::memory::set_memory_op<R, Device>;
-    using resmem_var_op = psi::memory::resize_memory_op<R, Device>;
-    using delmem_var_op = psi::memory::delete_memory_op<R, Device>;
-    using syncmem_var_op = psi::memory::synchronize_memory_op<R, Device, Device>;
-    using syncmem_var_h2d_op = psi::memory::synchronize_memory_op<R, psi::DEVICE_GPU, psi::DEVICE_CPU>;
-    using syncmem_var_d2h_op = psi::memory::synchronize_memory_op<R, psi::DEVICE_CPU, psi::DEVICE_GPU>;
+    using setmem_var_op = psi::memory::set_memory_op<Real, Device>;
+    using resmem_var_op = psi::memory::resize_memory_op<Real, Device>;
+    using delmem_var_op = psi::memory::delete_memory_op<Real, Device>;
+    using syncmem_var_op = psi::memory::synchronize_memory_op<Real, Device, Device>;
+    using syncmem_var_h2d_op = psi::memory::synchronize_memory_op<Real, psi::DEVICE_GPU, psi::DEVICE_CPU>;
+    using syncmem_var_d2h_op = psi::memory::synchronize_memory_op<Real, psi::DEVICE_CPU, psi::DEVICE_GPU>;
 
     using setmem_complex_op = psi::memory::set_memory_op<T, Device>;
     using resmem_complex_op = psi::memory::resize_memory_op<T, Device>;
@@ -75,13 +75,13 @@ class DiagoIterAssist
 };
 
 template<typename T, typename Device>
-typename DiagoIterAssist<T, Device>::R DiagoIterAssist<T, Device>::avg_iter = 0.0;
+typename DiagoIterAssist<T, Device>::Real DiagoIterAssist<T, Device>::avg_iter = 0.0;
 
 template<typename T, typename Device>
 int DiagoIterAssist<T, Device>::PW_DIAG_NMAX = 30;
 
 template<typename T, typename Device>
-typename DiagoIterAssist<T, Device>::R DiagoIterAssist<T, Device>::PW_DIAG_THR = 1.0e-2;
+typename DiagoIterAssist<T, Device>::Real DiagoIterAssist<T, Device>::PW_DIAG_THR = 1.0e-2;
 
 template<typename T, typename Device>
 bool DiagoIterAssist<T, Device>::need_subspace = false;

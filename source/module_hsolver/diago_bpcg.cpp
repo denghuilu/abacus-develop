@@ -12,9 +12,9 @@
 namespace hsolver {
 
 template<typename T, typename Device>
-DiagoBPCG<T, Device>::DiagoBPCG(const R* precondition_in)
+DiagoBPCG<T, Device>::DiagoBPCG(const Real* precondition_in)
 {
-    this->r_type   = ct::DataTypeToEnum<R>::value;
+    this->r_type   = ct::DataTypeToEnum<Real>::value;
     this->t_type   = ct::DataTypeToEnum<T>::value;
     this->device_type    = ct::DeviceTypeToEnum<Device>::value;
 
@@ -54,12 +54,12 @@ void DiagoBPCG<T, Device>::init_iter(const psi::Psi<T, Device> &psi_in) {
 }
 
 template<typename T, typename Device>
-bool DiagoBPCG<T, Device>::test_error(const ct::Tensor& err_in, R thr_in)
+bool DiagoBPCG<T, Device>::test_error(const ct::Tensor& err_in, Real thr_in)
 {
-    const R * _err_st = err_in.data<R>();
+    const Real * _err_st = err_in.data<Real>();
     if (err_in.device_type() == ct::DeviceType::GpuDevice) {
         ct::Tensor h_err_in = err_in.to_device<ct::DEVICE_CPU>();
-        _err_st = h_err_in.data<R>();
+        _err_st = h_err_in.data<Real>();
     }
     for (int ii = 0; ii < this->n_band; ii++) {
         if (_err_st[ii] > thr_in) {
@@ -112,13 +112,13 @@ void DiagoBPCG<T, Device>::calc_grad_with_block(
         ct::Tensor& grad_out,
         ct::Tensor& grad_old_out)
 {
-    calc_grad_with_block_op()(prec_in.data<R>(), err_out.data<R>(), beta_out.data<R>(), psi_in.data<T>(), hpsi_in.data<T>(), grad_out.data<T>(), grad_old_out.data<T>(), this->n_basis, this->n_basis, this->n_band);
+    calc_grad_with_block_op()(prec_in.data<Real>(), err_out.data<Real>(), beta_out.data<Real>(), psi_in.data<T>(), hpsi_in.data<T>(), grad_out.data<T>(), grad_old_out.data<T>(), this->n_basis, this->n_basis, this->n_band);
 }
 
 template<typename T, typename Device>
 void DiagoBPCG<T, Device>::calc_prec()
 {
-    syncmem_var_h2d_op()(this->prec.template data<R>(), this->h_prec.template data<R>(), this->n_basis);
+    syncmem_var_h2d_op()(this->prec.template data<Real>(), this->h_prec.template data<Real>(), this->n_basis);
 }
 
 template<typename T, typename Device>
@@ -176,7 +176,7 @@ void DiagoBPCG<T, Device>::diag_hsub(
         /*conj_x=*/false, /*conj_y=*/true, /*alpha=*/1.0, /*beta=*/0.0, /*Tensor out=*/&hsub_out);
     hsub_out = ct::op::einsum("ij,kj->ik", psi_in, hpsi_in, option);
 
-    ct::op::lapack_dnevd<T, ct_Device>()('V', 'U', hsub_out.data<T>(), this->n_band, eigenvalue_out.data<R>());
+    ct::op::lapack_dnevd<T, ct_Device>()('V', 'U', hsub_out.data<T>(), this->n_band, eigenvalue_out.data<Real>());
 }
 
 template<typename T, typename Device>
@@ -222,7 +222,7 @@ template<typename T, typename Device>
 void DiagoBPCG<T, Device>::diag(
         hamilt::Hamilt<T, Device>* hamilt_in,
         psi::Psi<T, Device>& psi_in,
-        R* eigenvalue_in)
+        Real* eigenvalue_in)
 {
     const int current_scf_iter = hsolver::DiagoIterAssist<T, Device>::SCF_ITER;
     // Get the pointer of the input psi
@@ -234,7 +234,7 @@ void DiagoBPCG<T, Device>::diag(
     this->calc_hsub_with_block(hamilt_in, psi_in, this->psi, this->hpsi, this->hsub, this->work, this->eigen);
 
     setmem_complex_op()(this->grad_old.template data<T>(), 0, this->n_basis * this->n_band);
-    setmem_var_op()(this->beta.template data<R>(), 1E+40, this->n_band);
+    setmem_var_op()(this->beta.template data<Real>(), 1E+40, this->n_band);
     int ntry = 0;
     int max_iter = current_scf_iter > 1 ?
                    this->nline :
@@ -276,7 +276,7 @@ void DiagoBPCG<T, Device>::diag(
         }
     } while (ntry < max_iter && this->test_error(this->err_st, this->all_band_cg_thr));
     this->calc_hsub_with_block_exit(this->psi, this->hpsi, this->hsub, this->work, this->eigen);
-    syncmem_var_d2h_op()(eigenvalue_in, this->eigen.template data<R>(), this->n_band);
+    syncmem_var_d2h_op()(eigenvalue_in, this->eigen.template data<Real>(), this->n_band);
 }
 
 template class DiagoBPCG<std::complex<float>, psi::DEVICE_CPU>;

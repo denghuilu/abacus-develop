@@ -13,10 +13,10 @@ template<typename T, typename Device = psi::DEVICE_CPU>
 class HSolverPW: public HSolver<T, Device>
 {
   private:
-    // Note PossibleComplexToReal<T>::type will 
+    // Note GetTypeReal<T>::type will 
     // return T if T is real type(float, double), 
     // otherwise return the real type of T(complex<float>, complex<double>)
-    using R = typename PossibleComplexToReal<T>::type;
+    using Real = typename GetTypeReal<T>::type;
   public:
     HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in, wavefunc* pwf_in);
 
@@ -33,13 +33,13 @@ class HSolverPW: public HSolver<T, Device>
                const std::string method_in,
                const bool skip_charge) override;
 
-    virtual R cal_hsolerror() override;
-    virtual R set_diagethr(const int istep, const int iter, const R drho) override;
-    virtual R reset_diagethr(std::ofstream& ofs_running, const R hsover_error, const R drho) override;
+    virtual Real cal_hsolerror() override;
+    virtual Real set_diagethr(const int istep, const int iter, const Real drho) override;
+    virtual Real reset_diagethr(std::ofstream& ofs_running, const Real hsover_error, const Real drho) override;
   protected:
     void initDiagh(const psi::Psi<T, Device>& psi_in);
     void endDiagh();
-    void hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::Psi<T, Device>& psi, R* eigenvalue);
+    void hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::Psi<T, Device>& psi, Real* eigenvalue);
 
     void updatePsiK(hamilt::Hamilt<T, Device>* pHamilt,
                     psi::Psi<T, Device>& psi,
@@ -49,16 +49,16 @@ class HSolverPW: public HSolver<T, Device>
     wavefunc* pwf = nullptr;
 
     // calculate the precondition array for diagonalization in PW base
-    void update_precondition(std::vector<R> &h_diag, const int ik, const int npw);
+    void update_precondition(std::vector<Real> &h_diag, const int ik, const int npw);
 
-    std::vector<R> precondition;
+    std::vector<Real> precondition;
 
     bool initialed_psi = false;
 
     Device * ctx = {};
-    using resmem_var_op = psi::memory::resize_memory_op<R, psi::DEVICE_CPU>;
-    using delmem_var_op = psi::memory::delete_memory_op<R, psi::DEVICE_CPU>;
-    using castmem_2d_2h_op = psi::memory::cast_memory_op<double, R, psi::DEVICE_CPU, psi::DEVICE_CPU>;
+    using resmem_var_op = psi::memory::resize_memory_op<Real, psi::DEVICE_CPU>;
+    using delmem_var_op = psi::memory::delete_memory_op<Real, psi::DEVICE_CPU>;
+    using castmem_2d_2h_op = psi::memory::cast_memory_op<double, Real, psi::DEVICE_CPU, psi::DEVICE_CPU>;
     
 };
 

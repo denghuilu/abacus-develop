@@ -13,7 +13,7 @@
 using namespace hsolver;
 
 template<typename T, typename Device>
-DiagoCG<T, Device>::DiagoCG(const R* precondition_in)
+DiagoCG<T, Device>::DiagoCG(const Real* precondition_in)
 {
     this->device = psi::device::get_device_type<Device>(this->ctx);
     this->precondition = precondition_in;
@@ -41,7 +41,7 @@ DiagoCG<T, Device>::~DiagoCG() {
 }
 
 template<typename T, typename Device>
-void DiagoCG<T, Device>::diag_mock(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T, Device> &phi, R *eigenvalue_in)
+void DiagoCG<T, Device>::diag_mock(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T, Device> &phi, Real *eigenvalue_in)
 {
     ModuleBase::TITLE("DiagoCG", "diag_once");
     ModuleBase::timer::tick("DiagoCG", "diag_once");
@@ -59,7 +59,7 @@ void DiagoCG<T, Device>::diag_mock(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T
     // ModuleBase::GlobalFunc::ZEROS(this->eigenvalue, this->n_band);
 
     /// record for how many loops in cg convergence
-    R avg = 0.0;
+    Real avg = 0.0;
 
     //-------------------------------------------------------------------
     // "poor man" iterative diagonalization of a complex hermitian matrix
@@ -129,9 +129,9 @@ void DiagoCG<T, Device>::diag_mock(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T
                 this->hphi);
 
         int iter = 0;
-        R gg_last = 0.0;
-        R cg_norm = 0.0;
-        R theta = 0.0;
+        Real gg_last = 0.0;
+        Real cg_norm = 0.0;
+        Real theta = 0.0;
         bool converged = false;
         for (iter = 0; iter < DiagoIterAssist<T, Device>::PW_DIAG_NMAX; iter++)
         {
@@ -158,7 +158,7 @@ void DiagoCG<T, Device>::diag_mock(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T
         {
             ++this->notconv;
         }
-        avg += static_cast<R>(iter) + 1.00;
+        avg += static_cast<Real>(iter) + 1.00;
 
         // reorder eigenvalues if they are not in the right order
         // (this CAN and WILL happen in not-so-special cases)
@@ -178,7 +178,7 @@ void DiagoCG<T, Device>::diag_mock(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T
                 i++;
 
                 // last calculated eigenvalue should be in the i-th position: reorder
-                R e0 = eigenvalue[m];
+                Real e0 = eigenvalue[m];
                 // ModuleBase::GlobalFunc::COPYARRAY(psi_temp, pphi, this->dim);
                 syncmem_complex_op()(this->ctx, this->ctx, pphi, psi_temp, this->dim);
 
@@ -224,20 +224,20 @@ void DiagoCG<T, Device>::calculate_gradient()
     // denghui replace this at 20221106
     // TODO: use GPU precondition to initialize CG class
     if (this->device == psi::GpuDevice) {
-        vector_div_vector_op<R, Device>()(this->ctx, this->dim, this->gradient, this->hphi, this->d_precondition);
-        vector_div_vector_op<R, Device>()(this->ctx, this->dim, this->pphi, this->sphi, this->d_precondition);
+        vector_div_vector_op<Real, Device>()(this->ctx, this->dim, this->gradient, this->hphi, this->d_precondition);
+        vector_div_vector_op<Real, Device>()(this->ctx, this->dim, this->pphi, this->sphi, this->d_precondition);
     }
     else {
-        vector_div_vector_op<R, Device>()(this->ctx, this->dim, this->gradient, this->hphi, this->precondition);
-        vector_div_vector_op<R, Device>()(this->ctx, this->dim, this->pphi, this->sphi, this->precondition);
+        vector_div_vector_op<Real, Device>()(this->ctx, this->dim, this->gradient, this->hphi, this->precondition);
+        vector_div_vector_op<Real, Device>()(this->ctx, this->dim, this->pphi, this->sphi, this->precondition);
     }
 
     // Update lambda !
     // (4) <psi|SPH|psi >
-    const R eh = hsolver::zdot_real_op<R, Device>()(this->ctx, this->dim, this->sphi, this->gradient);
+    const Real eh = hsolver::zdot_real_op<Real, Device>()(this->ctx, this->dim, this->sphi, this->gradient);
     // (5) <psi|SPS|psi >
-    const R es = hsolver::zdot_real_op<R, Device>()(this->ctx, this->dim, this->sphi, this->pphi);
-    const R lambda = eh / es;
+    const Real es = hsolver::zdot_real_op<Real, Device>()(this->ctx, this->dim, this->sphi, this->pphi);
+    const Real lambda = eh / es;
 
     // Update g!
     // for (int i = 0; i < this->dim; i++)
@@ -250,7 +250,7 @@ void DiagoCG<T, Device>::calculate_gradient()
     //     this->gradient[i] -= lambda * this->pphi[i];
     // }
     // haozhihan replace this 2022-10-6
-    constantvector_addORsub_constantVector_op<R, Device>()(this->ctx, this->dim, this->gradient, this->gradient, 1.0, this->pphi, (-lambda));
+    constantvector_addORsub_constantVector_op<Real, Device>()(this->ctx, this->dim, this->gradient, this->gradient, 1.0, this->pphi, (-lambda));
 }
 
 template<typename T, typename Device>
@@ -265,7 +265,7 @@ void DiagoCG<T, Device>::orthogonal_gradient(hamilt::Hamilt<T, Device> *phm_in, 
     // int inc = 1;
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // haozhihan replace 2022-10-07
-    gemv_op<R, Device>()(
+    gemv_op<Real, Device>()(
         this->ctx,
         'C',
         this->dim,
@@ -284,7 +284,7 @@ void DiagoCG<T, Device>::orthogonal_gradient(hamilt::Hamilt<T, Device> *phm_in, 
     // (3) orthogonal |g> and |scg> to all states (0~m-1)
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // haozhihan replace 2022-10-07
-    gemv_op<R, Device>()(
+    gemv_op<Real, Device>()(
         this->ctx,
         'N',
         this->dim,
@@ -298,7 +298,7 @@ void DiagoCG<T, Device>::orthogonal_gradient(hamilt::Hamilt<T, Device> *phm_in, 
         this->gradient,
         1);
 
-    gemv_op<R, Device>()(
+    gemv_op<Real, Device>()(
         this->ctx,
         'N',
         this->dim,
@@ -314,21 +314,21 @@ void DiagoCG<T, Device>::orthogonal_gradient(hamilt::Hamilt<T, Device> *phm_in, 
 }
 
 template<typename T, typename Device>
-void DiagoCG<T, Device>::calculate_gamma_cg(const int iter, R &gg_last, const R &cg_norm, const R &theta)
+void DiagoCG<T, Device>::calculate_gamma_cg(const int iter, Real &gg_last, const Real &cg_norm, const Real &theta)
 {
     if (test_cg == 1) {
         ModuleBase::TITLE("DiagoCG", "calculate_gamma_cg");
     }
     auto pcg = this->cg->get_pointer();
     auto pphi_m = this->phi_m->get_pointer();
-    R gg_inter;
+    Real gg_inter;
     if (iter > 0)
     {
         // (1) Update gg_inter!
         // gg_inter = <g|g0>
         // Attention : the 'g' in g0 is getted last time
         gg_inter
-            = hsolver::zdot_real_op<R, Device>()(this->ctx, this->dim, this->gradient, this->g0); // b means before
+            = hsolver::zdot_real_op<Real, Device>()(this->ctx, this->dim, this->gradient, this->g0); // b means before
     }
 
     // (2) Update for g0!
@@ -343,15 +343,15 @@ void DiagoCG<T, Device>::calculate_gamma_cg(const int iter, R &gg_last, const R 
     // denghui replace this 20221106
     // TODO: use GPU precondition instead
     if (this->device == psi::GpuDevice) {
-        vector_mul_vector_op<R, Device>()(this->ctx, this->dim, this->g0, this->scg, this->d_precondition);
+        vector_mul_vector_op<Real, Device>()(this->ctx, this->dim, this->g0, this->scg, this->d_precondition);
     }
     else {
-        vector_mul_vector_op<R, Device>()(this->ctx, this->dim, this->g0, this->scg, this->precondition);
+        vector_mul_vector_op<Real, Device>()(this->ctx, this->dim, this->g0, this->scg, this->precondition);
     }
 
     // (3) Update gg_now!
     // gg_now = < g|P|scg > = < g|g0 >
-    const R gg_now = hsolver::zdot_real_op<R, Device>()(this->ctx, this->dim, this->gradient, this->g0);
+    const Real gg_now = hsolver::zdot_real_op<Real, Device>()(this->ctx, this->dim, this->gradient, this->g0);
 
     if (iter == 0)
     {
@@ -366,7 +366,7 @@ void DiagoCG<T, Device>::calculate_gamma_cg(const int iter, R &gg_last, const R 
     {
         // (4) Update gamma !
         assert(gg_last != 0.0);
-        const R gamma = (gg_now - gg_inter) / gg_last;
+        const Real gamma = (gg_now - gg_inter) / gg_last;
 
         // (5) Update gg_last !
         gg_last = gg_now;
@@ -377,9 +377,9 @@ void DiagoCG<T, Device>::calculate_gamma_cg(const int iter, R &gg_last, const R 
         //     pcg[i] = gamma * pcg[i] + this->gradient[i];
         // }
         // haozhihan replace this 2022-10-6
-        constantvector_addORsub_constantVector_op<R, Device>()(this->ctx, this->dim, pcg, pcg, gamma, this->gradient, 1.0);
+        constantvector_addORsub_constantVector_op<Real, Device>()(this->ctx, this->dim, pcg, pcg, gamma, this->gradient, 1.0);
 
-        const R norma = gamma * cg_norm * sin(theta);
+        const Real norma = gamma * cg_norm * sin(theta);
         T znorma(norma * -1, 0.0);
 
         // haozhihan replace this 2022-10-6
@@ -389,34 +389,34 @@ void DiagoCG<T, Device>::calculate_gamma_cg(const int iter, R &gg_last, const R 
         {
             pcg[i] -= norma * pphi_m[i];
         }*/
-        axpy_op<R, Device>()(this->ctx, this->dim, &znorma, pphi_m, 1, pcg, 1);
+        axpy_op<Real, Device>()(this->ctx, this->dim, &znorma, pphi_m, 1, pcg, 1);
     }
 }
 
 template<typename T, typename Device>
-bool DiagoCG<T, Device>::update_psi(R &cg_norm, R &theta, R &eigenvalue)
+bool DiagoCG<T, Device>::update_psi(Real &cg_norm, Real &theta, Real &eigenvalue)
 {
     if (test_cg == 1)
         ModuleBase::TITLE("DiagoCG", "update_psi");
-    cg_norm = sqrt(hsolver::zdot_real_op<R, Device>()(this->ctx, this->dim, this->cg->get_pointer(), this->scg));
+    cg_norm = sqrt(hsolver::zdot_real_op<Real, Device>()(this->ctx, this->dim, this->cg->get_pointer(), this->scg));
 
     if (cg_norm < 1.0e-10)
         return 1;
 
     T* phi_m_pointer = this->phi_m->get_pointer();
 
-    const R a0
-        = hsolver::zdot_real_op<R, Device>()(this->ctx, this->dim, phi_m_pointer, this->pphi) * 2.0 / cg_norm;
-    const R b0
-        = hsolver::zdot_real_op<R, Device>()(this->ctx, this->dim, this->cg->get_pointer(), this->pphi) / (cg_norm * cg_norm);
+    const Real a0
+        = hsolver::zdot_real_op<Real, Device>()(this->ctx, this->dim, phi_m_pointer, this->pphi) * 2.0 / cg_norm;
+    const Real b0
+        = hsolver::zdot_real_op<Real, Device>()(this->ctx, this->dim, this->cg->get_pointer(), this->pphi) / (cg_norm * cg_norm);
 
-    const R e0 = eigenvalue;
+    const Real e0 = eigenvalue;
     theta = atan(a0 / (e0 - b0)) / 2.0;
 
-    const R new_e = (e0 - b0) * cos(2.0 * theta) + a0 * sin(2.0 * theta);
+    const Real new_e = (e0 - b0) * cos(2.0 * theta) + a0 * sin(2.0 * theta);
 
-    const R e1 = (e0 + b0 + new_e) / 2.0;
-    const R e2 = (e0 + b0 - new_e) / 2.0;
+    const Real e1 = (e0 + b0 + new_e) / 2.0;
+    const Real e2 = (e0 + b0 - new_e) / 2.0;
 
     if (e1 > e2)
     {
@@ -426,8 +426,8 @@ bool DiagoCG<T, Device>::update_psi(R &cg_norm, R &theta, R &eigenvalue)
     eigenvalue = std::min(e1, e2);
     //	OUT("eigenvalue",eigenvalue);
 
-    const R cost = cos(theta);
-    const R sint_norm = sin(theta) / cg_norm;
+    const Real cost = cos(theta);
+    const Real sint_norm = sin(theta) / cg_norm;
 
     auto pcg = this->cg->get_pointer();
     // for (int i = 0; i < this->dim; i++)
@@ -436,7 +436,7 @@ bool DiagoCG<T, Device>::update_psi(R &cg_norm, R &theta, R &eigenvalue)
     // }
     
     // haozhihan replace this 2022-10-6
-    constantvector_addORsub_constantVector_op<R, Device>()(this->ctx, this->dim, phi_m_pointer, phi_m_pointer, cost, pcg, sint_norm);
+    constantvector_addORsub_constantVector_op<Real, Device>()(this->ctx, this->dim, phi_m_pointer, phi_m_pointer, cost, pcg, sint_norm);
 
 
     //	std::cout << "\n overlap2 = "  << this->ddot(dim, phi_m, phi_m);
@@ -455,8 +455,8 @@ bool DiagoCG<T, Device>::update_psi(R &cg_norm, R &theta, R &eigenvalue)
         // }
 
         // haozhihan replace this 2022-10-6
-        constantvector_addORsub_constantVector_op<R, Device>()(this->ctx, this->dim, this->sphi, this->sphi, cost, this->scg, sint_norm);
-        constantvector_addORsub_constantVector_op<R, Device>()(this->ctx, this->dim, this->hphi, this->hphi, cost, this->pphi, sint_norm);
+        constantvector_addORsub_constantVector_op<Real, Device>()(this->ctx, this->dim, this->sphi, this->sphi, cost, this->scg, sint_norm);
+        constantvector_addORsub_constantVector_op<Real, Device>()(this->ctx, this->dim, this->hphi, this->hphi, cost, this->pphi, sint_norm);
         return 0;
     }
 }
@@ -482,7 +482,7 @@ void DiagoCG<T, Device>::schmit_orth(
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // haozhihan replace 2022-10-6
     int inc = 1;
-    gemv_op<R, Device>()(
+    gemv_op<Real, Device>()(
         this->ctx,
         'C',
         this->dim,
@@ -501,11 +501,11 @@ void DiagoCG<T, Device>::schmit_orth(
 
     T var(0, 0);
     syncmem_complex_d2h_op()(this->cpu_ctx, this->ctx, &var, lagrange_so + m, 1);
-    R psi_norm = var.real();
+    Real psi_norm = var.real();
 
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // haozhihan replace 2022-10-6
-    gemv_op<R, Device>()(
+    gemv_op<Real, Device>()(
         this->ctx,
         'N',
         this->dim,
@@ -529,7 +529,7 @@ void DiagoCG<T, Device>::schmit_orth(
         psi_norm -= ( conj(lagrange[j]) * lagrange[j] ).real();
     }*/
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    psi_norm -= hsolver::zdot_real_op<R, Device>()(this->ctx, m, lagrange_so, lagrange_so, false);
+    psi_norm -= hsolver::zdot_real_op<Real, Device>()(this->ctx, m, lagrange_so, lagrange_so, false);
 
     if (psi_norm <= 0.0)
     {
@@ -549,20 +549,20 @@ void DiagoCG<T, Device>::schmit_orth(
     auto pphi_m = this->phi_m->get_pointer();
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // haozhihan replace 2022-10-6
-    // scal_op<R, Device>()(this->ctx, this->dim, &psi_norm, pphi_m, 1);
+    // scal_op<Real, Device>()(this->ctx, this->dim, &psi_norm, pphi_m, 1);
     //======================================================================
     // for (int ig = 0; ig < this->dim; ig++)
     // {
     //     pphi_m[ig] /= psi_norm;
     // }
-    vector_div_constant_op<R, Device>()(this->ctx, this->dim, pphi_m, pphi_m, psi_norm);
+    vector_div_constant_op<Real, Device>()(this->ctx, this->dim, pphi_m, pphi_m, psi_norm);
 
     // ModuleBase::timer::tick("DiagoCG","schmit_orth");
     delmem_complex_op()(this->ctx, lagrange_so);
 }
 
 template<typename T, typename Device>
-void DiagoCG<T, Device>::diag(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T, Device> &psi, R *eigenvalue_in)
+void DiagoCG<T, Device>::diag(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T, Device> &psi, Real *eigenvalue_in)
 {
     /// record the times of trying iterative diagonalization
     int ntry = 0;

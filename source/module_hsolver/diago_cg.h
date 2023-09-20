@@ -18,21 +18,21 @@ template<typename T = std::complex<double>, typename Device = psi::DEVICE_CPU>
 class DiagoCG : public DiagH<T, Device>
 {
   private:
-    // Note PossibleComplexToReal<T>::type will 
+    // Note GetTypeReal<T>::type will 
     // return T if T is real type(float, double), 
     // otherwise return the real type of T(complex<float>, complex<double>)
-    using R = typename PossibleComplexToReal<T>::type;
+    using Real = typename GetTypeReal<T>::type;
   public:
     // Constructor need:
     // 1. temporary mock of Hamiltonian "Hamilt_PW"
     // 2. precondition pointer should point to place of precondition array.
-    DiagoCG(const R *precondition_in);
+    DiagoCG(const Real *precondition_in);
     ~DiagoCG();
 
     // virtual void init(){};
     // refactor hpsi_info
     // this is the override function diag() for CG method
-    void diag(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T, Device> &psi, R *eigenvalue_in) override;
+    void diag(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T, Device> &psi, Real *eigenvalue_in) override;
 
   private:
     /// static variables, used for passing control variables
@@ -51,10 +51,10 @@ class DiagoCG : public DiagH<T, Device>
     /// non-zero col size for inputted psi matrix
     int dim = 0;
     /// precondition for cg diag
-    const R *precondition = nullptr;
+    const Real *precondition = nullptr;
     /// eigenvalue results
-    R *eigenvalue = nullptr;
-    R *d_precondition = nullptr;
+    Real *eigenvalue = nullptr;
+    Real *d_precondition = nullptr;
 
     /// temp vector for new psi for one band, size dim
     psi::Psi<T, Device>* phi_m = nullptr;
@@ -88,17 +88,17 @@ class DiagoCG : public DiagH<T, Device>
 
     void orthogonal_gradient(hamilt::Hamilt<T, Device> *phm_in, const psi::Psi<T, Device> &eigenfunction, const int m);
 
-    void calculate_gamma_cg(const int iter, R &gg_last, const R &cg0, const R &theta);
+    void calculate_gamma_cg(const int iter, Real &gg_last, const Real &cg0, const Real &theta);
 
-    bool update_psi(R &cg_norm, R &theta, R &eigenvalue);
+    bool update_psi(Real &cg_norm, Real &theta, Real &eigenvalue);
 
     void schmit_orth(const int &m, const psi::Psi<T, Device> &psi);
 
     // used in diag() for template replace Hamilt with Hamilt_PW
-    void diag_mock(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T, Device> &phi, R *eigenvalue_in);
+    void diag_mock(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T, Device> &phi, Real *eigenvalue_in);
 
     using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
-    using zdot_real_op = hsolver::zdot_real_op<R, Device>;
+    using zdot_real_op = hsolver::zdot_real_op<Real, Device>;
 
     using setmem_complex_op = psi::memory::set_memory_op<T, Device>;
     using delmem_complex_op = psi::memory::delete_memory_op<T, Device>;
@@ -107,9 +107,9 @@ class DiagoCG : public DiagH<T, Device>
     using syncmem_complex_d2h_op = psi::memory::synchronize_memory_op<T, psi::DEVICE_CPU, Device>;
     using castmem_complex_d2h_op = psi::memory::cast_memory_op<T, T, psi::DEVICE_CPU, Device>;
 
-    using resmem_var_op = psi::memory::resize_memory_op<R, Device>;
-    using setmem_var_h_op = psi::memory::set_memory_op<R, psi::DEVICE_CPU>;
-    using syncmem_var_h2d_op = psi::memory::synchronize_memory_op<R, Device, psi::DEVICE_CPU>;
+    using resmem_var_op = psi::memory::resize_memory_op<Real, Device>;
+    using setmem_var_h_op = psi::memory::set_memory_op<Real, psi::DEVICE_CPU>;
+    using syncmem_var_h2d_op = psi::memory::synchronize_memory_op<Real, Device, psi::DEVICE_CPU>;
 
     const T * one = nullptr, * zero = nullptr, * neg_one = nullptr;
 };

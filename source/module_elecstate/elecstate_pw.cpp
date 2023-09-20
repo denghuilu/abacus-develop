@@ -33,14 +33,14 @@ template<typename T, typename Device>
 void ElecStatePW<T, Device>::init_rho_data() 
 {
     if (GlobalV::device_flag == "gpu" || GlobalV::precision_flag == "single") {
-        this->rho = new R*[this->charge->nspin];
+        this->rho = new Real*[this->charge->nspin];
         resmem_var_op()(this->ctx, this->rho_data, this->charge->nspin * this->charge->nrxx);
         for (int ii = 0; ii < this->charge->nspin; ii++) {
             this->rho[ii] = this->rho_data + ii * this->charge->nrxx;
         }
         if (get_xc_func_type() == 3)
         {
-            this->kin_r = new R*[this->charge->nspin];
+            this->kin_r = new Real*[this->charge->nspin];
             resmem_var_op()(this->ctx, this->kin_r_data, this->charge->nspin * this->charge->nrxx);
             for (int ii = 0; ii < this->charge->nspin; ii++) {
                 this->kin_r[ii] = this->kin_r_data + ii * this->charge->nrxx;
@@ -48,10 +48,10 @@ void ElecStatePW<T, Device>::init_rho_data()
         }
     }
     else {
-        this->rho = reinterpret_cast<R **>(this->charge->rho);
+        this->rho = reinterpret_cast<Real **>(this->charge->rho);
         if (get_xc_func_type() == 3)
         {
-            this->kin_r = reinterpret_cast<R **>(this->charge->kin_r);
+            this->kin_r = reinterpret_cast<Real **>(this->charge->kin_r);
         }
     }
     resmem_complex_op()(this->ctx, this->wfcr, this->basis->nmaxgr, "ElecSPW::wfcr");
@@ -165,7 +165,7 @@ void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
 
             this->basis->recip_to_real(this->ctx, &psi(ibnd,npwx), this->wfcr_another_spin, ik);
 
-            const auto w1 = static_cast<R>(this->wg(ik, ibnd) / get_ucell_omega());
+            const auto w1 = static_cast<Real>(this->wg(ik, ibnd) / get_ucell_omega());
 
             // replaced by denghui at 20221110
             elecstate_pw_op()(this->ctx, GlobalV::DOMAG, GlobalV::DOMAG_Z, this->charge->nrxx, w1, this->rho, this->wfcr, this->wfcr_another_spin);
@@ -184,7 +184,7 @@ void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
 
             this->basis->recip_to_real(this->ctx, &psi(ibnd,0), this->wfcr, ik);
 
-            const auto w1 = static_cast<R>(this->wg(ik, ibnd) / get_ucell_omega());
+            const auto w1 = static_cast<Real>(this->wg(ik, ibnd) / get_ucell_omega());
 
             if (w1 != 0.0)
             {
@@ -204,9 +204,9 @@ void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
                               j,
                               npw,
                               this->basis->npwk_max,
-                              static_cast<R>(get_ucell_tpiba()),
-                              this->basis->template get_gcar_data<R>(),
-                              this->basis->template get_kvec_c_data<R>(),
+                              static_cast<Real>(get_ucell_tpiba()),
+                              this->basis->template get_gcar_data<Real>(),
+                              this->basis->template get_kvec_c_data<Real>(),
                               &psi(ibnd, 0),
                               this->wfcr);
 

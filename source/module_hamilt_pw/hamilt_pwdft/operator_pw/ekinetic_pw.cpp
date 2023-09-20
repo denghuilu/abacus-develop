@@ -9,8 +9,8 @@ namespace hamilt {
 
 template<typename T, typename Device>
 Ekinetic<OperatorPW<T, Device>>::Ekinetic(
-    R tpiba2_in,
-    const R* gk2_in,
+    Real tpiba2_in,
+    const Real* gk2_in,
     const int gk2_row,
     const int gk2_col)
 {
@@ -41,7 +41,7 @@ void Ekinetic<OperatorPW<T, Device>>::act(
     ModuleBase::timer::tick("Operator", "EkineticPW");
     int max_npw = nbasis / npol;
 
-  const R *gk2_ik = &(this->gk2[this->ik * this->gk2_col]);
+  const Real *gk2_ik = &(this->gk2[this->ik * this->gk2_col]);
   // denghui added 20221019
   ekinetic_op()(this->ctx, nbands, ngk_ik, max_npw, tpiba2, gk2_ik, tmhpsi, tmpsi_in);
   // for (int ib = 0; ib < nbands; ++ib)

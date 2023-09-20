@@ -15,7 +15,7 @@ namespace hamilt {
 #define __METATEMPLATE
 
 template<class T> class Meta : public T {};
-// template<typename R, typename Device = psi::DEVICE_CPU>
+// template<typename Real, typename Device = psi::DEVICE_CPU>
 // class Meta : public OperatorPW<T, Device> {};
 
 #endif
@@ -24,11 +24,11 @@ template<typename T, typename Device>
 class Meta<OperatorPW<T, Device>> : public OperatorPW<T, Device>
 {
   private:
-    using R = typename PossibleComplexToReal<T>::type;
+    using Real = typename GetTypeReal<T>::type;
     public:
-      Meta(R tpiba2_in,
+      Meta(Real tpiba2_in,
            const int* isk_in,
-           const R* vk_in,
+           const Real* vk_in,
            const int vk_row,
            const int vk_col,
            const ModulePW::PW_Basis_K* wfcpw);
@@ -46,12 +46,12 @@ class Meta<OperatorPW<T, Device>> : public OperatorPW<T, Device>
           const int ngk = 0)const override;
 
       // denghui added for copy constructor at 20221105
-      R get_tpiba() const
+      Real get_tpiba() const
       {
           return this->tpiba;
       }
     const int * get_isk() const {return this->isk;}
-    const R* get_vk() const {return this->vk;}
+    const Real* get_vk() const {return this->vk;}
     int get_vk_row() const {return this->vk_row;}
     int get_vk_col() const {return this->vk_col;}
     const ModulePW::PW_Basis_K* get_wfcpw() const
@@ -68,19 +68,19 @@ class Meta<OperatorPW<T, Device>> : public OperatorPW<T, Device>
     mutable int vk_row = 0;
     mutable int vk_col = 0;
 
-    R tpiba = 0.0;
+    Real tpiba = 0.0;
 
     const int* isk = nullptr;
 
-    const R * vk = nullptr;
+    const Real * vk = nullptr;
 
     const ModulePW::PW_Basis_K* wfcpw = nullptr;
 
     Device* ctx = {};
     psi::DEVICE_CPU* cpu_ctx = {};
     T *porter = nullptr;
-    using meta_op = meta_pw_op<R, Device>;
-    using vector_mul_vector_op = hsolver::vector_mul_vector_op<R, Device>;
+    using meta_op = meta_pw_op<Real, Device>;
+    using vector_mul_vector_op = hsolver::vector_mul_vector_op<Real, Device>;
     using resmem_complex_op = psi::memory::resize_memory_op<T, Device>;
     using delmem_complex_op = psi::memory::delete_memory_op<T, Device>;
 };

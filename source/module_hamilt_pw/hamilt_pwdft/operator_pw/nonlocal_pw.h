@@ -15,7 +15,7 @@ namespace hamilt {
 #define NONLOCALTEMPLATE_H
 
 template<class T> class Nonlocal : public T {};
-// template<typename R, typename Device = psi::DEVICE_CPU>
+// template<typename Real, typename Device = psi::DEVICE_CPU>
 // class Nonlocal : public OperatorPW<T, Device> {};
 
 #endif
@@ -24,7 +24,7 @@ template<typename T, typename Device>
 class Nonlocal<OperatorPW<T, Device>> : public OperatorPW<T, Device>
 {
   private:
-    using R = typename PossibleComplexToReal<T>::type;
+    using Real = typename GetTypeReal<T>::type;
   public:
     Nonlocal(const int* isk_in,
              const pseudopot_cell_vnl* ppcell_in,
@@ -73,12 +73,12 @@ class Nonlocal<OperatorPW<T, Device>> : public OperatorPW<T, Device>
     mutable T *becp = nullptr;
     Device* ctx = {};
     psi::DEVICE_CPU* cpu_ctx = {};
-    R * deeq = nullptr;
+    Real * deeq = nullptr;
     T * deeq_nc = nullptr;
-    // using nonlocal_op = nonlocal_pw_op<R, Device>;
-    using gemv_op = hsolver::gemv_op<R, Device>;
-    using gemm_op = hsolver::gemm_op<R, Device>;
-    using nonlocal_op = nonlocal_pw_op<R, Device>;
+    // using nonlocal_op = nonlocal_pw_op<Real, Device>;
+    using gemv_op = hsolver::gemv_op<Real, Device>;
+    using gemm_op = hsolver::gemm_op<Real, Device>;
+    using nonlocal_op = nonlocal_pw_op<Real, Device>;
     using setmem_complex_op = psi::memory::set_memory_op<T, Device>;
     using resmem_complex_op = psi::memory::resize_memory_op<T, Device>;
     using delmem_complex_op = psi::memory::delete_memory_op<T, Device>;
