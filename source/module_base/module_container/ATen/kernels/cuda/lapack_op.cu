@@ -46,7 +46,7 @@ __global__ void set_matrix_kernel(
 
 template <typename T>
 struct set_matrix<T, DEVICE_GPU> {
-    using Type = typename PossibleStdComplexToThrustComplex<T>::type;
+    using Type = typename GetTypeThrust<T>::type;
     void operator() (
         const char& uplo,
         T* A,

@@ -3,10 +3,14 @@
 
 #include <complex>
 
-#if __CUDA || __ROCM
+#if defined(__CUDA)
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
 #include <base/macros/cuda.h>
+#elif defined(__ROCM)
+#include <hip/hip_runtime.h>
+#include <hipblas/hipblas.h>
+#include <base/macros/rocm.h>
 #endif // __CUDA || __ROCM
 
 extern "C"
@@ -335,7 +339,7 @@ void copy(const long n, const std::complex<double> *a, const int incx, std::comp
 
 } // namespace BlasConnector
 
-#if __CUDA || __ROCM
+#if defined(__CUDA)
 namespace cuBlasConnector {
     
 static inline
@@ -645,7 +649,7 @@ void gemm_batched_strided(cublasHandle_t& handle, const char& transa, const char
             batch_size);
 }
 } // namespace cuBlasConnector
-#endif // __CUDA || __ROCM
+#endif // __CUDA
 } // namespace container
 
 #endif // BASE_THIRD_PARTY_BLAS_H_

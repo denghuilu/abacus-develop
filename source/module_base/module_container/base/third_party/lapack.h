@@ -3,10 +3,16 @@
 
 #include <complex>
 
-#if __CUDA || __ROCM
+
+#if defined(__CUDA)
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
 #include <base/macros/cuda.h>
+#elif defined(__ROCM)
+#include <hip/hip_runtime.h>
+#include <hipblas/hipblas.h>
+#include <hipsolver/hipsolver.h>
+#include <base/macros/rocm.h>
 #endif // __CUDA || __ROCM
 
 //Naming convention of lapack subroutines : ammxxx, where
@@ -322,7 +328,7 @@ void trtri( const char &uplo, const char &diag, const int &n, std::complex<doubl
 
 } // namespace lapackConnector
 
-#if __CUDA || __ROCM
+#if defined(__CUDA)
 namespace cuSolverConnector {
 
 template <typename T>
@@ -330,8 +336,8 @@ static inline
 void trtri (cusolverDnHandle_t& cusolver_handle, const char& uplo, const char& diag, const int& n, T* A, const int& lda)
 {
     size_t d_lwork = 0, h_lwork = 0;
-    using Type = typename PossibleStdComplexToThrustComplex<T>::type;
-    cusolverDnXtrtri_bufferSize(cusolver_handle, cublas_fill_mode(uplo), cublas_diag_type(diag), n, DataTypeToCudaType<T>::cuda_data_type, reinterpret_cast<Type*>(A), lda, &d_lwork, &h_lwork);
+    using Type = typename GetTypeThrust<T>::type;
+    cusolverDnXtrtri_bufferSize(cusolver_handle, cublas_fill_mode(uplo), cublas_diag_type(diag), n, GetTypeCuda<T>::cuda_data_type, reinterpret_cast<Type*>(A), lda, &d_lwork, &h_lwork);
     void* d_work = nullptr, *h_work = nullptr;
     cudaMalloc((void**)&d_work, d_lwork);
     if (h_lwork) {
@@ -344,7 +350,7 @@ void trtri (cusolverDnHandle_t& cusolver_handle, const char& uplo, const char& d
     int* d_info = nullptr;
     cudaMalloc((void**)&d_info, sizeof(int));
     // Perform Cholesky decomposition
-    cusolverDnXtrtri(cusolver_handle, cublas_fill_mode(uplo), cublas_diag_type(diag), n, DataTypeToCudaType<T>::cuda_data_type, reinterpret_cast<Type*>(A), n, d_work, d_lwork, h_work, h_lwork, d_info);
+    cusolverDnXtrtri(cusolver_handle, cublas_fill_mode(uplo), cublas_diag_type(diag), n, GetTypeCuda<T>::cuda_data_type, reinterpret_cast<Type*>(A), n, d_work, d_lwork, h_work, h_lwork, d_info);
     cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost);
     if (h_info != 0) {
         throw std::runtime_error("trtri: failed to invert matrix");
@@ -657,7 +663,7 @@ void dngvd (cusolverDnHandle_t& cusolver_handle, const int& itype, const char& j
 }
 
 } // namespace cuSolverConnector
-#endif
+#endif // __CUDA
 
 }
 #endif  // BASE_THIRD_PARTY_LAPACK_H_
