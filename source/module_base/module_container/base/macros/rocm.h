@@ -83,7 +83,7 @@ hipblasFillMode_t hipblas_fill_mode(const char& uplo) {
     else if (uplo == 'L' || uplo == 'l')
         return HIPBLAS_FILL_MODE_LOWER;
     else
-        throw std::runtime_error("cublas_fill_mode: unknown uplo");
+        throw std::runtime_error("hipblas_fill_mode: unknown uplo");
 }
 
 static inline
@@ -93,7 +93,7 @@ hipblasDiagType_t hipblas_diag_type(const char& diag) {
     else if (diag == 'N' || diag == 'n')
         return HIPBLAS_DIAG_NON_UNIT;
     else
-        throw std::runtime_error("cublas_diag_type: unknown diag");
+        throw std::runtime_error("hipblas_diag_type: unknown diag");
 }
 
 static inline
@@ -114,6 +114,16 @@ hipsolverEigType_t hipblas_eig_type(const int& itype) {
         return HIPSOLVER_EIG_TYPE_2;
     else
         throw std::runtime_error("hipblas_eig_mode: unknown diag");
+}
+
+static inline
+hipsolverFillMode_t hipsolver_fill_mode(const char& uplo) {
+    if (uplo == 'U' || uplo == 'u')
+        return HIPSOLVER_FILL_MODE_UPPER;
+    else if (uplo == 'L' || uplo == 'l')
+        return HIPSOLVER_FILL_MODE_LOWER;
+    else
+        throw std::runtime_error("hipsolver_fill_mode: unknown uplo");
 }
 
 // hipSOLVER API errors
@@ -144,19 +154,19 @@ static const char* hipsolverGetErrorEnum(hipsolverStatus_t error) {
     }
 }
 
-inline void cusolverAssert(hipsolverStatus_t code, const char* file, int line, bool abort = true)
+inline void hipsolverAssert(hipsolverStatus_t code, const char* file, int line, bool abort = true)
 {
     if (code != HIPSOLVER_STATUS_SUCCESS)
     {
-        fprintf(stderr, "cuSOLVER Assert: %s %s %d\n", hipsolverGetErrorEnum(code), file, line);
+        fprintf(stderr, "hipSOLVER Assert: %s %s %d\n", hipsolverGetErrorEnum(code), file, line);
         if (abort)
             exit(code);
     }
 }
 
-#define cusolverErrcheck(res) { cusolverAssert((res), __FILE__, __LINE__); }
+#define hipsolverErrcheck(res) { hipsolverAssert((res), __FILE__, __LINE__); }
 
-// cuSOLVER API errors
+// hipSOLVER API errors
 static const char * hipblasGetErrorEnum(hipblasStatus_t error) {
     switch (error) {
         case HIPBLAS_STATUS_SUCCESS:

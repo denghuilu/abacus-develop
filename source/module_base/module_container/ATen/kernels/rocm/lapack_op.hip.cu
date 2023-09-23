@@ -1,27 +1,26 @@
 #include <ATen/kernels/lapack_op.h>
 #include <base/third_party/lapack.h>
 
-#include <cublas_v2.h>
-#include <cusolverDn.h>
-#include <cuda_runtime.h>
+#include <hip/hip_runtime.h>
 #include <thrust/complex.h>
+#include <hipsolver/hipsolver.h>
 
 namespace container {
 namespace op {
 
 
-static cusolverDnHandle_t cusolver_handle = nullptr;
+static hipsolverHandle_t hipsolver_handle = nullptr;
 
 void createGpuSolverHandle() {
-    if (cusolver_handle == nullptr) {
-        cusolverErrcheck(cusolverDnCreate(&cusolver_handle));
+    if (hipsolver_handle == nullptr) {
+        hipsolverErrcheck(hipsolverCreate(&hipsolver_handle));
     }
 }
 
 void destroyGpuSolverHandle() {
-    if (cusolver_handle != nullptr) {
-        cusolverErrcheck(cusolverDnDestroy(cusolver_handle));
-        cusolver_handle = nullptr;
+    if (hipsolver_handle != nullptr) {
+        hipsolverErrcheck(hipsolverDestroy(hipsolver_handle));
+        hipsolver_handle = nullptr;
     }
 }
 
@@ -68,8 +67,8 @@ struct lapack_trtri<T, DEVICE_GPU> {
     {
         // TODO: trtri is not implemented in this method yet
         // Cause the trtri in cuSolver is not stable for ABACUS!
-        //cuSolverConnector::trtri(cusolver_handle, uplo, diag, dim, Mat, lda);
-        cuSolverConnector::potri(cusolver_handle, uplo, diag, dim, Mat, lda);
+        //hipSolverConnector::trtri(hipsolver_handle, uplo, diag, dim, Mat, lda);
+        hipSolverConnector::potri(hipsolver_handle, uplo, diag, dim, Mat, lda);
     }
 };
 
@@ -81,7 +80,7 @@ struct lapack_potrf<T, DEVICE_GPU> {
         T* Mat, 
         const int& lda) 
     {
-        cuSolverConnector::potrf(cusolver_handle, uplo, dim, Mat, dim);
+        hipSolverConnector::potrf(hipsolver_handle, uplo, dim, Mat, dim);
     }
 };
 
@@ -95,7 +94,7 @@ struct lapack_dnevd<T, DEVICE_GPU> {
         const int& dim,
         Real* eigen_val)
     {
-        cuSolverConnector::dnevd(cusolver_handle, jobz, uplo, dim, Mat, dim, eigen_val);
+        hipSolverConnector::dnevd(hipsolver_handle, jobz, uplo, dim, Mat, dim, eigen_val);
     }
 };
 
@@ -111,7 +110,7 @@ struct lapack_dngvd<T, DEVICE_GPU> {
         const int& dim,
         Real* eigen_val)
     {
-        cuSolverConnector::dngvd(cusolver_handle, itype, jobz, uplo, dim, Mat_A, dim, Mat_B, dim, eigen_val);
+        hipSolverConnector::dngvd(hipsolver_handle, itype, jobz, uplo, dim, Mat_A, dim, Mat_B, dim, eigen_val);
     }
 };
 

@@ -12,7 +12,7 @@
 #define device_free hipFree
 #define device_result_t hipError_t
 #define device_success hipSuccess
-#endif
+#endif 
 
 namespace container {
 namespace base {
