@@ -1,3 +1,4 @@
+#include <vector>
 #include <ATen/kernels/lapack_op.h>
 #include <base/third_party/lapack.h>
 
@@ -67,8 +68,12 @@ struct lapack_trtri<T, DEVICE_GPU> {
     {
         // TODO: trtri is not implemented in this method yet
         // Cause the trtri in cuSolver is not stable for ABACUS!
-        //hipSolverConnector::trtri(hipsolver_handle, uplo, diag, dim, Mat, lda);
-        hipSolverConnector::potri(hipsolver_handle, uplo, diag, dim, Mat, lda);
+        // hipSolverConnector::trtri(hipsolver_handle, uplo, diag, dim, Mat, lda);
+        // hipSolverConnector::potri(hipsolver_handle, uplo, diag, dim, Mat, lda);
+        std::vector<T> H_Mat(dim * dim, static_cast<T>(0.0));
+        hipMemcpy(H_Mat.data(), Mat, sizeof(T) * H_Mat.size(), hipMemcpyDeviceToHost);
+        lapack_trtri<T, DEVICE_CPU>()(uplo, diag, dim, H_Mat.data(), lda);
+        hipMemcpy(Mat, H_Mat.data(), sizeof(T) * H_Mat.size(), hipMemcpyHostToDevice);
     }
 };
 
@@ -80,7 +85,11 @@ struct lapack_potrf<T, DEVICE_GPU> {
         T* Mat, 
         const int& lda) 
     {
-        hipSolverConnector::potrf(hipsolver_handle, uplo, dim, Mat, dim);
+        // hipSolverConnector::potrf(hipsolver_handle, uplo, dim, Mat, dim);
+        std::vector<T> H_Mat(dim * dim, static_cast<T>(0.0));
+        hipMemcpy(H_Mat.data(), Mat, sizeof(T) * H_Mat.size(), hipMemcpyDeviceToHost);
+        lapack_potrf<T, DEVICE_CPU>()(uplo, dim, H_Mat.data(), lda);
+        hipMemcpy(Mat, H_Mat.data(), sizeof(T) * H_Mat.size(), hipMemcpyHostToDevice);
     }
 };
 
@@ -94,7 +103,14 @@ struct lapack_dnevd<T, DEVICE_GPU> {
         const int& dim,
         Real* eigen_val)
     {
-        hipSolverConnector::dnevd(hipsolver_handle, jobz, uplo, dim, Mat, dim, eigen_val);
+        // hipSolverConnector::dnevd(hipsolver_handle, jobz, uplo, dim, Mat, dim, eigen_val);
+        std::vector<T> H_Mat(dim * dim, static_cast<T>(0.0));
+        std::vector<Real> H_eigen_val(dim, static_cast<Real>(0.0));
+        hipMemcpy(H_Mat.data(), Mat, sizeof(T) * H_Mat.size(), hipMemcpyDeviceToHost);
+        hipMemcpy(H_eigen_val.data(), eigen_val, sizeof(Real) * H_eigen_val.size(), hipMemcpyDeviceToHost);
+        lapack_dnevd<T, DEVICE_CPU>()(jobz, uplo, H_Mat.data(), dim, H_eigen_val.data());
+        hipMemcpy(Mat, H_Mat.data(), sizeof(T) * H_Mat.size(), hipMemcpyHostToDevice);
+        hipMemcpy(eigen_val, H_eigen_val.data(), sizeof(Real) * H_eigen_val.size(), hipMemcpyHostToDevice);
     }
 };
 
