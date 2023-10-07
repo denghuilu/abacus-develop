@@ -4,7 +4,7 @@
 
 namespace hamilt {
 template<typename T, typename Device = psi::DEVICE_CPU>
-class OperatorPW : public Operator<T, Device>
+class OperatorPW : public Operator
 {
     public:
         virtual ~OperatorPW();

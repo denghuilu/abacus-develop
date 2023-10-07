@@ -10,7 +10,7 @@
 namespace hsolver {
 
 template<typename T, typename Device = psi::DEVICE_CPU>
-class HSolverPW: public HSolver<T, Device>
+class HSolverPW: public HSolver
 {
   private:
     // Note GetTypeReal<T>::type will 
@@ -27,11 +27,11 @@ class HSolverPW: public HSolver<T, Device>
     void update(//Input &in
     ) override;*/
 
-    void solve(hamilt::Hamilt<T, Device>* pHamilt,
-               psi::Psi<T, Device>& psi,
+    void solve(hamilt::Hamilt* pHamilt,
+               ct::Tensor& psi,
                elecstate::ElecState* pes,
-               const std::string method_in,
-               const bool skip_charge) override;
+               std::string method_in,
+               bool skip_charge) override;
 
     virtual Real cal_hsolerror() override;
     virtual Real set_diagethr(const int istep, const int iter, const Real drho) override;

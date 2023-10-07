@@ -7,25 +7,20 @@
 #include "string"
  
 #include <module_base/macros.h>
+#include <ATen/core/tensor.h>
 
 namespace hsolver
 {
 
-template <typename T, typename Device = psi::DEVICE_CPU>
 class DiagH
 {
-  private:
-    using Real = typename GetTypeReal<T>::type;
   public:
-    virtual ~DiagH(){};
+    virtual ~DiagH() = default;
     // virtual void init()=0;
+    // TODO: Use an enum type to specify the type of DiagH
     std::string method = "none";
 
-    virtual void diag(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T, Device> &psi, Real *eigenvalue_in) = 0;
-
-    virtual void diag(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<Real, Device> &psi, Real *eigenvalue_in) {
-        return;
-    }
+    virtual void diag(hamilt::Hamilt* phm_in, ct::Tensor& psi, ct::Tensor* eigenvalue_in) = 0;
 };
 
 } // namespace hsolver

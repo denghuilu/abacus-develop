@@ -11,7 +11,7 @@ namespace hamilt
 {
 
 template<typename T, typename Device = psi::DEVICE_CPU>
-class HamiltPW : public Hamilt<T, Device>
+class HamiltPW : public Hamilt
 {
   private:
     // Note GetTypeReal<T>::type will 
@@ -20,15 +20,13 @@ class HamiltPW : public Hamilt<T, Device>
     using Real = typename GetTypeReal<T>::type;
   public:
     HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K* wfc_basis, K_Vectors* p_kv);
-    template<typename T_in, typename Device_in = Device>
-    explicit HamiltPW(const HamiltPW<T_in, Device_in>* hamilt);
-    ~HamiltPW();
+    ~HamiltPW() override;
 
     // for target K point, update consequence of hPsi() and matrix()
-    void updateHk(const int ik) override;
+    void updateHk(int ik) override;
 
     // core function: for solving eigenvalues of Hamiltonian with iterative method
-    virtual void sPsi(const T *psi_in, T *spsi, const size_t size) const override;
+    void sPsi(const ct::Tensor* psi_in, ct::Tensor* spsi, size_t size) const override;
 
   private:
 

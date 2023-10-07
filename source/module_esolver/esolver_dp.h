@@ -112,7 +112,7 @@ class ESolver_DP : public ESolver
     std::vector<double> cell;     ///< the lattice vectors
     std::vector<int> atype;       ///< the atom type corresponding to DP model
     std::vector<double> coord;    ///< the atomic positions
-    double dp_potential;          ///< the computed potential energy
+    double dp_potential{};          ///< the computed potential energy
     ModuleBase::matrix dp_force;  ///< the computed atomic forces
     ModuleBase::matrix dp_virial; ///< the computed lattice virials
 };

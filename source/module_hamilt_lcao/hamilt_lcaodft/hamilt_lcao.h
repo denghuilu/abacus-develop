@@ -19,7 +19,7 @@ namespace hamilt
 // template first for type of k space H matrix elements
 // template second for type of temporary matrix, gamma_only fix-gamma-matrix + S-gamma, multi-k fix-Real + S-Real
 template <typename TK, typename TR>
-class HamiltLCAO : public Hamilt<std::complex<double>>
+class HamiltLCAO : public Hamilt
 {
   public:
     /**
@@ -54,7 +54,7 @@ class HamiltLCAO : public Hamilt<std::complex<double>>
     };
 
     /// get pointer of Operator<TK> , the return will be opsd or ops
-    Operator<TK>*& getOperator();
+    Operator*& getOperator();
     /// get hk-pointer of std::vector<TK>, the return will be LM->Hloc or LM->Hloc2
     std::vector<TK>& getHk(LCAO_Matrix* LM);
     /// get sk-pointer of std::vector<TK>, the return will be this->sk

@@ -15,7 +15,7 @@ namespace ModuleESolver
 {
 
     template<typename T, typename Device = psi::DEVICE_CPU>
-    class ESolver_KS_PW : public ESolver_KS<T, Device>
+    class ESolver_KS_PW : public ESolver_KS
     {
     private:
         using Real = typename GetTypeReal<T>::type;

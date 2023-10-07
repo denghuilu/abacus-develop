@@ -21,7 +21,7 @@ namespace hsolver
 {
 
 template <typename T = std::complex<double>, typename Device = psi::DEVICE_CPU> 
-class DiagoDavid : public DiagH<T, Device>
+class DiagoDavid : public DiagH
 {
   private:
     // Note GetTypeReal<T>::type will 
@@ -33,7 +33,7 @@ class DiagoDavid : public DiagH<T, Device>
     ~DiagoDavid();
 
     // this is the override function diag() for CG method
-    void diag(hamilt::Hamilt<T, Device>* phm_in,
+    void diag(hamilt::Hamilt* phm_in,
               psi::Psi<T, Device>& phi,
               Real* eigenvalue_in);
 
@@ -77,7 +77,7 @@ class DiagoDavid : public DiagH<T, Device>
     psi::DEVICE_CPU* cpu_ctx = {};
     psi::AbacusDevice_t device = {};
 
-    void cal_grad(hamilt::Hamilt<T, Device>* phm_in,
+    void cal_grad(hamilt::Hamilt* phm_in,
                   const int& dim,
                   const int& nbase,
                   const int& notconv,
@@ -128,7 +128,7 @@ class DiagoDavid : public DiagH<T, Device>
                      Real* eigenvalue,
                      T* vcc);
 
-    void diag_mock(hamilt::Hamilt<T, Device>* phm_in,
+    void diag_mock(hamilt::Hamilt* phm_in,
                    psi::Psi<T, Device>& psi,
                    Real* eigenvalue_in);
 

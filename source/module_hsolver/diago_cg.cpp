@@ -41,7 +41,7 @@ DiagoCG<T, Device>::~DiagoCG() {
 }
 
 template<typename T, typename Device>
-void DiagoCG<T, Device>::diag_mock(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T, Device> &phi, Real *eigenvalue_in)
+void DiagoCG<T, Device>::diag_mock(hamilt::Hamilt* phm_in, psi::Psi<T, Device> &phi, Real *eigenvalue_in)
 {
     ModuleBase::TITLE("DiagoCG", "diag_once");
     ModuleBase::timer::tick("DiagoCG", "diag_once");
@@ -118,7 +118,6 @@ void DiagoCG<T, Device>::diag_mock(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T
 
         //do hPsi, actually the result of hpsi stored in Operator,
         //the necessary of copying operation should be checked later
-        hpsi_info cg_hpsi_in(this->phi_m, cg_hpsi_range, this->hphi);
         phm_in->ops->hPsi(cg_hpsi_in);
 
         this->eigenvalue[m] = 

@@ -14,14 +14,11 @@
 namespace hsolver
 {
 
-template<typename T, typename Device = psi::DEVICE_CPU>
 class HSolver
 {
-  private:
-    using Real = typename GetTypeReal<T>::type;
   public:
-    HSolver(){};
-    virtual ~HSolver(){
+    HSolver() = default;
+    virtual ~HSolver() {
         delete pdiagh;
     };
     /*//initialization, used in construct function or restruct a new HSolver
@@ -35,64 +32,61 @@ class HSolver
         Input &in )=0;*/
 
     // solve Hamiltonian to electronic density in ElecState
-    virtual void solve(hamilt::Hamilt<T, Device>* phm,
-                       psi::Psi<T, Device>& ppsi,
+    virtual void solve(hamilt::Hamilt* phm,
+                       ct::Tensor& ppsi,
                        elecstate::ElecState* pes,
                        const std::string method,
-                       const bool skip_charge = false)
-    {
-        return;
-    }
+                       const bool skip_charge) {}
 
-    virtual void solve(hamilt::Hamilt<T, Device>* phm,
-                       psi::Psi<Real, Device>& ppsi,
+    virtual void solve(hamilt::Hamilt* phm,
+                       psi::Psi<double>& ppsi,
                        elecstate::ElecState* pes,
                        const std::string method,
-                       const bool skip_charge = false)
-    {
-        return;
-    }
+                       const bool skip_charge) {}
 
-    virtual void solve(hamilt::Hamilt<T, Device>* phm,
-                       psi::Psi<T, Device>& ppsi,
+    virtual void solve(hamilt::Hamilt* phm,
+                       psi::Psi<std::complex<double>>& ppsi,
+                       elecstate::ElecState* pes,
+                       const std::string method,
+                       const bool skip_charge) {}
+
+    virtual void solve(hamilt::Hamilt* phm,
+                       psi::Psi<std::complex<double>>& ppsi,
                        elecstate::ElecState* pes,
                        ModulePW::PW_Basis_K* wfc_basis,
                        Stochastic_WF& stowf,
                        const int istep,
                        const int iter,
                        const std::string method,
-                       const bool skip_charge = false)
-    {
-        return;
-    }
+                       const bool skip_charge) {}
 
     std::string classname = "none";
     // choose method of DiagH for solve Hamiltonian matrix
     // cg, dav, elpa, scalapack-gvx, cusolver
     std::string method = "none";
   public:
-    Real diag_ethr=0.0; //threshold for diagonalization
+    double diag_ethr=0.0; //threshold for diagonalization
     //set diag_ethr according to drho
     //for lcao, we suppose the error is zero and we set diag_ethr to 0
-    virtual Real set_diagethr(const int istep, const int iter, const Real drho)
+    virtual double set_diagethr(const int istep, const int iter, const double drho)
     {
         return 0.0;
     }
     //reset diag_ethr according to drho and hsolver_error
-    virtual Real reset_diagethr(std::ofstream& ofs_running, const Real hsover_error, const Real drho)
+    virtual double reset_diagethr(std::ofstream& ofs_running, const double hsover_error, const double drho)
     {
         return 0.0;
     }
 
     // calculate hsolver_error
     // for sdft and lcao, we suppose the error is zero 
-    virtual Real cal_hsolerror()
+    virtual double cal_hsolerror()
     {
         return 0.0;
     };
 
   protected:
-    DiagH<T, Device>* pdiagh = nullptr; // for single Hamiltonian matrix diagonal solver
+    DiagH* pdiagh = nullptr; // for single Hamiltonian matrix diagonal solver
 
 };
 

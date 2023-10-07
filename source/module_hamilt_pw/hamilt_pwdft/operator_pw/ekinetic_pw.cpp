@@ -31,29 +31,20 @@ Ekinetic<OperatorPW<T, Device>>::~Ekinetic() {}
 
 template<typename T, typename Device>
 void Ekinetic<OperatorPW<T, Device>>::act(
-    const int nbands,
-    const int nbasis,
+    const int64_t nbands,
+    const int64_t nbasis,
     const int npol,
-    const T* tmpsi_in,
-    T* tmhpsi,
-    const int ngk_ik)const
+    const ct::Tensor* tmpsi_in,
+    ct::Tensor* tmhpsi,
+    const int ngk_ik) const
 {
     ModuleBase::timer::tick("Operator", "EkineticPW");
-    int max_npw = nbasis / npol;
 
-  const Real *gk2_ik = &(this->gk2[this->ik * this->gk2_col]);
-  // denghui added 20221019
-  ekinetic_op()(this->ctx, nbands, ngk_ik, max_npw, tpiba2, gk2_ik, tmhpsi, tmpsi_in);
-  // for (int ib = 0; ib < nbands; ++ib)
-  // {
-  //     for (int ig = 0; ig < ngk_ik; ++ig)
-  //     {
-  //         tmhpsi[ig] += gk2_ik[ig] * tpiba2 * tmpsi_in[ig];
-  //     }
-  //     tmhpsi += max_npw;
-  //     tmpsi_in += max_npw;
-  // }
-  ModuleBase::timer::tick("Operator", "EkineticPW");
+    auto max_npw = nbasis / npol;
+    const Real *gk2_ik = &(this->gk2[this->ik * this->gk2_col]);
+    ekinetic_op()(this->ctx, nbands, ngk_ik, max_npw, tpiba2, gk2_ik, tmhpsi->data<T>(), tmpsi_in->data<T>());
+
+    ModuleBase::timer::tick("Operator", "EkineticPW");
 }
 
 // copy construct added by denghui at 20221105

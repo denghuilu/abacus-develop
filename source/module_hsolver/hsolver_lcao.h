@@ -7,7 +7,7 @@
 namespace hsolver
 {
 
-class HSolverLCAO : public HSolver<std::complex<double>>
+class HSolverLCAO : public HSolver
 {
   public:
     HSolverLCAO(const Parallel_Orbitals* ParaV_in)
@@ -22,9 +22,9 @@ class HSolverLCAO : public HSolver<std::complex<double>>
     void update(//Input &in
     ) override;*/
 
-    void solve(hamilt::Hamilt<std::complex<double>>* pHamilt, psi::Psi<std::complex<double>>& psi, elecstate::ElecState* pes, const std::string method_in, const bool skip_charge) override;
+    void solve(hamilt::Hamilt* pHamilt, psi::Psi<std::complex<double>>& psi, elecstate::ElecState* pes, const std::string method_in, const bool skip_charge) override;
 
-    void solve(hamilt::Hamilt<std::complex<double>>* pHamilt, psi::Psi<double>& psi, elecstate::ElecState* pes, const std::string method_in, const bool skip_charge) override;
+    void solve(hamilt::Hamilt* pHamilt, psi::Psi<double>& psi, elecstate::ElecState* pes, const std::string method_in, const bool skip_charge) override;
 
     static int out_mat_hs; // mohan add 2010-09-02
     static int out_mat_hsR; // LiuXh add 2019-07-16
@@ -32,10 +32,10 @@ class HSolverLCAO : public HSolver<std::complex<double>>
     static int out_mat_dh;
 
   private:
-    void hamiltSolvePsiK(hamilt::Hamilt<std::complex<double>>* hm, psi::Psi<std::complex<double>>& psi, double* eigenvalue);
-    void hamiltSolvePsiK(hamilt::Hamilt<std::complex<double>>* hm, psi::Psi<double>& psi, double* eigenvalue);
+    void hamiltSolvePsiK(hamilt::Hamilt* hm, psi::Psi<std::complex<double>>& psi, double* eigenvalue);
+    void hamiltSolvePsiK(hamilt::Hamilt* hm, psi::Psi<double>& psi, double* eigenvalue);
 
-    template <typename T> void solveTemplate(hamilt::Hamilt<std::complex<double>>* pHamilt, psi::Psi<T>& psi, elecstate::ElecState* pes, const std::string method_in, const bool skip_charge);
+    template <typename T> void solveTemplate(hamilt::Hamilt* pHamilt, psi::Psi<T>& psi, elecstate::ElecState* pes, const std::string method_in, const bool skip_charge);
     /*void solveTemplate(
         hamilt::Hamilt* pHamilt,
         psi::Psi<std::complex<double>>& psi,

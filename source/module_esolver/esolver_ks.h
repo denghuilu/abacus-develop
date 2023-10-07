@@ -17,7 +17,6 @@
 namespace ModuleESolver
 {
 
-    template<typename T, typename Device = psi::DEVICE_CPU>
     class ESolver_KS : public ESolver_FP
     {
     public:
@@ -81,8 +80,8 @@ namespace ModuleESolver
         ModuleIO::Output_Potential create_Output_Potential(int iter, const std::string& prefix = "None");
         // TODO: control single precision at input files
 
-        hsolver::HSolver<T, Device>* phsol = nullptr;
-        hamilt::Hamilt<T, Device>* p_hamilt = nullptr;
+        hsolver::HSolver* phsol = nullptr;
+        hamilt::Hamilt* p_hamilt = nullptr;
         ModulePW::PW_Basis_K* pw_wfc = nullptr;
         Charge_Mixing* p_chgmix = nullptr;
         wavefunc wf;

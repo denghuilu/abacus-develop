@@ -17,9 +17,7 @@ class ESolver
         classname = "ESolver";
     }
 
-    virtual ~ESolver()
-    {
-    }
+    virtual ~ESolver() = default;
 
     // virtual void Init(Input_EnSolver &inp, matrix &lattice_v)=0
     virtual void Init(Input& inp, UnitCell& cell) = 0;

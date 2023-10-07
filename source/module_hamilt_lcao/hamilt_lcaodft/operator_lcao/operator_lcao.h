@@ -10,7 +10,7 @@ namespace hamilt
 {
 
 template <typename TK, typename TR>
-class OperatorLCAO : public Operator<TK>
+class OperatorLCAO : public Operator
 {
   public:
     OperatorLCAO(

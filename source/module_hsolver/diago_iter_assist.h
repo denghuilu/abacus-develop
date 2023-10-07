@@ -26,14 +26,14 @@ class DiagoIterAssist
 
     // for CG diagonalization only
     static void diagH_subspace(
-        hamilt::Hamilt<T, Device>* pHamilt,
+        hamilt::Hamilt* pHamilt,
         const psi::Psi<T, Device> &psi,
         psi::Psi<T, Device> &evc,
         Real *en,
         int n_band = 0);
 
     static void diagH_subspace_init(
-        hamilt::Hamilt<T, Device>* pHamilt,
+        hamilt::Hamilt* pHamilt,
         const T* psi,
         int psi_nr,
         int psi_nc,
@@ -53,8 +53,6 @@ class DiagoIterAssist
 
   private:
     constexpr static const Device * ctx = {};
-
-    using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
 
     using setmem_var_op = psi::memory::set_memory_op<Real, Device>;
     using resmem_var_op = psi::memory::resize_memory_op<Real, Device>;

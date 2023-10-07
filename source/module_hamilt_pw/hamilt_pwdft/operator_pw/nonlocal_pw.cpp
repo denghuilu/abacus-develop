@@ -209,12 +209,12 @@ void Nonlocal<OperatorPW<T, Device>>::add_nonlocal_pp(T *hpsi_in, const T *becp,
 
 template<typename T, typename Device>
 void Nonlocal<OperatorPW<T, Device>>::act(
-    const int nbands,
-    const int nbasis,
+    const int64_t nbands,
+    const int64_t nbasis,
     const int npol,
-    const T* tmpsi_in,
-    T* tmhpsi,
-    const int ngk_ik)const
+    const ct::Tensor* tmpsi_in,
+    ct::Tensor* tmhpsi,
+    const int ngk_ik) const
 {
     ModuleBase::timer::tick("Operator", "NonlocalPW");
     if(!GlobalV::use_paw)

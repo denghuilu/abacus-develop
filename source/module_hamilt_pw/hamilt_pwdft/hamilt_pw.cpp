@@ -25,7 +25,7 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K
     if (GlobalV::T_IN_H)
     {
         // Operator<double>* ekinetic = new Ekinetic<OperatorLCAO<double>>
-        Operator<T, Device>* ekinetic
+        Operator* ekinetic
             = new Ekinetic<OperatorPW<T, Device>>(tpiba2, gk2, wfc_basis->nks, wfc_basis->npwk_max);
         if(this->ops == nullptr)
         {
@@ -66,7 +66,7 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K
         {
             //register Potential by gathered operator
             pot_in->pot_register(pot_register_in);
-            Operator<T, Device>* veff
+            Operator* veff
                 = new Veff<OperatorPW<T, Device>>(isk,
                                                        pot_in->get_v_effective_data<Real>(),
                                                        pot_in->get_effective_v().nr,
@@ -80,7 +80,7 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K
             {
                 this->ops->add(veff);
             }
-            Operator<T, Device>* meta
+            Operator* meta
                 = new Meta<OperatorPW<T, Device>>(tpiba,
                                                        isk,
                                                        pot_in->get_vofk_effective_data<Real>(),
@@ -92,7 +92,7 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K
     }
     if (GlobalV::VNL_IN_H)
     {
-        Operator<T, Device>* nonlocal
+        Operator* nonlocal
             = new Nonlocal<OperatorPW<T, Device>>(isk, &GlobalC::ppcell, &GlobalC::ucell, wfc_basis);
         if(this->ops == nullptr)
         {
@@ -124,77 +124,14 @@ void HamiltPW<T, Device>::updateHk(const int ik)
 }
 
 template<typename T, typename Device>
-void HamiltPW<T, Device>::sPsi
-(
-    const T *psi,
-    T *spsi,
-    size_t size
-) const
+void HamiltPW<T, Device>::sPsi(
+    const ct::Tensor *psi,
+    ct::Tensor *spsi,
+    size_t size) const
 {
     // ModuleBase::GlobalFunc::COPYARRAY(psi, spsi, size);
     // denghui replaced at 2022.11.04
-    syncmem_complex_op()(this->ctx, this->ctx, spsi, psi, size);
-}
-
-template<typename T, typename Device>
-template<typename T_in, typename Device_in>
-HamiltPW<T, Device>::HamiltPW(const HamiltPW<T_in, Device_in> *hamilt)
-{
-    this->classname = hamilt->classname;
-    OperatorPW<std::complex<T_in>, Device_in> * node =
-            reinterpret_cast<OperatorPW<std::complex<T_in>, Device_in> *>(hamilt->ops);
-
-    while(node != nullptr) {
-        if (node->classname == "Ekinetic") {
-            Operator<T, Device>* ekinetic =
-                    new Ekinetic<OperatorPW<T, Device>>(
-                            reinterpret_cast<const Ekinetic<OperatorPW<T_in, Device_in>>*>(node));
-            if(this->ops == nullptr) {
-                this->ops = ekinetic;
-            }
-            else {
-                this->ops->add(ekinetic);
-            }
-            // this->ops = reinterpret_cast<Operator<T, Device>*>(node);
-        }
-        else if (node->classname == "Nonlocal") {
-            Operator<T, Device>* nonlocal =
-                    new Nonlocal<OperatorPW<T, Device>>(
-                            reinterpret_cast<const Nonlocal<OperatorPW<T_in, Device_in>>*>(node));
-            if(this->ops == nullptr) {
-                this->ops = nonlocal;
-            }
-            else {
-                this->ops->add(nonlocal);
-            }
-        }
-        else if (node->classname == "Veff") {
-            Operator<T, Device>* veff =
-                    new Veff<OperatorPW<T, Device>>(
-                            reinterpret_cast<const Veff<OperatorPW<T_in, Device_in>>*>(node));
-            if(this->ops == nullptr) {
-                this->ops = veff;
-            }
-            else {
-                this->ops->add(veff);
-            }
-        }
-        else if (node->classname == "Meta") {
-            Operator<T, Device>* meta =
-                    new Meta<OperatorPW<T, Device>>(
-                            reinterpret_cast<const Meta<OperatorPW<T_in, Device_in>>*>(node));
-            if(this->ops == nullptr) {
-                this->ops = meta;
-            }
-            else {
-                this->ops->add(meta);
-            }
-        }
-        else {
-            ModuleBase::WARNING_QUIT("HamiltPW", "Unrecognized Operator type!");
-        }
-        node = reinterpret_cast<OperatorPW<std::complex<T_in>, Device_in> *>(node->next_op);
-    }
+    syncmem_complex_op()(this->ctx, this->ctx, spsi->data<T>(), psi->data<T>(), size);
 }
 
 template class HamiltPW<std::complex<float>, psi::DEVICE_CPU>;

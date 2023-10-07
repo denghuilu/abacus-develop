@@ -38,12 +38,13 @@ class Nonlocal<OperatorPW<T, Device>> : public OperatorPW<T, Device>
 
     virtual void init(const int ik_in)override;
 
-    virtual void act(const int nbands,
-        const int nbasis,
+    void act(
+        const int64_t nbands,
+        const int64_t nbasis,
         const int npol,
-        const T* tmpsi_in,
-        T* tmhpsi,
-        const int ngk = 0)const override;
+        const ct::Tensor* tmpsi_in,
+        ct::Tensor* tmhpsi,
+        const int ngk) const override;
 
     const int *get_isk() const {return this->isk;}
     const pseudopot_cell_vnl *get_ppcell() const {return this->ppcell;}
