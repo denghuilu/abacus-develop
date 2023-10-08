@@ -13,7 +13,7 @@ class TestDiagoIterAssist : public ::testing::Test
 	using dia_d = hsolver::DiagoIterAssist<std::complex<double>, psi::DEVICE_CPU>;
 
 	hamilt::Hamilt<std::complex<double>> hamilt_test_d;
-	hamilt::Hamilt<std::complex<float>> hamilt_test_f;
+	hamilt::Hamilt hamilt_test_f;
 
     DIAGOTEST::hamilt.create(4, 4);
 

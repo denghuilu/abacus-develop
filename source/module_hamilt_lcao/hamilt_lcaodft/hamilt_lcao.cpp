@@ -129,7 +129,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
         // LCAO_Matrix::Hloc_fixed2 is used for storing
         if(GlobalV::T_IN_H)
         {
-            Operator<TK>* ekinetic = new EkineticNew<OperatorLCAO<TK, TR>>(
+            Operator* ekinetic = new EkineticNew<OperatorLCAO<TK, TR>>(
                 LM_in, 
                 this->kv->kvec_d, 
                 this->hR, 
@@ -145,7 +145,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
         // in general case, target HR is this->hR, while target HK is LCAO_Matrix::Hloc
         if(GlobalV::VNL_IN_H)
         {
-            Operator<TK>* nonlocal = new NonlocalNew<OperatorLCAO<TK, TR>>(
+            Operator* nonlocal = new NonlocalNew<OperatorLCAO<TK, TR>>(
                 LM_in, 
                 this->kv->kvec_d, 
                 this->hR, 
@@ -167,7 +167,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
                 //register Potential by gathered operator
                 pot_in->pot_register(pot_register_in);
                 //effective potential term
-                Operator<TK>* veff = new Veff<OperatorLCAO<TK, TR>>(
+                Operator* veff = new Veff<OperatorLCAO<TK, TR>>(
                     GG_in,
                     loc_in,
                     LM_in,
@@ -186,7 +186,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
     #ifdef __DEEPKS
         if (GlobalV::deepks_scf)
         {
-            Operator<TK>* deepks = new DeePKS<OperatorLCAO<TK, TR>>(loc_in,
+            Operator* deepks = new DeePKS<OperatorLCAO<TK, TR>>(loc_in,
                                                                         LM_in,
                                                                         this->kv->kvec_d,
                                                                         this->hR, // no explicit call yet
@@ -202,7 +202,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
         //end node should be OperatorDFTU
         if (GlobalV::dft_plus_u)
         {
-            Operator<TK>* dftu = new OperatorDFTU<OperatorLCAO<TK, TR>>(
+            Operator* dftu = new OperatorDFTU<OperatorLCAO<TK, TR>>(
                 LM_in,
                 kv->kvec_d,
                 this->hR,// no explicit call yet
@@ -248,7 +248,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
 
         // initial operator for multi-k case
         // overlap term is indispensable
-        Operator<TK>* overlap = new OverlapNew<OperatorLCAO<TK, TR>>(
+        Operator* overlap = new OverlapNew<OperatorLCAO<TK, TR>>(
             LM_in,
             this->kv->kvec_d,
             this->hR,
@@ -272,7 +272,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
         // in general case, target HR is this->hR, while target HK is LCAO_Matrix::Hloc2
         if(GlobalV::T_IN_H)
         {
-            Operator<TK>* ekinetic = new EkineticNew<OperatorLCAO<TK, TR>>(
+            Operator* ekinetic = new EkineticNew<OperatorLCAO<TK, TR>>(
                 LM_in,
                 this->kv->kvec_d,
                 this->hR,
@@ -288,7 +288,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
         // in general case, target HR is this->hR, while target HK is LCAO_Matrix::Hloc2
         if(GlobalV::VNL_IN_H)
         {
-            Operator<TK>* nonlocal = new NonlocalNew<OperatorLCAO<TK, TR>>(
+            Operator* nonlocal = new NonlocalNew<OperatorLCAO<TK, TR>>(
                 LM_in,
                 this->kv->kvec_d,
                 this->hR,
@@ -303,7 +303,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
     #ifdef __DEEPKS
         if (GlobalV::deepks_scf)
         {
-            Operator<TK>* deepks
+            Operator* deepks
                 = new DeePKS<OperatorLCAO<TK, TR>>(loc_in,
                                                     LM_in,
                                                     this->kv->kvec_d,
@@ -319,7 +319,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
         //end node should be OperatorDFTU
         if (GlobalV::dft_plus_u)
         {
-            Operator<TK>* dftu = new OperatorDFTU<OperatorLCAO<TK, TR>>(
+            Operator* dftu = new OperatorDFTU<OperatorLCAO<TK, TR>>(
                 LM_in,
                 kv->kvec_d,
                 this->hR,// no explicit call yet
@@ -368,7 +368,7 @@ void HamiltLCAO<TK, TR>::updateHk(const int ik)
 template <>
 void HamiltLCAO<double, double>::refresh()
 {
-    dynamic_cast<hamilt::OperatorLCAO<double, double>*>(this->opsd)->set_hr_done(false);
+    dynamic_cast<hamilt::OperatorLCAO<double, double>*>(this->ops)->set_hr_done(false);
 }
 template <>
 void HamiltLCAO<std::complex<double>, double>::refresh()
@@ -383,17 +383,17 @@ void HamiltLCAO<std::complex<double>, std::complex<double>>::refresh()
 
 // get Operator base class pointer
 template <>
-Operator<double>*& HamiltLCAO<double, double>::getOperator()
-{
-    return this->opsd;
-}
-template <>
-Operator<std::complex<double>>*& HamiltLCAO<std::complex<double>, double>::getOperator()
+Operator*& HamiltLCAO<double, double>::getOperator()
 {
     return this->ops;
 }
 template <>
-Operator<std::complex<double>>*& HamiltLCAO<std::complex<double>, std::complex<double>>::getOperator()
+Operator*& HamiltLCAO<std::complex<double>, double>::getOperator()
+{
+    return this->ops;
+}
+template <>
+Operator*& HamiltLCAO<std::complex<double>, std::complex<double>>::getOperator()
 {
     return this->ops;
 }

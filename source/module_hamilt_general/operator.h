@@ -73,6 +73,7 @@ class Operator
     //calculation type, only different type can be in main chain table 
     enum calculation_type cal_type = calculation_type::no;
     Operator* next_sub_op = nullptr;
+    bool is_first_node = true;
 
     //if this Operator is first node in chain table, hpsi would not be empty
     mutable ct::Tensor* hpsi = nullptr;

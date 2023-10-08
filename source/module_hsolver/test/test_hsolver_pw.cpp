@@ -37,7 +37,7 @@ class TestHSolverPW : public ::testing::Test
     hsolver::HSolverPW<std::complex<double>, psi::DEVICE_CPU> hs_d = hsolver::HSolverPW<std::complex<double>, psi::DEVICE_CPU>(&pwbk, nullptr);
 
     hamilt::Hamilt<std::complex<double>> hamilt_test_d;
-    hamilt::Hamilt<std::complex<float>> hamilt_test_f;
+    hamilt::Hamilt hamilt_test_f;
 
     psi::Psi<std::complex<double>> psi_test_cd;
     psi::Psi<std::complex<float>> psi_test_cf;

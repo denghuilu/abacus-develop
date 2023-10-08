@@ -10,56 +10,46 @@
 #include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
 #include "module_base/memory.h"
 
+#include <ATen/core/tensor_map.h>
+
 using namespace hsolver;
 
 template<typename T, typename Device>
-DiagoCG<T, Device>::DiagoCG(const Real* precondition_in)
+DiagoCG<T, Device>::DiagoCG(const ct::Tensor& prec_in, const ct::Tensor& n_basis_in)
 {
-    this->device = psi::device::get_device_type<Device>(this->ctx);
-    this->precondition = precondition_in;
-    test_cg = 0;
-    reorder = false;
-    this->one = new T(1.0, 0.0);
-    this->zero = new T(0.0, 0.0);
-    this->neg_one = new T(-1.0, 0.0);
+    // reference to prec_in and n_basis_in
+    this->h_prec_.CopyFrom(prec_in);
+    this->n_basis_.CopyFrom(n_basis_in);
+    
+    this->test_cg_ = 0;
+    this->reorder_ = false;
+    this->one = std::move(Tensor({static_cast<T>(1.0)}).to_device<Device>());
+    this->zero = std::move(Tensor({static_cast<T>(0.0)}).to_device<Device>());
+    this->neg_one = std::move(Tensor({static_cast<T>(-1.0)}).to_device<Device>());
 }
 
 template<typename T, typename Device>
-DiagoCG<T, Device>::~DiagoCG() {
-    // delete this->cg;
-    // delete this->phi_m;
-    delmem_complex_op()(this->ctx, this->sphi);
-    delmem_complex_op()(this->ctx, this->hphi);
-    delmem_complex_op()(this->ctx, this->scg);
-    delmem_complex_op()(this->ctx, this->pphi);
-    delmem_complex_op()(this->ctx, this->gradient);
-    delmem_complex_op()(this->ctx, this->g0);
-    delmem_complex_op()(this->ctx, this->lagrange);
-    delete this->one;
-    delete this->zero;
-    delete this->neg_one;
-}
-
-template<typename T, typename Device>
-void DiagoCG<T, Device>::diag_mock(hamilt::Hamilt* phm_in, psi::Psi<T, Device> &phi, Real *eigenvalue_in)
+void DiagoCG<T, Device>::diag_mock(hamilt::Hamilt* phm_in, ct::Tensor& psi, ct::Tensor& eigen_in)
 {
     ModuleBase::TITLE("DiagoCG", "diag_once");
     ModuleBase::timer::tick("DiagoCG", "diag_once");
     
     /// out : record for states of convergence
-    this->notconv = 0;
+    this->notconv_ = 0;
 
     /// initialize variables
-    this->dim = phi.get_current_nbas();
-    this->dmx = phi.get_nbasis();
-    this->n_band = phi.get_nbands();
-    this->eigenvalue = eigenvalue_in;
+    this->n_band_ = psi.shape().dim_size(1);
+    this->n_basis_max_ = psi.shape().dim_size(2);
+    // Note: this->ik is a member value of basis class DiagH, 
+    // and this value was initialized by a function call within the HsolverPW's solve function
+    this->current_n_basis_ = this->n_basis_[this->ik];
+    // Reference to the eigen_in
+    this->eigen_.CopyFrom(eigen_in);
 
-    setmem_var_h_op()(this->cpu_ctx, this->eigenvalue, 0, this->n_band);
-    // ModuleBase::GlobalFunc::ZEROS(this->eigenvalue, this->n_band);
+    this->eigen_.zero();
 
     /// record for how many loops in cg convergence
-    Real avg = 0.0;
+    int avg_iter = 0;
 
     //-------------------------------------------------------------------
     // "poor man" iterative diagonalization of a complex hermitian matrix
@@ -68,45 +58,53 @@ void DiagoCG<T, Device>::diag_mock(hamilt::Hamilt* phm_in, psi::Psi<T, Device> &
     // Calls hPhi and sPhi to calculate H|phi> and S|phi>
     // Works for generalized eigenvalue problem (US pseudopotentials) as well
     //-------------------------------------------------------------------
-    this->phi_m = new psi::Psi<T, Device>(phi, 1, 1);
+    // this->phi_m = new psi::Psi<T, Device>(phi, 1, 1);
+    this->phi_m_ = std::move(ct::Tensor(
+        ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<Device>::value, {this->current_n_basis_}));
     // this->hphi.resize(this->dmx, ModuleBase::ZERO);
-    resmem_complex_op()(this->ctx, this->hphi, this->dmx);
-    setmem_complex_op()(this->ctx, this->hphi, 0, this->dmx);
+    this->hphi_ = std::move(ct::Tensor(
+        ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<Device>::value, {this->current_n_basis_}));
+    this->hphi_.zero();
     // this->sphi.resize(this->dmx, ModuleBase::ZERO);
-    resmem_complex_op()(this->ctx, this->sphi, this->dmx);
-    setmem_complex_op()(this->ctx, this->sphi, 0, this->dmx);
+    this->sphi_ = std::move(ct::Tensor(
+        ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<Device>::value, {this->current_n_basis_}));
+    this->sphi_.zero();
 
-    this->cg = new psi::Psi<T, Device>(phi, 1, 1);
+    // this->cg = new psi::Psi<T, Device>(phi, 1, 1);
+    this->cg_ = std::move(ct::Tensor(
+        ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<Device>::value, {this->current_n_basis_}));
     // this->scg.resize(this->dmx, ModuleBase::ZERO);
-    resmem_complex_op()(this->ctx, this->scg, this->dmx);
-    setmem_complex_op()(this->ctx, this->scg, 0, this->dmx);
+    this->scg_ = std::move(ct::Tensor(
+        ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<Device>::value, {this->current_n_basis_}));
+    this->scg_.zero();
     // this->pphi.resize(this->dmx, ModuleBase::ZERO);
-    resmem_complex_op()(this->ctx, this->pphi, this->dmx);
-    setmem_complex_op()(this->ctx, this->pphi, 0, this->dmx);
-
-    //in band_by_band CG method, only the first band in phi_m would be calculated
-    psi::Range cg_hpsi_range(0);
+    this->pphi_ = std::move(ct::Tensor(
+        ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<Device>::value, {this->current_n_basis_}));
+    this->pphi_.zero();
 
     // this->gradient.resize(this->dmx, ModuleBase::ZERO);
-    resmem_complex_op()(this->ctx, this->gradient, this->dmx);
-    setmem_complex_op()(this->ctx, this->gradient, 0, this->dmx);
+    this->gradient_ = std::move(ct::Tensor(
+        ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<Device>::value, {this->current_n_basis_}));
+    this->gradient_.zero();
     // this->g0.resize(this->dmx, ModuleBase::ZERO);
-    resmem_complex_op()(this->ctx, this->g0, this->dmx);
-    setmem_complex_op()(this->ctx, this->g0, 0, this->dmx);
+    this->g0_ = std::move(ct::Tensor(
+        ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<Device>::value, {this->current_n_basis_}));
+    this->g0_.zero();
     // this->lagrange.resize(this->n_band, ModuleBase::ZERO);
-    resmem_complex_op()(this->ctx, this->lagrange, this->n_band);
-    setmem_complex_op()(this->ctx, this->lagrange, 0, this->n_band);
+    this->lagrange_ = std::move(ct::Tensor(
+        ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<Device>::value, {this->n_band_}));
+    this->lagrange_.zero();
 
-    ModuleBase::Memory::record("DiagoCG", this->dmx * 8);
+    ModuleBase::Memory::record("DiagoCG", this->current_n_basis_ * 8);
 
-    for (int m = 0; m < this->n_band; m++)
+    for (int m = 0; m < this->n_band_; m++)
     {
-        if (test_cg > 2)
+        if (test_cg_ > 2)
             GlobalV::ofs_running << "Diagonal Band : " << m << std::endl;
         //copy psi_in into internal psi, m=0 has been done in Constructor
-        if(m>0)
+        if (m > 0)
         {
-            const T* psi_m_in = &(phi(m, 0));
+            const T* psi_m_in = &phi[this->ik_][m][0];
             auto pphi_m = this->phi_m->get_pointer();
             // haozhihan replace COPY_ARRAY
             syncmem_complex_op()(this->ctx, this->ctx, pphi_m, psi_m_in, this->dim);
@@ -253,7 +251,7 @@ void DiagoCG<T, Device>::calculate_gradient()
 }
 
 template<typename T, typename Device>
-void DiagoCG<T, Device>::orthogonal_gradient(hamilt::Hamilt<T, Device> *phm_in, const psi::Psi<T, Device> &eigenfunction, const int m)
+void DiagoCG<T, Device>::orthogonal_gradient(hamilt::Hamilt* phm_in, const psi::Psi<T, Device> &eigenfunction, const int m)
 {
     if (test_cg == 1) {
         ModuleBase::TITLE("DiagoCG", "orthogonal_gradient");
@@ -561,7 +559,7 @@ void DiagoCG<T, Device>::schmit_orth(
 }
 
 template<typename T, typename Device>
-void DiagoCG<T, Device>::diag(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T, Device> &psi, Real *eigenvalue_in)
+void DiagoCG<T, Device>::diag(hamilt::Hamilt* phm_in, ct::Tensor& psi, ct::Tensor& eigenvalue_in)
 {
     /// record the times of trying iterative diagonalization
     int ntry = 0;

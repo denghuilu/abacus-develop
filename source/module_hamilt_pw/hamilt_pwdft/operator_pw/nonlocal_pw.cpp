@@ -247,7 +247,7 @@ void Nonlocal<OperatorPW<T, Device>>::act(
                     &this->one,
                     this->vkb,
                     this->ppcell->vkb.nc,
-                    tmpsi_in,
+                    tmpsi_in->data<T>(),
                     inc,
                     &this->zero,
                     this->becp,
@@ -268,7 +268,7 @@ void Nonlocal<OperatorPW<T, Device>>::act(
                     &this->one,
                     this->vkb,
                     this->ppcell->vkb.nc,
-                    tmpsi_in,
+                    tmpsi_in->data<T>(),
                     max_npw,
                     &this->zero,
                     this->becp,
@@ -278,7 +278,7 @@ void Nonlocal<OperatorPW<T, Device>>::act(
 
             Parallel_Reduce::reduce_complex_double_pool(becp, nkb * nbands);
 
-            this->add_nonlocal_pp(tmhpsi, becp, nbands);
+            this->add_nonlocal_pp(tmhpsi->data<T>(), becp, nbands);
         }
     }
     else
@@ -291,7 +291,7 @@ void Nonlocal<OperatorPW<T, Device>>::act(
         vnlpsi = new std::complex<double> [npw];
         for(int ibands = 0; ibands < nbands; ibands++)
         {
-            GlobalC::paw_cell.paw_nl_psi(0,reinterpret_cast<const std::complex<double>*> (&tmpsi_in[ibands*max_npw]),vnlpsi);
+            GlobalC::paw_cell.paw_nl_psi(0,reinterpret_cast<const std::complex<double>*> (&tmpsi_in->data<T>()[ibands*max_npw]),vnlpsi);
             for(int i = 0; i < npw; i++)
             {
                 tmhpsi[ibands*max_npw+i] += vnlpsi[i];

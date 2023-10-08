@@ -405,6 +405,18 @@ class Tensor {
     Tensor& operator=(Tensor&& other) noexcept;
 
     /**
+     * @brief Copy the data from another tensor into this tensor.
+     *
+     * This function copies the data from another tensor into the current tensor.
+     * The underlying storage of the current tensor will be shared with the source tensor.
+     *
+     * @param other The source Tensor from which data will be copied.
+     * @return Returns true if the copy was successful, false otherwise.
+     * @note The current tensor will share the same underlying storage as the source tensor.
+     */
+    bool CopyFrom(const Tensor& other);
+
+    /**
      * @brief Copy the data from another tensor into this tensor while reshaping it.
      *
      * This function copies the data from another tensor into the current tensor, and also reshapes

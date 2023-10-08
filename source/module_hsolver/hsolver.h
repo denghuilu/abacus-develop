@@ -14,6 +14,13 @@
 namespace hsolver
 {
 
+enum HSolver_Type {
+    HSolver_None,
+    HSolver_PW,
+    HSolver_PW_SDFT,
+    HSolver_LCAO
+};
+
 class HSolver
 {
   public:
@@ -32,12 +39,6 @@ class HSolver
         Input &in )=0;*/
 
     // solve Hamiltonian to electronic density in ElecState
-    virtual void solve(hamilt::Hamilt* phm,
-                       ct::Tensor& ppsi,
-                       elecstate::ElecState* pes,
-                       const std::string method,
-                       const bool skip_charge) {}
-
     virtual void solve(hamilt::Hamilt* phm,
                        psi::Psi<double>& ppsi,
                        elecstate::ElecState* pes,
@@ -59,11 +60,19 @@ class HSolver
                        const int iter,
                        const std::string method,
                        const bool skip_charge) {}
+    
+    virtual void solve(
+        hamilt::Hamilt* phm,
+        ct::Tensor& ppsi,
+        elecstate::ElecState* pes,
+        const std::string method,
+        const bool skip_charge) {}
 
-    std::string classname = "none";
+    HSolver_Type classname = HSolver_Type::HSolver_None;
     // choose method of DiagH for solve Hamiltonian matrix
     // cg, dav, elpa, scalapack-gvx, cusolver
-    std::string method = "none";
+    DiagH_Type method = DiagH_Type::DiagH_None;
+
   public:
     double diag_ethr=0.0; //threshold for diagonalization
     //set diag_ethr according to drho

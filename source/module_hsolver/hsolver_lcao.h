@@ -12,7 +12,7 @@ class HSolverLCAO : public HSolver
   public:
     HSolverLCAO(const Parallel_Orbitals* ParaV_in)
     {
-      this->classname = "HSolverPW"; 
+      this->classname = HSolver_Type::HSolver_LCAO; 
       this->ParaV = ParaV_in;
       }
     /*void init(

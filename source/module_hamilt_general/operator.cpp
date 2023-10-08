@@ -62,6 +62,7 @@ void Operator::init(const int ik_in)
 void Operator::add(Operator* next)
 {
     if(next==nullptr) return;
+    next->is_first_node = false;
     if(next->next_op != nullptr) this->add(next->next_op);
     Operator* last = this;
     //loop to end of the chain

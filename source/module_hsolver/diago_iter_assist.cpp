@@ -20,7 +20,7 @@ namespace hsolver{
 //----------------------------------------------------------------------
 template<typename T, typename Device>
 void DiagoIterAssist<T, Device>::diagH_subspace(
-    hamilt::Hamilt<T, Device>* pHamilt, // hamiltonian operator carrier
+    hamilt::Hamilt* pHamilt, // hamiltonian operator carrier
     const psi::Psi<T, Device> &psi, // [in] wavefunction
     psi::Psi<T, Device> &evc, // [out] wavefunction
     Real *en, // [out] eigenvalues
@@ -197,7 +197,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace(
 
 template<typename T, typename Device>
 void DiagoIterAssist<T, Device>::diagH_subspace_init(
-    hamilt::Hamilt<T, Device>* pHamilt,
+    hamilt::Hamilt* pHamilt,
     const T* psi,
     int psi_nr,
     int psi_nc,

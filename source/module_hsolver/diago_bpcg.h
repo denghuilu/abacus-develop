@@ -25,7 +25,7 @@ namespace hsolver {
  * @tparam Device The device used for calculations (e.g., cpu or gpu).
  */
 template<typename T = std::complex<double>, typename Device = psi::DEVICE_CPU>
-class DiagoBPCG : public DiagH<T, Device>
+class DiagoBPCG : public DiagH
 {
   private:
     // Note GetTypeReal<T>::type will 
@@ -39,7 +39,7 @@ class DiagoBPCG : public DiagH<T, Device>
      *
      * @param precondition precondition data passed by the "Hamilt_PW" class.
      */
-    explicit DiagoBPCG(const Real* precondition);
+    explicit DiagoBPCG(const ct::Tensor& precondition);
 
     /**
      * @brief Destructor for DiagoBPCG class.
@@ -54,7 +54,7 @@ class DiagoBPCG : public DiagH<T, Device>
      *
      * @param psi_in The input wavefunction psi.
      */
-    void init_iter(const psi::Psi<T, Device> &psi_in);
+    void init_iter(const ct::Tensor& psi_in);
 
     /**
      * @brief Diagonalize the Hamiltonian using the CG method.
@@ -65,8 +65,7 @@ class DiagoBPCG : public DiagH<T, Device>
      * @param psi The input wavefunction psi matrix with [dim: n_basis x n_band, column major].
      * @param eigenvalue_in Pointer to the eigen array with [dim: n_band, column major].
      */
-    void diag(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T, Device> &psi, Real *eigenvalue_in) override;
-
+    void diag(hamilt::Hamilt* phm_in, ct::Tensor& psi, ct::Tensor& eigenvalue_in) override;
 
   private:
     /// the number of rows of the input psi
@@ -140,7 +139,7 @@ class DiagoBPCG : public DiagH<T, Device>
      * @param hpsi_out Pointer to the array where the resulting hpsi matrix will be stored.
      */
     void calc_hpsi_with_block(
-        hamilt::Hamilt<T, Device>* hamilt_in, 
+        hamilt::Hamilt* hamilt_in, 
         const psi::Psi<T, Device>& psi_in,  
         ct::Tensor& hpsi_out);
 
@@ -229,7 +228,7 @@ class DiagoBPCG : public DiagH<T, Device>
      * @param eigenvalue_out Computed eigen.
      */
     void calc_hsub_with_block(
-        hamilt::Hamilt<T, Device>* hamilt_in,
+        hamilt::Hamilt* hamilt_in,
         const psi::Psi<T, Device>& psi_in,
         ct::Tensor& psi_out, ct::Tensor& hpsi_out,
         ct::Tensor& hsub_out, ct::Tensor& workspace_in,

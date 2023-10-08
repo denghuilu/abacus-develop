@@ -266,6 +266,11 @@ bool Tensor::operator==(const Tensor& other) const {
     return result;
 }
 
+bool Tensor::CopyFrom(const Tensor& other) {
+    CopyFromInternal(other, other.shape());
+    return true;
+}
+
 bool Tensor::CopyFrom(const Tensor& other, const TensorShape& shape) {
     if (other.NumElements() == shape.NumElements()) {
         CopyFromInternal(other, shape);

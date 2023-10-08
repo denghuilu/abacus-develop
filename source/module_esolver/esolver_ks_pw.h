@@ -89,11 +89,7 @@ namespace ModuleESolver
         void initialize_psi();
     private:
         psi_initializer* psi_init = nullptr;
-        Device * ctx = {};
-        psi::AbacusDevice_t device = {};
-        psi::Psi<T, Device>* kspw_psi = nullptr;
-        psi::Psi<std::complex<double>, Device>* __kspw_psi = nullptr;
-        using castmem_2d_d2h_op = psi::memory::cast_memory_op<std::complex<double>, T, psi::DEVICE_CPU, Device>;
+        ct::Tensor* kspw_psi = nullptr;
     };
 }  // namespace ModuleESolver
 #endif

@@ -37,11 +37,11 @@ Veff<OperatorPW<T, Device>>::~Veff()
 
 template<typename T, typename Device>
 void Veff<OperatorPW<T, Device>>::act(
-    const int nbands,
-    const int nbasis,
+    const int64_t nbands,
+    const int64_t nbasis,
     const int npol,
-    const T* tmpsi_in,
-    T* tmhpsi,
+    const ct::Tensor* tmpsi_in,
+    ct::Tensor* tmhpsi,
     const int ngk_ik)const
 {
     ModuleBase::timer::tick("Operator", "VeffPW");
@@ -50,12 +50,15 @@ void Veff<OperatorPW<T, Device>>::act(
     const int current_spin = this->isk[this->ik];
     
     // T *porter = new T[wfcpw->nmaxgr];
+    // TODO: Use a batched fft to replace the following loop
     for (int ib = 0; ib < nbands; ib += npol)
     {
+        int tmhpsi_bias = 0;
+        int tmpsi_in_bias = 0;
         if (npol == 1)
         {
             // wfcpw->recip2real(tmpsi_in, porter, this->ik);
-            wfcpw->recip_to_real(this->ctx, tmpsi_in, this->porter, this->ik);
+            wfcpw->recip_to_real(this->ctx, tmpsi_in->data<T>() + tmpsi_in_bias, this->porter, this->ik);
             // NOTICE: when MPI threads are larger than number of Z grids
             // veff would contain nothing, and nothing should be done in real space
             // but the 3DFFT can not be skipped, it will cause hanging
@@ -69,14 +72,14 @@ void Veff<OperatorPW<T, Device>>::act(
                 // }
             }
             // wfcpw->real2recip(porter, tmhpsi, this->ik, true);
-            wfcpw->real_to_recip(this->ctx, this->porter, tmhpsi, this->ik, true);
+            wfcpw->real_to_recip(this->ctx, this->porter, tmhpsi->data<T>() + tmhpsi_bias, this->ik, true);
         }
         else
         {
             // T *porter1 = new T[wfcpw->nmaxgr];
             // fft to real space and doing things.
-            wfcpw->recip_to_real(this->ctx, tmpsi_in, this->porter, this->ik);
-            wfcpw->recip_to_real(this->ctx, tmpsi_in + max_npw, this->porter1, this->ik);
+            wfcpw->recip_to_real(this->ctx, tmpsi_in->data<T>() + tmpsi_in_bias, this->porter, this->ik);
+            wfcpw->recip_to_real(this->ctx, tmpsi_in->data<T>() + tmpsi_in_bias + max_npw, this->porter1, this->ik);
             if(this->veff_col != 0)
             {
                 /// denghui added at 20221109
@@ -85,23 +88,10 @@ void Veff<OperatorPW<T, Device>>::act(
                     current_veff[is] = this->veff + is * this->veff_col ; // for CPU device
                 }
                 veff_op()(this->ctx, this->veff_col, this->porter, this->porter1, current_veff);
-                // T sup, sdown;
-                // for (int ir = 0; ir < this->veff_col; ir++) {
-                //     sup = this->porter[ir] * (current_veff[0][ir] + current_veff[3][ir])
-                //         + this->porter1[ir]
-                //                 * (current_veff[1][ir]
-                //                 - T(0.0, 1.0) * current_veff[2][ir]);
-                //     sdown = this->porter1[ir] * (current_veff[0][ir] - current_veff[3][ir])
-                //             + this->porter[ir]
-                //                 * (current_veff[1][ir]
-                //                     + T(0.0, 1.0) * current_veff[2][ir]);
-                //     this->porter[ir] = sup;
-                //     this->porter1[ir] = sdown;
-                // }
             }
             // (3) fft back to G space.
-            wfcpw->real_to_recip(this->ctx, this->porter, tmhpsi, this->ik, true);
-            wfcpw->real_to_recip(this->ctx, this->porter1, tmhpsi + max_npw, this->ik, true);
+            wfcpw->real_to_recip(this->ctx, this->porter,  tmhpsi->data<T>() + tmhpsi_bias, this->ik, true);
+            wfcpw->real_to_recip(this->ctx, this->porter1, tmhpsi->data<T>() + tmhpsi_bias + max_npw, this->ik, true);
         }
         tmhpsi += max_npw * npol;
         tmpsi_in += max_npw * npol;
@@ -109,30 +99,10 @@ void Veff<OperatorPW<T, Device>>::act(
     ModuleBase::timer::tick("Operator", "VeffPW");
 }
 
-template<typename T, typename Device>
-template<typename T_in, typename Device_in>
-hamilt::Veff<OperatorPW<T, Device>>::Veff(const Veff<OperatorPW<T_in, Device_in>> *veff) {
-    this->classname = "Veff";
-    this->cal_type = pw_veff;
-    this->ik = veff->get_ik();
-    this->isk = veff->get_isk();
-    this->veff_col = veff->get_veff_col();
-    this->veff_row = veff->get_veff_row();
-    this->wfcpw = veff->get_wfcpw();
-    resmem_complex_op()(this->ctx, this->porter, this->wfcpw->nmaxgr);
-    resmem_complex_op()(this->ctx, this->porter1, this->wfcpw->nmaxgr);
-    this->veff = veff->get_veff();
-    if (this->isk == nullptr || this->veff == nullptr || this->wfcpw == nullptr) {
-        ModuleBase::WARNING_QUIT("VeffPW", "Constuctor of Operator::VeffPW is failed, please check your code!");
-    }
-}
-
 template class Veff<OperatorPW<std::complex<float>, psi::DEVICE_CPU>>;
 template class Veff<OperatorPW<std::complex<double>, psi::DEVICE_CPU>>;
-// template Veff<OperatorPW<std::complex<double>, psi::DEVICE_CPU>>::Veff(const Veff<OperatorPW<std::complex<double>, psi::DEVICE_CPU>> *veff);
 #if ((defined __CUDA) || (defined __ROCM))
 template class Veff<OperatorPW<std::complex<float>, psi::DEVICE_GPU>>;
 template class Veff<OperatorPW<std::complex<double>, psi::DEVICE_GPU>>;
-// template Veff<OperatorPW<std::complex<double>, psi::DEVICE_GPU>>::Veff(const Veff<OperatorPW<std::complex<double>, psi::DEVICE_GPU>> *veff);
 #endif
 } // namespace hamilt

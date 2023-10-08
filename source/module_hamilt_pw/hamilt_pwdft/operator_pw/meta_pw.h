@@ -38,11 +38,12 @@ class Meta<OperatorPW<T, Device>> : public OperatorPW<T, Device>
 
       virtual ~Meta();
 
-      virtual void act(const int nbands,
-          const int nbasis,
+      void act(
+          const int64_t nbands,
+          const int64_t nbasis,
           const int npol,
-          const T* tmpsi_in,
-          T* tmhpsi,
+          const ct::Tensor* tmpsi_in,
+          ct::Tensor* tmhpsi,
           const int ngk = 0)const override;
 
       // denghui added for copy constructor at 20221105

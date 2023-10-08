@@ -97,7 +97,7 @@ DiagoCG<T, Device>::~DiagoCG() {
 }
 
 template<typename T, typename Device>
-void DiagoCG<T, Device>::diag(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T, Device> &psi, Real *eigenvalue_in)
+void DiagoCG<T, Device>::diag(hamilt::Hamilt* phm_in, psi::Psi<T, Device> &psi, Real *eigenvalue_in)
 {
     //do something
     for(int ib = 0;ib<psi.get_nbands();ib++)
@@ -150,7 +150,7 @@ template <typename T, typename Device> DiagoDavid<T, Device>::~DiagoDavid()
 }
 
 template <typename T, typename Device>
-void DiagoDavid<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
+void DiagoDavid<T, Device>::diag(hamilt::Hamilt* phm_in,
                                       psi::Psi<T, Device>& psi,
                                       Real* eigenvalue_in)
 {
@@ -187,7 +187,7 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_CPU* ctx,
                         psi::Psi<std::complex<float>, psi::DEVICE_CPU>& wvf,
                         ModulePW::PW_Basis_K* wfc_basis,
                         wavefunc* p_wf,
-                        hamilt::Hamilt<std::complex<float>, psi::DEVICE_CPU>* phm_in)
+                        hamilt::Hamilt* phm_in)
 {
     for (int i = 0; i < wvf.size(); i++)
     {

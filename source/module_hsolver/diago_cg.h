@@ -26,76 +26,74 @@ class DiagoCG : public DiagH
     // Constructor need:
     // 1. temporary mock of Hamiltonian "Hamilt_PW"
     // 2. precondition pointer should point to place of precondition array.
-    DiagoCG(const Real *precondition_in);
-    ~DiagoCG();
+    DiagoCG(const ct::Tensor& prec_in, const ct::Tensor& n_basis_in);
+    // Destructor for DiagoCG
+    ~DiagoCG() = default;
 
     // virtual void init(){};
     // refactor hpsi_info
     // this is the override function diag() for CG method
-    void diag(hamilt::Hamilt* phm_in, psi::Psi<T, Device> &psi, Real *eigenvalue_in) override;
+    void diag(hamilt::Hamilt* phm_in, ct::Tensor& psi, ct::Tensor& eigenvalue_in) override;
 
   private:
     /// static variables, used for passing control variables
     /// if eigenvalue and eigenvectors should be reordered after diagonalization, it is always be true.
-    bool reorder = false;
+    bool reorder_ = false;
     /// record for how many bands not have convergence eigenvalues
-    int notconv = 0;
+    int notconv_ = 0;
 
-    int test_cg = 0;
+    int test_cg_ = 0;
 
     /// inside variables and vectors, used by inside functions.
     /// row size for input psi matrix
-    int n_band = 0;
+    int n_band_ = 0;
     /// col size for input psi matrix
-    int dmx = 0;
+    int n_basis_max_ = 0;
     /// non-zero col size for inputted psi matrix
-    int dim = 0;
+    int current_n_basis_ = 0;
+
     /// precondition for cg diag
-    const Real *precondition = nullptr;
+    ct::Tensor prec_ = {}, h_prec_ = {};
     /// eigenvalue results
-    Real *eigenvalue = nullptr;
-    Real *d_precondition = nullptr;
+    ct::Tensor eigen_ = {};
 
     /// temp vector for new psi for one band, size dim
-    psi::Psi<T, Device>* phi_m = nullptr;
-    // psi::Psi<T, Device>* phi_m = nullptr;
+    ct::Tensor phi_m_ = {};
     /// temp vector for S|psi> for one band, size dim
-    T* sphi = nullptr;
+    ct::Tensor sphi_ = {};
     /// temp vector for H|psi> for one band, size dim
-    T* hphi = nullptr;
+    ct::Tensor hphi_ = {};
 
     /// temp vector for , size dim
-    psi::Psi<T, Device>* cg = nullptr;
-    // psi::Psi<T, Device>* cg = nullptr;
+    ct::Tensor cg_ = {};
     /// temp vector for , size dim
-    T* scg = nullptr;
+    ct::Tensor scg_ = {};
     /// temp vector for store psi in sorting with eigenvalues, size dim
-    T* pphi = nullptr;
+    ct::Tensor pphi_ = {};
 
     /// temp vector for , size dim
-    T* gradient = nullptr;
+    ct::Tensor gradient_ = {};
     /// temp vector for , size dim
-    T* g0 = nullptr;
+    ct::Tensor g0_ = {};
     /// temp vector for matrix eigenvector * vector S|psi> , size m_band
-    T* lagrange = nullptr;
+    ct::Tensor lagrange_ = {};
 
-    /// device type of psi
-    psi::AbacusDevice_t device = {};
-    Device * ctx = {};
-    psi::DEVICE_CPU *cpu_ctx = {};
+    ct::DataType r_type_  = ct::DataType::DT_INVALID;
+    ct::DataType t_type_  = ct::DataType::DT_INVALID;
+    ct::DeviceType device_type_ = ct::DeviceType::UnKnown;
 
     void calculate_gradient();
 
-    void orthogonal_gradient(hamilt::Hamilt* phm_in, const psi::Psi<T, Device> &eigenfunction, const int m);
+    void orthogonal_gradient(hamilt::Hamilt* phm_in, const ct::Tensor& eigenfunction, const int& m);
 
-    void calculate_gamma_cg(const int iter, Real &gg_last, const Real &cg0, const Real &theta);
+    void calculate_gamma_cg(const int& iter, Real& gg_last, const Real& cg0, const Real& theta);
 
-    bool update_psi(Real &cg_norm, Real &theta, Real &eigenvalue);
+    bool update_psi(Real& cg_norm, Real& theta, Real& eigenvalue);
 
-    void schmit_orth(const int &m, const psi::Psi<T, Device> &psi);
+    void schmit_orth(const int& m, const ct::Tensor& psi);
 
     // used in diag() for template replace Hamilt with Hamilt_PW
-    void diag_mock(hamilt::Hamilt* phm_in, psi::Psi<T, Device> &phi, Real *eigenvalue_in);
+    void diag_mock(hamilt::Hamilt* phm_in, ct::Tensor& phi, ct::Tensor& eigenvalue_in);
 
     using zdot_real_op = hsolver::zdot_real_op<Real, Device>;
 
@@ -109,7 +107,7 @@ class DiagoCG : public DiagH
     using setmem_var_h_op = psi::memory::set_memory_op<Real, psi::DEVICE_CPU>;
     using syncmem_var_h2d_op = psi::memory::synchronize_memory_op<Real, Device, psi::DEVICE_CPU>;
 
-    const T * one = nullptr, * zero = nullptr, * neg_one = nullptr;
+    const ct::Tensor one_ = {}, zero_ = {}, neg_one_ = {};
 };
 
 } // namespace hsolver

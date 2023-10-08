@@ -38,12 +38,12 @@ Meta<OperatorPW<T, Device>>::~Meta()
 
 template<typename T, typename Device>
 void Meta<OperatorPW<T, Device>>::act(
-    const int nbands,
-    const int nbasis,
+    const int64_t nbands,
+    const int64_t nbasis,
     const int npol,
-    const T* tmpsi_in,
-    T* tmhpsi,
-    const int ngk_ik)const
+    const ct::Tensor* tmpsi_in,
+    ct::Tensor* tmhpsi,
+    const int ngk_ik) const
 {
     if (XC_Functional::get_func_type() != 3)
     {
@@ -60,7 +60,7 @@ void Meta<OperatorPW<T, Device>>::act(
     {
         for (int j = 0; j < 3; j++)
         {
-            meta_op()(this->ctx, this->ik, j, ngk_ik, this->wfcpw->npwk_max, this->tpiba, wfcpw->get_gcar_data<Real>(), wfcpw->get_kvec_c_data<Real>(), tmpsi_in, this->porter);
+            meta_op()(this->ctx, this->ik, j, ngk_ik, this->wfcpw->npwk_max, this->tpiba, wfcpw->get_gcar_data<Real>(), wfcpw->get_kvec_c_data<Real>(), tmpsi_in->data<T>(), this->porter);
             wfcpw->recip_to_real(this->ctx, this->porter, this->porter, this->ik);
 
             if(this->vk_col != 0) {
@@ -68,7 +68,7 @@ void Meta<OperatorPW<T, Device>>::act(
             }
 
             wfcpw->real_to_recip(this->ctx, this->porter, this->porter, this->ik);
-            meta_op()(this->ctx, this->ik, j, ngk_ik, this->wfcpw->npwk_max, this->tpiba, wfcpw->get_gcar_data<Real>(), wfcpw->get_kvec_c_data<Real>(), this->porter, tmhpsi, true);
+            meta_op()(this->ctx, this->ik, j, ngk_ik, this->wfcpw->npwk_max, this->tpiba, wfcpw->get_gcar_data<Real>(), wfcpw->get_kvec_c_data<Real>(), this->porter, tmhpsi->data<T>(), true);
 
         } // x,y,z directions
         tmhpsi += max_npw;
@@ -97,12 +97,8 @@ Meta<OperatorPW<T, Device>>::Meta(const Meta<OperatorPW<T_in, Device_in>> *meta)
 
 template class Meta<OperatorPW<std::complex<float>, psi::DEVICE_CPU>>;
 template class Meta<OperatorPW<std::complex<double>, psi::DEVICE_CPU>>;
-// template Meta<OperatorPW<std::complex<double>, psi::DEVICE_CPU>>::Meta(const Meta<OperatorPW<std::complex<double>, psi::DEVICE_CPU>> *meta);
 #if ((defined __CUDA) || (defined __ROCM))
 template class Meta<OperatorPW<std::complex<float>, psi::DEVICE_GPU>>;
 template class Meta<OperatorPW<std::complex<double>, psi::DEVICE_GPU>>;
-// template Meta<OperatorPW<std::complex<double>, psi::DEVICE_CPU>>::Meta(const Meta<OperatorPW<std::complex<double>, psi::DEVICE_GPU>> *meta);
-// template Meta<OperatorPW<std::complex<double>, psi::DEVICE_GPU>>::Meta(const Meta<OperatorPW<std::complex<double>, psi::DEVICE_CPU>> *meta);
-// template Meta<OperatorPW<std::complex<double>, psi::DEVICE_GPU>>::Meta(const Meta<OperatorPW<std::complex<double>, psi::DEVICE_GPU>> *meta);
 #endif
 } // namespace hamilt

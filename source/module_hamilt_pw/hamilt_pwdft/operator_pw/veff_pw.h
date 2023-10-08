@@ -25,23 +25,22 @@ class Veff<OperatorPW<T, Device>> : public OperatorPW<T, Device>
   private:
     using Real = typename GetTypeReal<T>::type;
   public:
-    Veff(const int* isk_in,
-         const Real* veff_in,
-         const int veff_row,
-         const int veff_col,
-         const ModulePW::PW_Basis_K* wfcpw_in);
-
-    template<typename T_in, typename Device_in = Device>
-    explicit Veff(const Veff<OperatorPW<T_in, Device_in>>* veff);
+    Veff(
+        const int* isk_in,
+        const Real* veff_in,
+        const int veff_row,
+        const int veff_col,
+        const ModulePW::PW_Basis_K* wfcpw_in);
 
     virtual ~Veff();
 
-    virtual void act(const int nbands,
-        const int nbasis,
+    void act(
+        const int64_t nbands,
+        const int64_t nbasis,
         const int npol,
-        const T* tmpsi_in,
-        T* tmhpsi,
-        const int ngk_ik = 0)const override;
+        const ct::Tensor* tmpsi_in,
+        ct::Tensor* tmhpsi,
+        const int ngk_ik)const override;
 
     // denghui added for copy constructor at 20221105
     const Real *get_veff() const {return this->veff;}

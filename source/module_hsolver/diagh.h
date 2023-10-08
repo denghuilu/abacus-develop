@@ -12,15 +12,31 @@
 namespace hsolver
 {
 
+enum DiagH_Type {
+    DiagH_None,
+    DiagH_CG,
+    DiagH_BPCG,
+    DiagH_DAV
+};
+
 class DiagH
 {
   public:
     virtual ~DiagH() = default;
     // virtual void init()=0;
-    // TODO: Use an enum type to specify the type of DiagH
-    std::string method = "none";
+    DiagH_Type method_ = DiagH_Type::DiagH_None;
 
-    virtual void diag(hamilt::Hamilt* phm_in, ct::Tensor& psi, ct::Tensor* eigenvalue_in) = 0;
+    // New interface with container Tensor
+    virtual void diag(hamilt::Hamilt* phm_in, ct::Tensor& psi, ct::Tensor& eigenvalue_in) {};
+    // Deprecated interface, will be removed in the future
+    virtual void diag(hamilt::Hamilt* phm_in, psi::Psi<double>& psi, double* eigenvalue_in) {};
+    virtual void diag(hamilt::Hamilt* phm_in, psi::Psi<std::complex<double>>& psi, double* eigenvalue_in) {};
+  
+  protected:
+    // specify current k-point index
+    int ik_ = 0;
+    // Array which stores the basis number of all k-points
+    ct::Tensor n_basis_ = {};
 };
 
 } // namespace hsolver

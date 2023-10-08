@@ -140,7 +140,7 @@ bool Exx_LRI_Interface<Tdata>::exx_after_converge(
         if (GlobalV::GAMMA_ONLY_LOCAL)
         {
             hamilt::HamiltLCAO<double, double>* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<double, double>*>(&hamilt);
-            hamilt::Operator<double>* exx
+            hamilt::Operator exx
                 = new hamilt::OperatorEXX<hamilt::OperatorLCAO<double, double>>(&lm,
                                                                         hamilt_lcao->getHR(), 
                                                                         &(hamilt_lcao->getHk(&lm)),
@@ -149,7 +149,7 @@ bool Exx_LRI_Interface<Tdata>::exx_after_converge(
         }
         else
         {
-            hamilt::Operator<std::complex<double>>* exx;
+            hamilt::Operator exx;
             if(GlobalV::NSPIN < 4)
             {
                 hamilt::HamiltLCAO<std::complex<double>, double>* hamilt_lcao = 

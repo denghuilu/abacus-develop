@@ -45,15 +45,11 @@ class HamiltLCAO : public Hamilt
         {
             delete this->ops;
         }
-        if (this->opsd != nullptr)
-        {
-            delete this->opsd;
-        }
         delete this->hR;
         delete this->sR;
     };
 
-    /// get pointer of Operator<TK> , the return will be opsd or ops
+    /// get pointer of Operator , the return will be opsd or ops
     Operator*& getOperator();
     /// get hk-pointer of std::vector<TK>, the return will be LM->Hloc or LM->Hloc2
     std::vector<TK>& getHk(LCAO_Matrix* LM);

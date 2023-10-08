@@ -40,7 +40,7 @@ class TestHSolver : public ::testing::Test
 	hsolver::HSolver<std::complex<double>, psi::DEVICE_CPU> hs_d;
 
 	hamilt::Hamilt<std::complex<double>> hamilt_test_d;
-	hamilt::Hamilt<std::complex<float>> hamilt_test_f;
+	hamilt::Hamilt hamilt_test_f;
 
 	psi::Psi<std::complex<double>> psi_test_cd;
 	psi::Psi<std::complex<float>> psi_test_cf;
@@ -101,7 +101,7 @@ TEST_F(TestHSolver, diagethr)
 namespace hsolver
 {
 	template <typename T, typename Device = psi::DEVICE_CPU>
-	class DiagH_mock : public DiagH<T, Device>
+	class DiagH_mock : public DiagH
 	{
 	  private:
 	    using Real = typename GetTypeReal<T>::type;
@@ -109,7 +109,7 @@ namespace hsolver
 		DiagH_mock(){}
 		~DiagH_mock(){}
 
-		void diag(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T, Device> &psi, Real *eigenvalue_in)
+		void diag(hamilt::Hamilt* phm_in, psi::Psi<T, Device> &psi, Real *eigenvalue_in)
 		{
 			return;
 		}

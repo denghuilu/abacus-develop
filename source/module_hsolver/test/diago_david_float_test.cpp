@@ -78,7 +78,7 @@ public:
 
 		//do Diago_David::diag()
 		float* en = new float[npw];		
-		hamilt::Hamilt<std::complex<float>> *phm;
+		hamilt::Hamilt *phm;
 		phm = new hamilt::HamiltPW<std::complex<float>>(nullptr, nullptr, nullptr);
 		hsolver::DiagoDavid<std::complex<float>> dav(precondition);
 		hsolver::DiagoDavid<std::complex<float>>::PW_DIAG_NDIM = order;

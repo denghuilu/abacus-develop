@@ -20,7 +20,7 @@ namespace hsolver {
 template <typename T, typename Device>
 HSolverPW<T, Device>::HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in, wavefunc* pwf_in)
 {
-    this->classname = "HSolverPW";
+    this->classname = HSolver_Type::HSolver_PW;
     this->wfc_basis = wfc_basis_in;
     this->pwf = pwf_in;
     this->diag_ethr = GlobalV::PW_DIAG_THR;
@@ -37,9 +37,9 @@ void HSolverPW::update()
     return;
 }*/
 template<typename T, typename Device>
-void HSolverPW<T, Device>::initDiagh(const psi::Psi<T, Device>& psi_in)
+void HSolverPW<T, Device>::initDiagh(const ct::Tensor& psi_in)
 {
-    if (this->method == "cg")
+    if (this->method == DiagH_Type::DiagH_CG)
     {
         if(this->pdiagh!=nullptr)
         {
@@ -56,7 +56,7 @@ void HSolverPW<T, Device>::initDiagh(const psi::Psi<T, Device>& psi_in)
             this->pdiagh->method = this->method;
         }
     }
-    else if (this->method == "dav")
+    else if (this->method == DiagH_Type::DiagH_DAV)
     {
         DiagoDavid<T>::PW_DIAG_NDIM = GlobalV::PW_DIAG_NDIM;
         if (this->pdiagh != nullptr)
@@ -74,7 +74,7 @@ void HSolverPW<T, Device>::initDiagh(const psi::Psi<T, Device>& psi_in)
             this->pdiagh->method = this->method;
         }
     }
-    else if (this->method == "bpcg") {
+    else if (this->method == DiagH_Type::DiagH_BPCG) {
         if(this->pdiagh!=nullptr) {
             if(this->pdiagh->method != this->method) {
                 delete (DiagoBPCG<T, Device>*)this->pdiagh;
@@ -96,11 +96,12 @@ void HSolverPW<T, Device>::initDiagh(const psi::Psi<T, Device>& psi_in)
 }
 
 template <typename T, typename Device>
-void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
-                                      psi::Psi<T, Device>& psi,
-                                      elecstate::ElecState* pes,
-                                      const std::string method_in,
-                                      const bool skip_charge)
+void HSolverPW<T, Device>::solve(
+    hamilt::Hamilt* pHamilt,
+    ct::Tensor& psi,
+    elecstate::ElecState* pes,
+    const std::string method_in,
+    const bool skip_charge)
 {
     ModuleBase::TITLE("HSolverPW", "solve");
     ModuleBase::timer::tick("HSolverPW", "solve");
@@ -165,6 +166,8 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
         // template add precondition calculating here
         update_precondition(precondition, ik, this->wfc_basis->npwk[ik]);
 
+        // specify current k point
+        this->pdiagh->updateDiagHK(ik);
         /// solve eigenvector and eigenvalue for H(k)
         this->hamiltSolvePsiK(pHamilt, psi, eigenvalues.data() + ik * pes->ekb.nc);
         if(skip_charge)
@@ -263,7 +266,7 @@ void HSolverPW<T, Device>::endDiagh()
 }
 
 template <typename T, typename Device>
-void HSolverPW<T, Device>::updatePsiK(hamilt::Hamilt<T, Device>* pHamilt,
+void HSolverPW<T, Device>::updatePsiK(hamilt::Hamilt* pHamilt,
                                            psi::Psi<T, Device>& psi,
                                            const int ik)
 {
@@ -284,7 +287,7 @@ void HSolverPW<T, Device>::updatePsiK(hamilt::Hamilt<T, Device>* pHamilt,
 }
 
 template<typename T, typename Device>
-void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::Psi<T, Device>& psi, Real* eigenvalue)
+void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt* hm, psi::Psi<T, Device>& psi, Real* eigenvalue)
 {
     this->pdiagh->diag(hm, psi, eigenvalue);
 }
@@ -362,7 +365,7 @@ typename HSolverPW<T, Device>::Real HSolverPW<T, Device>::set_diagethr(const int
         // if (GlobalV::FINAL_SCF) this->diag_ethr = 1.0e-2;
         if (GlobalV::CALCULATION == "md" || GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax")
         {
-            this->diag_ethr = std::max(this->diag_ethr, static_cast<Real>(GlobalV::PW_DIAG_THR));
+            this->diag_ethr = std::max(this->diag_ethr, GlobalV::PW_DIAG_THR);
         }
     }
     else

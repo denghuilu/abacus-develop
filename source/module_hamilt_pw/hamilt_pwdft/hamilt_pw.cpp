@@ -24,7 +24,7 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K
 
     if (GlobalV::T_IN_H)
     {
-        // Operator<double>* ekinetic = new Ekinetic<OperatorLCAO<double>>
+        // Operator ekinetic = new Ekinetic<OperatorLCAO<double>>
         Operator* ekinetic
             = new Ekinetic<OperatorPW<T, Device>>(tpiba2, gk2, wfc_basis->nks, wfc_basis->npwk_max);
         if(this->ops == nullptr)

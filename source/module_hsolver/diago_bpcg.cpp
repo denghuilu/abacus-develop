@@ -12,13 +12,13 @@
 namespace hsolver {
 
 template<typename T, typename Device>
-DiagoBPCG<T, Device>::DiagoBPCG(const Real* precondition_in)
+DiagoBPCG<T, Device>::DiagoBPCG(const ct::Tensor& precondition)
 {
-    this->r_type   = ct::DataTypeToEnum<Real>::value;
     this->t_type   = ct::DataTypeToEnum<T>::value;
+    this->r_type   = ct::DataTypeToEnum<Real>::value;
     this->device_type    = ct::DeviceTypeToEnum<Device>::value;
 
-    this->h_prec  = std::move(ct::TensorMap((void *) precondition_in, r_type, device_type, {this->n_basis}));
+    this->h_prec  = std::move(ct::TensorMap((void *) precondition_in.data<T>(), r_type, device_type, {this->n_basis}));
 }
 
 template<typename T, typename Device>
@@ -152,7 +152,7 @@ void DiagoBPCG<T, Device>::rotate_wf(
 
 template<typename T, typename Device>
 void DiagoBPCG<T, Device>::calc_hpsi_with_block(
-        hamilt::Hamilt<T, Device>* hamilt_in,
+        hamilt::Hamilt* hamilt_in,
         const psi::Psi<T, Device>& psi_in,
         ct::Tensor& hpsi_out)
 {
@@ -181,7 +181,7 @@ void DiagoBPCG<T, Device>::diag_hsub(
 
 template<typename T, typename Device>
 void DiagoBPCG<T, Device>::calc_hsub_with_block(
-        hamilt::Hamilt<T, Device> *hamilt_in,
+        hamilt::Hamilt*hamilt_in,
         const psi::Psi<T, Device> &psi_in,
         ct::Tensor& psi_out,
         ct::Tensor& hpsi_out,
@@ -220,7 +220,7 @@ void DiagoBPCG<T, Device>::calc_hsub_with_block_exit(
 
 template<typename T, typename Device>
 void DiagoBPCG<T, Device>::diag(
-        hamilt::Hamilt<T, Device>* hamilt_in,
+        hamilt::Hamilt* hamilt_in,
         psi::Psi<T, Device>& psi_in,
         Real* eigenvalue_in)
 {
