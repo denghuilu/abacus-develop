@@ -32,6 +32,15 @@ class DiagoIterAssist
         Real *en,
         int n_band = 0);
 
+    static void diagH_subspace(
+        hamilt::Hamilt* pHamilt,
+        const ct::Tensor& psi, 
+        ct::Tensor& evc,
+        ct::Tensor& en,
+        int ik,
+        int current_n_basis,
+        int n_band = 0);
+
     static void diagH_subspace_init(
         hamilt::Hamilt* pHamilt,
         const T* psi,

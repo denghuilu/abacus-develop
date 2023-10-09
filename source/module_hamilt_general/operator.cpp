@@ -32,12 +32,12 @@ Operator::~Operator()
     }
 }
 
-void Operator::hPsi(const ct::Tensor* psi, ct::Tensor* h_psi) const
+void Operator::hPsi(const ct::Tensor& psi, ct::Tensor& h_psi) const
 {
     ModuleBase::timer::tick("Operator", "hPsi");
     // psi are stored as a dim-3 tensor with shape [k, band, g]
-    auto nbands = psi->shape().dim_size(1);
-    auto nbasis = psi->shape().dim_size(2);
+    auto nbands = psi.shape().dim_size(1);
+    auto nbasis = psi.shape().dim_size(2);
 
     // how to get npol and ngk info
     this->act(nbands, nbasis, this->npol_, psi, h_psi, this->ngk_[this->ik]);

@@ -23,7 +23,7 @@ class Hamilt
     virtual void refresh() {}
 
     /// core function: for solving eigenvalues of Hamiltonian with iterative method
-    virtual void sPsi(const ct::Tensor* psi_in, ct::Tensor* spsi, const size_t size) const {}
+    virtual void sPsi(const ct::Tensor& psi_in, ct::Tensor& spsi) const {}
 
     /// core function: return H(k) and S(k) matrixs for direct solving eigenvalues.
     virtual void matrix(MatrixBlock<std::complex<double>> &hk_in, MatrixBlock<std::complex<double>> &sk_in) {}

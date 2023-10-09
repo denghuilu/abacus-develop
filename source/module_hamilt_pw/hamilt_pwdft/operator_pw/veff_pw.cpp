@@ -40,9 +40,9 @@ void Veff<OperatorPW<T, Device>>::act(
     const int64_t nbands,
     const int64_t nbasis,
     const int npol,
-    const ct::Tensor* tmpsi_in,
-    ct::Tensor* tmhpsi,
-    const int ngk_ik)const
+    const ct::Tensor& psi_in,
+    ct::Tensor& hpsi,
+    const int ngk_ik) const
 {
     ModuleBase::timer::tick("Operator", "VeffPW");
 
@@ -51,36 +51,31 @@ void Veff<OperatorPW<T, Device>>::act(
     
     // T *porter = new T[wfcpw->nmaxgr];
     // TODO: Use a batched fft to replace the following loop
+    auto hpsi_pack = hpsi.accessor<T, 3>();
+    auto psi_in_pack = psi_in.accessor<T, 3>();
     for (int ib = 0; ib < nbands; ib += npol)
     {
-        int tmhpsi_bias = 0;
-        int tmpsi_in_bias = 0;
         if (npol == 1)
         {
             // wfcpw->recip2real(tmpsi_in, porter, this->ik);
-            wfcpw->recip_to_real(this->ctx, tmpsi_in->data<T>() + tmpsi_in_bias, this->porter, this->ik);
+            wfcpw->recip_to_real(this->ctx, &psi_in_pack[this->ik][ib][0], this->porter, this->ik);
             // NOTICE: when MPI threads are larger than number of Z grids
             // veff would contain nothing, and nothing should be done in real space
             // but the 3DFFT can not be skipped, it will cause hanging
             if(this->veff_col != 0)
             {
                 veff_op()(this->ctx, this->veff_col, this->porter, this->veff + current_spin * this->veff_col);
-                // const Real* current_veff = &(this->veff[0](current_spin, 0));
-                // for (int ir = 0; ir < this->veff->nc; ++ir)
-                // {
-                //     porter[ir] *= current_veff[ir];
-                // }
             }
             // wfcpw->real2recip(porter, tmhpsi, this->ik, true);
-            wfcpw->real_to_recip(this->ctx, this->porter, tmhpsi->data<T>() + tmhpsi_bias, this->ik, true);
+            wfcpw->real_to_recip(this->ctx, this->porter, &hpsi_pack[this->ik][ib][0], this->ik, true);
         }
         else
         {
             // T *porter1 = new T[wfcpw->nmaxgr];
             // fft to real space and doing things.
-            wfcpw->recip_to_real(this->ctx, tmpsi_in->data<T>() + tmpsi_in_bias, this->porter, this->ik);
-            wfcpw->recip_to_real(this->ctx, tmpsi_in->data<T>() + tmpsi_in_bias + max_npw, this->porter1, this->ik);
-            if(this->veff_col != 0)
+            wfcpw->recip_to_real(this->ctx, &psi_in_pack[this->ik][ib][0], this->porter, this->ik);
+            wfcpw->recip_to_real(this->ctx, &psi_in_pack[this->ik][ib][max_npw], this->porter1, this->ik);
+            if (this->veff_col != 0)
             {
                 /// denghui added at 20221109
                 const Real* current_veff[4];
@@ -90,11 +85,9 @@ void Veff<OperatorPW<T, Device>>::act(
                 veff_op()(this->ctx, this->veff_col, this->porter, this->porter1, current_veff);
             }
             // (3) fft back to G space.
-            wfcpw->real_to_recip(this->ctx, this->porter,  tmhpsi->data<T>() + tmhpsi_bias, this->ik, true);
-            wfcpw->real_to_recip(this->ctx, this->porter1, tmhpsi->data<T>() + tmhpsi_bias + max_npw, this->ik, true);
+            wfcpw->real_to_recip(this->ctx, this->porter,  &hpsi_pack[this->ik][ib][0], this->ik, true);
+            wfcpw->real_to_recip(this->ctx, this->porter1, &hpsi_pack[this->ik][ib][max_npw], this->ik, true);
         }
-        tmhpsi += max_npw * npol;
-        tmpsi_in += max_npw * npol;
     }
     ModuleBase::timer::tick("Operator", "VeffPW");
 }

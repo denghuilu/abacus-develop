@@ -26,7 +26,7 @@ class HamiltPW : public Hamilt
     void updateHk(int ik) override;
 
     // core function: for solving eigenvalues of Hamiltonian with iterative method
-    void sPsi(const ct::Tensor* psi_in, ct::Tensor* spsi, size_t size) const override;
+    void sPsi(const ct::Tensor& psi_in, ct::Tensor& spsi) const override;
 
   private:
 

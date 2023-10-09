@@ -212,8 +212,8 @@ void Nonlocal<OperatorPW<T, Device>>::act(
     const int64_t nbands,
     const int64_t nbasis,
     const int npol,
-    const ct::Tensor* tmpsi_in,
-    ct::Tensor* tmhpsi,
+    const ct::Tensor& psi_in,
+    ct::Tensor& hpsi,
     const int ngk_ik) const
 {
     ModuleBase::timer::tick("Operator", "NonlocalPW");
@@ -247,7 +247,7 @@ void Nonlocal<OperatorPW<T, Device>>::act(
                     &this->one,
                     this->vkb,
                     this->ppcell->vkb.nc,
-                    tmpsi_in->data<T>(),
+                    psi_in.data<T>(),
                     inc,
                     &this->zero,
                     this->becp,
@@ -268,7 +268,7 @@ void Nonlocal<OperatorPW<T, Device>>::act(
                     &this->one,
                     this->vkb,
                     this->ppcell->vkb.nc,
-                    tmpsi_in->data<T>(),
+                    psi_in.data<T>(),
                     max_npw,
                     &this->zero,
                     this->becp,
@@ -278,7 +278,7 @@ void Nonlocal<OperatorPW<T, Device>>::act(
 
             Parallel_Reduce::reduce_complex_double_pool(becp, nkb * nbands);
 
-            this->add_nonlocal_pp(tmhpsi->data<T>(), becp, nbands);
+            this->add_nonlocal_pp(hpsi.data<T>(), becp, nbands);
         }
     }
     else

@@ -43,7 +43,7 @@ class Operator
     /// run this->act function for the first operator and run all act() for other nodes in chain table 
     /// if this procedure is not suitable for your operator, just override this function.
     /// output of hpsi would be first member of the returned tuple 
-    virtual void hPsi(const ct::Tensor* psi, ct::Tensor* h_psi) const;
+    virtual void hPsi(const ct::Tensor& psi, ct::Tensor& h_psi) const;
 
     virtual void init(int ik_in);
 
@@ -56,8 +56,8 @@ class Operator
     virtual void act(const int64_t nbands,
         const int64_t nbasis,
         const int npol,
-        const ct::Tensor* tmpsi_in,
-        ct::Tensor* tmhpsi,
+        const ct::Tensor& psi_in,
+        ct::Tensor& hpsi,
         const int ngk_ik) const {};
 
     /// an developer-friendly interface for act() function

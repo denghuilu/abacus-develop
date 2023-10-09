@@ -107,7 +107,11 @@ class DiagoCG : public DiagH
     using setmem_var_h_op = psi::memory::set_memory_op<Real, psi::DEVICE_CPU>;
     using syncmem_var_h2d_op = psi::memory::synchronize_memory_op<Real, Device, psi::DEVICE_CPU>;
 
-    const ct::Tensor one_ = {}, zero_ = {}, neg_one_ = {};
+    ct::Tensor one_ = {}, zero_ = {}, neg_one_ = {};
+
+    // 
+    Device* ctx_ = {};
+    psi::DEVICE_CPU* cpu_ctx_ = {};
 };
 
 } // namespace hsolver

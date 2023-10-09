@@ -463,6 +463,188 @@ bool DiagoIterAssist<T, Device>::test_exit_cond(const int &ntry, const int &notc
 }
 
 
+//----------------------------------------------------------------------
+// Hamiltonian diagonalization in the subspace spanned
+// by nstart states psi (atomic or random wavefunctions).
+// Produces on output n_band eigenvectors (n_band <= nstart) in evc.
+//----------------------------------------------------------------------
+template<typename T, typename Device>
+void DiagoIterAssist<T, Device>::diagH_subspace(
+    hamilt::Hamilt* pHamilt, // hamiltonian operator carrier
+    const ct::Tensor& psi, // [in] wavefunction
+    ct::Tensor& evc, // [out] wavefunction
+    ct::Tensor& en, // [out] eigenvalues
+    int ik,
+    int current_n_basis,
+    int n_band // [in] number of bands to be calculated, also number of rows of evc, if set to 0, n_band = nstart, default 0
+    )
+{
+    ModuleBase::TITLE("DiagoIterAssist", "diagH_subspace");
+    ModuleBase::timer::tick("DiagoIterAssist", "diagH_subspace");
+
+    // two case:
+    // 1. pw base: nstart = n_band, psi(nbands * npwx)
+    // 2. lcao_in_pw base: nstart >= n_band, psi(NLOCAL * npwx)
+    auto psi_pack = psi.accessor<T, 3>();
+    const int nstart = psi.shape().dim_size(0);
+    const int n_basis_max = psi.shape().dim_size(1);
+
+    if (n_band == 0) {
+        n_band = nstart;
+    }
+    assert(n_band <= nstart);
+
+    auto hcc = ct::Tensor(
+        ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<Device>::value, {nstart, nstart});
+    hcc.zero();
+    auto scc = ct::Tensor(
+        ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<Device>::value, {nstart, nstart});
+    scc.zero();
+    auto vcc = ct::Tensor(
+        ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<Device>::value, {nstart, nstart});
+    vcc.zero();
+
+    // allocated hpsi
+    // std::vector<T> hpsi(psi.get_nbands() * psi.get_nbasis());
+    auto hpsi = ct::Tensor(
+        ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<Device>::value, {nstart, current_n_basis});
+    hpsi.zero();
+    // do hPsi for all bands
+    pHamilt->ops->hPsi(psi[ik], hpsi);
+
+    gemm_op<Real, Device>()(
+        ctx,
+        'C',
+        'N',
+        nstart,
+        nstart,
+        current_n_basis,
+        &one,
+        &psi_pack[ik][0][0],
+        n_basis_max,
+        hpsi.data<T>(),
+        n_basis_max,
+        &zero,
+        hcc.data<T>(),
+        nstart
+    );
+
+    gemm_op<Real, Device>()(
+        ctx,
+        'C',
+        'N',
+        nstart,
+        nstart,
+        dmin,
+        &one,
+        ppsi,
+        dmax,
+        ppsi,
+        dmax,
+        &zero,
+        scc,
+        nstart
+    );
+
+    if (GlobalV::NPROC_IN_POOL > 1)
+    {
+        Parallel_Reduce::reduce_complex_double_pool(hcc, nstart * nstart);
+        Parallel_Reduce::reduce_complex_double_pool(scc, nstart * nstart);
+    }
+
+    // after generation of H and S matrix, diag them
+    DiagoIterAssist::diagH_LAPACK(nstart, n_band, hcc, scc, nstart, en, vcc);
+
+    //=======================
+    // diagonize the H-matrix
+    //=======================
+    if (
+        (
+            (GlobalV::BASIS_TYPE == "lcao")
+          ||(GlobalV::BASIS_TYPE == "lcao_in_pw")
+        )
+      &&(GlobalV::CALCULATION == "nscf")
+      )
+    {
+        GlobalV::ofs_running << " Not do zgemm to get evc." << std::endl;
+    }
+    else if (
+        (
+            (GlobalV::BASIS_TYPE == "lcao")
+          ||(GlobalV::BASIS_TYPE == "lcao_in_pw")
+        )
+      &&(
+            (GlobalV::CALCULATION == "scf")
+          ||(GlobalV::CALCULATION == "md")
+          ||(GlobalV::CALCULATION == "relax")
+        )
+        ) // pengfei 2014-10-13
+    {
+        // because psi and evc are different here,
+        // I think if psi and evc are the same,
+        // there may be problems, mohan 2011-01-01
+        gemm_op<Real, Device>()(
+            ctx,
+            'N',
+            'N',
+            dmax,
+            n_band,
+            nstart,
+            &one,
+            ppsi, // dmax * nstart
+            dmax,
+            vcc,  // nstart * n_band
+            nstart,
+            &zero,
+            evc.get_pointer(),
+            dmax
+        );
+    }
+    else
+    {
+        // As the evc and psi may refer to the same matrix, we first
+        // create a temporary matrix to store the result. (by wangjp)
+        // qianrui improve this part 2021-3-13
+        T* evctemp = nullptr;
+        resmem_complex_op()(ctx, evctemp, n_band * dmin, "DiagSub::evctemp");
+        setmem_complex_op()(ctx, evctemp, 0, n_band * dmin);
+
+        gemm_op<Real, Device>()(
+            ctx,
+            'N',
+            'N',
+            dmin,
+            n_band,
+            nstart,
+            &one,
+            ppsi, // dmin * nstart
+            dmax,
+            vcc,  // nstart * n_band
+            nstart,
+            &zero,
+            evctemp,
+            dmin
+        );
+
+        matrixSetToAnother<Real, Device>()(ctx, n_band, evctemp, dmin, evc.get_pointer(), dmax);
+        // for (int ib = 0; ib < n_band; ib++)
+        // {
+        //     for (int ig = 0; ig < dmin; ig++)
+        //     {
+                // evc(ib, ig) = evctmp(ib, ig);
+        //     }
+        // }
+        delmem_complex_op()(ctx, evctemp);
+    }
+
+    delmem_complex_op()(ctx, hcc);
+    delmem_complex_op()(ctx, scc);
+    delmem_complex_op()(ctx, vcc);
+    delmem_complex_op()(ctx, hphi);
+
+    ModuleBase::timer::tick("DiagoIterAssist", "diagH_subspace");
+}
+
 template class DiagoIterAssist<std::complex<float>, psi::DEVICE_CPU>;
 template class DiagoIterAssist<std::complex<double>, psi::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))

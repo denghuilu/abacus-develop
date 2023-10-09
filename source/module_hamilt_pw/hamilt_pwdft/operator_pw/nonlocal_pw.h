@@ -42,9 +42,9 @@ class Nonlocal<OperatorPW<T, Device>> : public OperatorPW<T, Device>
         const int64_t nbands,
         const int64_t nbasis,
         const int npol,
-        const ct::Tensor* tmpsi_in,
-        ct::Tensor* tmhpsi,
-        const int ngk) const override;
+        const ct::Tensor& psi_in,
+        ct::Tensor& hpsi,
+        const int ngk_ik) const override;
 
     const int *get_isk() const {return this->isk;}
     const pseudopot_cell_vnl *get_ppcell() const {return this->ppcell;}

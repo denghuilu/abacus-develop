@@ -41,8 +41,8 @@ void Meta<OperatorPW<T, Device>>::act(
     const int64_t nbands,
     const int64_t nbasis,
     const int npol,
-    const ct::Tensor* tmpsi_in,
-    ct::Tensor* tmhpsi,
+    const ct::Tensor& psi_in,
+    ct::Tensor& hpsi,
     const int ngk_ik) const
 {
     if (XC_Functional::get_func_type() != 3)
@@ -55,12 +55,13 @@ void Meta<OperatorPW<T, Device>>::act(
     const int current_spin = this->isk[this->ik];
     int max_npw = nbasis / npol;
     //npol == 2 case has not been considered
-
+    auto hpsi_pack = hpsi.accessor<T, 3>();
+    auto psi_in_pack = psi_in.accessor<T, 3>();
     for (int ib = 0; ib < nbands; ++ib)
     {
         for (int j = 0; j < 3; j++)
         {
-            meta_op()(this->ctx, this->ik, j, ngk_ik, this->wfcpw->npwk_max, this->tpiba, wfcpw->get_gcar_data<Real>(), wfcpw->get_kvec_c_data<Real>(), tmpsi_in->data<T>(), this->porter);
+            meta_op()(this->ctx, this->ik, j, ngk_ik, this->wfcpw->npwk_max, this->tpiba, wfcpw->get_gcar_data<Real>(), wfcpw->get_kvec_c_data<Real>(), &psi_in_pack[this->ik][ib][0], this->porter);
             wfcpw->recip_to_real(this->ctx, this->porter, this->porter, this->ik);
 
             if(this->vk_col != 0) {
@@ -68,11 +69,9 @@ void Meta<OperatorPW<T, Device>>::act(
             }
 
             wfcpw->real_to_recip(this->ctx, this->porter, this->porter, this->ik);
-            meta_op()(this->ctx, this->ik, j, ngk_ik, this->wfcpw->npwk_max, this->tpiba, wfcpw->get_gcar_data<Real>(), wfcpw->get_kvec_c_data<Real>(), this->porter, tmhpsi->data<T>(), true);
+            meta_op()(this->ctx, this->ik, j, ngk_ik, this->wfcpw->npwk_max, this->tpiba, wfcpw->get_gcar_data<Real>(), wfcpw->get_kvec_c_data<Real>(), this->porter, &hpsi_pack[this->ik][ib][0], true);
 
         } // x,y,z directions
-        tmhpsi += max_npw;
-        tmpsi_in += max_npw;
     }
     ModuleBase::timer::tick("Operator", "MetaPW");
 }

@@ -125,13 +125,11 @@ void HamiltPW<T, Device>::updateHk(const int ik)
 
 template<typename T, typename Device>
 void HamiltPW<T, Device>::sPsi(
-    const ct::Tensor *psi,
-    ct::Tensor *spsi,
-    size_t size) const
+    const ct::Tensor& psi,
+    ct::Tensor& spsi) const
 {
     // ModuleBase::GlobalFunc::COPYARRAY(psi, spsi, size);
-    // denghui replaced at 2022.11.04
-    syncmem_complex_op()(this->ctx, this->ctx, spsi->data<T>(), psi->data<T>(), size);
+    spsi.sync(psi);
 }
 
 template class HamiltPW<std::complex<float>, psi::DEVICE_CPU>;

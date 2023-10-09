@@ -48,6 +48,8 @@ public:
      */
     const std::vector<int64_t>& dims() const;
 
+    const std::vector<int64_t>& strides() const;
+
     /**
      * @brief Get the ndim of the tensor.
      * @return The number of dimensions in the tensor.
@@ -96,6 +98,12 @@ public:
 
 private:
     std::vector<int64_t> dims_ = {};  // Save dimension sizes of the tensor
+    std::vector<int64_t> strides_ = {};  // Save dimension strides of the tensor
+
+    /**
+     * @brief Compute the strides of the tensor.
+     */
+    std::vector<int64_t> get_strides_(const std::vector<int64_t>& dim);
 };
 
 /**

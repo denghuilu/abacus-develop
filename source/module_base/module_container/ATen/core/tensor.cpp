@@ -1,4 +1,5 @@
 #include <ATen/core/tensor.h>
+#include <ATen/core/tensor_map.h>
 #include <ATen/core/tensor_utils.h>
 #include <base/core/cpu_allocator.h>
 #if defined(__CUDA) || defined(__ROCM)
@@ -286,6 +287,29 @@ bool Tensor::CopyFromWithAllocate(const Tensor& other, const TensorShape& shape)
     if (buffer_) buffer_->unref();
     buffer_ = new TensorBuffer(GetAllocator(device_), shape_.NumElements() * SizeOfType(data_type_));
     return true;
+}
+
+void Tensor::sync(const Tensor& rhs) {
+    REQUIRES_OK(this->data_type_ == rhs.data_type_ 
+        && this->device_ == rhs.device_
+        && this->shape_ == rhs.shape_);
+
+    TEMPLATE_ALL_2(data_type_, device_,
+            op::synchronize_memory_op<T_, DEVICE_, DEVICE_>()(
+                    this->data<T_>(), rhs.data<T_>(), this->NumElements()))
+}
+
+Tensor Tensor::operator[](const int& index) const {
+    REQUIRES_OK(
+        index > 0 && index < shape_.dim_size(0),
+        "Tensor index is out of bounds.");
+
+    TensorShape output_shape = this->shape_;
+    output_shape.remove_dim(0);
+    auto data_ = reinterpret_cast<char*>(this->data()) + index * shape_.strides()[0] * SizeOfType(this->data_type_);
+    Tensor output = TensorMap(data_, this->data_type_, this->device_, output_shape);
+
+    return std::move(output);
 }
 
 // Overloaded operator<< for the Tensor class.

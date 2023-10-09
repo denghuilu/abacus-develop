@@ -27,41 +27,24 @@ Ekinetic<OperatorPW<T, Device>>::Ekinetic(
 }
 
 template<typename T, typename Device>
-Ekinetic<OperatorPW<T, Device>>::~Ekinetic() {}
+Ekinetic<OperatorPW<T, Device>>::~Ekinetic() = default;
 
 template<typename T, typename Device>
 void Ekinetic<OperatorPW<T, Device>>::act(
     const int64_t nbands,
     const int64_t nbasis,
     const int npol,
-    const ct::Tensor* tmpsi_in,
-    ct::Tensor* tmhpsi,
+    const ct::Tensor& psi_in,
+    ct::Tensor& hpsi,
     const int ngk_ik) const
 {
     ModuleBase::timer::tick("Operator", "EkineticPW");
 
     auto max_npw = nbasis / npol;
     const Real *gk2_ik = &(this->gk2[this->ik * this->gk2_col]);
-    ekinetic_op()(this->ctx, nbands, ngk_ik, max_npw, tpiba2, gk2_ik, tmhpsi->data<T>(), tmpsi_in->data<T>());
+    ekinetic_op()(this->ctx, nbands, ngk_ik, max_npw, tpiba2, gk2_ik, hpsi.data<T>(), psi_in.data<T>());
 
     ModuleBase::timer::tick("Operator", "EkineticPW");
-}
-
-// copy construct added by denghui at 20221105
-template<typename T, typename Device>
-template<typename T_in, typename Device_in>
-hamilt::Ekinetic<OperatorPW<T, Device>>::Ekinetic(const Ekinetic<OperatorPW<T_in, Device_in>> *ekinetic) {
-    this->classname = "Ekinetic";
-    this->cal_type = pw_ekinetic;
-    this->ik = ekinetic->get_ik();
-    this->tpiba2 = ekinetic->get_tpiba2();
-    this->gk2 = ekinetic->get_gk2();
-    this->gk2_row = ekinetic->get_gk2_row();
-    this->gk2_col = ekinetic->get_gk2_col();
-    this->device = psi::device::get_device_type<Device>(this->ctx);
-    if( this->tpiba2 < 1e-10 || this->gk2 == nullptr) {
-        ModuleBase::WARNING_QUIT("EkineticPW", "Copy Constuctor of Operator::EkineticPW is failed, please check your code!");
-    }
 }
 
 template class Ekinetic<OperatorPW<std::complex<float>, psi::DEVICE_CPU>>;

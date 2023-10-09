@@ -42,9 +42,9 @@ class Meta<OperatorPW<T, Device>> : public OperatorPW<T, Device>
           const int64_t nbands,
           const int64_t nbasis,
           const int npol,
-          const ct::Tensor* tmpsi_in,
-          ct::Tensor* tmhpsi,
-          const int ngk = 0)const override;
+          const ct::Tensor& psi_in,
+          ct::Tensor& hpsi,
+          const int ngk_ik)const override;
 
       // denghui added for copy constructor at 20221105
       Real get_tpiba() const

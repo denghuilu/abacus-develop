@@ -6,6 +6,7 @@
 #include <ATen/core/tensor_shape.h>
 #include <ATen/core/tensor_buffer.h>
 #include <ATen/kernels/memory_op.h>
+#include <ATen/core/tensor_accessor.h>
 
 #include <base/macros/macros.h>
 
@@ -104,7 +105,7 @@ class Tensor {
      */
     template <typename T> 
     Tensor(std::initializer_list<T> values, DeviceType device = DeviceType::CpuDevice) :
-        Tensor(DataTypeToEnum<T>::value, device, TensorShape({static_cast<int>(values.size())})) {
+        Tensor(DataTypeToEnum<T>::value, device, TensorShape({static_cast<int64_t>(values.size())})) {
         TEMPLATE_ALL_2(this->data_type_, this->device_,
             op::synchronize_memory_op<T, DEVICE_, DEVICE_CPU>()(
                 this->data<T>(), values.begin(), this->NumElements()))
@@ -318,6 +319,7 @@ class Tensor {
      *
      * @return The related Allocator class pointer.
      */
+    // TODO: Delete this function, and use a singleton allocator class.
     static base::Allocator* GetAllocator(DeviceType device);
 
     /**
@@ -444,6 +446,35 @@ class Tensor {
      * @return Returns true if the copy and allocation were successful, false otherwise.
      */
     bool CopyFromWithAllocate(const Tensor& other, const TensorShape& shape);
+
+    /**
+     * @brief Accessor function for a multi-dimensional tensor.
+     * 
+     * This function provides read-only access to the data of a tensor with a specific rank.
+     * It performs checks to ensure that the rank of the tensor matches the rank of the accessor.
+     * 
+     * @tparam T The data type of the elements.
+     * @tparam N The number of dimensions.
+     * 
+     * @return A TensorAccessor object for accessing the tensor's data.
+     */
+    template <typename T, size_t N>
+    TensorAccessor<T, N> accessor() const& {
+        // Check if the tensor's rank is greater than 0
+        static_assert(N > 0, 
+            "Accessor is used to access the data of a tensor with rank > 0, for scalars use *data<T>()");
+        // Check if the rank of the tensor matches the rank of the accessor
+        REQUIRES_OK(this->shape_.ndim() == N, 
+            "The rank of the tensor must match the rank of the accessor.");
+        // Create and return a TensorAccessor object
+        return TensorAccessor<T, N>(this->data<T>(), this->shape_.dims().data(), this->shape_.strides().data());
+    }
+    template<typename T, size_t N>
+    TensorAccessor<T, N> accessor() && = delete;
+
+    void sync(const Tensor& rhs);
+
+    Tensor operator[] (const int& index) const;
 
 protected:
 

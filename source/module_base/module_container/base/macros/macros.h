@@ -2,10 +2,13 @@
 #define BASE_MACROS_MACROS_H_
 
 #include <stdint.h>
+#include <base/utils/logging.h>
 
 #if __CUDA
 #include <base/macros/cuda.h> 
-#endif 
+#elif __ROCM
+#include <base/macros/rocm.h>
+#endif
 
 #include <ATen/core/tensor_types.h>
 
@@ -27,6 +30,41 @@
 
 #define MAX_SIZE_T UINT64_MAX
 
+#define AT_HOST
+#define AT_DEVICE
+#define AT_HOST_DEVICE
+
+#if defined(__CUDACC__) || defined(__HIPCC__)
+#define AT_HOST __host__
+#define AT_DEVICE __device__
+#define AT_HOST_DEVICE __host__ __device__
+#endif // defined(__CUDACC__) || defined(__HIPCC__)
+
+#if defined(__GNUC__) || defined(__ICL) || defined(__clang__)
+#define PREDICT_TRUE(expr) (__builtin_expect(static_cast<bool>(expr), 1))
+#define PREDICT_FALSE(expr) (__builtin_expect(static_cast<bool>(expr), 0))
+#else
+#define PREDICT_TRUE(expr) (expr)
+#define PREDICT_FALSE(expr) (expr)
+#endif
+
+#define CHECK_MSG(expr, ...)                                  \
+    (::base::utils::check_msg_impl(                           \
+        "Expected " #expr                                     \
+        " to be true, but got false.  "                       \
+        __VA_ARGS__ " "                                       \
+        "(Could this error message be improved?  If so, "     \
+        "please report an enhancement request to Container)"  \
+        ))
+
+#define REQUIRES_OK(expr, ...)                  \
+    if(PREDICT_FALSE(!(expr))) {                \
+        ::base::utils::check_exit_impl(         \
+            __func__,                           \
+            __FILE__,                           \
+            static_cast<uint32_t>(__LINE__),    \
+            CHECK_MSG(expr, ##__VA_ARGS__));    \
+    }
 
 // The macro TEMPLATE_1() expands to a switch statement conditioned on
 // TYPE_ENUM. Each case expands the STMTS after a typedef for T.

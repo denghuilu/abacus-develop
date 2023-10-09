@@ -37,11 +37,12 @@ class Ekinetic<OperatorPW<T, Device>> : public OperatorPW<T, Device>
 
     virtual ~Ekinetic();
 
-    void act(const int64_t nbands,
+    void act(
+        const int64_t nbands,
         const int64_t nbasis,
         const int npol,
-        const ct::Tensor* tmpsi_in,
-        ct::Tensor* tmhpsi,
+        const ct::Tensor& psi_in,
+        ct::Tensor& hpsi,
         const int ngk_ik)const override;
 
     // denghuilu added for copy construct at 20221105
