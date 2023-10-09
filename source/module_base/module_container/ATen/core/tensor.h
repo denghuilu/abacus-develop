@@ -474,7 +474,7 @@ class Tensor {
 
     void sync(const Tensor& rhs);
 
-    Tensor operator[] (const int& index) const;
+    Tensor& operator[] (const int& index) const;
 
 protected:
 

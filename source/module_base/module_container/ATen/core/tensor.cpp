@@ -299,7 +299,7 @@ void Tensor::sync(const Tensor& rhs) {
                     this->data<T_>(), rhs.data<T_>(), this->NumElements()))
 }
 
-Tensor Tensor::operator[](const int& index) const {
+Tensor& Tensor::operator[](const int& index) const {
     REQUIRES_OK(
         index > 0 && index < shape_.dim_size(0),
         "Tensor index is out of bounds.");
@@ -309,7 +309,7 @@ Tensor Tensor::operator[](const int& index) const {
     auto data_ = reinterpret_cast<char*>(this->data()) + index * shape_.strides()[0] * SizeOfType(this->data_type_);
     Tensor output = TensorMap(data_, this->data_type_, this->device_, output_shape);
 
-    return std::move(output);
+    return output;
 }
 
 // Overloaded operator<< for the Tensor class.

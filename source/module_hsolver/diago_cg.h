@@ -93,22 +93,12 @@ class DiagoCG : public DiagH
     void schmit_orth(const int& m, const ct::Tensor& psi);
 
     // used in diag() for template replace Hamilt with Hamilt_PW
-    void diag_mock(hamilt::Hamilt* phm_in, ct::Tensor& phi, ct::Tensor& eigenvalue_in);
+    void diag_mock(hamilt::Hamilt* phm_in, ct::Tensor& psi, ct::Tensor& eigenvalue_in);
 
     using zdot_real_op = hsolver::zdot_real_op<Real, Device>;
-
-    using setmem_complex_op = psi::memory::set_memory_op<T, Device>;
-    using delmem_complex_op = psi::memory::delete_memory_op<T, Device>;
-    using resmem_complex_op = psi::memory::resize_memory_op<T, Device>;
-    using syncmem_complex_op = psi::memory::synchronize_memory_op<T, Device, Device>;
     using syncmem_complex_d2h_op = psi::memory::synchronize_memory_op<T, psi::DEVICE_CPU, Device>;
 
-    using resmem_var_op = psi::memory::resize_memory_op<Real, Device>;
-    using setmem_var_h_op = psi::memory::set_memory_op<Real, psi::DEVICE_CPU>;
-    using syncmem_var_h2d_op = psi::memory::synchronize_memory_op<Real, Device, psi::DEVICE_CPU>;
-
     ct::Tensor one_ = {}, zero_ = {}, neg_one_ = {};
-
     // 
     Device* ctx_ = {};
     psi::DEVICE_CPU* cpu_ctx_ = {};

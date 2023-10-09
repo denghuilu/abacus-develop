@@ -33,6 +33,7 @@ class DiagH
     virtual void diag(hamilt::Hamilt* phm_in, psi::Psi<std::complex<double>>& psi, double* eigenvalue_in) {};
   
   protected:
+    // TODO: Remove ik
     // specify current k-point index
     int ik_ = 0;
     // Array which stores the basis number of all k-points
