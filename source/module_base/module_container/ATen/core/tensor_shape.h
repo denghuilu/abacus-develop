@@ -97,7 +97,7 @@ public:
     bool operator!=(const TensorShape& other) const;
 
 private:
-    std::vector<int64_t> dims_ = {};  // Save dimension sizes of the tensor
+    std::vector<int64_t> dims_ = {};     // Save dimension sizes of the tensor
     std::vector<int64_t> strides_ = {};  // Save dimension strides of the tensor
 
     /**

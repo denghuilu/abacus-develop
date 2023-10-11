@@ -12,13 +12,9 @@
 namespace hsolver {
 
 template<typename T, typename Device>
-DiagoBPCG<T, Device>::DiagoBPCG(const ct::Tensor& precondition)
+DiagoBPCG<T, Device>::DiagoBPCG(const ct::Tensor& prec_in, const ct::Tensor& n_basis_in)
 {
-    this->t_type   = ct::DataTypeToEnum<T>::value;
-    this->r_type   = ct::DataTypeToEnum<Real>::value;
-    this->device_type    = ct::DeviceTypeToEnum<Device>::value;
-
-    this->h_prec  = std::move(ct::TensorMap((void *) precondition_in.data<T>(), r_type, device_type, {this->n_basis}));
+    this->h_prec_.CopyFrom(prec_in);
 }
 
 template<typename T, typename Device>
@@ -28,10 +24,10 @@ DiagoBPCG<T, Device>::~DiagoBPCG() {
 }
 
 template<typename T, typename Device>
-void DiagoBPCG<T, Device>::init_iter(const psi::Psi<T, Device> &psi_in) {
+void DiagoBPCG<T, Device>::init_iter(const int& n_band, const int& n_basis) {
     // Specify the problem size n_basis, n_band, while lda is n_basis
-    this->n_band        = psi_in.get_nbands();
-    this->n_basis       = psi_in.get_nbasis();
+    this->n_band_       = n_band;
+    this->n_basis_      = n_basis;
 
     // All column major tensors
 

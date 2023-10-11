@@ -135,7 +135,8 @@ void DiagoDavid<T, Device>::diag_mock(
         }
         else
         {
-            phm_in->sPsi(psi[this->ik_][m], this->sphi_[m]);
+            auto sphi_m = this->sphi_[m];
+            phm_in->sPsi(psi[this->ik_][m], sphi_m);
         }
     }
     // begin SchmitOrth
@@ -163,7 +164,8 @@ void DiagoDavid<T, Device>::diag_mock(
         }
         else
         {
-            phm_in->sPsi(basis[0][m], this->sphi_[m]);
+            auto sphi_m = this->sphi_[m];
+            phm_in->sPsi(basis[0][m], sphi_m);
         }
     }
 
@@ -458,7 +460,8 @@ void DiagoDavid<T, Device>::cal_grad(hamilt::Hamilt* phm_in,
         }
         else
         {
-            phm_in->sPsi(basis[0][nbase + m], sphi[nbase + m]);
+            auto sphi_m = sphi[nbase + m];
+            phm_in->sPsi(basis[0][nbase + m], sphi_m);
         }
     }
     // first nbase bands psi* dot notconv bands spsi to prepare lagrange_matrix
@@ -503,7 +506,8 @@ void DiagoDavid<T, Device>::cal_grad(hamilt::Hamilt* phm_in,
         }
         else
         {
-            phm_in->sPsi(basis[0][nbase + m], sphi[nbase + m]);
+            auto sphi_m = sphi[nbase + m];
+            phm_in->sPsi(basis[0][nbase + m], sphi_m);
         }
     }
     // calculate H|psi> for not convergence bands

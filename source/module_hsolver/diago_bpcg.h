@@ -39,7 +39,7 @@ class DiagoBPCG : public DiagH
      *
      * @param precondition precondition data passed by the "Hamilt_PW" class.
      */
-    explicit DiagoBPCG(const ct::Tensor& precondition);
+    explicit DiagoBPCG(const ct::Tensor& prec_in, const ct::Tensor& n_basis_in);
 
     /**
      * @brief Destructor for DiagoBPCG class.
@@ -65,46 +65,43 @@ class DiagoBPCG : public DiagH
      * @param psi The input wavefunction psi matrix with [dim: n_basis x n_band, column major].
      * @param eigenvalue_in Pointer to the eigen array with [dim: n_band, column major].
      */
-    void diag(hamilt::Hamilt* phm_in, ct::Tensor& psi, ct::Tensor& eigenvalue_in) override;
+    void diag(hamilt::Hamilt* phm_in, ct::Tensor& psi, ct::Tensor& eigen_in) override;
 
   private:
     /// the number of rows of the input psi
-    int n_band = 0;
+    int n_band_ = 0;
     /// the number of cols of the input psi
-    int n_basis = 0;
+    int n_basis_ = 0;
+    /// the max number of cols of the input psi
+    int n_basis_max_ = 0;
     /// max iter steps for all-band cg loop
-    int nline = 4;
+    int nline_ = 4;
     /// cg convergence thr
-    Real all_band_cg_thr = 1E-5;
+    Real all_band_cg_thr_ = 1E-5;
 
-    ct::DataType r_type  = ct::DataType::DT_INVALID;
-    ct::DataType t_type  = ct::DataType::DT_INVALID;
-    ct::DeviceType device_type = ct::DeviceType::UnKnown;
-
-    ct::Tensor prec = {}, h_prec = {};
+    ct::Tensor prec_ = {}, h_prec_ = {};
 
     /// The coefficient for mixing the current and previous step gradients, used in iterative methods.
-    ct::Tensor beta = {};
+    ct::Tensor beta_ = {};
     /// Error state value, if it is smaller than the given threshold, then exit the iteration.
-    ct::Tensor err_st = {};
+    ct::Tensor err_st_ = {};
     /// Calculated eigen
-    ct::Tensor eigen = {};
+    ct::Tensor eigen_ = {};
 
     /// Pointer to the input wavefunction.
     /// Note: this pointer does not own memory, instead it ref the psi_in object.
     /// H|psi> matrix.
-    ct::Tensor psi = {}, hpsi = {};
+    ct::Tensor psi_ = {}, hpsi_ = {};
     
-    ct::Tensor hsub = {};
+    ct::Tensor hsub_ = {};
 
     /// H|psi> - epsilo * psi, grad of the given problem.
     /// Dim: n_basis * n_band, column major, lda = n_basis_max.
-    ct::Tensor grad = {}, hgrad = {}, grad_old = {};
+    ct::Tensor grad_ = {}, hgrad_ = {}, grad_old_ = {};
 
     /// work for some calculations within this class, including rotate_wf call
-    ct::Tensor work = {};
+    ct::Tensor work_ = {};
 
-    psi::Psi<T, Device>* grad_wrapper;
     /**
      * @brief Update the precondition array.
      *
@@ -313,8 +310,6 @@ class DiagoBPCG : public DiagH
      * @return Returns true if all error values are less than or equal to the threshold, false otherwise.
      */
     bool test_error(const ct::Tensor& err_in, Real thr_in);
-
-    using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
 
     using ct_Device = typename ct::PsiToContainer<Device>::type;
     using setmem_var_op = ct::op::set_memory_op<Real, ct_Device>;
