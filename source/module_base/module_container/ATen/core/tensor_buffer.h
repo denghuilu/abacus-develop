@@ -138,7 +138,8 @@ namespace container {
   private:
     base::Allocator* alloc_ = nullptr; ///< Pointer to the allocator used for memory allocation.
     void *data_ = nullptr;       ///< Pointer to the underlying data buffer.
-    bool owns_memory = false;    ///< Bool to indicate whether this tensor owns it's memory.
+    bool owns_memory_ = false;    ///< Bool to indicate whether this tensor owns it's memory.
+    int64_t allocated_bytes_ = 0; ///< The number of bytes allocated for this buffer.
 };
 
 }  // namespace container

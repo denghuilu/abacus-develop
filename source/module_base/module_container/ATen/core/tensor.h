@@ -228,6 +228,9 @@ class Tensor {
      */
     template <typename DEVICE>
     Tensor to_device() const {
+        if (this->device_ == DeviceTypeToEnum<DEVICE>::value) {
+            return *this;
+        }
         // Create output tensor on device
         Tensor output(this->data_type_, DeviceTypeToEnum<DEVICE>::value, this->shape_);
 

@@ -33,12 +33,11 @@ class DiagoIterAssist
         int n_band = 0);
 
     static void diagH_subspace(
-        hamilt::Hamilt* pHamilt,
+        const std::function<void(const ct::Tensor&, ct::Tensor&)>& hpsi_func,
         const ct::Tensor& psi, 
         ct::Tensor& evc,
         ct::Tensor& en,
         int ik,
-        int current_n_basis,
         int n_band = 0);
 
     static void diagH_subspace_init(

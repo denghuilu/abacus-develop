@@ -208,12 +208,11 @@ void Tensor::resize(const TensorShape& new_shape) {
     if (shape_ == new_shape) {
         return;
     }
+    if (buffer_ && buffer_->GetAllocatedBytes() < new_shape.NumElements() * SizeOfType(data_type_)) {
+        buffer_->unref();
+        this->buffer_ = new TensorBuffer(GetAllocator(device_), new_shape.NumElements() * SizeOfType(data_type_));
+    }
     shape_ = new_shape;
-
-    if (buffer_) buffer_->unref();
-    this->buffer_ = new TensorBuffer(GetAllocator(device_), shape_.NumElements() * SizeOfType(data_type_));
-
-    this->zero();
 }
 
 Tensor& Tensor::operator=(const Tensor& other) {

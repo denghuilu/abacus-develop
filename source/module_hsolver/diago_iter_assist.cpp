@@ -470,12 +470,11 @@ bool DiagoIterAssist<T, Device>::test_exit_cond(const int &ntry, const int &notc
 //----------------------------------------------------------------------
 template<typename T, typename Device>
 void DiagoIterAssist<T, Device>::diagH_subspace(
-    hamilt::Hamilt* pHamilt, // hamiltonian operator carrier
+    const std::function<void(const ct::Tensor&, ct::Tensor&)>& hpsi_func, // hamiltonian operator carrier
     const ct::Tensor& psi, // [in] wavefunction
     ct::Tensor& evc, // [out] wavefunction
     ct::Tensor& en, // [out] eigenvalues
     int ik,
-    int current_n_basis,
     int n_band // [in] number of bands to be calculated, also number of rows of evc, if set to 0, n_band = nstart, default 0
     )
 {
@@ -510,7 +509,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace(
         ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<Device>::value, {nstart, current_n_basis});
     hpsi.zero();
     // do hPsi for all bands
-    pHamilt->ops->hPsi(psi[ik], hpsi);
+    hpsi_func(psi[ik], hpsi);
 
     gemm_op<Real, Device>()(
         ctx,

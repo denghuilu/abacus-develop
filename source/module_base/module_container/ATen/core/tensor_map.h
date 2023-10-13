@@ -3,7 +3,7 @@
 
 #include <complex>
 
-#include "tensor.h"
+#include <ATen/core/tensor.h>
 
 namespace container {
 

@@ -10,6 +10,7 @@
 #include <base/macros/rocm.h>
 #endif
 
+#include <ATen/core/tensor.h>
 #include <ATen/core/tensor_types.h>
 
 #define DISALLOW_COPY_AND_ASSIGN(TypeName) \

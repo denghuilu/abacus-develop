@@ -8,11 +8,11 @@
 namespace container {
 
 // Construct a new TensorBuffer object.
-TensorBuffer::TensorBuffer(base::Allocator* alloc, void* data_ptr) : alloc_(alloc), data_(data_ptr), owns_memory(true) {}
+TensorBuffer::TensorBuffer(base::Allocator* alloc, void* data_ptr) : alloc_(alloc), data_(data_ptr), owns_memory_(true) {}
 
 // Construct a new TensorBuffer object.
 // Note, this is a reference TensorBuffer, does not owns memory itself.
-TensorBuffer::TensorBuffer(void* data_ptr) : alloc_(), data_(data_ptr), owns_memory(false) {}
+TensorBuffer::TensorBuffer(void* data_ptr) : alloc_(), data_(data_ptr), owns_memory_(false) {}
 
 // Class members are initialized in the order of their declaration, 
 // rather than the order they appear in the initialization list!
@@ -20,7 +20,8 @@ TensorBuffer::TensorBuffer(base::Allocator* alloc, size_t size) {
     alloc_ = alloc; 
     if (size > 0) {
         data_ = alloc_->allocate(size);
-        owns_memory = true;
+        owns_memory_ = true;
+        allocated_bytes_ = size;
     }
 }
 
@@ -28,11 +29,13 @@ TensorBuffer::TensorBuffer(base::Allocator* alloc, size_t size) {
 TensorBuffer::TensorBuffer(TensorBuffer&& other) noexcept
         : alloc_(other.alloc_),
           data_(other.data_), 
-          owns_memory(other.owns_memory) 
+          owns_memory_(other.owns_memory_),
+          allocated_bytes_(other.allocated_bytes_)
 {
     // Reset the other TensorBuffer.
     other.data_ = nullptr;
-    other.owns_memory = false;
+    other.owns_memory_ = false;
+    other.allocated_bytes_ = 0;
 }
 
 // Destroy the TensorBuffer object.
@@ -52,9 +55,7 @@ void* TensorBuffer::data() const { return data_; }
 // This method returns the total number of bytes allocated for the buffer by the allocator
 // associated with the TensorBuffer. If the buffer is not yet allocated, the function returns 0.
 size_t TensorBuffer::GetAllocatedBytes() const {
-    return alloc_ == nullptr ?
-           0 :
-           alloc_->AllocatedSize(data());
+    return allocated_bytes_;
 }
 
 // Get the root TensorBuffer object.
@@ -68,7 +69,7 @@ base::Allocator* TensorBuffer::allocator() const {
 }
 
 // Check whether this TensorBuffer owns the underlying memory.
-bool TensorBuffer::OwnsMemory() const { return this->owns_memory; }
+bool TensorBuffer::OwnsMemory() const { return this->owns_memory_; }
 
 // Get the type of device used by the TensorBuffer.
 DeviceType TensorBuffer::GetDeviceType() const {
@@ -89,7 +90,7 @@ void TensorBuffer::resize(size_t size) {
 
     // Update the internal state.
     this->data_ = new_data;
-    this->owns_memory = true;
+    this->owns_memory_ = true;
 }
 
 TensorBuffer& TensorBuffer::operator=(const TensorBuffer& other) {
@@ -109,7 +110,7 @@ TensorBuffer& TensorBuffer::operator=(const TensorBuffer& other) {
 
 
     this->data_ = this->alloc_->allocate(other.GetAllocatedBytes());
-    this->owns_memory = true;
+    this->owns_memory_ = true;
     return *this;
 }
 
@@ -120,11 +121,11 @@ TensorBuffer& TensorBuffer::operator=(TensorBuffer&& other) noexcept {
     delete this->alloc_;
     this->alloc_ = other.alloc_;
     this->data_ = other.data_;
-    this->owns_memory = other.owns_memory;
+    this->owns_memory_ = other.owns_memory_;
 
     // Reset the other TensorBuffer.
     other.data_ = nullptr;
-    other.owns_memory = false;
+    other.owns_memory_ = false;
     return *this;
 }
 

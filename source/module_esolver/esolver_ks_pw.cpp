@@ -52,12 +52,10 @@
 namespace ModuleESolver
 {
 
-template <typename T, typename Device>
-ESolver_KS_PW<T, Device>::ESolver_KS_PW()
+ESolver_KS_PW::ESolver_KS_PW()
 {
     this->classname = "ESolver_KS_PW";
     this->basisname = "PW";
-    this->device = psi::device::get_device_type<Device>(this->ctx);
 #if ((defined __CUDA) || (defined __ROCM))
     if (this->device == psi::GpuDevice)
     {
@@ -69,8 +67,7 @@ ESolver_KS_PW<T, Device>::ESolver_KS_PW()
 #endif
 }
 
-template <typename T, typename Device>
-ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
+ESolver_KS_PW::~ESolver_KS_PW()
 {
     // delete HSolver and ElecState
     if (this->phsol != nullptr)
@@ -109,8 +106,7 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
         this->psi_init = nullptr;
     }
 }
-template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::Init_GlobalC(Input& inp, UnitCell& cell)
+void ESolver_KS_PW::Init_GlobalC(Input& inp, UnitCell& cell)
 {
     if (this->psi != nullptr)
         delete this->psi;
@@ -174,8 +170,7 @@ void ESolver_KS_PW<T, Device>::Init_GlobalC(Input& inp, UnitCell& cell)
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT BASIS");
 }
 
-template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::Init(Input& inp, UnitCell& ucell)
+void ESolver_KS_PW::Init(Input& inp, UnitCell& ucell)
 {
     ESolver_KS<T, Device>::Init(inp, ucell);
 
@@ -222,8 +217,7 @@ void ESolver_KS_PW<T, Device>::Init(Input& inp, UnitCell& ucell)
     }
 }
 
-template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
+void ESolver_KS_PW::init_after_vc(Input& inp, UnitCell& ucell)
 {
     ModuleBase::TITLE("ESolver_KS_PW", "init_after_vc");
     ModuleBase::timer::tick("ESolver_KS_PW", "init_after_vc");
@@ -314,8 +308,7 @@ void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
     ModuleBase::timer::tick("ESolver_KS_PW", "init_after_vc");
 }
 
-template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::beforescf(int istep)
+void ESolver_KS_PW::beforescf(int istep)
 {
     ModuleBase::TITLE("ESolver_KS_PW", "beforescf");
 
@@ -399,8 +392,7 @@ void ESolver_KS_PW<T, Device>::beforescf(int istep)
     }
 }
 
-template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::othercalculation(const int istep)
+void ESolver_KS_PW::othercalculation(const int istep)
 {
     ModuleBase::TITLE("ESolver_KS_PW", "othercalculation");
     ModuleBase::timer::tick("ESolver_KS_PW", "othercalculation");
@@ -440,8 +432,7 @@ void ESolver_KS_PW<T, Device>::othercalculation(const int istep)
     return;
 }
 
-template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::eachiterinit(const int istep, const int iter)
+void ESolver_KS_PW::eachiterinit(const int istep, const int iter)
 {
     // mohan add 2010-07-16
     if (iter == 1)
@@ -459,8 +450,7 @@ void ESolver_KS_PW<T, Device>::eachiterinit(const int istep, const int iter)
     }
 }
 
-template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::allocate_psi_init()
+void ESolver_KS_PW::allocate_psi_init()
 {
     if(this->psi_init != nullptr)
     {
@@ -546,8 +536,7 @@ void ESolver_KS_PW<T, Device>::allocate_psi_init()
   Although ESolver_KS_PW supports template, but in this function it has no relationship with
   heterogeneous calculation, so all templates function are specialized to double
 */
-template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::initialize_psi()
+void ESolver_KS_PW::initialize_psi()
 {
     if (GlobalV::psi_initializer)
     {
@@ -611,8 +600,7 @@ void ESolver_KS_PW<T, Device>::initialize_psi()
 }
 
 // Temporary, it should be replaced by hsolver later.
-template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, const double ethr)
+void ESolver_KS_PW::hamilt2density(const int istep, const int iter, const double ethr)
 {
     if (this->phsol != nullptr)
     {
@@ -682,8 +670,7 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
 }
 
 // Temporary, it should be rewritten with Hamilt class.
-template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::updatepot(const int istep, const int iter)
+void ESolver_KS_PW::updatepot(const int istep, const int iter)
 {
     if (!this->conv_elec)
     {
@@ -698,8 +685,7 @@ void ESolver_KS_PW<T, Device>::updatepot(const int istep, const int iter)
     }
 }
 
-template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::eachiterfinish(const int iter)
+void ESolver_KS_PW::eachiterfinish(const int iter)
 {
     // print_eigenvalue(GlobalV::ofs_running);
     this->pelec->cal_energies(2);
@@ -736,8 +722,7 @@ void ESolver_KS_PW<T, Device>::eachiterfinish(const int iter)
     }
 }
 
-template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::afterscf(const int istep)
+void ESolver_KS_PW::afterscf(const int istep)
 {
     this->create_Output_Potential(istep).write();
 
@@ -789,14 +774,12 @@ void ESolver_KS_PW<T, Device>::afterscf(const int istep)
     }
 }
 
-template <typename T, typename Device>
-double ESolver_KS_PW<T, Device>::cal_Energy()
+double ESolver_KS_PW::cal_Energy()
 {
     return this->pelec->f_en.etot;
 }
 
-template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::cal_Force(ModuleBase::matrix& force)
+void ESolver_KS_PW::cal_Force(ModuleBase::matrix& force)
 {
     Forces<double, Device> ff(GlobalC::ucell.nat);
     if (this->__kspw_psi != nullptr)
@@ -810,8 +793,7 @@ void ESolver_KS_PW<T, Device>::cal_Force(ModuleBase::matrix& force)
     ff.cal_force(force, *this->pelec, this->pw_rho, &this->symm, &this->sf, &this->kv, this->pw_wfc, this->__kspw_psi);
 }
 
-template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::cal_Stress(ModuleBase::matrix& stress)
+void ESolver_KS_PW::cal_Stress(ModuleBase::matrix& stress)
 {
     Stress_PW<double, Device> ss(this->pelec);
     if (this->__kspw_psi != nullptr)
@@ -843,8 +825,7 @@ void ESolver_KS_PW<T, Device>::cal_Stress(ModuleBase::matrix& stress)
     GlobalV::PRESSURE = (stress(0, 0) + stress(1, 1) + stress(2, 2)) / 3;
 }
 
-template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::postprocess()
+void ESolver_KS_PW::postprocess()
 {
 
     GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
@@ -974,8 +955,7 @@ void ESolver_KS_PW<T, Device>::postprocess()
     }
 }
 
-template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::hamilt2estates(const double ethr)
+void ESolver_KS_PW::hamilt2estates(const double ethr)
 {
     if (this->phsol != nullptr)
     {
@@ -989,8 +969,7 @@ void ESolver_KS_PW<T, Device>::hamilt2estates(const double ethr)
     }
 }
 
-template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::nscf()
+void ESolver_KS_PW::nscf()
 {
     ModuleBase::TITLE("ESolver_KS_PW", "nscf");
     ModuleBase::timer::tick("ESolver_KS_PW", "nscf");
@@ -1070,10 +1049,4 @@ void ESolver_KS_PW<T, Device>::nscf()
     return;
 }
 
-template class ESolver_KS_PW<std::complex<float>, psi::DEVICE_CPU>;
-template class ESolver_KS_PW<std::complex<double>, psi::DEVICE_CPU>;
-#if ((defined __CUDA) || (defined __ROCM))
-template class ESolver_KS_PW<std::complex<float>, psi::DEVICE_GPU>;
-template class ESolver_KS_PW<std::complex<double>, psi::DEVICE_GPU>;
-#endif
 } // namespace ModuleESolver
