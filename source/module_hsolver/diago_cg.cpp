@@ -12,7 +12,7 @@
 
 #include <ATen/core/tensor_map.h>
 #include <ATen/core/tensor_utils.h>
-#include <ATen/kernels/einsum_op.h>
+#include <ATen/ops/einsum_op.h>
 
 #include "diago_cg.h"
 
@@ -402,7 +402,7 @@ void DiagoCG<T, Device>::schmit_orth(
     // {
     //     pphi_m[ig] /= psi_norm;
     // }
-    phi_m = phi_m / psi_norm;
+    phi_m /= psi_norm;
 }
 
 template<typename T, typename Device>

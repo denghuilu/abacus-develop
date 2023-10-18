@@ -80,18 +80,7 @@
     break;                                        \
   }
 
-#define CASE_3(TYPE, DEVICE_OUT, DEVICE_IN, STMTS)      \
-  case (int(DataTypeToEnum<TYPE>::value) * 100 +        \
-        int(DeviceTypeToEnum<DEVICE_OUT>::value) * 10 + \
-        int(DeviceTypeToEnum<DEVICE_IN>::value)): {     \
-    typedef TYPE T_;                                    \
-    typedef DEVICE_OUT DEVICE_OUT_;                     \
-    typedef DEVICE_IN DEVICE_IN_;                       \
-    STMTS;                                              \
-    break;                                              \
-  }
-
-#define CASES_ALL_WITH_DEFAULT_2_CPU(TYPE_ENUM, DEVICE_ENUM, STMTS, DEFAULT) \
+#define CASES_ALL_WITH_DEFAULT_2(TYPE_ENUM, DEVICE_ENUM, STMTS, DEFAULT) \
   switch (int(TYPE_ENUM) * 10 + int(DEVICE_ENUM)) {                      \
     CASE_2(float, DEVICE_CPU, SINGLE_ARG(STMTS))                         \
     CASE_2(double, DEVICE_CPU, SINGLE_ARG(STMTS))                        \
@@ -104,7 +93,7 @@
       break;                                                             \
   }
 
-#define CASES_BLAS_WITH_DEFAULT_2_CPU(TYPE_ENUM, DEVICE_ENUM, STMTS, DEFAULT) \
+#define CASES_BLAS_WITH_DEFAULT_2(TYPE_ENUM, DEVICE_ENUM, STMTS, DEFAULT) \
   switch (int(TYPE_ENUM) * 10 + int(DEVICE_ENUM)) {                      \
     CASE_2(float, DEVICE_CPU, SINGLE_ARG(STMTS))                         \
     CASE_2(double, DEVICE_CPU, SINGLE_ARG(STMTS))                        \
@@ -115,7 +104,7 @@
       break;                                                             \
   }
 
-#define CASES_ALL_WITH_DEFAULT_2(TYPE_ENUM, DEVICE_ENUM, STMTS, DEFAULT) \
+#define CASES_ALL_WITH_DEFAULT_2_GPU(TYPE_ENUM, DEVICE_ENUM, STMTS, DEFAULT) \
   switch (int(TYPE_ENUM) * 10 + int(DEVICE_ENUM)) {                      \
     CASE_2(float, DEVICE_CPU, SINGLE_ARG(STMTS))                         \
     CASE_2(float, DEVICE_GPU, SINGLE_ARG(STMTS))                         \
@@ -134,7 +123,7 @@
       break;                                                             \
   }
 
-#define CASES_BLAS_WITH_DEFAULT_2(TYPE_ENUM, DEVICE_ENUM, STMTS, DEFAULT) \
+#define CASES_BLAS_WITH_DEFAULT_2_GPU(TYPE_ENUM, DEVICE_ENUM, STMTS, DEFAULT) \
   switch (int(TYPE_ENUM) * 10 + int(DEVICE_ENUM)) {                      \
     CASE_2(float, DEVICE_CPU, SINGLE_ARG(STMTS))                         \
     CASE_2(float, DEVICE_GPU, SINGLE_ARG(STMTS))                         \
@@ -160,61 +149,50 @@
       break;                                                             \
   }
 
-#define CASES_ALL_WITH_DEFAULT_3(TYPE_ENUM, DEVICE_ENUM_OUT, DEVICE_ENUM_IN, STMTS, DEFAULT) \
-  switch (int(TYPE_ENUM) * 100 + int(DEVICE_ENUM_OUT) * 10 + int(DEVICE_ENUM_IN)) {          \
-    CASE_3(float, DEVICE_CPU, DEVICE_CPU, SINGLE_ARG(STMTS))                                 \
-    CASE_3(float, DEVICE_GPU, DEVICE_CPU, SINGLE_ARG(STMTS))                                 \
-    CASE_3(double, DEVICE_CPU, DEVICE_CPU, SINGLE_ARG(STMTS))                                \
-    CASE_3(double, DEVICE_GPU, DEVICE_CPU, SINGLE_ARG(STMTS))                                \
-    CASE_3(int, DEVICE_CPU, DEVICE_CPU, SINGLE_ARG(STMTS))                                   \
-    CASE_3(int, DEVICE_GPU, DEVICE_CPU, SINGLE_ARG(STMTS))                                   \
-    CASE_3(int64_t, DEVICE_CPU, DEVICE_CPU, SINGLE_ARG(STMTS))                               \
-    CASE_3(int64_t, DEVICE_GPU, DEVICE_CPU, SINGLE_ARG(STMTS))                               \
-    CASE_3(std::complex<float>, DEVICE_CPU, DEVICE_CPU, SINGLE_ARG(STMTS))                   \
-    CASE_3(std::complex<float>, DEVICE_CPU, DEVICE_GPU, SINGLE_ARG(STMTS))                   \
-    CASE_3(std::complex<double>, DEVICE_CPU, DEVICE_CPU, SINGLE_ARG(STMTS))                  \
-    CASE_3(std::complex<double>, DEVICE_CPU, DEVICE_GPU, SINGLE_ARG(STMTS))                  \
-    CASE_3(float, DEVICE_CPU, DEVICE_GPU, SINGLE_ARG(STMTS))                                 \
-    CASE_3(float, DEVICE_GPU, DEVICE_GPU, SINGLE_ARG(STMTS))                                 \
-    CASE_3(double, DEVICE_CPU, DEVICE_GPU, SINGLE_ARG(STMTS))                                \
-    CASE_3(double, DEVICE_GPU, DEVICE_GPU, SINGLE_ARG(STMTS))                                \
-    CASE_3(int, DEVICE_CPU, DEVICE_GPU, SINGLE_ARG(STMTS))                                   \
-    CASE_3(int, DEVICE_GPU, DEVICE_GPU, SINGLE_ARG(STMTS))                                   \
-    CASE_3(int64_t, DEVICE_CPU, DEVICE_GPU, SINGLE_ARG(STMTS))                               \
-    CASE_3(int64_t, DEVICE_GPU, DEVICE_GPU, SINGLE_ARG(STMTS))                               \
-    CASE_3(std::complex<float>, DEVICE_GPU, DEVICE_CPU, SINGLE_ARG(STMTS))                   \
-    CASE_3(std::complex<float>, DEVICE_GPU, DEVICE_GPU, SINGLE_ARG(STMTS))                   \
-    CASE_3(std::complex<double>, DEVICE_GPU, DEVICE_CPU, SINGLE_ARG(STMTS))                  \
-    CASE_3(std::complex<double>, DEVICE_GPU, DEVICE_GPU, SINGLE_ARG(STMTS))                  \
-    default:                                                                                 \
-      DEFAULT;                                                                               \
-      break;                                                                                 \
-  }
-
 
 #if __CUDA || __ROCM
-#define TEMPLATE_ALL_2(TYPE_ENUM, DEVICE_ENUM, ...)                        \
-    CASES_ALL_WITH_DEFAULT_2(TYPE_ENUM, DEVICE_ENUM, (__VA_ARGS__),        \
-                           std::cerr << "Unexpected type: " << TYPE_ENUM; exit(EXIT_FAILURE));
-#define TEMPLATE_BLAS_2(TYPE_ENUM, DEVICE_ENUM, ...)                        \
-    CASES_BLAS_WITH_DEFAULT_2(TYPE_ENUM, DEVICE_ENUM, (__VA_ARGS__),        \
-                           std::cerr << "Unexpected type: " << TYPE_ENUM; exit(EXIT_FAILURE));
-#else 
-#define TEMPLATE_ALL_2(TYPE_ENUM, DEVICE_ENUM, ...)                    \
-CASES_ALL_WITH_DEFAULT_2_CPU(TYPE_ENUM, DEVICE_ENUM, (__VA_ARGS__),    \
+#define TEMPLATE_ALL_2(TYPE_ENUM, DEVICE_ENUM, ...)                         \
+CASES_ALL_WITH_DEFAULT_2_GPU(TYPE_ENUM, DEVICE_ENUM, (__VA_ARGS__),         \
                        std::cerr << "Unexpected type: " << TYPE_ENUM; exit(EXIT_FAILURE));
 #define TEMPLATE_BLAS_2(TYPE_ENUM, DEVICE_ENUM, ...)                        \
-CASES_BLAS_WITH_DEFAULT_2_CPU(TYPE_ENUM, DEVICE_ENUM, (__VA_ARGS__),        \
+CASES_BLAS_WITH_DEFAULT_2_GPU(TYPE_ENUM, DEVICE_ENUM, (__VA_ARGS__),        \
+                       std::cerr << "Unexpected type: " << TYPE_ENUM; exit(EXIT_FAILURE));
+#define TEMPLATE_ALL_CALC_2(TYPE_ENUM, DEVICE_ENUM, ...)                    \
+CASES_ALL_CALC_WITH_DEFAULT_2_GPU(TYPE_ENUM, DEVICE_ENUM, (__VA_ARGS__),    \
+                       std::cerr << "Unexpected type: " << TYPE_ENUM; exit(EXIT_FAILURE));
+#else 
+#define TEMPLATE_ALL_2(TYPE_ENUM, DEVICE_ENUM, ...)                         \
+CASES_ALL_WITH_DEFAULT_2(TYPE_ENUM, DEVICE_ENUM, (__VA_ARGS__),             \
+                       std::cerr << "Unexpected type: " << TYPE_ENUM; exit(EXIT_FAILURE));
+#define TEMPLATE_BLAS_2(TYPE_ENUM, DEVICE_ENUM, ...)                        \
+CASES_BLAS_WITH_DEFAULT_2(TYPE_ENUM, DEVICE_ENUM, (__VA_ARGS__),            \
+                       std::cerr << "Unexpected type: " << TYPE_ENUM; exit(EXIT_FAILURE));
+#define TEMPLATE_ALL_CALC_2(TYPE_ENUM, DEVICE_ENUM, ...)                    \
+CASES_ALL_WITH_DEFAULT_2(TYPE_ENUM, DEVICE_ENUM, (__VA_ARGS__),             \
                        std::cerr << "Unexpected type: " << TYPE_ENUM; exit(EXIT_FAILURE));
 #endif 
 
-#define TEMPLATE_CZ_2(TYPE_ENUM, DEVICE_ENUM, ...)                         \
-    CASES_CZ_WITH_DEFAULT_2(TYPE_ENUM, DEVICE_ENUM, (__VA_ARGS__),         \
-                           std::cerr << "Unexpected type: " << TYPE_ENUM; exit(EXIT_FAILURE));
+#define TEMPLATE_CZ_2(TYPE_ENUM, DEVICE_ENUM, ...)                          \
+CASES_CZ_WITH_DEFAULT_2(TYPE_ENUM, DEVICE_ENUM, (__VA_ARGS__),              \
+                       std::cerr << "Unexpected type: " << TYPE_ENUM; exit(EXIT_FAILURE));
 
-#define TEMPLATE_ALL_3(TYPE_ENUM, DEVICE_ENUM_OUT, DEVICE_ENUM_IN, ...)                        \
-    CASES_ALL_WITH_DEFAULT_3(TYPE_ENUM, DEVICE_ENUM_OUT, DEVICE_ENUM_IN, (__VA_ARGS__),        \
-                           std::cerr << "Unexpected type: " << TYPE_ENUM; exit(EXIT_FAILURE));
 
+#if defined(__CUDACC__) || defined(__HIPCC__)
+#define ATEN_HOST __host__
+#define ATEN_DEVICE __device__
+#define ATEN_HOST_DEVICE __host__ __device__
+#else
+#define ATEN_HOST
+#define ATEN_DEVICE
+#define ATEN_HOST_DEVICE
+#endif
+
+#if defined(_MSC_VER)
+#define ATEN_ALWAYS_INLINE __forceinline
+#elif __has_attribute(always_inline) || defined(__GNUC__)
+#define ATEN_ALWAYS_INLINE __attribute__((__always_inline__)) inline
+#else
+#define ATEN_ALWAYS_INLINE inline
+#endif
 
 #endif // BASE_MACROS_MACROS_H_

@@ -5,8 +5,9 @@
 #include <ATen/core/tensor_types.h>
 #include <ATen/core/tensor_shape.h>
 #include <ATen/core/tensor_buffer.h>
-#include <ATen/kernels/memory_op.h>
 #include <ATen/core/tensor_accessor.h>
+
+#include <ATen/kernels/memory.h>
 
 #include <base/macros/macros.h>
 
