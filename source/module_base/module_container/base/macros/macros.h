@@ -1,7 +1,7 @@
 #ifndef BASE_MACROS_MACROS_H_
 #define BASE_MACROS_MACROS_H_
 
-#include <stdint.h>
+#include <cstdint>
 #include <base/utils/logging.h>
 
 #if __CUDA
@@ -177,22 +177,12 @@ CASES_CZ_WITH_DEFAULT_2(TYPE_ENUM, DEVICE_ENUM, (__VA_ARGS__),              \
                        std::cerr << "Unexpected type: " << TYPE_ENUM; exit(EXIT_FAILURE));
 
 
-#if defined(__CUDACC__) || defined(__HIPCC__)
-#define ATEN_HOST __host__
-#define ATEN_DEVICE __device__
-#define ATEN_HOST_DEVICE __host__ __device__
-#else
-#define ATEN_HOST
-#define ATEN_DEVICE
-#define ATEN_HOST_DEVICE
-#endif
-
 #if defined(_MSC_VER)
-#define ATEN_ALWAYS_INLINE __forceinline
+#define AT_ALWAYS_INLINE __forceinline
 #elif __has_attribute(always_inline) || defined(__GNUC__)
-#define ATEN_ALWAYS_INLINE __attribute__((__always_inline__)) inline
+#define AT_ALWAYS_INLINE __attribute__((__always_inline__)) inline
 #else
-#define ATEN_ALWAYS_INLINE inline
+#define AT_ALWAYS_INLINE inline
 #endif
 
 #endif // BASE_MACROS_MACROS_H_

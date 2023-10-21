@@ -23,8 +23,8 @@ TensorMap::TensorMap(void *data, const Tensor& other)
     this->buffer_ = new TensorBuffer(data);
 }
 
-void TensorMap::resize(const TensorShape &new_shape) {
-    throw std::logic_error("TensorMap object does not support the resize method.");
-}
+//void TensorMap::resize(const TensorShape &new_shape) {
+//    throw std::logic_error("TensorMap object does not support the resize method.");
+//}
 
 } // namespace container

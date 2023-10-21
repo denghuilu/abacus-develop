@@ -255,7 +255,7 @@ void DiagoCG<T, Device>::calc_gamma_cg(
     {
         // (1) Update gg_inter!
         // gg_inter = <g|g0>
-        // Attention : the 'g' in g0 is getted last time
+        // Attention : the 'g' in g0 is got last time
         auto gg_inter = ct::extract<Real>(ct::op::einsum("i,i->", grad, g0));
         // (4) Update gamma !
         REQUIRES_OK(gg_last != 0.0,

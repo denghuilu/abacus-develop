@@ -2,23 +2,17 @@
 
 #include <ATen/core/tensor.h>
 #include <ATen/core/tensor_map.h>
-#include <ATen/kernels/memory_op.h>
+#include <ATen/kernels/memory.h>
 #include <ATen/kernels/test/op_test_utils.h>
 
 namespace container {
-namespace op {
+namespace kernels {
 
 template <typename T>
 class MemoryOpTest : public testing::Test {
 public:
-    MemoryOpTest() {
-        test_utils::init_blas_handle();
-        test_utils::init_cusolver_handle();
-    }
-    ~MemoryOpTest() override {
-        test_utils::delete_blas_handle();
-        test_utils::delete_cusolver_handle();
-    }
+    MemoryOpTest() = default;
+    ~MemoryOpTest() override = default;
 };
 
 TYPED_TEST_SUITE(MemoryOpTest, test_utils::Types);
@@ -27,9 +21,9 @@ TYPED_TEST(MemoryOpTest, ResizeAndSynchronizeMemory) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
 
-    op::resize_memory_op<Type, Device> resizeMemory;
-    op::synchronize_memory_op<Type, DEVICE_CPU, Device> syncMemoryDeviceToHost;
-    op::synchronize_memory_op<Type, Device, DEVICE_CPU> syncMemoryHostToDevice;
+    kernels::resize_memory<Type, Device> resizeMemory;
+    kernels::synchronize_memory<Type, DEVICE_CPU, Device> syncMemoryDeviceToHost;
+    kernels::synchronize_memory<Type, Device, DEVICE_CPU> syncMemoryHostToDevice;
 
     Tensor A = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0)}).to_device<Device>());
 
@@ -50,7 +44,7 @@ TYPED_TEST(MemoryOpTest, SetMemory) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
 
-    op::set_memory_op<Type, Device> setMemory;
+    kernels::set_memory<Type, Device> setMemory;
 
     Tensor A = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0)}).to_device<Device>());
     Tensor B = A;
@@ -64,8 +58,8 @@ TYPED_TEST(MemoryOpTest, CastAndDeleteMemory) {
     using Type = std::complex<typename GetTypeReal<typename std::tuple_element<0, decltype(TypeParam())>::type>::type>;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
 
-    op::delete_memory_op<std::complex<float>, DEVICE_CPU> deleteMemory;
-    op::cast_memory_op<std::complex<float>, Type, DEVICE_CPU, Device> castMemory_H2D_D2S;
+    kernels::delete_memory<std::complex<float>, DEVICE_CPU> deleteMemory;
+    kernels::cast_memory<std::complex<float>, Type, DEVICE_CPU, Device> castMemory_H2D_D2S;
 
     Tensor A = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0)}).to_device<Device>());
     Tensor B = A.to_device<DEVICE_CPU>().cast<std::complex<float>>();

@@ -33,7 +33,7 @@ Tensor::Tensor(const Tensor& other)
           buffer_(new TensorBuffer(GetAllocator(device_), shape_.NumElements() * SizeOfType(data_type_)))
 {
     TEMPLATE_ALL_2(data_type_, device_,
-            op::synchronize_memory_op<T_, DEVICE_, DEVICE_>()(
+            kernels::synchronize_memory<T_, DEVICE_, DEVICE_>()(
                     this->data<T_>(), other.data<T_>(), this->NumElements()))
 }
 
@@ -95,7 +95,7 @@ base::Allocator* Tensor::GetAllocator(DeviceType device) {
 // Set the tensor to zero
 void Tensor::zero() {
     TEMPLATE_ALL_2(this->data_type_, this->device_,
-            op::set_memory_op<T_, DEVICE_>()(this->data<T_>(), 0, this->NumElements()))
+            kernels::set_memory<T_, DEVICE_>()(this->data<T_>(), 0, this->NumElements()))
 }
 
 // Reshape the current tensor
@@ -176,7 +176,7 @@ Tensor Tensor::slice(const std::vector<int> &start, const std::vector<int> &size
     unsigned int ndim = shape_.ndim();
     if (ndim == 1) {
         TEMPLATE_ALL_2(this->data_type_, this->device_,
-                       op::synchronize_memory_op<T_, DEVICE_, DEVICE_>()(
+                       kernels::synchronize_memory<T_, DEVICE_, DEVICE_>()(
                                output.data<T_>(), this->data<T_>() + start[0], size[0]))
     }
     else if (ndim == 2) {
@@ -184,7 +184,7 @@ Tensor Tensor::slice(const std::vector<int> &start, const std::vector<int> &size
             int offset = (start[0] + i) * shape_.dim_size(1) + start[1];
             int offset_out = i * size[1];
             TEMPLATE_ALL_2(this->data_type_, this->device_,
-                           op::synchronize_memory_op<T_, DEVICE_, DEVICE_>()(
+                           kernels::synchronize_memory<T_, DEVICE_, DEVICE_>()(
                                    output.data<T_>() + offset_out, this->data<T_>() + offset, size[1]))
         }
     }
@@ -195,7 +195,7 @@ Tensor Tensor::slice(const std::vector<int> &start, const std::vector<int> &size
                         (j + start[1]) * shape_.dim_size(2) + start[2];
                 int offset_out = i * size[1] * size[2] + j * size[2];
                 TEMPLATE_ALL_2(this->data_type_, this->device_,
-                               op::synchronize_memory_op<T_, DEVICE_, DEVICE_>()(
+                               kernels::synchronize_memory<T_, DEVICE_, DEVICE_>()(
                                        output.data<T_>() + offset_out, this->data<T_>() + offset, size[1]))
             }
         }
@@ -208,6 +208,8 @@ void Tensor::resize(const TensorShape& new_shape) {
     if (shape_ == new_shape) {
         return;
     }
+    REQUIRES_OK(buffer_->OwnsMemory(),
+        "Cannot resize a tensor that does not own its memory.");
     if (buffer_ && buffer_->GetAllocatedBytes() < new_shape.NumElements() * SizeOfType(data_type_)) {
         buffer_->unref();
         this->buffer_ = new TensorBuffer(GetAllocator(device_), new_shape.NumElements() * SizeOfType(data_type_));
@@ -227,7 +229,7 @@ Tensor& Tensor::operator=(const Tensor& other) {
     this->buffer_ = new TensorBuffer(GetAllocator(device_), shape_.NumElements() * SizeOfType(data_type_));
 
     TEMPLATE_ALL_2(this->data_type_, this->device_,
-                   container::op::synchronize_memory_op<T_, DEVICE_, DEVICE_>()(
+                   kernels::synchronize_memory<T_, DEVICE_, DEVICE_>()(
                    this->data<T_>(), other.data<T_>(), this->NumElements()))
     return *this;
 }
@@ -238,7 +240,7 @@ Tensor& Tensor::operator=(Tensor&& other) noexcept {
     }
     this->device_ = other.device_;
     this->data_type_ = other.data_type_;
-    this->shape_ = std::move(other.shape_);
+    this->shape_ = other.shape_;
    
     if (buffer_) buffer_->unref();  // Release current resource
     this->buffer_ = other.buffer_;
@@ -294,7 +296,7 @@ void Tensor::sync(const Tensor& rhs) {
         && this->shape_ == rhs.shape_);
 
     TEMPLATE_ALL_2(data_type_, device_,
-            op::synchronize_memory_op<T_, DEVICE_, DEVICE_>()(
+            kernels::synchronize_memory<T_, DEVICE_, DEVICE_>()(
                     this->data<T_>(), rhs.data<T_>(), this->NumElements()))
 }
 
@@ -325,7 +327,7 @@ std::ostream& operator<<(std::ostream& os, const Tensor& tensor) {
         data_ = malloc(num_elements * Tensor::SizeOfType(data_type));
         // Copy data to a specified device
         TEMPLATE_ALL_2(data_type, device_type,
-                       container::op::synchronize_memory_op<T_, DEVICE_CPU, DEVICE_>()(
+                       kernels::synchronize_memory<T_, DEVICE_CPU, DEVICE_>()(
                                reinterpret_cast<T_ *>(data_), tensor.data<T_>(), num_elements))
     }
 #endif

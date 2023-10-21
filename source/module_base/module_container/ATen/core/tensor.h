@@ -108,7 +108,7 @@ class Tensor {
     Tensor(std::initializer_list<T> values, DeviceType device = DeviceType::CpuDevice) :
         Tensor(DataTypeToEnum<T>::value, device, TensorShape({static_cast<int64_t>(values.size())})) {
         TEMPLATE_ALL_2(this->data_type_, this->device_,
-            op::synchronize_memory_op<T, DEVICE_, DEVICE_CPU>()(
+            kernels::synchronize_memory<T, DEVICE_, DEVICE_CPU>()(
                 this->data<T>(), values.begin(), this->NumElements()))
     }
 
@@ -238,7 +238,7 @@ class Tensor {
         // Copy data to a specified device
         // TODO: move the memory operator into the tensor_buff class.
         TEMPLATE_ALL_2(this->data_type_, this->device_,
-                   op::synchronize_memory_op<T_, DEVICE, DEVICE_>()(
+                   kernels::synchronize_memory<T_, DEVICE, DEVICE_>()(
                            output.data<T_>(), this->data<T_>(), this->NumElements()))
 
         return output;
@@ -260,7 +260,7 @@ class Tensor {
         // TODO: move the memory operator into the tensor_buff class.
         // Copy data to a specified device
         TEMPLATE_CZ_2(this->data_type_, this->device_,
-                   op::cast_memory_op<T, T_, DEVICE_, DEVICE_>()(
+                   kernels::cast_memory<T, T_, DEVICE_, DEVICE_>()(
                            output.data<T>(), this->data<T_>(), this->NumElements()))
 
         return output;
@@ -314,7 +314,7 @@ class Tensor {
      *
      * @note This method will automatically zero the resized tensor object.
      */
-    virtual void resize(const TensorShape& new_shape);
+    void resize(const TensorShape& new_shape);
 
     /**
      * @brief Get the Allocator object according to the given device type.

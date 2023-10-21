@@ -42,6 +42,7 @@ struct lapack_potrf {
 
 template <typename T, typename Device>
 struct lapack_dnevd {
+    using Real = typename GetTypeReal<T>::type;
     void operator()(
         const char& jobz,
         const char& uplo,
@@ -53,6 +54,7 @@ struct lapack_dnevd {
 
 template <typename T, typename Device>
 struct lapack_dngvd {
+    using Real = typename GetTypeReal<T>::type;
     void operator()(
         const int& itype,
         const char& jobz,
@@ -64,6 +66,7 @@ struct lapack_dngvd {
 };
 
 #if defined(__CUDA) || defined(__ROCM)
+// TODO: Use C++ singleton to manage the GPU handles
 void createGpuSolverHandle();  // create cusolver handle
 void destroyGpuSolverHandle(); // destroy cusolver handle
 #endif

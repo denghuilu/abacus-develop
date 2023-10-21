@@ -47,7 +47,7 @@ namespace container {
      *
      * @param new_shape The new shape of the tensor.
      */
-    void resize(const TensorShape& new_shape) override;
+    // void resize(const TensorShape& new_shape) override;
 };
 
 } // namespace container

@@ -32,20 +32,26 @@ static std::vector<T> ComputeStride(const std::vector<T>& shape) {
 template <typename T, bool Conjugate>
 struct transpose<T, DEVICE_CPU, Conjugate> {
     void operator()(
-        const Tensor& input,
         const std::vector<int>& perm,
-        Tensor& output)
+        const std::vector<int64_t>& p_shape,
+        const std::vector<int64_t>& q_shape,
+        const T* p,
+        T* q)
     {
-        const int ndim = input.shape().ndim();
-        auto in_strides = ComputeStride(input.shape().dims());
-        auto out_strides = ComputeStride(output.shape().dims());
+        REQUIRES_OK(p_shape.size() == q_shape.size(),
+            "transpose: p and q must have the same number of dimensions");
+        const int ndim = static_cast<int>(p_shape.size());
+        auto in_strides = ComputeStride(p_shape);
+        auto out_strides = ComputeStride(q_shape);
 
-        const T* p = reinterpret_cast<const T*>(input.data());
-        T* q = reinterpret_cast<T*>((output.data()));
-
+        int64_t num_elements = 1;
+        for (int ii = 0; ii < ndim; ++ii) {
+            num_elements *= q_shape[ii];
+        }
+        num_elements = ndim ? num_elements : 0;
         // Define a lambda expression 'transpose_fn' to implement transpose operation.
         // Perform transpose operation for the specified range [begin, end) in the output Tensor.
-        for (int64_t o_idx = 0; o_idx < output.shape().NumElements(); o_idx++) {
+        for (int64_t o_idx = 0; o_idx < num_elements; o_idx++) {
             int64_t i_idx = 0; // Initialize the index for the input Tensor element.
             int64_t t = o_idx; // Calculate the index for the output Tensor element.
 
@@ -61,7 +67,7 @@ struct transpose<T, DEVICE_CPU, Conjugate> {
             // Check if conjugation is needed.
             if (Conjugate) {
                 // Assign the conjugate value of the input Tensor element at index 'i_idx' to the output Tensor element at index 'o_idx'.
-                q[o_idx] = op::conj(p[i_idx]);
+                q[o_idx] = kernels::conj(p[i_idx]);
             } else {
                 // Assign the input Tensor element at index 'i_idx' to the output Tensor element at index 'o_idx'.
                 q[o_idx] = p[i_idx];
@@ -71,102 +77,109 @@ struct transpose<T, DEVICE_CPU, Conjugate> {
 };
 
 
-template <typename T>
-struct stride<T, DEVICE_CPU> {
-    void operator()(
-        const Tensor& input,
-        const TensorShape& stride,
-        Tensor& output)
-    {
-        const int ndim = input.shape().ndim();
-        auto in_strides = ComputeStride(input.shape().dims());
-        auto out_strides = ComputeStride(output.shape().dims());
+template<typename T, typename Device>
+void stride<T, Device>::operator()(
+    const std::vector<int64_t> &stride,
+    const std::vector<int64_t> &p_shape,
+    const std::vector<int64_t> &q_shape,
+    const T *p,
+    T *q)
+{
+    REQUIRES_OK(p_shape.size() == q_shape.size() ,
+                "stride: p and q must match the number of dimensions");
+    const int ndim = static_cast<int>(p_shape.size());
+    auto in_strides = ComputeStride(p_shape);
+    auto out_strides = ComputeStride(q_shape);
 
-        const T* p = input.data<T>();
-        T* q = output.data<T>();
-
-        // Perform stride operation for the specified range [begin, end) in the output Tensor.
-        for (int64_t o_idx = 0; o_idx < output.NumElements(); o_idx++) {
-            int64_t i_idx = 0; // Initialize the index for the input Tensor element.
-            int64_t current_o_idx = o_idx; // Calculate the index for the output Tensor element.
-            // Iterate over each dimension of the output Tensor.
-            for (int ii = 0; ii < ndim; ++ii) {
-                // Calculate the index in the current dimension.
-                // It is natural to view a tensor as a multi-dimentional array.
-                const int64_t current_dim_idx = current_o_idx / out_strides[ii];
-                // Update the output Tensor index 'current_o_idx' by removing the offset in the current dimension.
-                current_o_idx -= current_dim_idx * out_strides[ii];
-                // Calculate the offset for the corresponding index position in the input Tensor and accumulate it in 'i_idx'.
-                i_idx += (current_dim_idx * stride.dim_size(ii)) * in_strides[ii];
-            }
-            // Assign the input Tensor element at index 'i_idx' to the output Tensor element at index 'o_idx'.
-            q[o_idx] = p[i_idx];
-        }
+    int64_t num_elements = 1;
+    for (int ii = 0; ii < ndim; ++ii) {
+        num_elements *= q_shape[ii];
     }
-};
-
-
-template <typename T>
-struct inflate<T, DEVICE_CPU> {
-    void operator()(
-        const Tensor& input,
-        const TensorShape& stride,
-        Tensor& output)
-    {
-        const int ndim = input.shape().ndim();
-        auto in_strides = ComputeStride(input.shape().dims());
-        auto out_strides = ComputeStride(output.shape().dims());
-
-        const T* p = input.data<T>();
-        T* q = output.data<T>();
-
-        // Perform stride operation for the specified range [begin, end) in the output Tensor.
-        for (int64_t o_idx = 0; o_idx < output.NumElements(); o_idx++) {
-            int64_t i_idx = 0; // Initialize the index for the input Tensor element.
-            int64_t current_o_idx = o_idx; // Calculate the index for the output Tensor element.
-            bool valid = true;
-            // Iterate over each dimension of the output Tensor.
-            for (int ii = 0; ii < ndim; ++ii) {
-                // Calculte the ratio of the current output Tensor index 'current_o_idx' in the current dimension.
-                const int64_t current_dim_idx = current_o_idx / out_strides[ii];
-                // Update the output Tensor index 'current_o_idx' by removing the offset in the current dimension.
-                current_o_idx -= current_dim_idx * out_strides[ii];
-                // Calculate the offset for the corresponding index position in the input Tensor and accumulate it in 'i_idx'.
-                if (current_dim_idx % stride.dim_size(ii) == 0) {
-                    i_idx += (current_dim_idx / stride.dim_size(ii)) * in_strides[ii];
-                }
-                else {
-                    valid = false;
-                    break;
-                }
-            }
-            // Assign the input Tensor element at index 'i_idx' to the output Tensor element at index 'o_idx'.
-            q[o_idx] = p[i_idx] * static_cast<T>(valid ? 1.0 : 0.0);
+    num_elements = ndim ? num_elements : 0;
+    // Define a lambda expression 'stride_fn' to implement stride operation.
+    // Perform stride operation for the specified range [begin, end) in the output Tensor.
+    // Perform stride operation for the specified range [begin, end) in the output Tensor.
+    for (int64_t o_idx = 0; o_idx < num_elements; o_idx++) {
+        int64_t i_idx = 0; // Initialize the index for the input Tensor element.
+        int64_t current_o_idx = o_idx; // Calculate the index for the output Tensor element.
+        // Iterate over each dimension of the output Tensor.
+        for (int ii = 0; ii < ndim; ++ii) {
+            // Calculate the index in the current dimension.
+            // It is natural to view a tensor as a multi-dimentional array.
+            const int64_t current_dim_idx = current_o_idx / out_strides[ii];
+            // Update the output Tensor index 'current_o_idx' by removing the offset in the current dimension.
+            current_o_idx -= current_dim_idx * out_strides[ii];
+            // Calculate the offset for the corresponding index position in the input Tensor and accumulate it in 'i_idx'.
+            i_idx += (current_dim_idx * stride[ii]) * in_strides[ii];
         }
+        // Assign the input Tensor element at index 'i_idx' to the output Tensor element at index 'o_idx'.
+        q[o_idx] = p[i_idx];
     }
-};
+}
 
 
-template <typename T>
-struct reduce<T, DEVICE_CPU> {
-    void operator()(
-        const Tensor& input,
-        const int64_t& inner_most_dim,
-        Tensor& output)
-    {
-        const T* p = reinterpret_cast<const T*>(input.data());
-        T* q = reinterpret_cast<T*>((output.data()));
+template<typename T, typename Device>
+void inflate<T, Device>::operator()(
+    const std::vector<int64_t> &inflate,
+    const std::vector<int64_t> &p_shape,
+    const std::vector<int64_t> &q_shape,
+    const T *p,
+    T *q)
+{
+    REQUIRES_OK(p_shape.size() == q_shape.size(),
+                "transpose: p and q must have the same number of dimensions");
+    const int ndim = static_cast<int>(p_shape.size());
+    auto in_strides = ComputeStride(p_shape);
+    auto out_strides = ComputeStride(q_shape);
 
-        // It's just so simple to implement the reduce operation.
-        for (int64_t o_idx = 0; o_idx < output.NumElements(); o_idx++) {
-            T sum = 0;
-            for (int64_t i_idx = o_idx * inner_most_dim; i_idx < inner_most_dim + o_idx * inner_most_dim; i_idx++) {
-                sum += p[i_idx];
+    int64_t num_elements = 1;
+    for (int ii = 0; ii < ndim; ++ii) {
+        num_elements *= q_shape[ii];
+    }
+    num_elements = ndim ? num_elements : 0;
+    // Define a lambda expression 'inflate_fn' to implement inflate operation.
+    // Perform inflate operation for the specified range [begin, end) in the output Tensor.
+    for (int64_t o_idx = 0; o_idx < num_elements; o_idx++) {
+        int64_t i_idx = 0; // Initialize the index for the input Tensor element.
+        int64_t current_o_idx = o_idx; // Calculate the index for the output Tensor element.
+        bool valid = true;
+        // Iterate over each dimension of the output Tensor.
+        for (int ii = 0; ii < ndim; ++ii) {
+            // Calculte the ratio of the current output Tensor index 'current_o_idx' in the current dimension.
+            const int64_t current_dim_idx = current_o_idx / out_strides[ii];
+            // Update the output Tensor index 'current_o_idx' by removing the offset in the current dimension.
+            current_o_idx -= current_dim_idx * out_strides[ii];
+            // Calculate the offset for the corresponding index position in the input Tensor and accumulate it in 'i_idx'.
+            if (current_dim_idx % inflate[ii] == 0) {
+                i_idx += (current_dim_idx / inflate[ii]) * in_strides[ii];
             }
-            q[o_idx] = sum;
+            else {
+                valid = false;
+                break;
+            }
         }
+        // Assign the input Tensor element at index 'i_idx' to the output Tensor element at index 'o_idx'.
+        q[o_idx] = p[i_idx] * static_cast<T>(valid ? 1.0 : 0.0);
     }
-};
+}
+
+
+template<typename T, typename Device>
+void reduce<T, Device>::operator()(
+    const int64_t &num_element,
+    const int64_t &inner_most_dim,
+    const T *p,
+    T *q)
+{
+    // It's just so simple to implement the reduce operation.
+    for (int64_t o_idx = 0; o_idx < num_element; o_idx++) {
+        T sum = 0;
+        for (int64_t i_idx = o_idx * inner_most_dim; i_idx < inner_most_dim + o_idx * inner_most_dim; i_idx++) {
+            sum += p[i_idx];
+        }
+        q[o_idx] = sum;
+    }
+}
 
 
 template struct transpose<int, DEVICE_CPU>;

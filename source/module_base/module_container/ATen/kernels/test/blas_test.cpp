@@ -1,11 +1,11 @@
 #include <gtest/gtest.h>
 
 #include <ATen/core/tensor.h>
-#include <ATen/kernels/blas_op.h>
+#include <ATen/kernels/blas.h>
 #include <ATen/kernels/test/op_test_utils.h>
 
 namespace container {
-namespace op {
+namespace kernels {
 
 template <typename T>
 class BlasOpTest : public testing::Test {

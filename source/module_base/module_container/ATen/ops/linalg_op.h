@@ -1,15 +1,15 @@
-#ifndef ATEN_KERNELS_LINALG_H_
-#define ATEN_KERNELS_LINALG_H_
+#ifndef ATEN_OPS_LINALG_H_
+#define ATEN_OPS_LINALG_H_
 
 #include <ATen/core/tensor.h>
 
 #include <ATen/ops/einsum_op.h>
 
 namespace container {
-namespace kernels {
+namespace op {
 
 template <bool Conjugate = false>
-struct transpose {
+struct transpose_op {
     /**
      * @brief Perform the transpose operation on the input tensor.
      *
@@ -45,8 +45,7 @@ struct transpose {
  * @tparam T The data type of the Tensor.
  * @tparam Device The execution device (e.g., CPU or GPU).
  */
-template <typename T, typename Device>
-struct stride {
+struct stride_op {
     /**
      * @brief Perform stride operation on the input Tensor.
      *
@@ -62,7 +61,7 @@ struct stride {
      */
     void operator()(
         const Tensor& input,
-        const TensorShape& stride,
+        const std::vector<int64_t>& stride,
         Tensor& output);
 };
 
@@ -71,8 +70,7 @@ struct stride {
  *
  * This struct defines a functor that can be used to inflate a tensor using the specified stride.
  */
-template <typename T, typename Device>
-struct inflate {
+struct inflate_op {
     /**
      * @brief Inflate the input tensor.
      *
@@ -84,35 +82,12 @@ struct inflate {
      */
     void operator()(
         const Tensor& input,
-        const TensorShape& stride,
+        const std::vector<int64_t>& stride,
         Tensor& output);
 };
 
 
-/**
- * @brief A functor to perform reduction operation on a Tensor along the inner-most dimension.
- *
- * This functor applies a reduction operation on a given input Tensor along the inner-most dimension.
- * The reduction operation could be any operation that combines the elements along a specific dimension
- * into a single result, such as sum, mean, max, etc.
- *
- * @tparam T The data type of the elements in the Tensor.
- * @tparam Device The device on which the Tensor resides (CPU/GPU).
- * 
- * @TOTO: Add support for axis reduction operations.
- */
-template <typename T, typename Device>
-struct reduce {
-    /**
-     * @brief Perform the reduction operation on the input Tensor.
-     *
-     * This function applies the reduction operation on the input Tensor along the inner-most dimension
-     * and stores the result in the output Tensor.
-     *
-     * @param input The input Tensor on which the reduction operation will be applied.
-     * @param inner_most_dim The dimension along which the reduction will be performed.
-     * @param output The output Tensor to store the result of the reduction operation.
-     */
+struct reduce_op {
     void operator()(
         const Tensor& input,
         const int64_t& inner_most_dim,
@@ -122,4 +97,4 @@ struct reduce {
 } // namespace op
 } // namespace container
 
-#endif // ATEN_KERNELS_LINALG_H_
+#endif // ATEN_OPS_LINALG_H_

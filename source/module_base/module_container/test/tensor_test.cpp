@@ -304,6 +304,7 @@ TEST(Tensor, Resize) {
 
     container::TensorShape new_shape({3, 3});
     t1.resize(new_shape);
+    t1.zero();
 
     // Check if the data type remains the same after resize
     EXPECT_EQ(t1.data_type(), container::DataType::DT_FLOAT);

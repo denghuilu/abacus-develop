@@ -6,6 +6,7 @@
 #include <base/macros/macros.h>
 
 namespace base {
+namespace utils {
 
 template <typename T>
 class array_ref final {
@@ -36,7 +37,7 @@ class array_ref final {
     // Construct from a std::initializer_list.
     /* implicit */ constexpr array_ref(const std::initializer_list<T>& list)
       : data_(list.begin()), length_(list.size()) {}
-    
+
     constexpr const T* begin() const { return data_; }
     constexpr const T* end()   const { return data_ + length_; }
 
@@ -107,8 +108,9 @@ bool operator!=(array_ref<T> a1, array_ref<T> a2) {
 }
 
 
+} // namespace utils
 } // namespace base
 
-using int_array_ref = base::array_ref<int64_t>;
+using int_array_ref = ::base::utils::array_ref<int64_t>;
 
 #endif // BASE_UTILS_ARRAY_REF_H_

@@ -1,9 +1,35 @@
-#ifndef ATEN_CORE_DISPATCH_H_
-#define ATEN_CORE_DISPATCH_H_
+#ifndef ATEN_CORE_TENSOR_ITERATOR_H_
+#define ATEN_CORE_TENSOR_ITERATOR_H_
 
 #include <base/macros/macros.h>
 
-template <int N>
+namespace container {
+
+class TensorIteratorConfig final {
+    friend class TensorIterator;
+    friend class TensorIteratorBase;
+
+    TensorIteratorConfig() = default;
+    ~TensorIteratorConfig() = default;
+
+    DISALLOW_COPY_MOVE_AND_ASSIGN(TensorIteratorConfig);
+
+    TensorIteratorConfig& check_all_same_dtype(bool check_all_same_dtype) {
+        check_all_same_dtype_ = check_all_same_dtype;
+        return *this;
+    }
+
+    TensorIteratorConfig& add_input(const Tensor& input);
+    TensorIteratorConfig& add_output(const Tensor& output);
+
+    TensorIteratorConfig& add_borrowed_input(const Tensor& input);
+    TensorIteratorConfig& add_borrowed_output(const Tensor& output);
+
+  private:
+    bool check_all_same_dtype_ = false;
+
+};
+
 class TensorIterator {
 public:
     TensorIterator() {}
@@ -17,34 +43,6 @@ public:
     }
 };
 
-template <typename Derived>
-struct DispatchBase {
-    void operator()() { (static_cast<Derived*>(this))->impl() };
-};
+} // namespace container
 
-#define DECLARE_DISPATCH(name)                          \
-template <typename T, typename Device>                  \
-struct name : DispatchBase<name<T, Device>>;            \
-                                                        \
-template <typename T, typename Device,                  \
-          typename rT, typename... Args>                \
-struct name<T, Device, rT (*)(Args...)>                 \
-{                                                       \
-    void impl();                                        \
-};
-
-#define DECLARE_DISPATCH(name)                          \
-struct name : DispatchBase<name> {                      \
-    void impl();                                        \
-}                       
-
-#define DEFINE_DISPATCHER(name)                         \
-template <typename T, typename Device>                  \
-void name<T, Device>::impl() {                          \
-    /* do something */                                  \
-}                                                       \
-                                                        \
-
-                                                      
-
-#endif // ATEN_CORE_DISPATCH_H_
+#endif // ATEN_CORE_TENSOR_ITERATOR_H_
