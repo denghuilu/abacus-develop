@@ -70,7 +70,7 @@ class Tensor {
      */
     Tensor(DataType data_type, DeviceType device, const TensorShape& shape);
 
-    Tensor(base::Allocator* a, DataType data_type, DeviceType device, const TensorShape& shape);
+    Tensor(base::core::Allocator* a, DataType data_type, DeviceType device, const TensorShape& shape);
 
     /**
      * @brief Construct a new Tensor object by copying another Tensor.
@@ -324,7 +324,7 @@ class Tensor {
      * @return The related Allocator class pointer.
      */
     // TODO: Delete this function, and use a singleton allocator class.
-    static base::Allocator* GetAllocator(DeviceType device);
+    static base::core::Allocator* GetAllocator(DeviceType device);
 
     /**
      * @brief Get the element at the specified indices.

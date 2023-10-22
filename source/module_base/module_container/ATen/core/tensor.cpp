@@ -19,7 +19,7 @@ Tensor::Tensor(DataType data_type, const TensorShape& shape)
 Tensor::Tensor(DataType data_type, DeviceType device, const TensorShape& shape)
         : Tensor(GetAllocator(device), data_type, device, shape) {}
 
-Tensor::Tensor(base::Allocator* a, DataType data_type, DeviceType device, const TensorShape& shape)
+Tensor::Tensor(base::core::Allocator* a, DataType data_type, DeviceType device, const TensorShape& shape)
         : data_type_(data_type),
           device_(device),
           shape_(shape),
@@ -75,14 +75,14 @@ void* Tensor::data() const { return buffer_->data(); }
 const TensorBuffer& Tensor::buffer() const { return *buffer_; }
 
 // Get the Allocator object according to the given device type.
-base::Allocator* Tensor::GetAllocator(DeviceType device) {
-    base::Allocator * allocator;
+base::core::Allocator* Tensor::GetAllocator(DeviceType device) {
+    base::core::Allocator * allocator;
     if (device == DeviceType::CpuDevice) {
-        allocator = new base::CPUAllocator();
+        allocator = new base::core::CPUAllocator();
     }
 #if defined(__CUDA) || defined(__ROCM)
     else if (device == DeviceType::GpuDevice) {
-        allocator = new base::GPUAllocator();
+        allocator = new base::core::GPUAllocator();
     }
 #endif // __CUDA || __ROCM
     else {

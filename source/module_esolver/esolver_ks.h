@@ -91,7 +91,7 @@ namespace ModuleESolver
         Charge_Extra CE;
 
         // wavefunction coefficients
-        psi::Psi<T>* psi = nullptr;
+        psi::Psi<std::complex<double>>* psi = nullptr;
 
     protected:
         std::string basisname; //PW or LCAO

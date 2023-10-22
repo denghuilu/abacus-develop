@@ -10,7 +10,6 @@
 #include <base/macros/rocm.h>
 #endif
 
-#include <ATen/core/tensor.h>
 #include <ATen/core/tensor_types.h>
 
 #define DISALLOW_COPY_AND_ASSIGN(TypeName) \
@@ -31,14 +30,14 @@
 
 #define MAX_SIZE_T UINT64_MAX
 
-#define AT_HOST
-#define AT_DEVICE
-#define AT_HOST_DEVICE
-
 #if defined(__CUDACC__) || defined(__HIPCC__)
 #define AT_HOST __host__
 #define AT_DEVICE __device__
 #define AT_HOST_DEVICE __host__ __device__
+#else
+#define AT_HOST
+#define AT_DEVICE
+#define AT_HOST_DEVICE
 #endif // defined(__CUDACC__) || defined(__HIPCC__)
 
 #if defined(__GNUC__) || defined(__ICL) || defined(__clang__)
