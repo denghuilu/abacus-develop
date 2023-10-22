@@ -432,7 +432,7 @@ These variables are used to control general system parameters.
 ### kpar
 
 - **Type**: Integer
-- **Description**: divide all processors into kpar groups, and k points will be distributed among each group. The value taken should be less than or equal to the number of k points as well as the number of MPI threads.
+- **Description**: divide all processors into kpar groups, and k points will be distributed among each group. The value taken should be less than or equal to the number of k points as well as the number of MPI processes.
 - **Default**: 1
 
 ### bndpar
@@ -574,8 +574,8 @@ These variables are used to control general system parameters.
 - **Type**: Integer
 - **Availability**: pw base
 - **Description**: 
-  - 0: it will be set to the number of MPI threads. Normally, it is fine just leave it to the default value.
-  - `>0`: it specifies the number of threads used for carrying out diagonalization. Must be less than or equal to total number of MPI threads. Also, when cg diagonalization is used, diago_proc must be the same as the total number of MPI threads.
+  - 0: it will be set to the number of MPI processes. Normally, it is fine just leave it to the default value.
+  - `>0`: it specifies the number of processes used for carrying out diagonalization. Must be less than or equal to total number of MPI processes. Also, when cg diagonalization is used, diago_proc must be the same as the total number of MPI processes.
 - **Default**: 0
 
 ### nbspline
@@ -608,12 +608,12 @@ If only one value is set (such as `kspacing 0.5`), then kspacing values of a/b/c
   Available options are:
 
   - cpu: for CPUs via Intel, AMD, or Other supported CPU devices
-  - gpu: for GPUs via CUDA.
+  - gpu: for GPUs via CUDA or ROCm.
 
   Known limitations:
 
   - pw basis: required by the `gpu` acceleration options
-  - cg ks_solver: required by the `gpu` acceleration options
+  - cg/bpcg/dav ks_solver: required by the `gpu` acceleration options
 - **Default**: cpu
 
 [back to top](#full-list-of-input-keywords)
@@ -835,6 +835,7 @@ calculations.
   For plane-wave basis,
 
   - **cg**: cg method.
+  - **bpcg**: bpcg method, which is a block-parallel Conjugate Gradient (CG) method, typically exhibits higher acceleration in a GPU environment.
   - **dav**: the Davidson algorithm.
 
   For atomic orbitals basis,
@@ -907,14 +908,17 @@ calculations.
 - **Availability**: `smearing_method` is not `fixed`.
 - **Description**: Charge mixing methods.
   - **plain**: Just simple mixing.
-  - **pulay**: Standard Pulay method.
-  - **broyden**: Broyden method.
-- **Default**: pulay
+  - **pulay**: Standard Pulay method. [P. Pulay Chemical Physics Letters, (1980)](https://www.sciencedirect.com/science/article/abs/pii/0009261480803964)
+  - **broyden**: Simplified modified Broyden method. [D.D. Johnson Physical Review B (1988)](https://journals.aps.org/prb/abstract/10.1103/PhysRevB.38.12807)
+  
+  In general, the convergence of the Broyden method is slightly faster than that of the Pulay method.
+- **Default**: broyden
 
 ### mixing_beta
 
 - **Type**: Real
-- **Description**: mixing parameter. We recommend the following options:
+- **Description**: In general, the formula of charge mixing can be written as $\rho_{new} = \rho_{old} + \beta * \rho_{update}$, where $\rho_{new}$ represents the new charge density after charge mixing, $\rho_{old}$ represents the charge density in previous step, $\rho_{update}$ is obtained through various mixing methods, and $\beta$ is set by the parameter `mixing_beta`. A lower value of 'mixing_beta' results in less influence of $\rho_{update}$ on $\rho_{new}$, making the self-consistent field (SCF) calculation more stable. However, it may require more steps to achieve convergence.
+We recommend the following options:
   - **-10.0**: Program will auto set `mixing_beta` and `mixing_gg0` before charge mixing method starts.
     - Default values of transition metal system are `mixing_beta=0.2` and `mixing_gg0=1.5`;
     - Default values of metal system (bandgap <= 1.0 eV) are `mixing_beta=0.2` and `mixing_gg0=0.0`;
@@ -929,7 +933,9 @@ calculations.
 ### mixing_ndim
 
 - **Type**: Integer
-- **Description**: It indicates the mixing dimensions in Pulay, Pulay method uses the density from previous mixing_ndim steps and do a charge mixing based on this density.
+- **Description**: It indicates the mixing dimensions in Pulay or Broyden. Pulay and Broyden method use the density from previous mixing_ndim steps and do a charge mixing based on this density.
+  
+  For systems that are difficult to converge, one could try increasing the value of 'mixing_ndim' to enhance the stability of the self-consistent field (SCF) calculation.
 - **Default**: 8
 
 ### mixing_gg0
@@ -938,6 +944,8 @@ calculations.
 - **Description**: Whether to perfom Kerker scaling.
   -  **>0**: The high frequency wave vectors will be suppressed by multiplying a scaling factor $\frac{k^2}{k^2+gg0^2}$. Setting `mixing_gg0 = 1.5` is normally a good starting point.
   -  **0**: No Kerker scaling is performed.
+  
+  For systems that are difficult to converge, particularly metallic systems, enabling Kerker scaling may aid in achieving convergence.
 - **Default**: 0.0
 
 ### mixing_tau
@@ -2075,7 +2083,7 @@ These variables are relevant when using hybrid functionals.
 ### exx_distribute_type
 
 - **Type**: String
-- **Description**: When running in parallel, the evaluation of Fock exchange is done by distributing atom pairs on different threads, then gather the results. exx_distribute_type governs the mechanism of distribution. Available options are `htime`, `order`, `kmean1` and `kmeans2`. 
+- **Description**: When running in parallel, the evaluation of Fock exchange is done by distributing atom pairs on different processes, then gather the results. exx_distribute_type governs the mechanism of distribution. Available options are `htime`, `order`, `kmean1` and `kmeans2`. 
   - `order`: Atom pairs are simply distributed by their orders. 
   - `htime`: The balance in time is achieved on each processor, hence if the memory is sufficient, this is the recommended method. 
   - `kmeans1` ,   `kmeans2`: Two methods where the k-means clustering method is used to reduce memory requirement. They might be necessary for very large systems. (Currently not used)

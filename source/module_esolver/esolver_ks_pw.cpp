@@ -143,7 +143,7 @@ void ESolver_KS_PW::Init_GlobalC(Input& inp, UnitCell& cell)
     //======================================
     // Initalize non local pseudopotential
     //======================================
-    GlobalC::ppcell.init_vnl(GlobalC::ucell);
+    GlobalC::ppcell.init_vnl(GlobalC::ucell, this->pw_rho);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
 
     GlobalC::ppcell.cal_effective_D();
@@ -264,7 +264,7 @@ void ESolver_KS_PW::init_after_vc(Input& inp, UnitCell& ucell)
     }
     else
     {
-        GlobalC::ppcell.init_vnl(GlobalC::ucell);
+        GlobalC::ppcell.init_vnl(GlobalC::ucell, this->pw_rho);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
 
         this->pw_wfc->initgrids(GlobalC::ucell.lat0,
@@ -298,7 +298,8 @@ void ESolver_KS_PW::init_after_vc(Input& inp, UnitCell& ucell)
     {
         GlobalC::paw_cell.set_libpaw_ecut(INPUT.ecutwfc/2.0,INPUT.ecutwfc/2.0); //in Hartree
         GlobalC::paw_cell.set_libpaw_fft(this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz,
-                                         this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz);
+                                         this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz,
+                                         this->pw_wfc->startz,this->pw_wfc->numz);
 
         GlobalC::paw_cell.prepare_paw();
         GlobalC::paw_cell.set_sij();
@@ -434,9 +435,8 @@ void ESolver_KS_PW::othercalculation(const int istep)
 
 void ESolver_KS_PW::eachiterinit(const int istep, const int iter)
 {
-    // mohan add 2010-07-16
     if (iter == 1)
-        this->p_chgmix->reset();
+        this->p_chgmix->mix_reset();
 
     // mohan move harris functional to here, 2012-06-05
     // use 'rho(in)' and 'v_h and v_xc'(in)

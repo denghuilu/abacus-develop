@@ -1,16 +1,17 @@
 #include "esolver_ks.h"
 
+#include <time.h>
+#ifdef __MPI
+#include <mpi.h>
+#else
+#include <chrono>
+#endif
+
 #include <iostream>
 
-#include "../module_io/print_info.h"
+#include "module_io/print_info.h"
 #include "module_base/timer.h"
 #include "module_io/input.h"
-#include "time.h"
-#ifdef __MPI
-#include "mpi.h"
-#else
-#include "chrono"
-#endif
 
 //--------------Temporary----------------
 #include "module_base/global_variable.h"
@@ -50,9 +51,12 @@ namespace ModuleESolver {
                              INPUT.mixing_gg0,
                              INPUT.mixing_tau);
         // using bandgap to auto set mixing_beta
-        if (std::abs(INPUT.mixing_beta + 10.0) < 1e-6) {
+        if (std::abs(INPUT.mixing_beta + 10.0) < 1e-6)
+        {
             p_chgmix->need_auto_set();
-        } else if (INPUT.mixing_beta > 1.0 || INPUT.mixing_beta < 0.0) {
+        }
+        else if (INPUT.mixing_beta > 1.0 || INPUT.mixing_beta < 0.0)
+        {
             ModuleBase::WARNING("INPUT", "You'd better set mixing_beta to [0.0, 1.0]!");
         }
 
@@ -65,15 +69,19 @@ namespace ModuleESolver {
         this->wf.out_wfc_r = INPUT.out_wfc_r;
     }
 
-    ESolver_KS::~ESolver_KS() {
+    template<typename T, typename Device>
+    ESolver_KS<T, Device>::~ESolver_KS()
+    {
         delete this->pw_wfc;
         delete this->p_hamilt;
         delete this->phsol;
         delete this->p_chgmix;
     }
 
-    void ESolver_KS::Init(Input &inp, UnitCell &ucell) {
-        ESolver_FP::Init(inp, ucell);
+    template<typename T, typename Device>
+    void ESolver_KS<T, Device>::Init(Input& inp, UnitCell& ucell)
+    {
+        ESolver_FP::Init(inp,ucell);
 #ifdef USE_PAW
         if(GlobalV::use_paw)
         {
@@ -214,7 +222,8 @@ namespace ModuleESolver {
         {
             GlobalC::paw_cell.set_libpaw_ecut(INPUT.ecutwfc/2.0,INPUT.ecutwfc/2.0); //in Hartree
             GlobalC::paw_cell.set_libpaw_fft(this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz,
-                                            this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz);
+                                            this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz,
+                                            this->pw_wfc->startz,this->pw_wfc->numz);
             GlobalC::paw_cell.prepare_paw();
             GlobalC::paw_cell.set_sij();
 
@@ -363,8 +372,8 @@ namespace ModuleESolver {
                             }
                             p_chgmix->auto_set(bandgap_for_autoset, GlobalC::ucell);
                         }
-                        //conv_elec = this->estate.mix_rho();
-                        p_chgmix->mix_rho(iter, pelec->charge);
+                        
+                        p_chgmix->mix_rho(pelec->charge);
                         //----------charge mixing done-----------
                     }
                 }
@@ -479,4 +488,4 @@ namespace ModuleESolver {
                                           prefix);
     }
 
-} // namespace ModuleESolver
+}

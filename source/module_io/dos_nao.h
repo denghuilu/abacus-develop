@@ -7,8 +7,9 @@
 
 namespace ModuleIO
 {
-void out_dos_nao(const psi::Psi<double>* psid,
-                  const psi::Psi<std::complex<double>>* psi,
+    template<typename T>
+    void out_dos_nao(
+        const psi::Psi<T>* psi,
                   LCAO_Hamilt& uhm,
                   const ModuleBase::matrix& ekb,
                   const ModuleBase::matrix& wg,

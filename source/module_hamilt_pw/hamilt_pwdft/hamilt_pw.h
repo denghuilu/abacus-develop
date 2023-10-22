@@ -1,11 +1,10 @@
 #ifndef HAMILTPW_H
 #define HAMILTPW_H
 
+#include "module_base/macros.h"
 #include "module_cell/klist.h"
 #include "module_elecstate/potentials/potential_new.h"
 #include "module_hamilt_general/hamilt.h"
-
-#include <module_base/macros.h>
 
 namespace hamilt
 {
@@ -27,11 +26,6 @@ class HamiltPW : public Hamilt
 
     // core function: for solving eigenvalues of Hamiltonian with iterative method
     void sPsi(const ct::Tensor& psi_in, ct::Tensor& spsi) const override;
-
-  private:
-
-    Device *ctx = {};
-    using syncmem_complex_op = psi::memory::synchronize_memory_op<T, Device, Device>;
 };
 
 } // namespace hamilt

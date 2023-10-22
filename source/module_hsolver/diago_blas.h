@@ -8,21 +8,22 @@
 #ifndef DIAGOBLAS_H
 #define DIAGOBLAS_H
 
+#include <complex>
+#include <utility>
+#include <vector>
+
 #include "diagh.h"
 #include "module_base/complexmatrix.h"
 #include "module_base/matrix.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
-
-#include <complex>
-#include <utility>
-#include <vector>
 
 namespace hsolver
 {
 
 class DiagoBlas : public DiagH
 {
-
+private:
+    using Real = typename GetTypeReal<T>::type;
   public:
     void diag(hamilt::Hamilt* phm_in, psi::Psi<double> &psi, double *eigenvalue_in) override;
 

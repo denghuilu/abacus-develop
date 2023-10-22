@@ -1,15 +1,15 @@
 #include "hsolver_pw.h"
 
-#include "diago_cg.h"
-#include "diago_bpcg.h"
-#include "diago_david.h"
-#include "diago_iter_assist.h"
-#include "module_base/tool_quit.h"
-#include "module_base/timer.h"
-#include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
-#include "module_elecstate/elecstate_pw.h"
-#include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 #include <algorithm>
+
+#include "diago_bpcg.h"
+#include "diago_cg.h"
+#include "diago_david.h"
+#include "module_base/timer.h"
+#include "module_base/tool_quit.h"
+#include "module_elecstate/elecstate_pw.h"
+#include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
+#include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 #include "module_hsolver/diago_iter_assist.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #ifdef USE_PAW
@@ -158,6 +158,8 @@ void HSolverPW<T, Device>::solve(
             delete[] kpg;
 
             GlobalC::paw_cell.get_vkb();
+
+            GlobalC::paw_cell.set_currentk(ik);
         }
 #endif
 
@@ -168,6 +170,10 @@ void HSolverPW<T, Device>::solve(
 
         // specify current k point
         this->pdiagh->updateDiagHK(ik);
+#ifdef USE_PAW
+        GlobalC::paw_cell.set_currentk(ik);
+#endif
+
         /// solve eigenvector and eigenvalue for H(k)
         this->hamiltSolvePsiK(pHamilt, psi, eigenvalues.data() + ik * pes->ekb.nc);
         if(skip_charge)
@@ -177,7 +183,7 @@ void HSolverPW<T, Device>::solve(
             DiagoIterAssist<T, Device>::avg_iter = 0.0;
         }
         /// calculate the contribution of Psi for charge density rho
-     }
+    }
     castmem_2d_2h_op()(cpu_ctx, cpu_ctx, pes->ekb.c, eigenvalues.data(), pes->ekb.nr * pes->ekb.nc);
 
     this->endDiagh();
@@ -201,6 +207,7 @@ void HSolverPW<T, Device>::solve(
         for (int ik = 0; ik < this->wfc_basis->nks; ++ik)
         {
             psi.fix_k(ik);
+            GlobalC::paw_cell.set_currentk(ik);
             int nbands = psi.get_nbands();
             for(int ib = 0; ib < nbands; ib ++)
             {
@@ -216,11 +223,11 @@ void HSolverPW<T, Device>::solve(
 
         for(int iat = 0; iat < GlobalC::ucell.nat; iat ++)
         {
-            GlobalC::paw_cell.set_rhoij(iat,nrhoijsel[iat],rhoijp[iat].size(),rhoijselect[iat].data(),rhoijp[iat].data());
+            GlobalC::paw_cell.set_rhoij(iat,nrhoijsel[iat],rhoijselect[iat].size(),rhoijselect[iat].data(),rhoijp[iat].data());
         }
 
         double* nhatgr;
-        nhatgr = new double[3*GlobalC::paw_cell.get_nrxx()];
+        nhatgr = new double[3*GlobalC::paw_cell.get_nfft()];
         GlobalC::paw_cell.get_nhat(pes->charge->nhat,nhatgr);
         delete[] nhatgr;
     }

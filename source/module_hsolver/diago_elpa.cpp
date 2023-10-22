@@ -70,7 +70,8 @@ void DiagoElpa::diag(hamilt::Hamilt* phm_in, psi::Psi<double> &psi, double *eige
 }
 
 #ifdef __MPI
-bool DiagoElpa::ifElpaHandle(const bool &newIteration, const bool &ifNSCF)
+    template<typename T>
+    bool DiagoElpa<T>::ifElpaHandle(const bool& newIteration, const bool& ifNSCF)
 {
     int doHandle = false;
     if (newIteration)

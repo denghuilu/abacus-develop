@@ -9,8 +9,7 @@ threshold=0.0000001
 # check accuracy
 ca=8
 # regex of case name
-case="^[^#].*PINT.*$"
-#case="^[^#].*_.*$"
+case="^[^#].*_.*$"
 # enable AddressSanitizer
 sanitize=false
 
@@ -153,6 +152,7 @@ if [ "$sanitize" == true ]; then
 	mkdir ../html
 	echo -e "# Address Sanitizer Diagnostics\n" > ../html/README.md
 	report=$(realpath ../html/README.md)
+    export ASAN_OPTIONS="log_path=asan"
 fi
 
 for dir in $testdir; do
@@ -161,8 +161,13 @@ for dir in $testdir; do
 	TIMEFORMAT='[----------] Time elapsed: %R seconds'
 	#parallel test
 	time {
+        if [ "$case" = "282_NO_RPA" -o "$dir" = "102_PW_BPCG" ]; then
+            mpirun -np 1 $abacus > log.txt
+        else
+            mpirun -np $np $abacus > log.txt
+        fi
+
 		if [ "$sanitize" == true ]; then
-			ASAN_OPTIONS="log_path=asan" mpirun -np $np $abacus > log.txt
 			echo -e "## Test case ${dir}\n" >> ${report}
 			for diagnostic in asan.*; do
 				echo -e "### On process id ${diagnostic}\n" >> ${report}
@@ -170,12 +175,6 @@ for dir in $testdir; do
 				cat ${diagnostic} >> ${report}
 				echo -e "\`\`\`\n" >> ${report}
 			done
-		else
-			if [ "$case" = "282_NO_RPA" -o "$dir" = "102_PW_BPCG" ]; then
-				mpirun -np 1 $abacus > log.txt
-			else
-				mpirun -np $np $abacus > log.txt
-			fi
 		fi
 		#$abacus > log.txt
 		test -d OUT.autotest || (echo "No 'OUT.autotest' dir presented. Some errors may happened in ABACUS." && exit 1)

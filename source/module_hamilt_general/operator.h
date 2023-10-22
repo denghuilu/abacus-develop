@@ -1,10 +1,11 @@
 #ifndef OPERATOR_H
 #define OPERATOR_H
 
-#include<complex>
-#include "module_psi/psi.h"
+#include <complex>
+
 #include "module_base/global_function.h"
 #include "module_base/tool_quit.h"
+#include "module_psi/psi.h"
 
 #include <ATen/core/tensor.h>
 
@@ -65,8 +66,9 @@ class Operator
 
     Operator* next_op = nullptr;
 
-    protected:
+protected:
     int ik = 0;
+    int act_type = 1;   ///< determine which act() interface would be called in hPsi()
 
     mutable bool in_place = false;
 

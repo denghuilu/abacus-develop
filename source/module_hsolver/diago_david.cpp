@@ -4,12 +4,12 @@
 #include "module_base/blas_connector.h"
 #include "module_base/constants.h"
 #include "module_base/lapack_connector.h"
+#include "module_base/memory.h"
+#include "module_base/parallel_common.h"
+#include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
 #include "module_hsolver/kernels/dngvd_op.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
-#include "module_base/parallel_common.h"
-#include "module_base/parallel_reduce.h"
-#include "module_base/memory.h"
 
 #include <ATen/core/tensor_map.h>
 
@@ -129,8 +129,11 @@ void DiagoDavid<T, Device>::diag_mock(
         if(GlobalV::use_paw)
         {
 #ifdef USE_PAW
-            GlobalC::paw_cell.paw_nl_psi(1,reinterpret_cast<const std::complex<double>*>(&psi_pack[this->ik_][m][0]),
-                reinterpret_cast<std::complex<double>*>(&sphi_pack[m][0]));
+#ifdef __DEBUG
+            assert(psi.get_k_first());
+#endif 
+            GlobalC::paw_cell.paw_nl_psi(1, reinterpret_cast<const std::complex<double>*> (&psi(m, 0)),
+                reinterpret_cast<std::complex<double>*>(&this->sphi[m * this->dim]));
 #endif
         }
         else
@@ -1027,5 +1030,11 @@ template class DiagoDavid<std::complex<double>, psi::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
 template class DiagoDavid<std::complex<float>, psi::DEVICE_GPU>;
 template class DiagoDavid<std::complex<double>, psi::DEVICE_GPU>;
+#endif
+#ifdef __LCAO
+template class DiagoDavid<double, psi::DEVICE_CPU>;
+#if ((defined __CUDA) || (defined __ROCM))
+template class DiagoDavid<double, psi::DEVICE_GPU>;
+#endif
 #endif
 } // namespace hsolver
