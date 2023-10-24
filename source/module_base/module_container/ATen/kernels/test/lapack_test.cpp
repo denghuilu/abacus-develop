@@ -59,7 +59,7 @@ TYPED_TEST(LapackOpTest, Potrf) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
 
-    blas_gemm<Type, Device> gemmCalculator;
+    blas_gemm<Type, DEVICE_CPU> gemmCalculator;
     lapack_potrf<Type, Device> potrfCalculator;
     set_matrix<Type, Device> setMatrixCalculator;
 
@@ -85,7 +85,7 @@ TYPED_TEST(LapackOpTest, Potrf) {
     // Keep the upper triangle of B
     setMatrixCalculator('U', B.data<Type>(), dim);
     // A = U**T * U
-    gemmCalculator(transa, transb, m, n, k, &alpha, B.data<Type>(), k, B.data<Type>(), n, &beta, C.data<Type>(), n);
+    gemmCalculator(transa, transb, m, n, k, &alpha, B.to_device<DEVICE_CPU>().data<Type>(), k, B.to_device<DEVICE_CPU>().data<Type>(), n, &beta, C.to_device<DEVICE_CPU>().data<Type>(), n);
 
     EXPECT_EQ(A, C);
 }

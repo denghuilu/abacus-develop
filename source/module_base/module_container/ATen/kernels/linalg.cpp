@@ -29,52 +29,50 @@ static std::vector<T> ComputeStride(const std::vector<T>& shape) {
 }
 
 
-template <typename T, bool Conjugate>
-struct transpose<T, DEVICE_CPU, Conjugate> {
-    void operator()(
-        const std::vector<int>& perm,
-        const std::vector<int64_t>& p_shape,
-        const std::vector<int64_t>& q_shape,
-        const T* p,
-        T* q)
-    {
-        REQUIRES_OK(p_shape.size() == q_shape.size(),
-            "transpose: p and q must have the same number of dimensions");
-        const int ndim = static_cast<int>(p_shape.size());
-        auto in_strides = ComputeStride(p_shape);
-        auto out_strides = ComputeStride(q_shape);
+template<typename T, typename Device, bool Conjugate>
+void transpose<T, Device, Conjugate>::operator()(
+    const std::vector<int> &perm,
+    const std::vector<int64_t> &p_shape,
+    const std::vector<int64_t> &q_shape,
+    const T *p,
+    T *q)
+{
+    REQUIRES_OK(p_shape.size() == q_shape.size(),
+        "transpose: p and q must have the same number of dimensions");
+    const int ndim = static_cast<int>(p_shape.size());
+    auto in_strides = ComputeStride(p_shape);
+    auto out_strides = ComputeStride(q_shape);
 
-        int64_t num_elements = 1;
+    int64_t num_elements = 1;
+    for (int ii = 0; ii < ndim; ++ii) {
+        num_elements *= q_shape[ii];
+    }
+    num_elements = ndim ? num_elements : 0;
+    // Define a lambda expression 'transpose_fn' to implement transpose operation.
+    // Perform transpose operation for the specified range [begin, end) in the output Tensor.
+    for (int64_t o_idx = 0; o_idx < num_elements; o_idx++) {
+        int64_t i_idx = 0; // Initialize the index for the input Tensor element.
+        int64_t t = o_idx; // Calculate the index for the output Tensor element.
+
+        // Iterate over each dimension of the output Tensor.
         for (int ii = 0; ii < ndim; ++ii) {
-            num_elements *= q_shape[ii];
+            // Calculate the ratio of the current output Tensor index 't' in the current dimension.
+            const int64_t ratio = t / out_strides[ii];
+            // Update the output Tensor index 't' by removing the offset in the current dimension.
+            t -= ratio * out_strides[ii];
+            // Calculate the offset for the corresponding index position in the input Tensor and accumulate it in 'i_idx'.
+            i_idx += ratio * in_strides[perm[ii]];
         }
-        num_elements = ndim ? num_elements : 0;
-        // Define a lambda expression 'transpose_fn' to implement transpose operation.
-        // Perform transpose operation for the specified range [begin, end) in the output Tensor.
-        for (int64_t o_idx = 0; o_idx < num_elements; o_idx++) {
-            int64_t i_idx = 0; // Initialize the index for the input Tensor element.
-            int64_t t = o_idx; // Calculate the index for the output Tensor element.
-
-            // Iterate over each dimension of the output Tensor.
-            for (int ii = 0; ii < ndim; ++ii) {
-                // Calculate the ratio of the current output Tensor index 't' in the current dimension.
-                const int64_t ratio = t / out_strides[ii];
-                // Update the output Tensor index 't' by removing the offset in the current dimension.
-                t -= ratio * out_strides[ii];
-                // Calculate the offset for the corresponding index position in the input Tensor and accumulate it in 'i_idx'.
-                i_idx += ratio * in_strides[perm[ii]];
-            }
-            // Check if conjugation is needed.
-            if (Conjugate) {
-                // Assign the conjugate value of the input Tensor element at index 'i_idx' to the output Tensor element at index 'o_idx'.
-                q[o_idx] = kernels::conj(p[i_idx]);
-            } else {
-                // Assign the input Tensor element at index 'i_idx' to the output Tensor element at index 'o_idx'.
-                q[o_idx] = p[i_idx];
-            }
+        // Check if conjugation is needed.
+        if (Conjugate) {
+            // Assign the conjugate value of the input Tensor element at index 'i_idx' to the output Tensor element at index 'o_idx'.
+            q[o_idx] = kernels::conj(p[i_idx]);
+        } else {
+            // Assign the input Tensor element at index 'i_idx' to the output Tensor element at index 'o_idx'.
+            q[o_idx] = p[i_idx];
         }
     }
-};
+}
 
 
 template<typename T, typename Device>

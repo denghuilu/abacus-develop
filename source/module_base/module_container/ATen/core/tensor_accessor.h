@@ -15,7 +15,7 @@ struct DefaultPtrTraits {
 
 #if defined(__CUDACC__) || defined(__HIPCC__)
 template <typename T>
-struct RestrictPtrTraits<T*> {
+struct RestrictPtrTraits {
     using PtrType = T* __restrict__;
 };
 #endif

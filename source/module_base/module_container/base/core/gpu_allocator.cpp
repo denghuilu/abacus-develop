@@ -45,8 +45,8 @@ void GPUAllocator::free(void *ptr) {
 }
 
 // Get the type of device used by the TensorBuffer.
-DeviceType GPUAllocator::GetDeviceType() {
-    return DeviceType::GpuDevice;
+container::DeviceType GPUAllocator::GetDeviceType() {
+    return container::DeviceType::GpuDevice;
 }
 
 } // namespace core

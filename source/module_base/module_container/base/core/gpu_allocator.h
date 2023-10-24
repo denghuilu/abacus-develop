@@ -44,7 +44,7 @@ public:
      *
      * @return MemoryType The type of memory used by the TensorBuffer.
      */
-    DeviceType GetDeviceType() override;
+    container::DeviceType GetDeviceType() override;
 };
 
 } // namespace base

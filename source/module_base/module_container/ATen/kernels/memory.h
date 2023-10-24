@@ -24,7 +24,7 @@ struct resize_memory {
      * @param size New size of the allocated memory.
      * @param record_in Optional message to record the resize operation.
      */
-    void operator()(T*& arr, const size_t size, const char* record_in = nullptr);
+    void operator()(T*& arr, const size_t& size, const char* record_in = nullptr);
 };
 
 /**
@@ -69,7 +69,7 @@ struct synchronize_memory {
     void operator()(
         T* arr_out,
         const T* arr_in,
-        const size_t size);
+        const size_t& size);
 };
 
 /**
@@ -98,7 +98,7 @@ struct cast_memory {
     void operator()(
         T_out* arr_out,
         const T_in* arr_in,
-        const size_t size);
+        const size_t& size);
 };
 
 
