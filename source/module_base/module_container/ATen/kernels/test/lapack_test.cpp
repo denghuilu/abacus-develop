@@ -59,7 +59,7 @@ TYPED_TEST(LapackOpTest, Potrf) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
 
-    blas_gemm<Type, DEVICE_CPU> gemmCalculator;
+    blas_gemm<Type, Device> gemmCalculator;
     lapack_potrf<Type, Device> potrfCalculator;
     set_matrix<Type, Device> setMatrixCalculator;
 
