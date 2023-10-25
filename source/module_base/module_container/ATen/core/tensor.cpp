@@ -41,7 +41,7 @@ Tensor::Tensor(const Tensor& other)
 Tensor::Tensor(Tensor&& other) noexcept
         : data_type_(other.data_type_),
           device_(other.device_),
-          shape_(std::move(other.shape_)),
+          shape_(other.shape_),
           buffer_(other.buffer_)
 {
     // Reset the other object.
@@ -101,9 +101,10 @@ void Tensor::zero() {
 // Reshape the current tensor
 void Tensor::reshape(TensorShape shape) {
     // check the -1 dimension
-    int num = 1, auto_shape = 0, dim_count = -1, dim_idx = -1;
+    int64_t num = 1;
+    int auto_shape = 0, dim_count = -1, dim_idx = -1;
 
-    for (int dim : shape.dims()) {
+    for (auto dim : shape.dims()) {
         dim_count++;
         if (dim < 1 && dim != -1) {
             throw std::invalid_argument("Invalid shape, dim of tensor must >= 1 or equal to -1(auto shape).");
@@ -120,7 +121,7 @@ void Tensor::reshape(TensorShape shape) {
     }
     // auto reshape
     if (auto_shape == 1) {
-        int dim_ = static_cast<int>(this->NumElements()) / (-num);
+        int dim_ = static_cast<int>(this->NumElements() / (-num));
         if (dim_ < 1 || -dim_ * num != this->NumElements()) {
             throw std::invalid_argument("Invalid shape, total number of elements does not match!");
         }
@@ -134,11 +135,9 @@ void Tensor::reshape(TensorShape shape) {
     this->shape_ = shape;
 }
 
-Tensor Tensor::shaped(TensorShape shape) {
+Tensor Tensor::shaped(const TensorShape& shape) const {
     Tensor output;
-    if (output.CopyFrom(*this, this->shape()) != true) {
-        throw std::runtime_error("Invalid shaped operation.");
-    }
+    REQUIRES_OK(output.CopyFrom(*this, this->shape()), "Invalid shaped operation.")
     output.reshape(shape);
     return std::move(output);
 }
@@ -181,7 +180,7 @@ Tensor Tensor::slice(const std::vector<int> &start, const std::vector<int> &size
     }
     else if (ndim == 2) {
         for (int i = 0; i < size[0]; i++) {
-            int offset = (start[0] + i) * shape_.dim_size(1) + start[1];
+            int offset = static_cast<int>((start[0] + i) * shape_.dim_size(1) + start[1]);
             int offset_out = i * size[1];
             TEMPLATE_ALL_2(this->data_type_, this->device_,
                            kernels::synchronize_memory<T_, DEVICE_, DEVICE_>()(
@@ -191,8 +190,8 @@ Tensor Tensor::slice(const std::vector<int> &start, const std::vector<int> &size
     else if (ndim == 3) {
         for (int i = 0; i < size[0]; i++) {
             for (int j = 0; j < size[1]; j++) {
-                int offset = (i + start[0]) * shape_.dim_size(1) * shape_.dim_size(2) +
-                        (j + start[1]) * shape_.dim_size(2) + start[2];
+                int offset = static_cast<int>((i + start[0]) * shape_.dim_size(1) * shape_.dim_size(2) +
+                        (j + start[1]) * shape_.dim_size(2) + start[2]);
                 int offset_out = i * size[1] * size[2] + j * size[2];
                 TEMPLATE_ALL_2(this->data_type_, this->device_,
                                kernels::synchronize_memory<T_, DEVICE_, DEVICE_>()(
@@ -209,7 +208,7 @@ void Tensor::resize(const TensorShape& new_shape) {
         return;
     }
     REQUIRES_OK(buffer_->OwnsMemory(),
-        "Cannot resize a tensor that does not own its memory.");
+        "Cannot resize a tensor that does not own its memory.")
     if (buffer_ && buffer_->GetAllocatedBytes() < new_shape.NumElements() * SizeOfType(data_type_)) {
         buffer_->unref();
         this->buffer_ = new TensorBuffer(GetAllocator(device_), new_shape.NumElements() * SizeOfType(data_type_));
@@ -281,7 +280,7 @@ bool Tensor::CopyFrom(const Tensor& other, const TensorShape& shape) {
     return false;
 }
 
-bool Tensor::CopyFromWithAllocate(const Tensor& other, const TensorShape& shape) {
+bool Tensor::AllocateFrom(const Tensor& other, const TensorShape& shape) {
     data_type_ = other.data_type_;
     device_ = other.device_;
     shape_ = shape;
@@ -293,7 +292,7 @@ bool Tensor::CopyFromWithAllocate(const Tensor& other, const TensorShape& shape)
 void Tensor::sync(const Tensor& rhs) {
     REQUIRES_OK(this->data_type_ == rhs.data_type_ 
         && this->device_ == rhs.device_
-        && this->shape_ == rhs.shape_);
+        && this->shape_ == rhs.shape_)
 
     TEMPLATE_ALL_2(data_type_, device_,
             kernels::synchronize_memory<T_, DEVICE_, DEVICE_>()(
@@ -303,7 +302,7 @@ void Tensor::sync(const Tensor& rhs) {
 Tensor Tensor::operator[](const int& index) const {
     REQUIRES_OK(
         index > 0 && index < shape_.dim_size(0),
-        "Tensor index is out of bounds.");
+        "Tensor index is out of bounds.")
 
     TensorShape output_shape = this->shape_;
     output_shape.remove_dim(0);

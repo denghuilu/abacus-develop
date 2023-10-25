@@ -287,7 +287,7 @@ class Tensor {
      *
      * @note There can be one -1 dimension in the input shape, indicates the auto reshape.
      */
-    Tensor shaped(TensorShape shape);
+    Tensor shaped(const TensorShape& shape) const;
 
     /**
      * @brief Return a new Tensor slice starting at the specified indices with the given size.
@@ -449,7 +449,7 @@ class Tensor {
      * @param shape The TensorShape specifying the shape of the newly allocated memory.
      * @return Returns true if the copy and allocation were successful, false otherwise.
      */
-    bool CopyFromWithAllocate(const Tensor& other, const TensorShape& shape);
+    bool AllocateFrom(const Tensor& other, const TensorShape& shape);
 
     /**
      * @brief Accessor function for a multi-dimensional tensor.
@@ -462,22 +462,37 @@ class Tensor {
      * 
      * @return A TensorAccessor object for accessing the tensor's data.
      */
-    template <typename T, size_t N>
-    TensorAccessor<T, N> accessor() const& {
+    template <typename T, size_t N, typename index_t = int64_t>
+    TensorAccessor<T, N, index_t> accessor() const& {
         // Check if the tensor's rank is greater than 0
         static_assert(N > 0, 
             "Accessor is used to access the data of a tensor with rank > 0, for scalars use *data<T>()");
         // Check if the rank of the tensor matches the rank of the accessor
         REQUIRES_OK(this->shape_.ndim() == N, 
-            "The rank of the tensor must match the rank of the accessor.");
+            "The rank of the tensor must match the rank of the accessor.")
         // Create and return a TensorAccessor object
-        return TensorAccessor<T, N>(this->data<T>(), this->shape_.dims().data(), this->shape_.strides().data());
+        return TensorAccessor<T, N, index_t>(this->data<T>(), this->shape_.dims().data(), this->shape_.strides().data());
     }
-    template<typename T, size_t N>
-    TensorAccessor<T, N> accessor() && = delete;
+    template<typename T, size_t N, typename index_t = int>
+    TensorAccessor<T, N, index_t> accessor() && = delete;
 
+    /**
+     * @brief Synchronize the current Tensor with another Tensor.
+     *
+     * This function ensures that the current Tensor's data is synchronized with another Tensor.
+     *
+     * @param rhs The Tensor to synchronize with.
+     */
     void sync(const Tensor& rhs);
 
+    /**
+     * @brief Access a sub-Tensor based on an index.
+     *
+     * This operator allows you to access a sub-Tensor based on the provided index.
+     *
+     * @param index The index to access. Should be within valid bounds.
+     * @return A sub-Tensor with the specified index.
+     */
     Tensor operator[] (const int& index) const;
 
 protected:
@@ -500,7 +515,7 @@ protected:
     /**
      * @brief The TensorBuffer object that holds the data of the tensor.
      */
-    TensorBuffer* buffer_;
+    TensorBuffer* buffer_{};
 
     /**
      * @brief Calculates the linear index corresponding to the given indices.
@@ -538,7 +553,7 @@ protected:
         // Check if the buffer of the current Tensor is different from the buffer of the 'other' Tensor.
         if (buffer_ != other.buffer_) {
             // If the current Tensor has a buffer, decrease its reference count.
-            // Note this could indicate a delete of current buffer_
+            // Note this could indicate a deleted of current buffer_
             if (buffer_) buffer_->unref();
             // Assign the buffer of the 'other' Tensor to the current Tensor's buffer.
             buffer_ = other.buffer_;

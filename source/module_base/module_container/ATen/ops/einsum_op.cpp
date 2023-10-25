@@ -211,7 +211,7 @@ static inline bool CopyFrom(const Tensor& input, const TensorShape& shape, Tenso
 // Note: This method will allocate memory with the given shape for output tensor,
 // also keep the data_type, device_type consistant with the input tensor.
 static inline bool CopyFromWithAllocate(const Tensor& input, const TensorShape& shape, Tensor* output) {
-    return output->CopyFromWithAllocate(input, shape);
+    return output->AllocateFrom(input, shape);
 }
 
 // Reshapes a Tensor of shape [b0,b1...bk,N,M] to [prod(b0,b1...bk),N,M].

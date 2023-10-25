@@ -69,7 +69,7 @@ class TensorAccessor : public TensorAccessorBase<T, N, index_t, PtrTraits> {
   public:
     using PtrType = typename PtrTraits<T>::PtrType;
 
-    AT_HOST_DEVICE TensorAccessor(PtrType data, const int *sizes, const index_t* strides)
+    AT_HOST_DEVICE TensorAccessor(PtrType data, const index_t* sizes, const index_t* strides)
         : TensorAccessorBase<T, N, index_t, PtrTraits>(data, sizes, strides) {}
 
     AT_HOST_DEVICE TensorAccessor<T, N - 1, index_t, PtrTraits> operator[](index_t idx) {
