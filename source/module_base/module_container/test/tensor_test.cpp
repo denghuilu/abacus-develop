@@ -18,12 +18,12 @@ TEST(Tensor, Constructor) {
     container::Tensor t2(container::DataType::DT_DOUBLE, container::DeviceType::GpuDevice, container::TensorShape({3, 4}));
     EXPECT_EQ(t2.data_type(), container::DataType::DT_DOUBLE);
     EXPECT_EQ(t2.device_type(), container::DeviceType::GpuDevice);
-    // EXPECT_EQ(t2.shape().dims(), std::vector<int64_t>({3, 4}));
+    EXPECT_EQ(t2.shape().dims(), std::vector<int64_t>({3, 4}));
     EXPECT_EQ(t2.NumElements(), 12);
 #endif
 
     // Test copy constructor
-    container::Tensor t3(t1);
+    container::Tensor t3 = t1;
     EXPECT_EQ(t3.data_type(), container::DataType::DT_FLOAT);
     EXPECT_EQ(t3.device_type(), container::DeviceType::CpuDevice);
     // EXPECT_EQ(t3.shape().dims(), std::vector<int64_t>({2, 3}));
@@ -82,6 +82,7 @@ TEST(Tensor, GetDataPointer) {
 
 
 TEST(Tensor, GetDataPointerDeathTest) {
+    ::testing::FLAGS_gtest_death_test_style = "threadsafe";
     // Try to get a typed pointer with a type that does not match the tensor's data type.
     // This should cause an error message to be printed and the program to exit with failure.
     container::Tensor tensor(container::DataType::DT_FLOAT, container::TensorShape({1, 1}));
@@ -115,6 +116,7 @@ TEST(Tensor, SizeOfType) {
 }
 
 TEST(Tensor, SizeOfTypeDeathTest) {
+    ::testing::FLAGS_gtest_death_test_style = "threadsafe";
     // Verify that requesting data with an unsupported data type causes the program to exit.
     ASSERT_EXIT(
       container::Tensor::SizeOfType(container::DataType::DT_INVALID),
@@ -214,6 +216,7 @@ TEST(Tensor, GetValueAndInnerMostPtr) {
 }
 
 TEST(Tensor, ReshapeDeathTest) {
+    ::testing::FLAGS_gtest_death_test_style = "threadsafe";
     container::Tensor t(container::DataType::DT_FLOAT, container::DeviceType::CpuDevice, {2, 3, 4});
     container::TensorShape new_shape({-1, 8});
     new_shape.set_dim_size(1, -2);
@@ -327,6 +330,7 @@ TEST(Tensor, Resize) {
 }
 
 TEST(Tensor, GetAllocatorDeathTest) {
+    ::testing::FLAGS_gtest_death_test_style = "threadsafe";
     container::Tensor t1(container::DataType::DT_FLOAT, container::TensorShape({2, 2}));
     ASSERT_EXIT(
       base::core::Allocator* alloc = container::Tensor::GetAllocator(container::DeviceType::UnKnown),
@@ -339,11 +343,11 @@ TEST(Tensor, OutputOperator) {
     // Create a tensor of shape [2, 2] with random values
     const int64_t num_elements = 4;
     int* data1 = new int[num_elements];
-    int64_t* data2 = new int64_t[num_elements];
-    float* data3 = new float[num_elements];
-    double* data4 = new double[num_elements];
-    std::complex<float>* data5 = new std::complex<float>[num_elements];
-    std::complex<double>* data6 = new std::complex<double>[num_elements];
+    auto* data2 = new int64_t[num_elements];
+    auto* data3 = new float[num_elements];
+    auto* data4 = new double[num_elements];
+    auto* data5 = new std::complex<float>[num_elements];
+    auto* data6 = new std::complex<double>[num_elements];
     for (int ii = 0; ii < num_elements; ++ii) {
         data1[ii] = static_cast<int>(ii);
         data2[ii] = static_cast<int64_t>(ii);
