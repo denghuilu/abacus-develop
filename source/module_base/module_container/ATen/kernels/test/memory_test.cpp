@@ -64,7 +64,7 @@ TYPED_TEST(MemoryOpTest, CastAndDeleteMemory) {
     Tensor A = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0)}).to_device<Device>());
     Tensor B = A.to_device<DEVICE_CPU>().cast<std::complex<float>>();
     
-    std::complex<float> * d_A = (std::complex<float>*)malloc(sizeof(std::complex<float>) * 3);
+    auto * d_A = (std::complex<float>*)malloc(sizeof(std::complex<float>) * 3);
     castMemory_H2D_D2S(d_A, A.data<Type>(), 3);
     Tensor C = std::move(TensorMap(d_A, B.data_type(), B.device_type(), {3}));
 

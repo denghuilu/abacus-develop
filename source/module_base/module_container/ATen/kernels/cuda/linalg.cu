@@ -24,25 +24,25 @@ thrust::complex<T> conj(thrust::complex<T>& in) {
 template <typename T, bool Conjugate>
 __global__ void do_transpose_kernel(
     int ndim,
-    int64_t size,
+    int64_t num_elements,
     const T* p,
     const int* perm,
     const int64_t* in_strides,
     const int64_t* out_strides,
     T* q)
 {
-    for (int64_t o_idx = threadIdx.x; o_idx < size; o_idx += blockDim.x) {
+    for (int64_t o_idx = 0; o_idx < num_elements; o_idx++) {
         int64_t i_idx = 0; // Initialize the index for the input Tensor element.
         int64_t current_o_idx = o_idx; // Calculate the index for the output Tensor element.
 
         // Iterate over each dimension of the output Tensor.
         for (int ii = 0; ii < ndim; ++ii) {
-            // Calculate the current_dim_idx of the current output Tensor index 'current_o_idx' in the current dimension.
-            const int64_t current_dim_idx = current_o_idx / out_strides[ii];
+            // Calculate the ratio of the current output Tensor index 'current_o_idx' in the current dimension.
+            const int64_t ratio = current_o_idx / out_strides[ii];
             // Update the output Tensor index 'current_o_idx' by removing the offset in the current dimension.
-            current_o_idx -= current_dim_idx * out_strides[ii];
+            current_o_idx -= ratio * out_strides[ii];
             // Calculate the offset for the corresponding index position in the input Tensor and accumulate it in 'i_idx'.
-            i_idx += current_dim_idx * in_strides[perm[ii]];
+            i_idx += ratio * in_strides[perm[ii]];
         }
         // Check if conjugation is needed.
         if (Conjugate) {
