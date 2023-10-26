@@ -3,21 +3,21 @@
 #include <ATen/core/tensor.h>
 #include <ATen/core/tensor_map.h>
 #include <ATen/kernels/memory.h>
-#include <ATen/kernels/test/op_test_utils.h>
+#include <test/test_utils.h>
 
 namespace container {
 namespace kernels {
 
 template <typename T>
-class MemoryOpTest : public testing::Test {
+class MemoryTest : public testing::Test {
 public:
-    MemoryOpTest() = default;
-    ~MemoryOpTest() override = default;
+    MemoryTest() = default;
+    ~MemoryTest() override = default;
 };
 
-TYPED_TEST_SUITE(MemoryOpTest, test_utils::Types);
+TYPED_TEST_SUITE(MemoryTest, test_utils::Types);
 
-TYPED_TEST(MemoryOpTest, ResizeAndSynchronizeMemory) {
+TYPED_TEST(MemoryTest, ResizeAndSynchronizeMemory) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
 
@@ -40,7 +40,7 @@ TYPED_TEST(MemoryOpTest, ResizeAndSynchronizeMemory) {
     EXPECT_EQ(A, B);
 }
 
-TYPED_TEST(MemoryOpTest, SetMemory) {
+TYPED_TEST(MemoryTest, SetMemory) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
 
@@ -54,7 +54,7 @@ TYPED_TEST(MemoryOpTest, SetMemory) {
     EXPECT_EQ(A, B);
 }
 
-TYPED_TEST(MemoryOpTest, CastAndDeleteMemory) {
+TYPED_TEST(MemoryTest, CastAndDeleteMemory) {
     using Type = std::complex<typename GetTypeReal<typename std::tuple_element<0, decltype(TypeParam())>::type>::type>;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
 

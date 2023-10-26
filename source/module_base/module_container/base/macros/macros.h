@@ -79,6 +79,15 @@
     break;                                        \
   }
 
+#define CASE_LAMBDA_2(TYPE, DEVICE, FUNC)         \
+  case (int(DataTypeToEnum<TYPE>::value) * 10 +   \
+        int(DeviceTypeToEnum<DEVICE>::value)): {  \
+    typedef TYPE T_;                              \
+    typedef DEVICE DEVICE_;                       \
+    FUNC();                                       \
+    break;                                        \
+  }
+
 #define CASES_ALL_WITH_DEFAULT_2(TYPE_ENUM, DEVICE_ENUM, STMTS, DEFAULT) \
   switch (int(TYPE_ENUM) * 10 + int(DEVICE_ENUM)) {                      \
     CASE_2(float, DEVICE_CPU, SINGLE_ARG(STMTS))                         \
@@ -87,6 +96,19 @@
     CASE_2(int64_t, DEVICE_CPU, SINGLE_ARG(STMTS))                       \
     CASE_2(std::complex<float>, DEVICE_CPU, SINGLE_ARG(STMTS))           \
     CASE_2(std::complex<double>, DEVICE_CPU, SINGLE_ARG(STMTS))          \
+    default:                                                             \
+      DEFAULT;                                                           \
+      break;                                                             \
+  }
+
+#define CASES_ALL_LAMBDA_WITH_DEFAULT_2(TYPE_ENUM, DEVICE_ENUM, FUNC, DEFAULT) \
+  switch (int(TYPE_ENUM) * 10 + int(DEVICE_ENUM)) {                      \
+    CASE_LAMBDA_2(float, DEVICE_CPU, FUNC)                               \
+    CASE_LAMBDA_2(double, DEVICE_CPU, FUNC)                              \
+    CASE_LAMBDA_2(int, DEVICE_CPU, FUNC)                                 \
+    CASE_LAMBDA_2(int64_t, DEVICE_CPU, FUNC)                             \
+    CASE_LAMBDA_2(std::complex<float>, DEVICE_CPU, FUNC)                 \
+    CASE_LAMBDA_2(std::complex<double>, DEVICE_CPU, FUNC)                \
     default:                                                             \
       DEFAULT;                                                           \
       break;                                                             \
@@ -122,6 +144,25 @@
       break;                                                             \
   }
 
+#define CASES_ALL_LAMBDA_WITH_DEFAULT_2_GPU(TYPE_ENUM, DEVICE_ENUM, FUNC, DEFAULT) \
+  switch (int(TYPE_ENUM) * 10 + int(DEVICE_ENUM)) {                      \
+    CASE_LAMBDA_2(float, DEVICE_CPU, FUNC)                               \
+    CASE_LAMBDA_2(float, DEVICE_GPU, FUNC)                               \
+    CASE_LAMBDA_2(double, DEVICE_CPU, FUNC)                              \
+    CASE_LAMBDA_2(double, DEVICE_GPU, FUNC)                              \
+    CASE_LAMBDA_2(int, DEVICE_CPU, FUNC)                                 \
+    CASE_LAMBDA_2(int, DEVICE_GPU, FUNC)                                 \
+    CASE_LAMBDA_2(int64_t, DEVICE_CPU, FUNC)                             \
+    CASE_LAMBDA_2(int64_t, DEVICE_GPU, FUNC)                             \
+    CASE_LAMBDA_2(std::complex<float>, DEVICE_CPU, FUNC)                 \
+    CASE_LAMBDA_2(std::complex<float>, DEVICE_GPU, FUNC)                 \
+    CASE_LAMBDA_2(std::complex<double>, DEVICE_CPU, FUNC)                \
+    CASE_LAMBDA_2(std::complex<double>, DEVICE_GPU, FUNC)                \
+    default:                                                             \
+      DEFAULT;                                                           \
+      break;                                                             \
+  }
+
 #define CASES_BLAS_WITH_DEFAULT_2_GPU(TYPE_ENUM, DEVICE_ENUM, STMTS, DEFAULT) \
   switch (int(TYPE_ENUM) * 10 + int(DEVICE_ENUM)) {                      \
     CASE_2(float, DEVICE_CPU, SINGLE_ARG(STMTS))                         \
@@ -150,22 +191,34 @@
 
 
 #if __CUDA || __ROCM
+#define TEMPLATE_ALL_LAMBDA_2(TYPE_ENUM, DEVICE_ENUM, ...)                 \
+CASES_ALL_LAMBDA_WITH_DEFAULT_2_GPU(TYPE_ENUM, DEVICE_ENUM, (__VA_ARGS__), \
+                       std::cerr << "Unexpected type: " << TYPE_ENUM; exit(EXIT_FAILURE));
+
 #define TEMPLATE_ALL_2(TYPE_ENUM, DEVICE_ENUM, ...)                         \
 CASES_ALL_WITH_DEFAULT_2_GPU(TYPE_ENUM, DEVICE_ENUM, (__VA_ARGS__),         \
                        std::cerr << "Unexpected type: " << TYPE_ENUM; exit(EXIT_FAILURE));
+
 #define TEMPLATE_BLAS_2(TYPE_ENUM, DEVICE_ENUM, ...)                        \
 CASES_BLAS_WITH_DEFAULT_2_GPU(TYPE_ENUM, DEVICE_ENUM, (__VA_ARGS__),        \
                        std::cerr << "Unexpected type: " << TYPE_ENUM; exit(EXIT_FAILURE));
+
 #define TEMPLATE_ALL_CALC_2(TYPE_ENUM, DEVICE_ENUM, ...)                    \
 CASES_ALL_CALC_WITH_DEFAULT_2_GPU(TYPE_ENUM, DEVICE_ENUM, (__VA_ARGS__),    \
                        std::cerr << "Unexpected type: " << TYPE_ENUM; exit(EXIT_FAILURE));
-#else 
+#else
+#define TEMPLATE_ALL_LAMBDA_2(TYPE_ENUM, DEVICE_ENUM, ...)                  \
+CASES_ALL_LAMBDA_WITH_DEFAULT_2(TYPE_ENUM, DEVICE_ENUM, (__VA_ARGS__),      \
+                       std::cerr << "Unexpected type: " << TYPE_ENUM; exit(EXIT_FAILURE));
+
 #define TEMPLATE_ALL_2(TYPE_ENUM, DEVICE_ENUM, ...)                         \
 CASES_ALL_WITH_DEFAULT_2(TYPE_ENUM, DEVICE_ENUM, (__VA_ARGS__),             \
                        std::cerr << "Unexpected type: " << TYPE_ENUM; exit(EXIT_FAILURE));
+
 #define TEMPLATE_BLAS_2(TYPE_ENUM, DEVICE_ENUM, ...)                        \
 CASES_BLAS_WITH_DEFAULT_2(TYPE_ENUM, DEVICE_ENUM, (__VA_ARGS__),            \
                        std::cerr << "Unexpected type: " << TYPE_ENUM; exit(EXIT_FAILURE));
+
 #define TEMPLATE_ALL_CALC_2(TYPE_ENUM, DEVICE_ENUM, ...)                    \
 CASES_ALL_WITH_DEFAULT_2(TYPE_ENUM, DEVICE_ENUM, (__VA_ARGS__),             \
                        std::cerr << "Unexpected type: " << TYPE_ENUM; exit(EXIT_FAILURE));

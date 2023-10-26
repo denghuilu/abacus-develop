@@ -2,22 +2,120 @@
 
 #include <ATen/core/tensor.h>
 #include <ATen/kernels/linalg.h>
-#include <ATen/kernels/test/op_test_utils.h>
+#include <test/test_utils.h>
 
 namespace container {
 namespace kernels {
 
 template<typename T>
-class LinalgOpTest : public testing::Test {
+class LinalgTest : public testing::Test {
 public:
-    LinalgOpTest() = default;
+    LinalgTest() = default;
 
-    ~LinalgOpTest() override = default;
+    ~LinalgTest() override = default;
 };
 
-TYPED_TEST_SUITE(LinalgOpTest, test_utils::Types);
+TYPED_TEST_SUITE(LinalgTest, test_utils::Types);
 
-TYPED_TEST(LinalgOpTest, Transpose) {
+TYPED_TEST(LinalgTest, Add) {
+    using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
+
+    Tensor A = std::move(
+        Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
+                static_cast<Type>(4.0), static_cast<Type>(5.0), static_cast<Type>(6.0),
+                static_cast<Type>(7.0), static_cast<Type>(8.0), static_cast<Type>(9.0)}).to_device<Device>());
+    Tensor B = std::move(
+        Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
+                static_cast<Type>(4.0), static_cast<Type>(5.0), static_cast<Type>(6.0),
+                static_cast<Type>(7.0), static_cast<Type>(8.0), static_cast<Type>(9.0)}).to_device<Device>());
+
+    Tensor expected = std::move(
+        Tensor({static_cast<Type>(3.0), static_cast<Type>(6.0), static_cast<Type>(9.0),
+                static_cast<Type>(12.0), static_cast<Type>(15.0), static_cast<Type>(18.0),
+                static_cast<Type>(21.0), static_cast<Type>(24.0), static_cast<Type>(27.0)}).to_device<Device>());
+    Tensor result = Tensor(expected.data_type(), expected.device_type(), expected.shape());
+    kernels::add<Type, Device>()(
+        A.NumElements(), static_cast<Type>(2.0), A.data<Type>(), static_cast<Type>(1.0), B.data<Type>(), result.data<Type>());
+    EXPECT_EQ(result, expected);
+}
+
+TYPED_TEST(LinalgTest, Mul) {
+    using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
+
+    Tensor A = std::move(
+        Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
+                static_cast<Type>(4.0), static_cast<Type>(5.0), static_cast<Type>(6.0),
+                static_cast<Type>(7.0), static_cast<Type>(8.0), static_cast<Type>(9.0)}).to_device<Device>());
+    Tensor B = std::move(
+        Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
+                static_cast<Type>(4.0), static_cast<Type>(5.0), static_cast<Type>(6.0),
+                static_cast<Type>(7.0), static_cast<Type>(8.0), static_cast<Type>(9.0)}).to_device<Device>());
+
+    Tensor expected = std::move(
+        Tensor({static_cast<Type>(1.0), static_cast<Type>(4.0), static_cast<Type>(9.0),
+                static_cast<Type>(16.0), static_cast<Type>(25.0), static_cast<Type>(36.0),
+                static_cast<Type>(49.0), static_cast<Type>(64.0), static_cast<Type>(81.0)}).to_device<Device>());
+    Tensor result = Tensor(expected.data_type(), expected.device_type(), expected.shape());
+    kernels::mul<Type, Device>()(
+        A.NumElements(), static_cast<Type>(1.0), A.data<Type>(), B.data<Type>(), result.data<Type>());
+    EXPECT_EQ(result, expected);
+}
+
+TYPED_TEST(LinalgTest, Div) {
+    using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
+
+    Tensor A = std::move(
+        Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
+                static_cast<Type>(4.0), static_cast<Type>(5.0), static_cast<Type>(6.0),
+                static_cast<Type>(7.0), static_cast<Type>(8.0), static_cast<Type>(9.0)}).to_device<Device>());
+    Tensor B = std::move(
+        Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
+                static_cast<Type>(4.0), static_cast<Type>(5.0), static_cast<Type>(6.0),
+                static_cast<Type>(7.0), static_cast<Type>(8.0), static_cast<Type>(9.0)}).to_device<Device>());
+
+    Tensor expected = std::move(
+        Tensor({static_cast<Type>(1.0), static_cast<Type>(1.0), static_cast<Type>(1.0),
+                static_cast<Type>(1.0), static_cast<Type>(1.0), static_cast<Type>(1.0),
+                static_cast<Type>(1.0), static_cast<Type>(1.0), static_cast<Type>(1.0)}).to_device<Device>());
+
+    Tensor result = Tensor(expected.data_type(), expected.device_type(), expected.shape());
+    kernels::div<Type, Device>()(
+        A.NumElements(), static_cast<Type>(1.0), A.data<Type>(), B.data<Type>(), result.data<Type>());
+    EXPECT_EQ(result, expected);
+}
+
+TYPED_TEST(LinalgTest, Fma) {
+    using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
+
+    Tensor A = std::move(
+        Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
+                static_cast<Type>(4.0), static_cast<Type>(5.0), static_cast<Type>(6.0),
+                static_cast<Type>(7.0), static_cast<Type>(8.0), static_cast<Type>(9.0)}).to_device<Device>());
+    Tensor B = std::move(
+        Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
+                static_cast<Type>(4.0), static_cast<Type>(5.0), static_cast<Type>(6.0),
+                static_cast<Type>(7.0), static_cast<Type>(8.0), static_cast<Type>(9.0)}).to_device<Device>());
+    Tensor C = std::move(
+        Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
+                static_cast<Type>(4.0), static_cast<Type>(5.0), static_cast<Type>(6.0),
+                static_cast<Type>(7.0), static_cast<Type>(8.0), static_cast<Type>(9.0)}).to_device<Device>());
+
+    Tensor expected = std::move(
+        Tensor({static_cast<Type>(5.0),   static_cast<Type>(14.0),  static_cast<Type>(27.0),
+                static_cast<Type>(44.0),  static_cast<Type>(65.0),  static_cast<Type>(90.0),
+                static_cast<Type>(119.0), static_cast<Type>(152.0), static_cast<Type>(189.0)}).to_device<Device>());
+
+    Tensor result = Tensor(expected.data_type(), expected.device_type(), expected.shape());
+    kernels::fma<Type, Device>()(
+        A.NumElements(), static_cast<Type>(2.0), A.data<Type>(), B.data<Type>(), static_cast<Type>(3.0), C.data<Type>(), result.data<Type>());
+    EXPECT_EQ(result, expected);
+}
+
+TYPED_TEST(LinalgTest, Transpose) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
 
@@ -40,7 +138,7 @@ TYPED_TEST(LinalgOpTest, Transpose) {
 }
 
 
-TYPED_TEST(LinalgOpTest, Stride) {
+TYPED_TEST(LinalgTest, Stride) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
 
@@ -62,7 +160,7 @@ TYPED_TEST(LinalgOpTest, Stride) {
 }
 
 
-TYPED_TEST(LinalgOpTest, Inflate) {
+TYPED_TEST(LinalgTest, Inflate) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
 
@@ -84,7 +182,7 @@ TYPED_TEST(LinalgOpTest, Inflate) {
 }
 
 
-TYPED_TEST(LinalgOpTest, Reduce) {
+TYPED_TEST(LinalgTest, Reduce) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
 

@@ -2,7 +2,7 @@
 
 #include <ATen/core/tensor.h>
 #include <ATen/ops/linalg_op.h>
-#include <ATen/kernels/test/op_test_utils.h>
+#include <test/test_utils.h>
 
 namespace container {
 namespace op {
@@ -16,8 +16,180 @@ public:
 
 TYPED_TEST_SUITE(LinalgOpTest, test_utils::Types);
 
-TYPED_TEST(LinalgOpTest, Transpose) {
+TYPED_TEST(LinalgOpTest, Add) {
+    using Type   = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
+
+    op::add_op addCalculator;
+
+    Tensor A = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(4.0), static_cast<Type>(5.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(6.0)}).to_device<Device>());
+    Tensor B = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(4.0), static_cast<Type>(5.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(6.0)}).to_device<Device>());
+    Tensor C = A;
+    C.zero();
+
+    Tensor expected = std::move(Tensor(
+                                {static_cast<Type>(2.0), static_cast<Type>(4.0), static_cast<Type>(6.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(8.0), static_cast<Type>(10.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(12.0)}).to_device<Device>());
+    addCalculator(A, B, C);
+    EXPECT_EQ(C, expected);
+
+    C.zero();
+    C = A + B;
+    EXPECT_EQ(C, expected);
+
+    A += B;
+    EXPECT_EQ(A, expected);
+
+    C.zero();
+    C = expected - B;
+    C -= B;
+    expected.zero();
+    EXPECT_EQ(C, expected);
+}
+
+TYPED_TEST(LinalgOpTest, Sub) {
+    using Type   = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
+
+    op::add_op addCalculator;
+
+    Tensor A = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(4.0), static_cast<Type>(5.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(6.0)}).to_device<Device>());
+    Tensor B = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(4.0), static_cast<Type>(5.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(6.0)}).to_device<Device>());
+    Tensor C = A;
+    C.zero();
+
+    Tensor expected = std::move(Tensor(
+        {static_cast<Type>(2.0), static_cast<Type>(4.0), static_cast<Type>(6.0),
+         static_cast<Type>(0.0), static_cast<Type>(8.0), static_cast<Type>(10.0),
+         static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(12.0)}).to_device<Device>());
+
+    C = expected - B;
+    C -= B;
+    expected.zero();
+    EXPECT_EQ(C, expected);
+}
+
+TYPED_TEST(LinalgOpTest, AddScalar) {
+    using Type   = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
+
+    op::add_op addCalculator;
+
+    Tensor A = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(4.0), static_cast<Type>(5.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(6.0)}).to_device<Device>());
+    Tensor B = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(4.0), static_cast<Type>(5.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(6.0)}).to_device<Device>());
+    Tensor C = A;
+    C.zero();
+
+    Tensor expected = std::move(Tensor({static_cast<Type>(-1.0), static_cast<Type>(-2.0), static_cast<Type>(-3.0),
+                                        static_cast<Type>(0.0),  static_cast<Type>(-4.0), static_cast<Type>(-5.0),
+                                        static_cast<Type>(0.0),  static_cast<Type>(0.0),  static_cast<Type>(-6.0)}).to_device<Device>());
+
+    auto alpha = static_cast<Type>(2.0);
+    auto beta  = static_cast<Type>(-3.0);
+
+    addCalculator(alpha, A, beta, B, C);
+    EXPECT_EQ(C, expected);
+}
+
+TYPED_TEST(LinalgOpTest, Mul) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
+
+    op::mul_op mulCalculator;
+
+    Tensor A = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(4.0), static_cast<Type>(5.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(6.0)}).to_device<Device>());
+
+    Tensor B = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(4.0), static_cast<Type>(5.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(6.0)}).to_device<Device>());
+    Tensor C = A;
+    C.zero();
+    Tensor expected = std::move(Tensor({
+                                 static_cast<Type>(1.0), static_cast<Type>(4.0), static_cast<Type>(9.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(16.0),static_cast<Type>(25.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(36.0)}).to_device<Device>());
+
+    mulCalculator(A, B, C);
+    EXPECT_EQ(C, expected);
+
+    C.zero();
+    C = A * B;
+    EXPECT_EQ(C, expected);
+
+    A *= B;
+    EXPECT_EQ(A, expected);
+}
+
+TYPED_TEST(LinalgOpTest, MulScalar) {
+    using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
+
+    op::mul_op mulCalculator;
+
+    Tensor A = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(4.0), static_cast<Type>(5.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(6.0)}).to_device<Device>());
+
+    Tensor C = A;
+    C.zero();
+    Tensor expected = std::move(Tensor({
+                                 static_cast<Type>(2.0), static_cast<Type>(4.0), static_cast<Type>(6.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(8.0),static_cast<Type>(10.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(12.0)}).to_device<Device>());
+
+    auto alpha = static_cast<Type>(2.0);
+    mulCalculator(alpha, A, C);
+    EXPECT_EQ(C, expected);
+}
+
+TYPED_TEST(LinalgOpTest, Div) {
+    using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
+
+    op::div_op divCalculator;
+
+    Tensor A = std::move(Tensor({static_cast<Type>(2.0), static_cast<Type>(4.0), static_cast<Type>(6.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(8.0), static_cast<Type>(10.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(12.0)}).to_device<Device>());
+
+    Tensor B = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
+                                 static_cast<Type>(1.0), static_cast<Type>(4.0), static_cast<Type>(5.0),
+                                 static_cast<Type>(1.0), static_cast<Type>(1.0), static_cast<Type>(6.0)}).to_device<Device>());
+    Tensor C = A;
+    C.zero();
+    Tensor expected = std::move(Tensor({
+                                 static_cast<Type>(2.0), static_cast<Type>(2.0), static_cast<Type>(2.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(2.0), static_cast<Type>(2.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(2.0)}).to_device<Device>());
+
+    divCalculator(A, B, C);
+    EXPECT_EQ(C, expected);
+
+    C.zero();
+    C = A / B;
+    EXPECT_EQ(C, expected);
+
+    A /= B;
+    EXPECT_EQ(A, expected);
+}
+
+TYPED_TEST(LinalgOpTest, Transpose) {
+    using Type   = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
 
     op::transpose_op<false> transposeCalculator;
@@ -41,7 +213,7 @@ TYPED_TEST(LinalgOpTest, Transpose) {
 }
 
 TYPED_TEST(LinalgOpTest, Stride) {
-    using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using Type   = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
 
     op::stride_op strideCalculator;
@@ -60,7 +232,7 @@ TYPED_TEST(LinalgOpTest, Stride) {
 }
 
 TYPED_TEST(LinalgOpTest, Inflate) {
-    using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using Type   = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
 
     op::inflate_op inflateCalculator;
@@ -79,7 +251,7 @@ TYPED_TEST(LinalgOpTest, Inflate) {
 }
 
 TYPED_TEST(LinalgOpTest, Reduce) {
-    using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using Type   = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
 
     op::reduce_op reduceCalculator;

@@ -2,27 +2,27 @@
 
 #include <ATen/core/tensor.h>
 #include <ATen/kernels/lapack.h>
-#include <ATen/kernels/test/op_test_utils.h>
+#include <test/test_utils.h>
 
 namespace container {
 namespace kernels {
 
 template <typename T>
-class LapackOpTest : public testing::Test {
+class LapackTest : public testing::Test {
 public:
-    LapackOpTest() {
+    LapackTest() {
         test_utils::init_blas_handle();
         test_utils::init_cusolver_handle();
     }
-    ~LapackOpTest() override {
+    ~LapackTest() override {
         test_utils::delete_blas_handle();
         test_utils::delete_cusolver_handle();
     }
 };
 
-TYPED_TEST_SUITE(LapackOpTest, test_utils::Types);
+TYPED_TEST_SUITE(LapackTest, test_utils::Types);
 
-TYPED_TEST(LapackOpTest, Trtri) {
+TYPED_TEST(LapackTest, Trtri) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Device = DEVICE_CPU;
 
@@ -55,7 +55,7 @@ TYPED_TEST(LapackOpTest, Trtri) {
     EXPECT_EQ(C, I);
 }
 
-TYPED_TEST(LapackOpTest, Potrf) {
+TYPED_TEST(LapackTest, Potrf) {
 
     return;
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
@@ -92,7 +92,7 @@ TYPED_TEST(LapackOpTest, Potrf) {
     EXPECT_EQ(A, C);
 }
 
-TYPED_TEST(LapackOpTest, dnevd) {
+TYPED_TEST(LapackTest, dnevd) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Real = typename GetTypeReal<Type>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
@@ -139,7 +139,7 @@ TYPED_TEST(LapackOpTest, dnevd) {
 }
 
 
-TYPED_TEST(LapackOpTest, dngvd) {
+TYPED_TEST(LapackTest, dngvd) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Real = typename GetTypeReal<Type>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;

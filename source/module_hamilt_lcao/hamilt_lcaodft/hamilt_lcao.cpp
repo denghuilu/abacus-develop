@@ -373,7 +373,7 @@ void HamiltLCAO<TK, TR>::refresh()
 
 // get Operator base class pointer
 template <typename TK, typename TR>
-Operator<TK>*& HamiltLCAO<TK, TR>::getOperator()
+Operator*& HamiltLCAO<TK, TR>::getOperator()
 {
     return this->ops;
 }

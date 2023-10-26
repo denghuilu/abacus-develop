@@ -8,6 +8,58 @@
 namespace container {
 namespace kernels {
 
+template <typename T, typename Device>
+struct add {
+    // z = alpha * x + beta * y
+    void operator()(
+        const int& num_element,
+        const T& alpha,
+        const T* x,
+        const T& beta,
+        const T* y,
+        T* z);
+};
+
+template <typename T, typename Device>
+struct mul {
+    void operator()(
+        const int& num_element,
+        const T& alpha,
+        const T* x,
+        T* y);
+    // z = alpha * x * y
+    void operator()(
+        const int& num_element,
+        const T& alpha,
+        const T* x,
+        const T* y,
+        T* z);
+};
+
+template <typename T, typename Device>
+struct div {
+    // z = alpha * x / y
+    void operator()(
+        const int& num_element,
+        const T& alpha,
+        const T* x,
+        const T* y,
+        T* z);
+};
+
+template <typename T, typename Device>
+struct fma {
+    // out = alpha * x * y + beta * z
+    void operator()(
+        const int& num_element,
+        const T& alpha,
+        const T* x,
+        const T* y,
+        const T& beta,
+        const T* z,
+        T* out);
+};
+
 template <typename T, typename Device, bool Conjugate = false>
 struct transpose {
     void operator()(

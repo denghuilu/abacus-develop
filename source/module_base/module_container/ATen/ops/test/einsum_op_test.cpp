@@ -2,7 +2,7 @@
 
 #include <ATen/core/tensor.h>
 #include <ATen/ops/einsum_op.h>
-#include <ATen/kernels/test/op_test_utils.h>
+#include <test/test_utils.h>
 
 namespace container {
 namespace op {

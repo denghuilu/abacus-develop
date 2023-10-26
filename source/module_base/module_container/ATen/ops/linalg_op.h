@@ -8,6 +8,71 @@
 namespace container {
 namespace op {
 
+/**
+ * @brief A functor to perform add operation on a Tensor.
+ *
+ * This functor adds two Tensors element-wise, resulting in a new Tensor with the same
+ * shape as the input Tensors.
+ */
+struct add_op {
+    /**
+     * @brief Perform add operation on the input Tensors.
+     *
+     * This function adds two Tensors element-wise, resulting in a new Tensor with the same
+     * shape as the input Tensors.
+     *
+     * @param x The first input Tensor.
+     * @param y The second input Tensor.
+     * @param z The output Tensor that will hold the result of the add operation.
+     *          It must have the same shape as the input Tensors.
+     */
+    void operator()(
+        const Tensor& x,
+        const Tensor& y,
+        Tensor& z);
+
+    template <typename T>
+    void operator()(
+        const T& alpha,
+        const Tensor& x,
+        const T& beta,
+        const Tensor& y,
+        Tensor& z);
+};
+
+struct mul_op {
+    // z = x * y
+    void operator()(
+        const Tensor& x,
+        const Tensor& y,
+        Tensor& z);
+
+    // y = alpha * x
+    template <typename T>
+    void operator()(
+        const T& alpha,
+        const Tensor& x,
+        Tensor& y);
+};
+
+struct div_op {
+    // z = x / y
+    void operator()(
+        const Tensor& x,
+        const Tensor& y,
+        Tensor& z);
+};
+
+Tensor operator+(const Tensor& self, const Tensor& other);
+Tensor operator-(const Tensor& self, const Tensor& other);
+Tensor operator*(const Tensor& self, const Tensor& other);
+Tensor operator/(const Tensor& self, const Tensor& other);
+Tensor& operator+=(Tensor& self, const Tensor& other);
+Tensor& operator-=(Tensor& self, const Tensor& other);
+Tensor& operator*=(Tensor& self, const Tensor& other);
+Tensor& operator/=(Tensor& self, const Tensor& other);
+
+
 template <bool Conjugate = false>
 struct transpose_op {
     /**

@@ -28,6 +28,55 @@ static std::vector<T> ComputeStride(const std::vector<T>& shape) {
     return std::move(strides);
 }
 
+template<typename T, typename Device>
+void add<T, Device>::operator()(const int& num_element, const T& alpha, const T* x, const T& beta, const T* y, T* z) {
+    // Define a lambda expression 'add_fn' to implement add operation.
+    // Perform add operation for the specified range [begin, end) in the output Tensor.
+    for (int o_idx = 0; o_idx < num_element; o_idx++) {
+        // Assign the sum of the input Tensor elements at index 'o_idx' to the output Tensor element at index 'o_idx'.
+        z[o_idx] = alpha * x[o_idx] + beta * y[o_idx];
+    }
+}
+
+template<typename T, typename Device>
+void mul<T, Device>::operator()(const int& num_element, const T& alpha, const T* x, T* y) {
+    // Define a lambda expression 'mul_fn' to implement mul operation.
+    // Perform mul operation for the specified range [begin, end) in the output Tensor.
+    for (int o_idx = 0; o_idx < num_element; o_idx++) {
+        // Assign the product of the input Tensor elements at index 'o_idx' to the output Tensor element at index 'o_idx'.
+        y[o_idx] = alpha * x[o_idx];
+    }
+}
+
+template<typename T, typename Device>
+void mul<T, Device>::operator()(const int& num_element, const T& alpha, const T* x, const T* y, T* z) {
+    // Define a lambda expression 'mul_fn' to implement mul operation.
+    // Perform mul operation for the specified range [begin, end) in the output Tensor.
+    for (int o_idx = 0; o_idx < num_element; o_idx++) {
+        // Assign the product of the input Tensor elements at index 'o_idx' to the output Tensor element at index 'o_idx'.
+        z[o_idx] = alpha * x[o_idx] * y[o_idx];
+    }
+}
+
+template<typename T, typename Device>
+void div<T, Device>::operator()(const int& num_element, const T& alpha, const T* x, const T* y, T* z) {
+    // Define a lambda expression 'div_fn' to implement div operation.
+    // Perform div operation for the specified range [begin, end) in the output Tensor.
+    for (int o_idx = 0; o_idx < num_element; o_idx++) {
+        // Assign the quotient of the input Tensor elements at index 'o_idx' to the output Tensor element at index 'o_idx'.
+        z[o_idx] = alpha * x[o_idx] / y[o_idx];
+    }
+}
+
+template<typename T, typename Device>
+void fma<T, Device>::operator()(const int& num_element, const T& alpha, const T* x, const T* y, const T& beta, const T* z, T* out) {
+    // Define a lambda expression 'fma_fn' to implement fma operation.
+    // Perform fma operation for the specified range [begin, end) in the output Tensor.
+    for (int o_idx = 0; o_idx < num_element; o_idx++) {
+        // Assign the sum of the product of the input Tensor elements at index 'o_idx' and the corresponding coefficients to the output Tensor element at index 'o_idx'.
+        out[o_idx] = alpha * x[o_idx] * y[o_idx] + beta * z[o_idx];
+    }
+}
 
 template<typename T, typename Device, bool Conjugate>
 void transpose<T, Device, Conjugate>::operator()(
@@ -179,6 +228,34 @@ void reduce<T, Device>::operator()(
     }
 }
 
+
+template struct add<int, DEVICE_CPU>;
+template struct add<int64_t, DEVICE_CPU>;
+template struct add<float, DEVICE_CPU>;
+template struct add<double, DEVICE_CPU>;
+template struct add<std::complex<float>, DEVICE_CPU>;
+template struct add<std::complex<double>, DEVICE_CPU>;
+
+template struct mul<int, DEVICE_CPU>;
+template struct mul<int64_t, DEVICE_CPU>;
+template struct mul<float, DEVICE_CPU>;
+template struct mul<double, DEVICE_CPU>;
+template struct mul<std::complex<float>, DEVICE_CPU>;
+template struct mul<std::complex<double>, DEVICE_CPU>;
+
+template struct div<int, DEVICE_CPU>;
+template struct div<int64_t, DEVICE_CPU>;
+template struct div<float, DEVICE_CPU>;
+template struct div<double, DEVICE_CPU>;
+template struct div<std::complex<float>, DEVICE_CPU>;
+template struct div<std::complex<double>, DEVICE_CPU>;
+
+template struct fma<int, DEVICE_CPU>;
+template struct fma<int64_t, DEVICE_CPU>;
+template struct fma<float, DEVICE_CPU>;
+template struct fma<double, DEVICE_CPU>;
+template struct fma<std::complex<float>, DEVICE_CPU>;
+template struct fma<std::complex<double>, DEVICE_CPU>;
 
 template struct transpose<int, DEVICE_CPU>;
 template struct transpose<int64_t, DEVICE_CPU>;

@@ -396,7 +396,7 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_GPU *ctx,
                         psi::Psi<std::complex<float>, psi::DEVICE_GPU> &wvf,
                         ModulePW::PW_Basis_K *wfc_basis,
                         wavefunc *p_wf,
-                        hamilt::Hamilt<std::complex<float>, psi::DEVICE_GPU> *phm_in)
+                        hamilt::Hamilt* phm_in)
 {
     ModuleBase::TITLE("wavefunc","diago_PAO_in_pw_k2");
     // (6) Prepare for atmoic orbitals or random orbitals
@@ -489,7 +489,7 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_GPU *ctx,
                         psi::Psi<std::complex<double>, psi::DEVICE_GPU> &wvf,
                         ModulePW::PW_Basis_K *wfc_basis,
                         wavefunc *p_wf,
-                        hamilt::Hamilt<std::complex<double>, psi::DEVICE_GPU> *phm_in)
+                        hamilt::Hamilt*phm_in)
 {
     ModuleBase::TITLE("wavefunc","diago_PAO_in_pw_k2");
 	// (6) Prepare for atmoic orbitals or random orbitals

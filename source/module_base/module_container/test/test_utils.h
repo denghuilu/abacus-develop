@@ -1,8 +1,8 @@
 #ifndef ATEN_KERNELS_TEST_OP_TEST_UTILS_H_
 #define ATEN_KERNELS_TEST_OP_TEST_UTILS_H_
 #include <gtest/gtest.h>
-#include <ATen/kernels/blas.h>
-#include <ATen/kernels/lapack.h>
+#include "module_base/module_container/ATen/kernels/blas.h"
+#include "module_base/module_container/ATen/kernels/lapack.h"
 
 namespace container {
 namespace test_utils {
