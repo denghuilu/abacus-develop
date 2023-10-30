@@ -152,7 +152,7 @@ void DiagoBPCG<T, Device>::calc_hpsi_with_block(
         const psi::Psi<T, Device>& psi_in,
         ct::Tensor& hpsi_out)
 {
-    // calculate all-band hpsi
+    // calculate all-band hpsi_
     psi::Range all_bands_range(1, psi_in.get_current_k(), 0, psi_in.get_nbands() - 1);
     hpsi_info info(&psi_in, all_bands_range, hpsi_out.data<T>());
     hamilt_in->ops->hPsi(info);
@@ -185,7 +185,7 @@ void DiagoBPCG<T, Device>::calc_hsub_with_block(
         ct::Tensor& workspace_in,
         ct::Tensor& eigenvalue_out)
 {
-    // Apply the H operator to psi and obtain the hpsi matrix.
+    // Apply the H operator to psi and obtain the hpsi_ matrix.
     this->calc_hpsi_with_block(hamilt_in, psi_in, hpsi_out);
 
     // Diagonalization of the subspace matrix.
@@ -241,7 +241,7 @@ void DiagoBPCG<T, Device>::diag(
         // Be careful here ! dangerous zone!
         // 1. normalize psi
         // 2. calculate the epsilo
-        // 3. calculate the gradient by hpsi - epsilo * psi
+        // 3. calculate the gradient by hpsi_ - epsilo * psi
         // 4. gradient mix with the previous gradient
         // 5. Do precondition
         this->calc_grad_with_block(this->prec, this->err_st, this->beta,
@@ -258,10 +258,10 @@ void DiagoBPCG<T, Device>::diag(
         // Calculate H|grad> matrix
         this->calc_hpsi_with_block(hamilt_in, this->grad_wrapper[0], this->hgrad);
 
-        // optimize psi as well as the hpsi
+        // optimize psi as well as the hpsi_
         // 1. normalize grad
         // 2. calculate theta
-        // 3. update psi as well as hpsi
+        // 3. update psi as well as hpsi_
         this->line_minimize(this->grad, this->hgrad, this->psi, this->hpsi);
 
         // orthogonal psi by cholesky method

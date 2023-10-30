@@ -2,7 +2,7 @@
 #define BASE_UTILS_ARRAY_REF_H_
 
 #include <cstddef>
-#include <stdint.h>
+#include <cstdint>
 #include <base/macros/macros.h>
 
 namespace base {

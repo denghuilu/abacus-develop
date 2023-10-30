@@ -2,24 +2,23 @@
 
 namespace hamilt {
 
-template <typename FPTYPE> 
-struct ekinetic_pw_op<FPTYPE, psi::DEVICE_CPU> {
+template <typename T>
+struct ekinetic_pw_op<T, psi::DEVICE_CPU> {
+  using Real = typename GetTypeReal<T>::type;
   void operator() (
-      const psi::DEVICE_CPU* /*dev*/,
       const int& nband,
       const int& npw,
-      const int& max_npw,
-      const FPTYPE& tpiba2,
-      const FPTYPE* gk2_ik,
-      std::complex<FPTYPE>* tmhpsi,
-      const std::complex<FPTYPE>* tmpsi_in)
+      const Real& tpiba2,
+      const Real* gk2,
+      const T* psi,
+      T* hpsi)
   {
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 4096/sizeof(FPTYPE))
 #endif
     for (int ib = 0; ib < nband; ++ib) {
       for (int ig = 0; ig < npw; ++ig) {
-        tmhpsi[ib * max_npw + ig] += gk2_ik[ig] * tpiba2 * tmpsi_in[ib * max_npw + ig];
+        hpsi[ib * npw + ig] += gk2[ig] * tpiba2 * psi[ib * npw + ig];
       }
     }
   }

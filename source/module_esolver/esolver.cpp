@@ -93,23 +93,7 @@ namespace ModuleESolver
         //initialize the corresponding Esolver child class
         if (esolver_type == "ksdft_pw")
         {
-        #if ((defined __CUDA) || (defined __ROCM))
-            if (GlobalV::device_flag == "gpu") {
-                if (GlobalV::precision_flag == "single") {
-                    p_esolver = new ESolver_KS_PW<std::complex<float>, psi::DEVICE_GPU>();
-                }
-                else {
-                    p_esolver = new ESolver_KS_PW<std::complex<double>, psi::DEVICE_GPU>();
-                }
-                return;
-            }
-        #endif
-            if (GlobalV::precision_flag == "single") {
-                p_esolver = new ESolver_KS_PW<std::complex<float>, psi::DEVICE_CPU>();
-            }
-            else {
-                p_esolver = new ESolver_KS_PW<std::complex<double>, psi::DEVICE_CPU>();
-            }
+            p_esolver = new ESolver_KS_PW();
         }
 #ifdef __LCAO
         else if (esolver_type == "ksdft_lcao")

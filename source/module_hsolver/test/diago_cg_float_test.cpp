@@ -168,7 +168,7 @@ TEST_P(DiagoCGFloatTest, RandomHamilt)
     DIAGOTEST::hmatrix_f = hpsi.hamilt();
 
     DIAGOTEST::npw = dcp.npw;
-    // ModuleBase::ComplexMatrix psi = hpsi.psi();
+    // ModuleBase::ComplexMatrix psi = hpsi_.psi();
     dcp.CompareEigen(hpsi.precond());
 }
 
@@ -205,8 +205,8 @@ TEST(DiagoCGFloatTest, Hamilt)
 {
     int dim = 100;
     int nbnd = 2;
-    HPsi hpsi(nbnd, dim);
-    std::vector<std::complex<float>> hm = hpsi.hamilt();
+    HPsi hpsi_(nbnd, dim);
+    std::vector<std::complex<float>> hm = hpsi_.hamilt();
     std::vector<std::complex<float>> hm_backup = hm;
     ModuleBase::ComplexMatrix eig(dim, dim);
     float e[dim];
@@ -236,11 +236,11 @@ TEST(DiagoCGFloatTest, TwoByTwo)
     DiagoCGPrepare dcp(nband, dim, 0, true, 1e-4, 50, 1e-0);
     hsolver::DiagoIterAssist<std::complex<float>>::PW_DIAG_NMAX = dcp.maxiter;
     hsolver::DiagoIterAssist<std::complex<float>>::PW_DIAG_THR = dcp.eps;
-    HPsi hpsi;
-    hpsi.create(nband, dim);
+    HPsi hpsi_;
+    hpsi_.create(nband, dim);
     DIAGOTEST::hmatrix_f = hm;
     DIAGOTEST::npw = dim;
-    dcp.CompareEigen(hpsi.precond());
+    dcp.CompareEigen(hpsi_.precond());
 }
 #endif
 

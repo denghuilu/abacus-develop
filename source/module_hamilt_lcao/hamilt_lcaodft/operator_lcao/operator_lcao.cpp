@@ -26,7 +26,7 @@ void OperatorLCAO<double, double>::get_hs_pointers()
         const int inc = 1;
         BlasConnector::copy(this->LM->Sloc.size(), this->LM->Sloc.data(), inc, this->smatrix_k, inc);
 #ifdef __ELPA
-        hsolver::DiagoElpa<double>::DecomposedState = 0;
+        hsolver::DiagoElpa::DecomposedState = 0;
 #endif
         this->new_e_iteration = false;
     }

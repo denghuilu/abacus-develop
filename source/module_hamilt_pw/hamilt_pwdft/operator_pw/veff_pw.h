@@ -1,5 +1,5 @@
-#ifndef VEFFPW_H
-#define VEFFPW_H
+#ifndef OPERATOR_PW_VEFF_H_
+#define OPERATOR_PW_VEFF_H_
 
 #include "operator_pw.h"
 #include "module_base/matrix.h"
@@ -10,14 +10,14 @@
 
 namespace hamilt {
 
-#ifndef __VEFFTEMPLATE
-#define __VEFFTEMPLATE
+#ifndef VEFFTEMPLATE
+#define VEFFTEMPLATE
 
 template<class T> class Veff : public T {};
 // template<typename Real, typename Device = psi::DEVICE_CPU>
 // class Veff : public OperatorPW<T, Device> {};
 
-#endif
+#endif // VEFFTEMPLATE
 
 template<typename T, typename Device>
 class Veff<OperatorPW<T, Device>> : public OperatorPW<T, Device>
@@ -25,55 +25,20 @@ class Veff<OperatorPW<T, Device>> : public OperatorPW<T, Device>
   private:
     using Real = typename GetTypeReal<T>::type;
   public:
-    Veff(
-        const int* isk_in,
-        const Real* veff_in,
-        const int veff_row,
-        const int veff_col,
-        const ModulePW::PW_Basis_K* wfcpw_in);
+    Veff(const ct::Tensor& isk, const ct::Tensor& veff, const ModulePW::PW_Basis_K* wfcpw_in);
 
-    virtual ~Veff();
-
-    void act(
-        const int64_t nbands,
-        const int64_t nbasis,
-        const int npol,
-        const ct::Tensor& psi_in,
-        ct::Tensor& hpsi,
-        const int ngk_ik)const override;
-
-    // denghui added for copy constructor at 20221105
-    const Real *get_veff() const {return this->veff;}
-    int get_veff_col() const {return this->veff_col;}
-    int get_veff_row() const { return this->veff_row; }
-    const int *get_isk() const {return isk;}
-    const ModulePW::PW_Basis_K* get_wfcpw() const
-    {
-        return this->wfcpw;
-    }
+    void act(const ct::Tensor& psi, ct::Tensor& hpsi)const override;
 
   private:
 
-    const int* isk = nullptr;
+    Device* ctx_ = {};
+    ct::Tensor isk_ = {}, veff_ = {};
+    ct::Tensor porter_ = {}, porter1_ = {};
 
-    const ModulePW::PW_Basis_K* wfcpw = nullptr;
+    const ModulePW::PW_Basis_K* wfcpw_ = nullptr;
 
-    Device* ctx = {};
-    psi::DEVICE_CPU* cpu_ctx = {};
-
-    int veff_col = 0;
-    int veff_row = 0;
-    const Real *veff = nullptr, *h_veff = nullptr, *d_veff = nullptr;
-    T *porter = nullptr;
-    T *porter1 = nullptr;
-    psi::AbacusDevice_t device = {};
-    using veff_op = veff_pw_op<Real, Device>;
-
-
-    using resmem_complex_op = psi::memory::resize_memory_op<T, Device>;
-    using delmem_complex_op = psi::memory::delete_memory_op<T, Device>;
 };
 
 } // namespace hamilt
 
-#endif
+#endif // OPERATOR_PW_VEFF_H_

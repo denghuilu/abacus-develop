@@ -495,6 +495,10 @@ class Tensor {
      */
     Tensor operator[] (const int& index) const;
 
+    explicit operator bool() const {
+        return this->NumElements() > 0;
+    }
+
 protected:
 
     /**

@@ -89,98 +89,6 @@ void div_op::operator()(const container::Tensor &x, const container::Tensor &y, 
     })
 }
 
-Tensor operator+(const Tensor& self, const Tensor& other) {
-    // check the shape
-    REQUIRES_OK(self.shape() == other.shape(),
-                "add: the shape of the two input Tensors must be the same")
-    // allocate memory for the result
-    Tensor result = Tensor(self.data_type(), self.device_type(), self.shape());
-    add_op()(self, other, result);
-    return result;
-}
-
-Tensor operator-(const Tensor& self, const Tensor& other) {
-    // check the shape
-    REQUIRES_OK(self.shape() == other.shape(),
-                "add: the shape of the two input Tensors must be the same")
-    REQUIRES_OK(self.data_type() == other.data_type(),
-                "add: the data type of the two input Tensors must be the same")
-    REQUIRES_OK(self.device_type() == other.device_type(),
-                "add: the device type of the two input Tensors must be the same")
-    Tensor result = Tensor(self.data_type(), self.device_type(), self.shape());
-    // allocate memory for the result
-    TEMPLATE_ALL_LAMBDA_2(self.data_type(), self.device_type(), [&](){
-        T_ alpha = static_cast<T_>(1.0);
-        T_ beta  = static_cast<T_>(-1.0);
-        kernels::add<T_, DEVICE_>()(
-            self.NumElements(), alpha, self.data<T_>(), beta, other.data<T_>(), result.data<T_>());
-    })
-    return result;
-}
-
-Tensor operator*(const Tensor& self, const Tensor& other) {
-    // check the shape
-    REQUIRES_OK(self.shape() == other.shape(),
-                "mul: the shape of the two input Tensors must be the same")
-    // allocate memory for the result
-    Tensor result = Tensor(self.data_type(), self.device_type(), self.shape());
-    mul_op()(self, other, result);
-    return result;
-}
-
-Tensor operator/(const Tensor& self, const Tensor& other) {
-    // check the shape
-    REQUIRES_OK(self.shape() == other.shape(),
-                "div: the shape of the two input Tensors must be the same")
-    // allocate memory for the result
-    Tensor result = Tensor(self.data_type(), self.device_type(), self.shape());
-    div_op()(self, other, result);
-    return result;
-}
-
-Tensor& operator+=(Tensor& self, const Tensor& other) {
-    // check the shape
-    REQUIRES_OK(self.shape() == other.shape(),
-                "add: the shape of the two input Tensors must be the same")
-    add_op()(self, other, self);
-    return self;
-}
-
-Tensor& operator-=(Tensor& self, const Tensor& other) {
-    // check the shape
-    REQUIRES_OK(self.shape() == other.shape(),
-                "add: the shape of the two input Tensors must be the same")
-    REQUIRES_OK(self.data_type() == other.data_type(),
-                "add: the data type of the two input Tensors must be the same")
-    REQUIRES_OK(self.device_type() == other.device_type(),
-                "add: the device type of the two input Tensors must be the same")
-    // allocate memory for the result
-    TEMPLATE_ALL_LAMBDA_2(self.data_type(), self.device_type(), [&](){
-        T_ alpha = static_cast<T_>(1.0);
-        T_ beta  = static_cast<T_>(-1.0);
-        kernels::add<T_, DEVICE_>()(
-            self.NumElements(), alpha, self.data<T_>(), beta, other.data<T_>(), self.data<T_>());
-    })
-
-    return self;
-}
-
-Tensor& operator*=(Tensor& self, const Tensor& other) {
-    // check the shape
-    REQUIRES_OK(self.shape() == other.shape(),
-                "mul: the shape of the two input Tensors must be the same")
-    mul_op()(self, other, self);
-    return self;
-}
-
-Tensor& operator/=(Tensor& self, const Tensor& other) {
-    // check the shape
-    REQUIRES_OK(self.shape() == other.shape(),
-                "div: the shape of the two input Tensors must be the same")
-    div_op()(self, other, self);
-    return self;
-}
-
 
 template<bool Conjugate>
 void transpose_op<Conjugate>::operator()(
@@ -240,3 +148,95 @@ template void mul_op::operator()<std::complex<double>>(const std::complex<double
 
 } // namespace kernels
 } // namespace container
+
+ct::Tensor operator+(const ct::Tensor& self, const ct::Tensor& other) {
+    // check the shape
+    REQUIRES_OK(self.shape() == other.shape(),
+                "add: the shape of the two input Tensors must be the same")
+    // allocate memory for the result
+    ct::Tensor result = ct::Tensor(self.data_type(), self.device_type(), self.shape());
+    ct::op::add_op()(self, other, result);
+    return result;
+}
+
+ct::Tensor operator-(const ct::Tensor& self, const ct::Tensor& other) {
+    // check the shape
+    REQUIRES_OK(self.shape() == other.shape(),
+                "add: the shape of the two input Tensors must be the same")
+    REQUIRES_OK(self.data_type() == other.data_type(),
+                "add: the data type of the two input Tensors must be the same")
+    REQUIRES_OK(self.device_type() == other.device_type(),
+                "add: the device type of the two input Tensors must be the same")
+    ct::Tensor result = ct::Tensor(self.data_type(), self.device_type(), self.shape());
+    // allocate memory for the result
+    TEMPLATE_ALL_LAMBDA_2(self.data_type(), self.device_type(), [&](){
+        T_ alpha = static_cast<T_>(1.0);
+        T_ beta  = static_cast<T_>(-1.0);
+        ct::kernels::add<T_, DEVICE_>()(
+            self.NumElements(), alpha, self.data<T_>(), beta, other.data<T_>(), result.data<T_>());
+    })
+    return result;
+}
+
+ct::Tensor operator*(const ct::Tensor& self, const ct::Tensor& other) {
+    // check the shape
+    REQUIRES_OK(self.shape() == other.shape(),
+                "mul: the shape of the two input Tensors must be the same")
+    // allocate memory for the result
+    ct::Tensor result = ct::Tensor(self.data_type(), self.device_type(), self.shape());
+    ct::op::mul_op()(self, other, result);
+    return result;
+}
+
+ct::Tensor operator/(const ct::Tensor& self, const ct::Tensor& other) {
+    // check the shape
+    REQUIRES_OK(self.shape() == other.shape(),
+                "div: the shape of the two input Tensors must be the same")
+    // allocate memory for the result
+    ct::Tensor result = ct::Tensor(self.data_type(), self.device_type(), self.shape());
+    ct::op::div_op()(self, other, result);
+    return result;
+}
+
+ct::Tensor& operator+=(ct::Tensor& self, const ct::Tensor& other) {
+    // check the shape
+    REQUIRES_OK(self.shape() == other.shape(),
+                "add: the shape of the two input Tensors must be the same")
+    ct::op::add_op()(self, other, self);
+    return self;
+}
+
+ct::Tensor& operator-=(ct::Tensor& self, const ct::Tensor& other) {
+    // check the shape
+    REQUIRES_OK(self.shape() == other.shape(),
+                "add: the shape of the two input Tensors must be the same")
+    REQUIRES_OK(self.data_type() == other.data_type(),
+                "add: the data type of the two input Tensors must be the same")
+    REQUIRES_OK(self.device_type() == other.device_type(),
+                "add: the device type of the two input Tensors must be the same")
+    // allocate memory for the result
+    TEMPLATE_ALL_LAMBDA_2(self.data_type(), self.device_type(), [&](){
+        T_ alpha = static_cast<T_>(1.0);
+        T_ beta  = static_cast<T_>(-1.0);
+        ct::kernels::add<T_, DEVICE_>()(
+            self.NumElements(), alpha, self.data<T_>(), beta, other.data<T_>(), self.data<T_>());
+    })
+
+    return self;
+}
+
+ct::Tensor& operator*=(ct::Tensor& self, const ct::Tensor& other) {
+    // check the shape
+    REQUIRES_OK(self.shape() == other.shape(),
+                "mul: the shape of the two input Tensors must be the same")
+    ct::op::mul_op()(self, other, self);
+    return self;
+}
+
+ct::Tensor& operator/=(ct::Tensor& self, const ct::Tensor& other) {
+    // check the shape
+    REQUIRES_OK(self.shape() == other.shape(),
+                "div: the shape of the two input Tensors must be the same")
+    ct::op::div_op()(self, other, self);
+    return self;
+}

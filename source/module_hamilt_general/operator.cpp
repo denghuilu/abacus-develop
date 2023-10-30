@@ -9,7 +9,7 @@ Operator::Operator() = default;
 
 Operator::~Operator()
 {
-    delete this->hpsi;
+    delete this->hpsi_;
     Operator* last = this->next_op;
     Operator* last_sub = this->next_sub_op;
     while(last != nullptr || last_sub != nullptr)

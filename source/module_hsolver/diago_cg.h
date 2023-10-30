@@ -28,7 +28,7 @@ class DiagoCG : public DiagH
         const std::function<void(const ct::Tensor&, ct::Tensor&)>& hpsi_func,
         const std::function<void(const ct::Tensor&, ct::Tensor&)>& spsi_func);
     // Destructor for DiagoCG
-    ~DiagoCG() = default;
+    ~DiagoCG() override = default;
 
     // virtual void init(){};
     // refactor hpsi_info

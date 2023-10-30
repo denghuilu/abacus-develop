@@ -52,10 +52,10 @@ void DiagoIterAssist<T, Device>::diagH_subspace(
     // qianrui improve this part 2021-3-14
     const T* ppsi = psi.get_pointer();
 
-    // allocated hpsi
-    // std::vector<T> hpsi(psi.get_nbands() * psi.get_nbasis());
+    // allocated hpsi_
+    // std::vector<T> hpsi_(psi.get_nbands() * psi.get_nbasis());
     T* hphi = nullptr;
-    resmem_complex_op()(ctx, hphi, psi.get_nbands() * psi.get_nbasis(), "DiagSub::hpsi");
+    resmem_complex_op()(ctx, hphi, psi.get_nbands() * psi.get_nbasis(), "DiagSub::hpsi_");
     setmem_complex_op()(ctx, hphi, 0, psi.get_nbands() * psi.get_nbasis());
     // do hPsi for all bands
     psi::Range all_bands_range(1, psi.get_current_k(), 0, psi.get_nbands()-1);
@@ -239,12 +239,12 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(
 
     const T *ppsi = psi_temp.get_pointer();
 
-    // allocated hpsi
+    // allocated hpsi_
     T* hpsi = nullptr;
-    resmem_complex_op()(ctx, hpsi, psi_temp.get_nbands() * psi_temp.get_nbasis(), "DiagSub::hpsi");
+    resmem_complex_op()(ctx, hpsi, psi_temp.get_nbands() * psi_temp.get_nbasis(), "DiagSub::hpsi_");
     setmem_complex_op()(ctx, hpsi, 0, psi_temp.get_nbands() * psi_temp.get_nbasis());
     // ================================================
-    // std::vector<T> hpsi(psi_temp.get_nbands() * psi_temp.get_nbasis());
+    // std::vector<T> hpsi_(psi_temp.get_nbands() * psi_temp.get_nbasis());
 
 
     // do hPsi for all bands
@@ -474,7 +474,6 @@ void DiagoIterAssist<T, Device>::diagH_subspace(
     const ct::Tensor& psi, // [in] wavefunction
     ct::Tensor& evc, // [out] wavefunction
     ct::Tensor& en, // [out] eigenvalues
-    int ik,
     int n_band // [in] number of bands to be calculated, also number of rows of evc, if set to 0, n_band = nstart, default 0
     )
 {
@@ -503,8 +502,8 @@ void DiagoIterAssist<T, Device>::diagH_subspace(
         ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<Device>::value, {nstart, nstart});
     vcc.zero();
 
-    // allocated hpsi
-    // std::vector<T> hpsi(psi.get_nbands() * psi.get_nbasis());
+    // allocated hpsi_
+    // std::vector<T> hpsi_(psi.get_nbands() * psi.get_nbasis());
     auto hpsi = ct::Tensor(
         ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<Device>::value, {nstart, current_n_basis});
     hpsi.zero();

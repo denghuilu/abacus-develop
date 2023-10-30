@@ -148,7 +148,7 @@ TEST_P(DiagoDavTest,RandomHamilt)
 	DIAGOTEST::npw_local[0] = DIAGOTEST::npw;
 	psi_local = psi;
 	precondition_local = new double[DIAGOTEST::npw];
-	for(int i=0;i<DIAGOTEST::npw;i++) precondition_local[i] = (hpsi.precond())[i];
+	for(int i=0;i<DIAGOTEST::npw;i++) precondition_local[i] = (hpsi_.precond())[i];
 #endif
 
 	ddp.CompareEigen(psi_local,precondition_local);
@@ -192,7 +192,7 @@ TEST(DiagoDavRealSystemTest, dataH)
 	DIAGOTEST::npw_local[0] = DIAGOTEST::npw;
 	psi_local = psi;
 	precondition_local = new double[DIAGOTEST::npw];
-	for(int i=0;i<DIAGOTEST::npw;i++) precondition_local[i] = (hpsi.precond())[i];
+	for(int i=0;i<DIAGOTEST::npw;i++) precondition_local[i] = (hpsi_.precond())[i];
 #endif
 
 	ddp.CompareEigen(psi_local,precondition_local);

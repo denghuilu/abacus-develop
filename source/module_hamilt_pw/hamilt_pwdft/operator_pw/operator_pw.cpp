@@ -5,7 +5,7 @@
 using namespace hamilt;
 
 template<typename T, typename Device>
-OperatorPW<T, Device>::~OperatorPW(){};
+OperatorPW<T, Device>::~OperatorPW()= default;
 
 namespace hamilt {
 template class OperatorPW<std::complex<float>, psi::DEVICE_CPU>;

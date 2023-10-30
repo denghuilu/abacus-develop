@@ -63,16 +63,6 @@ struct div_op {
         Tensor& z);
 };
 
-Tensor operator+(const Tensor& self, const Tensor& other);
-Tensor operator-(const Tensor& self, const Tensor& other);
-Tensor operator*(const Tensor& self, const Tensor& other);
-Tensor operator/(const Tensor& self, const Tensor& other);
-Tensor& operator+=(Tensor& self, const Tensor& other);
-Tensor& operator-=(Tensor& self, const Tensor& other);
-Tensor& operator*=(Tensor& self, const Tensor& other);
-Tensor& operator/=(Tensor& self, const Tensor& other);
-
-
 template <bool Conjugate = false>
 struct transpose_op {
     /**
@@ -161,5 +151,14 @@ struct reduce_op {
 
 } // namespace op
 } // namespace container
+
+ct::Tensor   operator+(const ct::Tensor& self, const ct::Tensor& other);
+ct::Tensor   operator-(const ct::Tensor& self, const ct::Tensor& other);
+ct::Tensor   operator*(const ct::Tensor& self, const ct::Tensor& other);
+ct::Tensor   operator/(const ct::Tensor& self, const ct::Tensor& other);
+ct::Tensor& operator+=(ct::Tensor& self, const ct::Tensor& other);
+ct::Tensor& operator-=(ct::Tensor& self, const ct::Tensor& other);
+ct::Tensor& operator*=(ct::Tensor& self, const ct::Tensor& other);
+ct::Tensor& operator/=(ct::Tensor& self, const ct::Tensor& other);
 
 #endif // ATEN_OPS_LINALG_H_

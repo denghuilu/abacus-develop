@@ -49,7 +49,7 @@ class DiagoBPCG : public DiagH
     /**
      * @brief Initialize the class before diagonalization.
      *
-     * This function allocates all the related variables, such as hpsi, hsub, before the diag call.
+     * This function allocates all the related variables, such as hpsi_, hsub, before the diag call.
      * It is called by the HsolverPW::initDiagh() function.
      *
      * @param psi_in The input wavefunction psi.
@@ -121,19 +121,19 @@ class DiagoBPCG : public DiagH
 
     /**
      *
-     * @brief Apply the H operator to psi and obtain the hpsi matrix.
+     * @brief Apply the H operator to psi and obtain the hpsi_ matrix.
      *
      * This function calculates the matrix product of the Hamiltonian operator (H) and the input wavefunction (psi).
      * The resulting matrix is stored in the output array hpsi_out.
      *
-     * @note hpsi = H|psi>;
+     * @note hpsi_ = H|psi>;
      *
      * psi_in[dim: n_basis x n_band, column major, lda = n_basis_max],
      * hpsi_out[dim: n_basis x n_band, column major, lda = n_basis_max].
      *
      * @param hamilt_in A pointer to the hamilt::Hamilt object representing the Hamiltonian operator.
      * @param psi_in The input wavefunction psi.
-     * @param hpsi_out Pointer to the array where the resulting hpsi matrix will be stored.
+     * @param hpsi_out Pointer to the array where the resulting hpsi_ matrix will be stored.
      */
     void calc_hpsi_with_block(
         hamilt::Hamilt* hamilt_in, 
@@ -197,7 +197,7 @@ class DiagoBPCG : public DiagH
      * @note The steps involved in optimization are:
      *   1. normalize psi
      *   2. calculate the epsilo
-     *   3. calculate the gradient by hpsi - epsilo * psi
+     *   3. calculate the gradient by hpsi_ - epsilo * psi
      *   4. gradient mix with the previous gradient
      *   5. Do precondition
      */
@@ -210,7 +210,7 @@ class DiagoBPCG : public DiagH
 
     /**
      *
-     * @brief Apply the Hamiltonian operator to psi and obtain the hpsi matrix.
+     * @brief Apply the Hamiltonian operator to psi and obtain the hpsi_ matrix.
      *
      * psi_out[dim: n_basis x n_band, column major, lda = n_basis_max],
      * hpsi_out[dim: n_basis x n_band, column major, lda = n_basis_max],
@@ -233,7 +233,7 @@ class DiagoBPCG : public DiagH
     
     /**
      *
-     * @brief Apply the Hamiltonian operator to psi and obtain the hpsi matrix.
+     * @brief Apply the Hamiltonian operator to psi and obtain the hpsi_ matrix.
      *
      * psi_out[dim: n_basis x n_band, column major, lda = n_basis_max],
      * hpsi_out[dim: n_basis x n_band, column major, lda = n_basis_max],
@@ -271,7 +271,7 @@ class DiagoBPCG : public DiagH
 
     /**
      *
-     *@brief Optimize psi as well as the hpsi.
+     *@brief Optimize psi as well as the hpsi_.
      *
      *@param grad_in Input gradient array, [dim: n_basis x n_band, column major, lda = n_basis_max].
      *@param hgrad_in Product of grad_in and Hamiltonian, [dim: n_basis x n_band, column major, lda = n_basis_max].
@@ -280,7 +280,7 @@ class DiagoBPCG : public DiagH
      *@note The steps involved in optimization are:
      *  1. Normalize the gradient.
      *  2. Calculate theta.
-     *  3. Update psi as well as hpsi.
+     *  3. Update psi as well as hpsi_.
      */
     void line_minimize(
         ct::Tensor& grad_in,
@@ -293,7 +293,7 @@ class DiagoBPCG : public DiagH
      *
      * @param workspace_in Workspace memory, [dim: n_basis x n_band, column major, lda = n_basis_max]..
      * @param psi_out Input and output wavefunction array. [dim: n_basis x n_band, column major, lda = n_basis_max].
-     * @param hpsi_out Input and output hpsi array. [dim: n_basis x n_band, column major, lda = n_basis_max].
+     * @param hpsi_out Input and output hpsi_ array. [dim: n_basis x n_band, column major, lda = n_basis_max].
      * @param hsub_out Input Hamiltonian product array. [dim: n_band x n_band, column major, lda = n_band].
      */
     void orth_cholesky(

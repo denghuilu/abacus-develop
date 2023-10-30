@@ -30,6 +30,7 @@ class DiagH
     DiagH_Type method_ = DiagH_Type::DiagH_None;
 
     // New interface with container Tensor
+    virtual void diag(const ct::Tensor& prec, ct::Tensor& psi, ct::Tensor& eigen_in) {};
     virtual void diag(hamilt::Hamilt* phm_in, ct::Tensor& psi, ct::Tensor& eigenvalue_in) {};
     // Deprecated interface, will be removed in the future
     virtual void diag(hamilt::Hamilt* phm_in, psi::Psi<double>& psi, double* eigenvalue_in) {};

@@ -37,7 +37,6 @@ class DiagoIterAssist
         const ct::Tensor& psi, 
         ct::Tensor& evc,
         ct::Tensor& en,
-        int ik,
         int n_band = 0);
 
     static void diagH_subspace_init(

@@ -7,8 +7,8 @@ template<typename T, typename Device = psi::DEVICE_CPU>
 class OperatorPW : public Operator
 {
     public:
-        virtual ~OperatorPW();
-        std::string classname = "";
+        ~OperatorPW() override;
+        calculation_type type_ = calculation_type::no;
 };
 
 }//end namespace hamilt

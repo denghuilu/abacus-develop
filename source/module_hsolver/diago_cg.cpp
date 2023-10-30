@@ -13,6 +13,7 @@
 #include <ATen/core/tensor_map.h>
 #include <ATen/core/tensor_utils.h>
 #include <ATen/ops/einsum_op.h>
+#include <ATen/ops/linalg_op.h>
 
 #include "diago_cg.h"
 
@@ -118,7 +119,7 @@ void DiagoCG<T, Device>::diag_mock(const ct::Tensor& prec, ct::Tensor& psi, ct::
                 cg_norm, theta, eigen_pack[m], // Real&
                 phi_m, sphi, hphi); // Tensor&
 
-        } while (!converged || ++iter < DiagoIterAssist<T, Device>::PW_DIAG_NMAX);
+        } while (!converged && ++iter < DiagoIterAssist<T, Device>::PW_DIAG_NMAX);
 
         // ModuleBase::GlobalFunc::COPYARRAY(phi_m->get_pointer(), psi_temp, this->n_basis_);
         psi[m].sync(phi_m);
@@ -186,8 +187,10 @@ void DiagoCG<T, Device>::calc_grad(
     //     // So here we get the grad.
     //     grad[i] -= lambda * this->pphi[i];
     // }
-    // TODO: add some possible lazy evaluation ? 
-    grad -= lambda * pphi;
+    // TODO: add some possible lazy evaluation ?
+    // grad = - lambda * pphi + 1 * grad;
+    ct::op::add_op()(
+        -lambda, pphi, static_cast<Real>(1.0), grad, grad);
 }
 
 template<typename T, typename Device>
@@ -203,7 +206,7 @@ void DiagoCG<T, Device>::orth_grad(
         /*conj_x=*/true, /*conj_y=*/false, /*alpha=*/1.0, /*beta=*/0.0, /*Tensor out=*/&lagrange);
     lagrange = ct::op::einsum("ij,i->j", psi, scg, option);
     // TODO: add Tensor operators for communications
-    Parallel_Reduce::reduce_complex_double_pool(lagrange.data<T>(), m);
+    Parallel_Reduce::reduce_pool(lagrange.data<T>(), m);
 
     // (3) orthogonal |g> and |scg> to all states (0~m-1)
     option = ct::EinsumOption(
@@ -268,14 +271,19 @@ void DiagoCG<T, Device>::calc_gamma_cg(
         // {
         //     pcg[i] = gamma * pcg[i] + grad[i];
         // }
-        cg = gamma * cg + grad;
-        auto normal = gamma * cg_norm * sin(theta);
+        // cg = gamma * cg + grad;
+        ct::op::add_op()(
+            gamma, cg, static_cast<Real>(1.0), grad, cg);
+        Real normal = gamma * cg_norm * sin(theta);
         // zaxpy_(&this->n_basis_, &znorma, pphi_m, &one, pcg, &one);
         /*for (int i = 0; i < this->n_basis_; i++)
         {
             pcg[i] -= norma * pphi_m[i];
         }*/
-        cg += normal * phi_m;
+        // cg += normal * phi_m;
+        ct::op::add_op()(
+            normal, phi_m, static_cast<Real>(1.0), grad, cg);
+
     }
 }
 
@@ -325,21 +333,25 @@ bool DiagoCG<T, Device>::update_psi(
     // {
     //     phi_m_pointer[i] = phi_m_pointer[i] * cost + sint_norm * pcg[i];
     // }
-    phi_m = phi_m * cost + sint_norm * cg;    
+    // phi_m = phi_m * cost + sint_norm * cg;
+    ct::op::add_op()(
+        cost, phi_m, sint_norm, cg, phi_m);
 
     if (std::abs(eigen - e0) < DiagoIterAssist<T, Device>::PW_DIAG_THR) {
         return true;
     }
-    else {
-        // for (int i = 0; i < this->n_basis_; i++)
-        // {
-        //     sphi[i] = sphi[i] * cost + sint_norm * scg[i];
-        //     hphi[i] = hphi[i] * cost + sint_norm * this->pphi[i];
-        // }
-        sphi = sphi * cost + sint_norm * scg;
-        hphi = hphi * cost + sint_norm * pphi;
-        return false;
-    }
+    // for (int i = 0; i < this->n_basis_; i++)
+    // {
+    //     sphi[i] = sphi[i] * cost + sint_norm * scg[i];
+    //     hphi[i] = hphi[i] * cost + sint_norm * this->pphi[i];
+    // }
+    // sphi = sphi * cost + sint_norm * scg;
+    ct::op::add_op()(
+        cost, sphi, sint_norm, scg, sphi);
+    // hphi = hphi * cost + sint_norm * pphi;
+    ct::op::add_op()(
+        cost, hphi, sint_norm, pphi, hphi);
+    return false;
 }
 
 template<typename T, typename Device>
@@ -370,7 +382,7 @@ void DiagoCG<T, Device>::schmit_orth(
     lagrange_so = ct::op::einsum("i,ji->j", psi_map, sphi, option);
 
     // be careful , here reduce m+1
-    Parallel_Reduce::reduce_complex_double_pool(lagrange_so.data<T>(), m + 1);
+    Parallel_Reduce::reduce_pool(lagrange_so.data<T>(), m + 1);
 
     psi_map = ct::TensorMap(
         psi.data<T>(), psi.data_type(), psi.device_type(), {m, this->n_basis_});
@@ -392,7 +404,7 @@ void DiagoCG<T, Device>::schmit_orth(
         lagrange_so[m] - ct::op::einsum("i,i->", lagrange_so, lagrange_so));
 
     REQUIRES_OK(psi_norm > 0.0,
-        "DiagoCG::schmit_orth: psi_norm < 0");
+        "DiagoCG::schmit_orth: psi_norm < 0")
 
     psi_norm = sqrt(psi_norm);
 
@@ -402,7 +414,8 @@ void DiagoCG<T, Device>::schmit_orth(
     // {
     //     pphi_m[ig] /= psi_norm;
     // }
-    phi_m /= psi_norm;
+    // phi_m /= psi_norm;
+    ct::op::mul_op()(1 / psi_norm, phi_m, phi_m);
 }
 
 template<typename T, typename Device>
@@ -415,7 +428,7 @@ void DiagoCG<T, Device>::diag(const ct::Tensor& prec, ct::Tensor& psi, ct::Tenso
     {
         if(DiagoIterAssist<T, Device>::need_subspace || ntry > 0)
         {
-            DiagoIterAssist<T, Device>::diagH_subspace(hpsi_func_, psi, psi, eigen_in, this->ik_);
+            DiagoIterAssist<T, Device>::diagH_subspace(hpsi_func_, psi, psi, eigen_in);
         }
 
         DiagoIterAssist<T, Device>::avg_iter += 1.0;

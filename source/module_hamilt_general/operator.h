@@ -50,16 +50,12 @@ class Operator
 
     virtual void add(Operator* next);
 
-    virtual int get_ik() const { return this->ik; }
+    virtual int get_ik() const { return this->ik_; }
 
     ///do operation : |hpsi_choosed> = V|psi_choosed>
     ///V is the target operator act on choosed psi, the consequence should be added to choosed hpsi
-    virtual void act(const int64_t nbands,
-        const int64_t nbasis,
-        const int npol,
-        const ct::Tensor& psi_in,
-        ct::Tensor& hpsi,
-        const int ngk_ik) const {};
+    // hpi = H|psi>;
+    virtual void act(const ct::Tensor& psi, ct::Tensor& hpsi) const {};
 
     /// an developer-friendly interface for act() function
     virtual ct::Tensor act(const ct::Tensor& psi_in) const { return psi_in; };
@@ -67,18 +63,18 @@ class Operator
     Operator* next_op = nullptr;
 
 protected:
-    int ik = 0;
+    int ik_ = 0;
     int act_type = 1;   ///< determine which act() interface would be called in hPsi()
 
     mutable bool in_place = false;
 
     //calculation type, only different type can be in main chain table 
-    enum calculation_type cal_type = calculation_type::no;
+    calculation_type calc_type_ = calculation_type::no;
     Operator* next_sub_op = nullptr;
     bool is_first_node = true;
 
-    //if this Operator is first node in chain table, hpsi would not be empty
-    mutable ct::Tensor* hpsi = nullptr;
+    //if this Operator is first node in chain table, hpsi_ would not be empty
+    mutable ct::Tensor* hpsi_ = nullptr;
 
     int npol_ = 0;
     int* ngk_ = nullptr;
