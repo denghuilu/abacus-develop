@@ -622,7 +622,10 @@ std::string get_device_info(std::string device_flag)
     }
 #elif defined(__ROCM)
     if (device_flag == "gpu") {
-
+        int dev = 0;
+        hipDeviceProp_t deviceProp;
+        hipGetDeviceProperties(&deviceProp, dev);
+        device_info = deviceProp.name;
     }
 #endif
     if (device_flag == "cpu") {
