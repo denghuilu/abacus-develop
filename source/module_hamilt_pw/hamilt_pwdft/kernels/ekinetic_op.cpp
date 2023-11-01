@@ -14,7 +14,7 @@ struct ekinetic_pw_op<T, psi::DEVICE_CPU> {
       T* hpsi)
   {
 #ifdef _OPENMP
-#pragma omp parallel for collapse(2) schedule(static, 4096/sizeof(FPTYPE))
+#pragma omp parallel for collapse(2) schedule(static, 4096/sizeof(T))
 #endif
     for (int ib = 0; ib < nband; ++ib) {
       for (int ig = 0; ig < npw; ++ig) {
@@ -24,8 +24,8 @@ struct ekinetic_pw_op<T, psi::DEVICE_CPU> {
   }
 };
 
-template struct ekinetic_pw_op<float, psi::DEVICE_CPU>;
-template struct ekinetic_pw_op<double, psi::DEVICE_CPU>;
+template struct ekinetic_pw_op<std::complex<float>, psi::DEVICE_CPU>;
+template struct ekinetic_pw_op<std::complex<double>, psi::DEVICE_CPU>;
 
 }  // namespace hamilt
 

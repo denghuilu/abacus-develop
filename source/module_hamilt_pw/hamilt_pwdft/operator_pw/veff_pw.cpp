@@ -46,34 +46,33 @@ void Veff<OperatorPW<T, Device>>::act(
         if (this->npol_ == 1)
         {
             // wfcpw->recip2real(tmpsi_in, porter, this->ik);
-            wfcpw_->recip_to_real(this->ctx_, psi[ib].data<T>(), porter_);
+            wfcpw_->recip_to_real(this->ctx_, psi[ib].data<T>(), porter_.data<T>(), this->ik_);
             // NOTICE: when MPI threads are larger than number of Z grids
             // veff would contain nothing, and nothing should be done in real space
             // but the 3DFFT can not be skipped, it will cause hanging
             if (veff_) {
-                veff_pw_op<T, Device>()(veff_.shape().dim_size(1), porter_, veff_[current_spin].data<T>());
+                veff_pw_op<T, Device>()(veff_.shape().dim_size(1), porter_.data<T>(), veff_[current_spin].data<Real>());
             }
             // wfcpw->real2recip(porter, tmhpsi, this->ik, true);
-            wfcpw_->real_to_recip(this->ctx_, porter_, hpsi[ib].data<T>(), true);
+            wfcpw_->real_to_recip(this->ctx_, porter_.data<T>(), hpsi[ib].data<T>(), true);
         }
         else
         {
             // T *porter1 = new T[wfcpw->nmaxgr];
             // fft to real space and doing things.
-            wfcpw_->recip_to_real(this->ctx, &psi_in_pack[this->ik][ib][0], this->porter, this->ik);
-            wfcpw_->recip_to_real(this->ctx, &psi_in_pack[this->ik][ib][max_npw], this->porter1, this->ik);
-            if (this->veff_col != 0)
-            {
+            wfcpw_->recip_to_real(this->ctx_, psi[ib].data<T>(), porter_.data<T>(), this->ik_);
+            wfcpw_->recip_to_real(this->ctx_, psi[ib][max_npw].data<T>(), porter1_.data<T>(), this->ik_);
+            if (veff_) {
                 /// denghui added at 20221109
                 const Real* current_veff[4];
                 for(int is = 0; is < 4; is++) {
-                    current_veff[is] = this->veff + is * this->veff_col ; // for CPU device
+                    current_veff[is] = veff_[is].data<Real>(); // for CPU device
                 }
-                veff_op()(this->ctx, this->veff_col, this->porter, this->porter1, current_veff);
+                veff_pw_op<T, Device>()(veff_.shape().dim_size(1), porter_.data<T>(), porter1_.data<T>(), current_veff);
             }
             // (3) fft back to G space.
-            wfcpw->real_to_recip(this->ctx, this->porter,  &hpsi_pack[this->ik][ib][0], this->ik, true);
-            wfcpw->real_to_recip(this->ctx, this->porter1, &hpsi_pack[this->ik][ib][max_npw], this->ik, true);
+            wfcpw_->real_to_recip(this->ctx_, porter_.data<T>(),  hpsi[ib].data<T>(), this->ik_, true);
+            wfcpw_->real_to_recip(this->ctx_, porter1_.data<T>(), hpsi[ib][max_npw].data<T>(), this->ik_, true);
         }
     }
     ModuleBase::timer::tick("Operator", "VeffPW");

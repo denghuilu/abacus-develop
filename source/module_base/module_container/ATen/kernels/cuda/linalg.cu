@@ -21,6 +21,79 @@ thrust::complex<T> conj(thrust::complex<T>& in) {
     return thrust::conj(in);
 }
 
+template <typename T>
+__global__ void do_add_kernel(
+    const int num_element,
+    const T alpha,
+    const T* x,
+    const T beta,
+    const T* y,
+    T* z)
+{
+    // Perform add operation for the specified range [begin, end) in the output Tensor.
+    for (auto o_idx = threadIdx.x; o_idx < num_element; o_idx += blockDim.x) {
+        // Assign the sum of the input Tensor elements at index 'o_idx' to the output Tensor element at index 'o_idx'.
+        z[o_idx] = alpha * x[o_idx] + beta * y[o_idx];
+    }
+}
+
+template <typename T>
+__global__ void do_mul_kernel(
+    const int num_element,
+    const T alpha,
+    const T* x,
+    T* y)
+{
+    for (auto o_idx = threadIdx.x; o_idx < num_element; o_idx += blockDim.x) {
+        // Assign the sum of the input Tensor elements at index 'o_idx' to the output Tensor element at index 'o_idx'.
+        y[o_idx] = alpha * x[o_idx];
+    }
+}
+
+template <typename T>
+__global__ void do_mul_kernel(
+    const int num_element,
+    const T alpha,
+    const T* x,
+    const T* y,
+    T* z)
+{
+    for (auto o_idx = threadIdx.x; o_idx < num_element; o_idx += blockDim.x) {
+        // Assign the sum of the input Tensor elements at index 'o_idx' to the output Tensor element at index 'o_idx'.
+        z[o_idx] = alpha * x[o_idx] * y[o_idx];
+    }
+}
+
+template <typename T>
+__global__ void do_div_kernel(
+    const int num_element,
+    const T alpha,
+    const T* x,
+    const T* y,
+    T* z)
+{
+    for (auto o_idx = threadIdx.x; o_idx < num_element; o_idx += blockDim.x) {
+        // Assign the sum of the input Tensor elements at index 'o_idx' to the output Tensor element at index 'o_idx'.
+        z[o_idx] = alpha * x[o_idx] / y[o_idx];
+    }
+}
+
+template <typename T>
+__global__ void do_fma_kernel(
+    const int num_element,
+    const T alpha,
+    const T* x,
+    const T* y,
+    const T beta,
+    const T* z,
+    T* out)
+{
+    for (auto o_idx = threadIdx.x; o_idx < num_element; o_idx += blockDim.x) {
+        // Assign the sum of the input Tensor elements at index 'o_idx' to the output Tensor element at index 'o_idx'.
+        out[o_idx] = alpha * x[o_idx] * y[o_idx] + beta * z[o_idx];
+    }
+}
+
 template <typename T, bool Conjugate>
 __global__ void do_transpose_kernel(
     int ndim,
@@ -148,6 +221,57 @@ static std::vector<T> compute_stride(const std::vector<T>& shape) {
         stride *= static_cast<T>(*it);
     }
     return std::move(strides);
+}
+
+template<typename T, typename Device>
+void add<T, Device>::operator()(const int& num_element, const T& alpha, const T* x, const T& beta, const T* y, T* z) {
+    using Type = typename GetTypeThrust<T>::type;
+    auto alpha_ = *reinterpret_cast<const Type*>(&alpha);
+    auto beta_ = *reinterpret_cast<const Type*>(&beta);
+    const int block = (num_element + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+    do_add_kernel<Type><<<block, THREADS_PER_BLOCK>>> (
+        num_element, alpha_, reinterpret_cast<const Type*>(x),
+        beta_, reinterpret_cast<const Type*>(y), reinterpret_cast<Type*>(z));
+}
+
+template<typename T, typename Device>
+void mul<T, Device>::operator()(const int& num_element, const T& alpha, const T* x, T* y) {
+    using Type = typename GetTypeThrust<T>::type;
+    auto alpha_ = *reinterpret_cast<const Type*>(&alpha);
+    const int block = (num_element + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+    do_mul_kernel<Type><<<block, THREADS_PER_BLOCK>>> (
+        num_element, alpha_,
+        reinterpret_cast<const Type*>(x),  reinterpret_cast<Type*>(y));
+}
+
+template<typename T, typename Device>
+void mul<T, Device>::operator()(const int& num_element, const T& alpha, const T* x, const T* y, T* z) {
+    using Type = typename GetTypeThrust<T>::type;
+    auto alpha_ = *reinterpret_cast<const Type*>(&alpha);
+    const int block = (num_element + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+    do_mul_kernel<Type><<<block, THREADS_PER_BLOCK>>> (
+        num_element, alpha_,
+        reinterpret_cast<const Type*>(x), reinterpret_cast<const Type*>(y), reinterpret_cast<Type*>(z));
+}
+
+template<typename T, typename Device>
+void div<T, Device>::operator()(const int& num_element, const T& alpha, const T* x, const T* y, T* z) {
+    using Type = typename GetTypeThrust<T>::type;
+    auto alpha_ = *reinterpret_cast<const Type*>(&alpha);
+    const int block = (num_element + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+    do_div_kernel<Type><<<block, THREADS_PER_BLOCK>>> (
+        num_element, alpha_, reinterpret_cast<const Type*>(x), reinterpret_cast<const Type*>(y), reinterpret_cast<Type*>(z));
+}
+
+template<typename T, typename Device>
+void fma<T, Device>::operator()(const int& num_element, const T& alpha, const T* x, const T* y, const T& beta, const T* z, T* out) {
+    using Type = typename GetTypeThrust<T>::type;
+    auto alpha_ = *reinterpret_cast<const Type*>(&alpha);
+    auto beta_ = *reinterpret_cast<const Type*>(&beta);
+    const int block = (num_element + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+    do_fma_kernel<Type><<<block, THREADS_PER_BLOCK>>> (
+        num_element, alpha_, reinterpret_cast<const Type*>(x), reinterpret_cast<const Type*>(y),
+        beta_, reinterpret_cast<const Type*>(z), reinterpret_cast<Type*>(out));
 }
 
 template<typename T, typename Device, bool Conjugate>
@@ -292,6 +416,34 @@ void reduce<T, Device>::operator()(
     do_reduce_kernel<Type><<<block, THREADS_PER_BLOCK>>> (
         num_element, inner_most_dim, p_, q_);
 }
+
+template struct add<int, DEVICE_GPU>;
+template struct add<int64_t, DEVICE_GPU>;
+template struct add<float, DEVICE_GPU>;
+template struct add<double, DEVICE_GPU>;
+template struct add<std::complex<float>, DEVICE_GPU>;
+template struct add<std::complex<double>, DEVICE_GPU>;
+
+template struct mul<int, DEVICE_GPU>;
+template struct mul<int64_t, DEVICE_GPU>;
+template struct mul<float, DEVICE_GPU>;
+template struct mul<double, DEVICE_GPU>;
+template struct mul<std::complex<float>, DEVICE_GPU>;
+template struct mul<std::complex<double>, DEVICE_GPU>;
+
+template struct div<int, DEVICE_GPU>;
+template struct div<int64_t, DEVICE_GPU>;
+template struct div<float, DEVICE_GPU>;
+template struct div<double, DEVICE_GPU>;
+template struct div<std::complex<float>, DEVICE_GPU>;
+template struct div<std::complex<double>, DEVICE_GPU>;
+
+template struct fma<int, DEVICE_GPU>;
+template struct fma<int64_t, DEVICE_GPU>;
+template struct fma<float, DEVICE_GPU>;
+template struct fma<double, DEVICE_GPU>;
+template struct fma<std::complex<float>, DEVICE_GPU>;
+template struct fma<std::complex<double>, DEVICE_GPU>;
 
 template struct transpose<int, DEVICE_GPU>;
 template struct transpose<int64_t, DEVICE_GPU>;

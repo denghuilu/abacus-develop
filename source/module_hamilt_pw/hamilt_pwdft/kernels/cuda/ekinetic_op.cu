@@ -25,27 +25,28 @@ __global__ void ekinetic_pw(
   }
 }
 
-template <typename FPTYPE> 
-void hamilt::ekinetic_pw_op<FPTYPE, psi::DEVICE_GPU>::operator() (
-      const psi::DEVICE_GPU* dev,
-      const int& nband,
-      const int& npw,
-      const int& max_npw,
-      const FPTYPE& tpiba2,
-      const FPTYPE* gk2_ik,
-      std::complex<FPTYPE>* tmhpsi,
-      const std::complex<FPTYPE>* tmpsi_in)
-{
-  // denghui implement 20221019
-  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-  ekinetic_pw<FPTYPE><<<nband, THREADS_PER_BLOCK>>>(
-    npw, max_npw, tpiba2, // control params
-    gk2_ik, // array of data
-    reinterpret_cast<thrust::complex<FPTYPE>*>(tmhpsi), // array of data
-    reinterpret_cast<const thrust::complex<FPTYPE>*>(tmpsi_in)); // array of data
-}
+template <typename T>
+struct ekinetic_pw_op<T, psi::DEVICE_GPU> {
+    using Real = typename GetTypeReal<T>::type;
 
-template struct ekinetic_pw_op<float, psi::DEVICE_GPU>;
-template struct ekinetic_pw_op<double, psi::DEVICE_GPU>;
+    void operator()(
+        const int &nband,
+        const int &npw,
+        const Real &tpiba2,
+        const Real *gk2,
+        const T *psi,
+        T *hpsi) {
+        // denghui implement 20221019
+        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        // ekinetic_pw<Real><<<nband, THREADS_PER_BLOCK>>>(
+        //   npw, max_npw, tpiba2, // control params
+        //   gk2_ik, // array of data
+        //   reinterpret_cast<thrust::complex<FPTYPE>*>(tmhpsi), // array of data
+        //   reinterpret_cast<const thrust::complex<FPTYPE>*>(tmpsi_in)); // array of data
+    }
+};
+
+template struct ekinetic_pw_op<std::complex<float>, psi::DEVICE_GPU>;
+template struct ekinetic_pw_op<std::complex<double>, psi::DEVICE_GPU>;
 
 }  // namespace hamilt

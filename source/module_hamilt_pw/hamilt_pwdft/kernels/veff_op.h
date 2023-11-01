@@ -4,8 +4,10 @@
 #include "module_psi/psi.h"
 #include <complex>
 
+#include <module_base/macros.h>
+
 namespace hamilt {
-template <typename FPTYPE, typename Device>
+template <typename T, typename Device>
 struct veff_pw_op {
     /// @brief Compute the effective potential of hPsi in real space,
     /// out[ir] *= in[ir];
@@ -17,11 +19,11 @@ struct veff_pw_op {
     ///
     /// Output Parameters
     /// \param out : output array
+    using Real = typename GetTypeReal<T>::type;
     void operator() (
-        const Device* dev,
         const int& size,
-        std::complex<FPTYPE>* out,
-        const FPTYPE* in);
+        T* out,
+        const Real* in);
 
     /// @brief Compute the effective potential of hPsi in real space with NSPIN > 2,
     ///
@@ -44,11 +46,10 @@ struct veff_pw_op {
     /// \param out : output array 1
     /// \param out1 : output array 2
     void operator() (
-        const Device* dev,
         const int& size,
-        std::complex<FPTYPE>* out,
-        std::complex<FPTYPE>* out1,
-        const FPTYPE** in);
+        T* out,
+        T* out1,
+        const Real** in);
 };
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
