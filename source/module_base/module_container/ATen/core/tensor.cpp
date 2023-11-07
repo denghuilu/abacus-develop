@@ -207,8 +207,8 @@ void Tensor::resize(const TensorShape& new_shape) {
     if (shape_ == new_shape) {
         return;
     }
-    REQUIRES_OK(buffer_->OwnsMemory(),
-        "Cannot resize a tensor that does not own its memory.")
+    REQUIRES_OK(buffer_->OwnsMemory() || this->NumElements() == 0,
+        "Cannot resize a tensor that mapped from a given data buffer")
     if (buffer_ && buffer_->GetAllocatedBytes() < new_shape.NumElements() * SizeOfType(data_type_)) {
         buffer_->unref();
         this->buffer_ = new TensorBuffer(GetAllocator(device_), new_shape.NumElements() * SizeOfType(data_type_));
