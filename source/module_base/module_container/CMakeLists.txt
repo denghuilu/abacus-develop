@@ -9,7 +9,10 @@ set(ATen_CUDA_DEPENDENCY_LIBS)
 set(ATen_ROCM_DEPENDENCY_LIBS)
 
 add_subdirectory(base/core)
-add_subdirectory(base/third_party/backward-cpp)
+if(ENABLE_BACKTRACE)
+  add_compile_definitions(__ENABLE_BACKTRACE)
+  add_subdirectory(base/third_party/backward-cpp)
+endif()
 
 add_subdirectory(ATen/ops)
 add_subdirectory(ATen/core)
@@ -20,9 +23,13 @@ if(USE_ROCM)
   set(ATen_ROCM_DEPENDENCY_LIBS container_rocm)
 endif()
 
-add_library(container OBJECT ${ATen_CPU_SRCS} ${ATen_CUDA_SRCS} ${BACKWARD_ENABLE})
-target_link_libraries(container PUBLIC ${BACKWARD_LIBRARIES})
-target_compile_definitions(container PUBLIC ${BACKWARD_DEFINITIONS})
+if(ENABLE_BACKTRACE)
+  add_library(container OBJECT ${ATen_CPU_SRCS} ${ATen_CUDA_SRCS} ${BACKWARD_ENABLE})
+  target_link_libraries(container PUBLIC ${BACKWARD_LIBRARIES})
+  target_compile_definitions(container PUBLIC ${BACKWARD_DEFINITIONS})
+else()
+  add_library(container OBJECT ${ATen_CPU_SRCS} ${ATen_CUDA_SRCS})
+endif()
 
 target_link_libraries(container PUBLIC 
   ${ATen_CPU_DEPENDENCY_LIBS} ${ATen_CUDA_DEPENDENCY_LIBS} ${ATen_ROCM_DEPENDENCY_LIBS})

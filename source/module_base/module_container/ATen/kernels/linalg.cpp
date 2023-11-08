@@ -86,7 +86,7 @@ void transpose<T, Device, Conjugate>::operator()(
     const T *p,
     T *q)
 {
-    REQUIRES_OK(p_shape.size() == q_shape.size(),
+    REQUIRES_OK(p_shape.size() != q_shape.size(),
         "transpose: p and q must have the same number of dimensions");
     const int ndim = static_cast<int>(p_shape.size());
     auto in_strides = ComputeStride(p_shape);
