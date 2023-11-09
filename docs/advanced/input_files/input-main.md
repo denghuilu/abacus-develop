@@ -642,6 +642,7 @@ If only one value is set (such as `kspacing 0.5`), then kspacing values of a/b/c
 
   - pw basis: required by the `single` precision options
   - cg/bpcg/dav ks_solver: required by the `single` precision options
+- **Default**: double
 
 [back to top](#full-list-of-input-keywords)
 
