@@ -23,6 +23,13 @@ TensorMap::TensorMap(void *data, const Tensor& other)
     this->buffer_ = new TensorBuffer(data);
 }
 
+TensorMap::TensorMap(const Tensor& other, const TensorShape& shape)
+        : Tensor(other.data_type(), other.device_type(), {})
+{
+    this->shape_ = shape;
+    this->buffer_ = new TensorBuffer(other.data());
+}
+
 //void TensorMap::resize(const TensorShape &new_shape) {
 //    throw std::logic_error("TensorMap object does not support the resize method.");
 //}

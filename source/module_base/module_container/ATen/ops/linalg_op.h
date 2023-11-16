@@ -160,5 +160,13 @@ ct::Tensor& operator+=(ct::Tensor& self, const ct::Tensor& other);
 ct::Tensor& operator-=(ct::Tensor& self, const ct::Tensor& other);
 ct::Tensor& operator*=(ct::Tensor& self, const ct::Tensor& other);
 ct::Tensor& operator/=(ct::Tensor& self, const ct::Tensor& other);
+template <typename T>
+ct::Tensor& operator/=(ct::Tensor& self, const T& other) {
+    container::op::div_op()(
+        self,
+        ct::Tensor(other),
+        self);
+    return self;
+}
 
 #endif // ATEN_OPS_LINALG_H_

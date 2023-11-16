@@ -28,8 +28,8 @@ static std::vector<T> ComputeStride(const std::vector<T>& shape) {
     return std::move(strides);
 }
 
-template<typename T, typename Device>
-void add<T, Device>::operator()(const int& num_element, const T& alpha, const T* x, const T& beta, const T* y, T* z) {
+template<typename T_1, typename T_2, typename Device>
+void add<T_1, T_2, Device>::operator()(const int& num_element, const T_1& alpha, const T_1* x, const T_1& beta, const T_2* y, T_1* z) {
     // Define a lambda expression 'add_fn' to implement add operation.
     // Perform add operation for the specified range [begin, end) in the output Tensor.
     for (int o_idx = 0; o_idx < num_element; o_idx++) {
@@ -38,8 +38,8 @@ void add<T, Device>::operator()(const int& num_element, const T& alpha, const T*
     }
 }
 
-template<typename T, typename Device>
-void mul<T, Device>::operator()(const int& num_element, const T& alpha, const T* x, T* y) {
+template<typename T_1, typename T_2, typename Device>
+void mul<T_1, T_2, Device>::operator()(const int& num_element, const T_1& alpha, const T_1* x, T_1* y) {
     // Define a lambda expression 'mul_fn' to implement mul operation.
     // Perform mul operation for the specified range [begin, end) in the output Tensor.
     for (int o_idx = 0; o_idx < num_element; o_idx++) {
@@ -48,8 +48,8 @@ void mul<T, Device>::operator()(const int& num_element, const T& alpha, const T*
     }
 }
 
-template<typename T, typename Device>
-void mul<T, Device>::operator()(const int& num_element, const T& alpha, const T* x, const T* y, T* z) {
+template<typename T_1, typename T_2, typename Device>
+void mul<T_1, T_2, Device>::operator()(const int& num_element, const T_1& alpha, const T_1* x, const T_2* y, T_1* z) {
     // Define a lambda expression 'mul_fn' to implement mul operation.
     // Perform mul operation for the specified range [begin, end) in the output Tensor.
     for (int o_idx = 0; o_idx < num_element; o_idx++) {
@@ -58,13 +58,23 @@ void mul<T, Device>::operator()(const int& num_element, const T& alpha, const T*
     }
 }
 
-template<typename T, typename Device>
-void div<T, Device>::operator()(const int& num_element, const T& alpha, const T* x, const T* y, T* z) {
+template<typename T_1, typename T_2, typename Device>
+void div<T_1, T_2, Device>::operator()(const int& num_element, const T_1& alpha, const T_1* x, const T_2* y, T_1* z) {
     // Define a lambda expression 'div_fn' to implement div operation.
     // Perform div operation for the specified range [begin, end) in the output Tensor.
     for (int o_idx = 0; o_idx < num_element; o_idx++) {
         // Assign the quotient of the input Tensor elements at index 'o_idx' to the output Tensor element at index 'o_idx'.
         z[o_idx] = alpha * x[o_idx] / y[o_idx];
+    }
+}
+
+template<typename T_1, typename T_2, typename Device>
+void div<T_1, T_2, Device>::operator()(const int& num_element, const T_1& alpha, const T_1* x, const T_2& y, T_1* z) {
+    // Define a lambda expression 'div_fn' to implement div operation.
+    // Perform div operation for the specified range [begin, end) in the output Tensor.
+    for (int o_idx = 0; o_idx < num_element; o_idx++) {
+        // Assign the quotient of the input Tensor elements at index 'o_idx' to the output Tensor element at index 'o_idx'.
+        z[o_idx] = alpha * x[o_idx] / y;
     }
 }
 
@@ -229,26 +239,35 @@ void reduce<T, Device>::operator()(
 }
 
 
-template struct add<int, DEVICE_CPU>;
-template struct add<int64_t, DEVICE_CPU>;
-template struct add<float, DEVICE_CPU>;
-template struct add<double, DEVICE_CPU>;
-template struct add<std::complex<float>, DEVICE_CPU>;
-template struct add<std::complex<double>, DEVICE_CPU>;
+template struct add<int, int, DEVICE_CPU>;
+template struct add<int64_t, int64_t, DEVICE_CPU>;
+template struct add<float, float, DEVICE_CPU>;
+template struct add<double, double, DEVICE_CPU>;
+template struct add<double, float, DEVICE_CPU>;
+template struct add<std::complex<float>, std::complex<float>, DEVICE_CPU>;
+template struct add<std::complex<float>, float, DEVICE_CPU>;
+template struct add<std::complex<double>, std::complex<double>, DEVICE_CPU>;
+template struct add<std::complex<double>, double, DEVICE_CPU>;
 
-template struct mul<int, DEVICE_CPU>;
-template struct mul<int64_t, DEVICE_CPU>;
-template struct mul<float, DEVICE_CPU>;
-template struct mul<double, DEVICE_CPU>;
-template struct mul<std::complex<float>, DEVICE_CPU>;
-template struct mul<std::complex<double>, DEVICE_CPU>;
+template struct mul<int, int, DEVICE_CPU>;
+template struct mul<int64_t, int64_t, DEVICE_CPU>;
+template struct mul<float, float, DEVICE_CPU>;
+template struct mul<double, double, DEVICE_CPU>;
+template struct mul<double, float, DEVICE_CPU>;
+template struct mul<std::complex<float>, std::complex<float>,DEVICE_CPU>;
+template struct mul<std::complex<float>, float, DEVICE_CPU>;
+template struct mul<std::complex<double>, std::complex<double>, DEVICE_CPU>;
+template struct mul<std::complex<double>, double, DEVICE_CPU>;
 
-template struct div<int, DEVICE_CPU>;
-template struct div<int64_t, DEVICE_CPU>;
-template struct div<float, DEVICE_CPU>;
-template struct div<double, DEVICE_CPU>;
-template struct div<std::complex<float>, DEVICE_CPU>;
-template struct div<std::complex<double>, DEVICE_CPU>;
+template struct div<int, int, DEVICE_CPU>;
+template struct div<int64_t, int64_t, DEVICE_CPU>;
+template struct div<float, float, DEVICE_CPU>;
+template struct div<double, double, DEVICE_CPU>;
+template struct div<double, float, DEVICE_CPU>;
+template struct div<std::complex<float>, std::complex<float>, DEVICE_CPU>;
+template struct div<std::complex<float>, float, DEVICE_CPU>;
+template struct div<std::complex<double>, std::complex<double>, DEVICE_CPU>;
+template struct div<std::complex<double>, double, DEVICE_CPU>;
 
 template struct fma<int, DEVICE_CPU>;
 template struct fma<int64_t, DEVICE_CPU>;

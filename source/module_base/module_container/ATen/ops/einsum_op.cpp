@@ -613,7 +613,7 @@ bool ProcessDimensions(
             if (num_dims != labels.size()) {
                 throw std::invalid_argument(
                     "Input " + std::to_string(ii) + " has " + std::to_string(num_dims) +
-                    " dimensions but got" + std::to_string(num_labels) + " labels");
+                    " dimensions but got " + std::to_string(num_labels) + " labels");
             }
             for (int label_idx = 0; label_idx < labels.size(); label_idx++) {
                 const int label = labels[label_idx];
@@ -855,7 +855,7 @@ static void DoContract(
             kernels::blas_dot<T, Device>()(k, x_device_memory_ptrs[0], 1, y_device_memory_ptrs[0], 1, z_device_memory_ptrs[0]);
         }
         // Gemv
-        else if (n == 1 && option.conj_x != true) {
+        else if (n == 1 && option.conj_x != true && option.conj_y != true) {
             // This is a matrix*vector multiply so use GEMV to compute A * x.
             // Here we are multiplying in the natural order, so we have to flip
             // the transposition flag to compensate for the tensor being stored
@@ -952,7 +952,11 @@ bool ContractOperands(
         CopyFromWithAllocate(inputs[0], output_shape, &output);
     }
     if (lhs.NumElements() == 0 || rhs.NumElements() == 0) {
-        output.zero();
+        // If the output is not pre-allocated, zero it out.
+        // Otherwise just return the pre-allocated output.
+        if (option.out == nullptr) {
+            output.zero();
+        }
         return true;
     }
 

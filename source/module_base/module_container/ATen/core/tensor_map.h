@@ -58,6 +58,8 @@ namespace container {
      */
     TensorMap(void *data, const Tensor& other);
 
+    TensorMap(const Tensor& other, const TensorShape& shape);
+
 };
 
 } // namespace container

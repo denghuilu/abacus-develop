@@ -40,6 +40,13 @@ class Tensor {
      */
     Tensor();
 
+    template <typename T>
+    explicit Tensor(const T& data)
+            : Tensor(ct::DataTypeToEnum<T>::value, TensorShape({1})) 
+    {
+        *reinterpret_cast<T*>(this->data()) = data;
+    }
+
     /**
      * @brief Explicit constructor for the Tensor class.
      * 
@@ -169,8 +176,7 @@ class Tensor {
             (std::is_same<T, std::complex<float>>::value && data_type_ != DataType::DT_COMPLEX) ||
             (std::is_same<T, std::complex<double>>::value && data_type_ != DataType::DT_COMPLEX_DOUBLE))
         {
-            std::cerr << "Tensor data type does not match requested type." << std::endl;
-            exit(EXIT_FAILURE);
+            REQUIRES_OK(false, "Tensor data type does not match requested type.")
         }
         return buffer_->base<T>();
     }

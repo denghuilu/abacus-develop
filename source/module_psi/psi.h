@@ -3,6 +3,7 @@
 
 #include "module_psi/kernels/memory_op.h"
 #include "module_psi/kernels/types.h"
+#include <ATen/core/tensor.h>
 
 #include <tuple>
 

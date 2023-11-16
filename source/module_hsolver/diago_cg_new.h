@@ -11,7 +11,7 @@
 
 namespace hsolver {
 
-template<typename T, typename Device = ct::DEVICE_CPU>
+template<typename T, typename Device = psi::DEVICE_CPU>
 class DiagoCG_New : public DiagH<T, Device>
 {
     // private: accessibility within class is private by default
@@ -19,6 +19,7 @@ class DiagoCG_New : public DiagH<T, Device>
     // return T if T is real type(float, double),
     // otherwise return the real type of T(complex<float>, complex<double>)
     using Real = typename GetTypeReal<T>::type;
+    using ct_Device = typename ct::PsiToContainer<Device>::type;
 
   public:
     using Func = std::function<void(const ct::Tensor&, ct::Tensor&)>;

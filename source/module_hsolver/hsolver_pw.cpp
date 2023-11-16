@@ -4,6 +4,8 @@
 
 #include "diago_bpcg.h"
 #include "diago_cg.h"
+#include <module_hsolver/diago_cg_new.h>
+#include <base/macros/macros.h>
 #include "diago_david.h"
 #include "module_base/timer.h"
 #include "module_base/tool_quit.h"
@@ -39,7 +41,7 @@ void HSolverPW::update()
 template<typename T, typename Device>
 void HSolverPW<T, Device>::initDiagh(const psi::Psi<T, Device>& psi_in)
 {
-    if (this->method == "cg")
+    if (this->method == "cg-new")
     {
         if(this->pdiagh!=nullptr)
         {
@@ -89,8 +91,35 @@ void HSolverPW<T, Device>::initDiagh(const psi::Psi<T, Device>& psi_in)
             reinterpret_cast<DiagoBPCG<T, Device>*>(this->pdiagh)->init_iter(psi_in);
         }
     }
-    else
+    else if (this->method == "cg")
     {
+        if(this->pdiagh != nullptr)
+        {
+            if(this->pdiagh->method != this->method)
+            {
+                delete reinterpret_cast<DiagoCG_New<T, Device>*>(this->pdiagh);
+                this->pdiagh = new DiagoCG_New<T, Device>(
+                    GlobalV::BASIS_TYPE,
+                    GlobalV::CALCULATION,
+                    DiagoIterAssist<T, Device>::need_subspace,
+                    DiagoIterAssist<T, Device>::PW_DIAG_THR,
+                    DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
+                    GlobalV::NPROC_IN_POOL);
+                this->pdiagh->method = this->method;
+            }
+        }
+        else {
+            this->pdiagh = new DiagoCG_New<T, Device>(
+                    GlobalV::BASIS_TYPE,
+                    GlobalV::CALCULATION,
+                    DiagoIterAssist<T, Device>::need_subspace,
+                    DiagoIterAssist<T, Device>::PW_DIAG_THR,
+                    DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
+                    GlobalV::NPROC_IN_POOL);
+            this->pdiagh->method = this->method;
+        }
+    } 
+    else {
         ModuleBase::WARNING_QUIT("HSolverPW::solve", "This method of DiagH is not supported!");
     }
 }
@@ -286,7 +315,7 @@ void HSolverPW<T, Device>::endDiagh()
 {
     // DiagoCG would keep 9*nbasis memory in cache during loop-k
     // it should be deleted before calculating charge
-    if(this->method == "cg")
+    if(this->method == "cg-new")
     {
         delete (DiagoCG<T, Device>*)this->pdiagh;
         this->pdiagh = nullptr;
@@ -296,9 +325,18 @@ void HSolverPW<T, Device>::endDiagh()
         delete (DiagoDavid<T, Device>*)this->pdiagh;
         this->pdiagh = nullptr;
     }
-    if(this->method == "all-band cg")
+    if(this->method == "bpcg")
     {
         delete (DiagoBPCG<T, Device>*)this->pdiagh;
+        this->pdiagh = nullptr;
+    }
+    if (this->method == "cg")
+    {
+        // load the average iteration steps for cg diagonalization
+        auto cg = reinterpret_cast<DiagoCG_New<T, Device>*>(this->pdiagh);
+        DiagoIterAssist<T, Device>::avg_iter = cg->get_avg_iter();
+
+        delete reinterpret_cast<DiagoCG_New<T, Device>*>(this->pdiagh);
         this->pdiagh = nullptr;
     }
 
@@ -341,7 +379,56 @@ void HSolverPW<T, Device>::updatePsiK(hamilt::Hamilt<T, Device>* pHamilt,
 template<typename T, typename Device>
 void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::Psi<T, Device>& psi, Real* eigenvalue)
 {
-    this->pdiagh->diag(hm, psi, eigenvalue);
+    if (this->method != "cg") {
+        this->pdiagh->diag(hm, psi, eigenvalue);
+    }
+    else { // warp the hpsi_func and spsi_func into a lambda function
+        using ct_Device = typename ct::PsiToContainer<Device>::type;
+        auto cg = reinterpret_cast<DiagoCG_New<T, Device>*>(this->pdiagh);
+        // warp the hpsi_func and spsi_func into a lambda function
+        auto hpsi_func = [hm, &psi](const ct::Tensor& psi_in, ct::Tensor& hpsi_out) {
+            // psi_in should be a 2D tensor: 
+            // psi_in.shape() = [nbands, nbasis]
+            const int ndim = psi_in.shape().ndim();
+            REQUIRES_OK(ndim <= 2, "dims of psi_in should be less than or equal to 2");
+            // Convert a Tensor object to a psi::Psi object
+            auto psi_wrapper = psi::Psi<T, Device>(
+                psi_in.data<T>(), 1, 
+                ndim == 1 ? 1 : psi_in.shape().dim_size(0), 
+                ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1));
+            psi::Range all_bands_range(1, psi_wrapper.get_current_k(), 0, psi_wrapper.get_nbands() - 1);
+            using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
+            hpsi_info info(&psi_wrapper, all_bands_range, hpsi_out.data<T>());
+            hm->ops->hPsi(info);
+        };
+        auto spsi_func = [hm](const ct::Tensor& psi_in, ct::Tensor& spsi_out) {
+            // psi_in should be a 2D tensor: 
+            // psi_in.shape() = [nbands, nbasis]
+            const int ndim = psi_in.shape().ndim();
+            REQUIRES_OK(ndim <= 2, "dims of psi_in should be less than or equal to 2");
+            // Convert a Tensor object to a psi::Psi object
+            hm->sPsi(psi_in.data<T>(), spsi_out.data<T>(), 
+                ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1), 
+                ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1), 
+                ndim == 1 ? 1 : psi_in.shape().dim_size(0));
+        };
+        auto psi_tensor = ct::TensorMap(
+            psi.get_pointer(), 
+            ct::DataTypeToEnum<T>::value, 
+            ct::DeviceTypeToEnum<ct_Device>::value,
+            ct::TensorShape({psi.get_nbands(), psi.get_nbasis()}));
+        auto eigen_tensor = ct::TensorMap(
+            eigenvalue,
+            ct::DataTypeToEnum<Real>::value,
+            ct::DeviceTypeToEnum<ct::DEVICE_CPU>::value,
+            ct::TensorShape({psi.get_nbands()}));
+        const auto prec_tensor = ct::TensorMap(
+            precondition.data(),
+            ct::DataTypeToEnum<Real>::value, 
+            ct::DeviceTypeToEnum<ct::DEVICE_CPU>::value,
+            ct::TensorShape({static_cast<int>(precondition.size())})).to_device<ct_Device>();
+        cg->diag(hpsi_func, spsi_func, psi_tensor, eigen_tensor, prec_tensor);
+    }
 }
 
 template<typename T, typename Device>
