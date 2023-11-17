@@ -291,12 +291,18 @@ bool Tensor::AllocateFrom(const Tensor& other, const TensorShape& shape) {
 
 void Tensor::sync(const Tensor& rhs) {
     REQUIRES_OK(this->data_type_ == rhs.data_type_ 
-        && this->device_ == rhs.device_
-        && this->shape_ == rhs.shape_)
+        && this->device_ == rhs.device_)
 
-    TEMPLATE_ALL_2(data_type_, device_,
-            kernels::synchronize_memory<T_, DEVICE_, DEVICE_>()(
-                    this->data<T_>(), rhs.data<T_>(), this->NumElements()))
+    if (this->shape_ == rhs.shape_) {
+        TEMPLATE_ALL_2(data_type_, device_,
+                kernels::synchronize_memory<T_, DEVICE_, DEVICE_>()(
+                        this->data<T_>(), rhs.data<T_>(), this->NumElements()))
+    }
+    else {
+        TEMPLATE_ALL_2(data_type_, device_,
+                kernels::synchronize_memory_stride<T_, DEVICE_, DEVICE_>()(
+                        this->data<T_>(), rhs.data<T_>(), this->shape().dims(), rhs.shape().dims()))
+    }
 }
 
 Tensor Tensor::operator[](const int& index) const {

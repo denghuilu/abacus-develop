@@ -47,6 +47,7 @@ TensorBuffer::~TensorBuffer() {
     }
     if (alloc_ != nullptr) {
         delete alloc_;
+        alloc_ = nullptr;
     }
 }
 

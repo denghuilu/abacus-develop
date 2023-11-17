@@ -423,7 +423,7 @@ void DiagoCG_New<T, Device>::diagH_subspace(
     else {
         option = ct::EinsumOption(
             /*conj_x=*/false, /*conj_y=*/false, /*alpha=*/1.0, /*beta=*/0.0, /*Tensor out=*/nullptr);
-        const ct::Tensor evc = ct::op::einsum("ij,kj->ik", psi, hsub, option);
+        const ct::Tensor evc = ct::op::einsum("ij,jk->ik", hsub, psi, option);
         psi.sync(evc);
     }
     ModuleBase::timer::tick("DiagoCGNew", "diagH_subspace");
@@ -460,9 +460,9 @@ void DiagoCG_New<T, Device>::diag(
     this->spsi_func_ = spsi_func;
     do
     {
-        // if(need_subspace_ || ntry > 0) {
-        //     this->diagH_subspace(hpsi_func, spsi_func, psi, eigen);
-        // }
+        if (need_subspace_ || ntry > 0) {
+            this->diagH_subspace(hpsi_func, spsi_func, psi, eigen);
+        }
         ++ntry;
         avg_iter_ += 1.0;
         this->diag_mock(prec, psi, eigen);
