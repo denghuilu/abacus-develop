@@ -6,6 +6,7 @@
 #include <module_hamilt_pw/hamilt_pwdft/hamilt_pw.h>
 
 #include <ATen/kernels/lapack.h>
+#include <ATen/kernels/memory.h>
 #include <ATen/core/tensor_map.h>
 #include <ATen/core/tensor_utils.h>
 
@@ -414,7 +415,9 @@ void DiagoCG_New<T, Device>::diagH_subspace(
         Parallel_Reduce::reduce_pool(hsub.data<T>(), hsub.NumElements());
         Parallel_Reduce::reduce_pool(ssub.data<T>(), ssub.NumElements());
     }
-    ct::kernels::lapack_dngvd<T, ct_Device>()(1, 'V', 'U', hsub.data<T>(), ssub.data<T>(), hsub.shape().dim_size(0), eigen.data<Real>());
+    ct::Tensor eigen_ = eigen.to_device<ct_Device>();
+    ct::kernels::lapack_dngvd<T, ct_Device>()(
+        1, 'V', 'U', hsub.data<T>(), ssub.data<T>(), hsub.shape().dim_size(0), eigen_.data<Real>());
 
     if ((basis_type_ == "lcao" || basis_type_ == "lcao_in_pw") && calculation_ == "nscf")
     {
