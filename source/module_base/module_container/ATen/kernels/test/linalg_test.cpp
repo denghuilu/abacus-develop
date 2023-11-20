@@ -35,7 +35,7 @@ TYPED_TEST(LinalgTest, Add) {
                 static_cast<Type>(12.0), static_cast<Type>(15.0), static_cast<Type>(18.0),
                 static_cast<Type>(21.0), static_cast<Type>(24.0), static_cast<Type>(27.0)}).to_device<Device>());
     Tensor result = Tensor(expected.data_type(), expected.device_type(), expected.shape());
-    kernels::add<Type, Device>()(
+    kernels::add<Type, Type, Device>()(
         A.NumElements(), static_cast<Type>(2.0), A.data<Type>(), static_cast<Type>(1.0), B.data<Type>(), result.data<Type>());
     EXPECT_EQ(result, expected);
 }
@@ -58,7 +58,7 @@ TYPED_TEST(LinalgTest, Mul) {
                 static_cast<Type>(16.0), static_cast<Type>(25.0), static_cast<Type>(36.0),
                 static_cast<Type>(49.0), static_cast<Type>(64.0), static_cast<Type>(81.0)}).to_device<Device>());
     Tensor result = Tensor(expected.data_type(), expected.device_type(), expected.shape());
-    kernels::mul<Type, Device>()(
+    kernels::mul<Type, Type, Device>()(
         A.NumElements(), static_cast<Type>(1.0), A.data<Type>(), B.data<Type>(), result.data<Type>());
     EXPECT_EQ(result, expected);
 }
@@ -82,7 +82,7 @@ TYPED_TEST(LinalgTest, Div) {
                 static_cast<Type>(1.0), static_cast<Type>(1.0), static_cast<Type>(1.0)}).to_device<Device>());
 
     Tensor result = Tensor(expected.data_type(), expected.device_type(), expected.shape());
-    kernels::div<Type, Device>()(
+    kernels::div<Type, Type, Device>()(
         A.NumElements(), static_cast<Type>(1.0), A.data<Type>(), B.data<Type>(), result.data<Type>());
     EXPECT_EQ(result, expected);
 }
