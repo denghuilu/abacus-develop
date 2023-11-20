@@ -192,7 +192,7 @@ void diago_PAO_in_pw_k2(const int &ik,
 	{
 		p_wf->random(wvf.get_pointer(),0,nbands,ik, wfc_basis);
 
-		if(GlobalV::KS_SOLVER=="cg") //xiaohui add 2013-09-02
+		if(GlobalV::KS_SOLVER=="cg" || GlobalV::KS_SOLVER=="cg-new") //xiaohui add 2013-09-02
 		{
 			if(phm_in!= nullptr)
 			{
@@ -226,7 +226,7 @@ void diago_PAO_in_pw_k2(const int &ik,
 		std::vector<std::complex<float>> s_wfcatom(starting_nw * nbasis);
 		castmem_z2c_h2h_op()(cpu_ctx, cpu_ctx, s_wfcatom.data(), wfcatom.c, starting_nw * nbasis);
 		//if(GlobalV::DIAGO_TYPE == "cg") xiaohui modify 2013-09-02
-		if(GlobalV::KS_SOLVER=="cg") //xiaohui add 2013-09-02
+		if(GlobalV::KS_SOLVER=="cg" || GlobalV::KS_SOLVER=="cg-new") //xiaohui add 2013-09-02
 		{
 			if(phm_in!= nullptr)
 			{
@@ -299,7 +299,7 @@ void diago_PAO_in_pw_k2(const int &ik,
 	{
 		p_wf->random(wvf.get_pointer(),0,nbands,ik, wfc_basis);
 
-		if(GlobalV::KS_SOLVER=="cg") //xiaohui add 2013-09-02
+		if(GlobalV::KS_SOLVER=="cg" || GlobalV::KS_SOLVER=="cg-new") //xiaohui add 2013-09-02
 		{
 			if(phm_in!= nullptr)
 			{
@@ -339,7 +339,7 @@ void diago_PAO_in_pw_k2(const int &ik,
 
         // (7) Diago with cg method.
 		//if(GlobalV::DIAGO_TYPE == "cg") xiaohui modify 2013-09-02
-		if(GlobalV::KS_SOLVER=="cg") //xiaohui add 2013-09-02
+		if(GlobalV::KS_SOLVER=="cg" || GlobalV::KS_SOLVER=="cg-new") //xiaohui add 2013-09-02
 		{
 			if(phm_in!= nullptr)
 			{
@@ -443,7 +443,7 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_GPU *ctx,
         resmem_cd_op()(gpu_ctx, c_wfcatom, wfcatom.nr * wfcatom.nc);
         castmem_z2c_h2d_op()(gpu_ctx, cpu_ctx, c_wfcatom, wfcatom.c, wfcatom.nr * wfcatom.nc);
     }
-    if(GlobalV::KS_SOLVER=="cg") //xiaohui add 2013-09-02
+    if(GlobalV::KS_SOLVER=="cg" || GlobalV::KS_SOLVER=="cg-new") //xiaohui add 2013-09-02
     {
         // (7) Diago with cg method.
         if(phm_in!= nullptr)
@@ -536,7 +536,7 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_GPU *ctx,
         resmem_zd_op()(gpu_ctx, z_wfcatom, wfcatom.nr * wfcatom.nc);
         syncmem_z2z_h2d_op()(gpu_ctx, cpu_ctx, z_wfcatom, wfcatom.c, wfcatom.nr * wfcatom.nc);
     }
-	if(GlobalV::KS_SOLVER=="cg") //xiaohui add 2013-09-02
+	if(GlobalV::KS_SOLVER=="cg" || GlobalV::KS_SOLVER=="cg-new") //xiaohui add 2013-09-02
 	{
 		// (7) Diago with cg method.
 		if(phm_in!= nullptr)
