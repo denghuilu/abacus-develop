@@ -41,7 +41,7 @@ void HSolverPW::update()
 template<typename T, typename Device>
 void HSolverPW<T, Device>::initDiagh(const psi::Psi<T, Device>& psi_in)
 {
-    if (this->method == "cg-new")
+    if (this->method == "cg")
     {
         if(this->pdiagh!=nullptr)
         {
@@ -91,7 +91,7 @@ void HSolverPW<T, Device>::initDiagh(const psi::Psi<T, Device>& psi_in)
             reinterpret_cast<DiagoBPCG<T, Device>*>(this->pdiagh)->init_iter(psi_in);
         }
     }
-    else if (this->method == "cg")
+    else if (this->method == "cg-new")
     {
         if(this->pdiagh != nullptr)
         {
@@ -315,7 +315,7 @@ void HSolverPW<T, Device>::endDiagh()
 {
     // DiagoCG would keep 9*nbasis memory in cache during loop-k
     // it should be deleted before calculating charge
-    if(this->method == "cg-new")
+    if(this->method == "cg")
     {
         delete (DiagoCG<T, Device>*)this->pdiagh;
         this->pdiagh = nullptr;
@@ -330,12 +330,11 @@ void HSolverPW<T, Device>::endDiagh()
         delete (DiagoBPCG<T, Device>*)this->pdiagh;
         this->pdiagh = nullptr;
     }
-    if (this->method == "cg")
+    if (this->method == "cg-new")
     {
         // load the average iteration steps for cg diagonalization
         auto cg = reinterpret_cast<DiagoCG_New<T, Device>*>(this->pdiagh);
         DiagoIterAssist<T, Device>::avg_iter = cg->get_avg_iter();
-
         delete reinterpret_cast<DiagoCG_New<T, Device>*>(this->pdiagh);
         this->pdiagh = nullptr;
     }
@@ -379,7 +378,7 @@ void HSolverPW<T, Device>::updatePsiK(hamilt::Hamilt<T, Device>* pHamilt,
 template<typename T, typename Device>
 void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::Psi<T, Device>& psi, Real* eigenvalue)
 {
-    if (this->method != "cg") {
+    if (this->method != "cg-new") {
         this->pdiagh->diag(hm, psi, eigenvalue);
     }
     else { // warp the hpsi_func and spsi_func into a lambda function
@@ -427,6 +426,9 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::P
             ct::DataTypeToEnum<Real>::value, 
             ct::DeviceTypeToEnum<ct::DEVICE_CPU>::value,
             ct::TensorShape({static_cast<int>(precondition.size())})).to_device<ct_Device>().slice({0}, {psi.get_current_nbas()});
+        
+        std::cout << "psi_tensor = " << psi_tensor << std::endl;
+
         cg->diag(hpsi_func, spsi_func, psi_tensor, eigen_tensor, prec_tensor);
         // TODO: Double check tensormap's potential problem
         ct::TensorMap(psi.get_pointer(), psi_tensor, {psi.get_nbands(), psi.get_nbasis()}).sync(psi_tensor);

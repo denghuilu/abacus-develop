@@ -295,6 +295,10 @@ void ElecState::print_etot(const bool converged,
     {
         label = "BP";
     }
+    else if (ks_solver_type == "cg-new")
+    {
+        label = "CN";
+    }
     else
     {
         ModuleBase::WARNING_QUIT("Energy", "print_etot found unknown ks_solver_type");

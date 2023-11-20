@@ -3635,7 +3635,7 @@ void Input::Check(void)
         {
             ModuleBase::WARNING_QUIT("Input", "lapack can not be used with plane wave basis.");
         }
-        else if (ks_solver != "default" && ks_solver != "cg" && ks_solver != "dav" && ks_solver != "bpcg")
+        else if (ks_solver != "default" && ks_solver != "cg" && ks_solver != "dav" && ks_solver != "bpcg" && ks_solver != "cg-new")
         {
             ModuleBase::WARNING_QUIT("Input", "please check the ks_solver parameter!");
         }

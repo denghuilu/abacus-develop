@@ -567,7 +567,7 @@ std::string get_device_flag(const std::string& device, const std::string& ks_sol
 #else
     str = "cpu";
 #endif
-    if (ks_solver != "cg" && ks_solver != "dav" && ks_solver != "bpcg") {
+    if (ks_solver != "cg" && ks_solver != "dav" && ks_solver != "bpcg" && ks_solver != "cg-new") {
         str = "cpu";
     }
     if (basis_type != "pw") {
