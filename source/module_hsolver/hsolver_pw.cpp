@@ -47,7 +47,7 @@ void HSolverPW<T, Device>::initDiagh(const psi::Psi<T, Device>& psi_in)
         {
             if(this->pdiagh->method != this->method)
             {
-                delete (DiagoCG<T, Device>*)this->pdiagh;
+                delete reinterpret_cast<DiagoCG<T, Device>*>(this->pdiagh);
                 this->pdiagh = new DiagoCG<T, Device>(precondition.data());
                 this->pdiagh->method = this->method;
             }
@@ -65,7 +65,7 @@ void HSolverPW<T, Device>::initDiagh(const psi::Psi<T, Device>& psi_in)
         {
             if (this->pdiagh->method != this->method)
             {
-                delete (DiagoDavid<T, Device>*)this->pdiagh;
+                delete reinterpret_cast<DiagoDavid<T, Device>*>(this->pdiagh);
                 this->pdiagh = new DiagoDavid<T, Device>(precondition.data());
                 this->pdiagh->method = this->method;
             }
@@ -79,7 +79,7 @@ void HSolverPW<T, Device>::initDiagh(const psi::Psi<T, Device>& psi_in)
     else if (this->method == "bpcg") {
         if(this->pdiagh!=nullptr) {
             if(this->pdiagh->method != this->method) {
-                delete (DiagoBPCG<T, Device>*)this->pdiagh;
+                delete reinterpret_cast<DiagoBPCG<T, Device>*>(this->pdiagh);
                 this->pdiagh = new DiagoBPCG<T, Device>(precondition.data());
                 this->pdiagh->method = this->method;
                 reinterpret_cast<DiagoBPCG<T, Device>*>(this->pdiagh)->init_iter(psi_in);
@@ -307,7 +307,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     }
 #endif
     ModuleBase::timer::tick("HSolverPW", "solve");
-    return;
+    // return;
 }
 
 template<typename T, typename Device>
@@ -317,17 +317,17 @@ void HSolverPW<T, Device>::endDiagh()
     // it should be deleted before calculating charge
     if(this->method == "cg")
     {
-        delete (DiagoCG<T, Device>*)this->pdiagh;
+        delete reinterpret_cast<DiagoCG<T, Device>*>(this->pdiagh);
         this->pdiagh = nullptr;
     }
     if(this->method == "dav")
     {
-        delete (DiagoDavid<T, Device>*)this->pdiagh;
+        delete reinterpret_cast<DiagoDavid<T, Device>*>(this->pdiagh);
         this->pdiagh = nullptr;
     }
     if(this->method == "bpcg")
     {
-        delete (DiagoBPCG<T, Device>*)this->pdiagh;
+        delete reinterpret_cast<DiagoBPCG<T, Device>*>(this->pdiagh);
         this->pdiagh = nullptr;
     }
     if (this->method == "cg-new")
@@ -335,7 +335,7 @@ void HSolverPW<T, Device>::endDiagh()
         // load the average iteration steps for cg diagonalization
         auto cg = reinterpret_cast<DiagoCG_New<T, Device>*>(this->pdiagh);
         DiagoIterAssist<T, Device>::avg_iter = cg->get_avg_iter();
-        delete reinterpret_cast<DiagoCG_New<T, Device>*>(this->pdiagh);
+        delete cg;
         this->pdiagh = nullptr;
     }
 
@@ -385,17 +385,17 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::P
         using ct_Device = typename ct::PsiToContainer<Device>::type;
         auto cg = reinterpret_cast<DiagoCG_New<T, Device>*>(this->pdiagh);
         // warp the hpsi_func and spsi_func into a lambda function
-        auto hpsi_func = [hm, &psi](const ct::Tensor& psi_in, ct::Tensor& hpsi_out) {
+        auto hpsi_func = [hm](const ct::Tensor& psi_in, ct::Tensor& hpsi_out) {
             // psi_in should be a 2D tensor: 
             // psi_in.shape() = [nbands, nbasis]
-            const int ndim = psi_in.shape().ndim();
+            const auto ndim = psi_in.shape().ndim();
             REQUIRES_OK(ndim <= 2, "dims of psi_in should be less than or equal to 2");
             // Convert a Tensor object to a psi::Psi object
             auto psi_wrapper = psi::Psi<T, Device>(
                 psi_in.data<T>(), 1, 
                 ndim == 1 ? 1 : psi_in.shape().dim_size(0), 
                 ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1));
-            psi::Range all_bands_range(1, psi_wrapper.get_current_k(), 0, psi_wrapper.get_nbands() - 1);
+            psi::Range all_bands_range(true, psi_wrapper.get_current_k(), 0, psi_wrapper.get_nbands() - 1);
             using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
             hpsi_info info(&psi_wrapper, all_bands_range, hpsi_out.data<T>());
             hm->ops->hPsi(info);
@@ -403,7 +403,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::P
         auto spsi_func = [hm](const ct::Tensor& psi_in, ct::Tensor& spsi_out) {
             // psi_in should be a 2D tensor: 
             // psi_in.shape() = [nbands, nbasis]
-            const int ndim = psi_in.shape().ndim();
+            const auto ndim = psi_in.shape().ndim();
             REQUIRES_OK(ndim <= 2, "dims of psi_in should be less than or equal to 2");
             // Convert a Tensor object to a psi::Psi object
             hm->sPsi(psi_in.data<T>(), spsi_out.data<T>(), 

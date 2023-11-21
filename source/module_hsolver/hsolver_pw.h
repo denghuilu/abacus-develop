@@ -3,7 +3,6 @@
 
 #include "hsolver.h"
 #include "module_base/macros.h"
-#include "module_basis/module_pw/pw_basis_k.h"
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 
 namespace hsolver {
@@ -12,7 +11,7 @@ template<typename T, typename Device = psi::DEVICE_CPU>
 class HSolverPW: public HSolver<T, Device>
 {
   private:
-    // Note GetTypeReal<T>::type will 
+    // Note GetTypeReal<T>::type will
     // return T if T is real type(float, double), 
     // otherwise return the real type of T(complex<float>, complex<double>)
     using Real = typename GetTypeReal<T>::type;
