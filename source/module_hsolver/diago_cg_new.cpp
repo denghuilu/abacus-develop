@@ -192,7 +192,6 @@ void DiagoCG_New<T, Device>::calc_grad(
     auto lambda = eh / es;
     // Update g!
     // grad = - lambda * pphi + 1 * grad;
-    // for add_op: z = alpha * x + beta * y
     ct::op::add_op()(
         static_cast<T>(-lambda), pphi, static_cast<T>(1.0), grad, grad);
 }
@@ -243,7 +242,10 @@ void DiagoCG_New<T, Device>::calc_gamma_cg(
     // (1) Update gg_inter!
     // gg_inter = <g|g0>
     // Attention : the 'g' in g0 is got last time
-    auto gg_inter = ct::extract<Real>(ct::op::einsum("i,i->", grad, g0));
+    Real gg_inter = 0.0;
+    if (iter > 0) {
+        gg_inter = ct::extract<Real>(ct::op::einsum("i,i->", grad, g0));
+    }
     // (2) Update for g0!
     // two usage:
     // firstly, for now, calculate: gg_now

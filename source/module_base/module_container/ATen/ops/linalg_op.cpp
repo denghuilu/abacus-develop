@@ -46,8 +46,10 @@ void add_op::operator()(const T& alpha, const Tensor &x, const T& beta, const Te
                 "add: the device type of the two input Tensors must be the same")
     // allocate memory for the result
     TEMPLATE_ALL_LAMBDA_2(x.data_type(), x.device_type(), [&](){
+        auto x_ = x;
+        auto y_ = y;
         kernels::add<T, T, DEVICE_>()(
-            x.NumElements(), alpha, x.data<T>(), beta, y.data<T>(), z.data<T>());
+            x_.NumElements(), alpha, x_.data<T>(), beta, y_.data<T>(), z.data<T>());
     })
 }
 
@@ -96,8 +98,9 @@ void div_op::operator()(const container::Tensor &x, const container::Tensor &y, 
     if (y.NumElements() == 1) {
         TEMPLATE_ALL_LAMBDA_3(x.data_type(), y.data_type(), x.device_type(), [&](){
             T_1 alpha = static_cast<T_1>(1);
+            auto x_ = x;
             kernels::div<T_1, T_2, DEVICE_>()(
-                x.NumElements(), alpha, x.data<T_1>(), y.data<T_2>()[0], z.data<T_1>());
+                x.NumElements(), alpha, x_.data<T_1>(), y.data<T_2>()[0], z.data<T_1>());
         })
     }
     else {

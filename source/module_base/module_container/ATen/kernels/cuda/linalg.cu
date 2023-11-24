@@ -31,9 +31,9 @@ __global__ void do_add_kernel(
     T_1* z)
 {
     // Perform add operation for the specified range [begin, end) in the output Tensor.
-    for (auto o_idx = threadIdx.x; o_idx < num_element; o_idx += blockDim.x) {
-        // Assign the sum of the input Tensor elements at index 'o_idx' to the output Tensor element at index 'o_idx'.
-        z[o_idx] = alpha * x[o_idx] + beta * y[o_idx];
+    for (auto ii = threadIdx.x; ii < num_element; ii += blockDim.x) {
+        // Assign the sum of the input Tensor elements at index 'ii' to the output Tensor element at index 'ii'.
+        z[ii] = alpha * x[ii] + beta * y[ii];
     }
 }
 
@@ -44,9 +44,9 @@ __global__ void do_mul_kernel(
     const T* x,
     T* y)
 {
-    for (auto o_idx = threadIdx.x; o_idx < num_element; o_idx += blockDim.x) {
-        // Assign the sum of the input Tensor elements at index 'o_idx' to the output Tensor element at index 'o_idx'.
-        y[o_idx] = alpha * x[o_idx];
+    for (auto ii = threadIdx.x; ii < num_element; ii += blockDim.x) {
+        // Assign the sum of the input Tensor elements at index 'ii' to the output Tensor element at index 'ii'.
+        y[ii] = alpha * x[ii];
     }
 }
 
@@ -58,9 +58,9 @@ __global__ void do_mul_kernel(
     const T_2* y,
     T_1* z)
 {
-    for (auto o_idx = threadIdx.x; o_idx < num_element; o_idx += blockDim.x) {
-        // Assign the sum of the input Tensor elements at index 'o_idx' to the output Tensor element at index 'o_idx'.
-        z[o_idx] = alpha * x[o_idx] * y[o_idx];
+    for (auto ii = threadIdx.x; ii < num_element; ii += blockDim.x) {
+        // Assign the sum of the input Tensor elements at index 'ii' to the output Tensor element at index 'ii'.
+        z[ii] = alpha * x[ii] * y[ii];
     }
 }
 
@@ -72,9 +72,9 @@ __global__ void do_div_kernel(
     const T_2* y,
     T_1* z)
 {
-    for (auto o_idx = threadIdx.x; o_idx < num_element; o_idx += blockDim.x) {
-        // Assign the sum of the input Tensor elements at index 'o_idx' to the output Tensor element at index 'o_idx'.
-        z[o_idx] = alpha * x[o_idx] / y[o_idx];
+    for (auto ii = threadIdx.x; ii < num_element; ii += blockDim.x) {
+        // Assign the sum of the input Tensor elements at index 'ii' to the output Tensor element at index 'ii'.
+        z[ii] = alpha * x[ii] / y[ii];
     }
 }
 
@@ -86,9 +86,9 @@ __global__ void do_div_kernel(
     const T_2 y,
     T_1* z)
 {
-    for (auto o_idx = threadIdx.x; o_idx < num_element; o_idx += blockDim.x) {
-        // Assign the sum of the input Tensor elements at index 'o_idx' to the output Tensor element at index 'o_idx'.
-        z[o_idx] = alpha * x[o_idx] / y;
+    for (auto ii = threadIdx.x; ii < num_element; ii += blockDim.x) {
+        // Assign the sum of the input Tensor elements at index 'ii' to the output Tensor element at index 'ii'.
+        z[ii] = alpha * x[ii] / y;
     }
 }
 
@@ -102,9 +102,9 @@ __global__ void do_fma_kernel(
     const T* z,
     T* out)
 {
-    for (auto o_idx = threadIdx.x; o_idx < num_element; o_idx += blockDim.x) {
-        // Assign the sum of the input Tensor elements at index 'o_idx' to the output Tensor element at index 'o_idx'.
-        out[o_idx] = alpha * x[o_idx] * y[o_idx] + beta * z[o_idx];
+    for (auto ii = threadIdx.x; ii < num_element; ii += blockDim.x) {
+        // Assign the sum of the input Tensor elements at index 'ii' to the output Tensor element at index 'ii'.
+        out[ii] = alpha * x[ii] * y[ii] + beta * z[ii];
     }
 }
 
