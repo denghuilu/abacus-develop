@@ -40,6 +40,7 @@ class DiagoCG_New final : public DiagH<T, Device>
     // obtain the average iteration steps for cg diagonalization
     int get_avg_iter() const;
   private:
+    Device * ctx_ = {};
     /// static variables, used for passing control variables
     /// record for how many bands not have convergence eigenvalues
     int notconv_ = 0;
@@ -114,6 +115,8 @@ class DiagoCG_New final : public DiagH<T, Device>
 
     bool test_exit_cond(const int& ntry, const int& notconv) const;
 
+    consts<T> cs_;
+    const T * one_ = nullptr, * zero_ = nullptr, * neg_one_ = nullptr;
 };
 
 } // namespace hsolver

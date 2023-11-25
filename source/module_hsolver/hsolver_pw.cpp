@@ -378,14 +378,17 @@ void HSolverPW<T, Device>::updatePsiK(hamilt::Hamilt<T, Device>* pHamilt,
 template<typename T, typename Device>
 void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::Psi<T, Device>& psi, Real* eigenvalue)
 {
+    ModuleBase::timer::tick("HSolverPW", "diag");
     if (this->method != "cg-new") {
         this->pdiagh->diag(hm, psi, eigenvalue);
     }
-    else { // warp the hpsi_func and spsi_func into a lambda function
+    else {
+        // warp the hpsi_func and spsi_func into a lambda function
         using ct_Device = typename ct::PsiToContainer<Device>::type;
         auto cg = reinterpret_cast<DiagoCG_New<T, Device>*>(this->pdiagh);
         // warp the hpsi_func and spsi_func into a lambda function
         auto hpsi_func = [hm](const ct::Tensor& psi_in, ct::Tensor& hpsi_out) {
+            ModuleBase::timer::tick("DiagoCG_New", "hpsi_func");
             // psi_in should be a 2D tensor: 
             // psi_in.shape() = [nbands, nbasis]
             const auto ndim = psi_in.shape().ndim();
@@ -399,8 +402,10 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::P
             using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
             hpsi_info info(&psi_wrapper, all_bands_range, hpsi_out.data<T>());
             hm->ops->hPsi(info);
+            ModuleBase::timer::tick("DiagoCG_New", "hpsi_func");
         };
         auto spsi_func = [hm](const ct::Tensor& psi_in, ct::Tensor& spsi_out) {
+            ModuleBase::timer::tick("DiagoCG_New", "spsi_func");
             // psi_in should be a 2D tensor: 
             // psi_in.shape() = [nbands, nbasis]
             const auto ndim = psi_in.shape().ndim();
@@ -410,6 +415,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::P
                 ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1), 
                 ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1), 
                 ndim == 1 ? 1 : psi_in.shape().dim_size(0));
+            ModuleBase::timer::tick("DiagoCG_New", "spsi_func");
         };
         auto psi_tensor = ct::TensorMap(
             psi.get_pointer(), 
@@ -431,6 +437,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::P
         // TODO: Double check tensormap's potential problem
         ct::TensorMap(psi.get_pointer(), psi_tensor, {psi.get_nbands(), psi.get_nbasis()}).sync(psi_tensor);
     }
+    ModuleBase::timer::tick("HSolverPW", "diag");
 }
 
 template<typename T, typename Device>

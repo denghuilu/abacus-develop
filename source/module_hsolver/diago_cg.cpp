@@ -208,6 +208,7 @@ void DiagoCG<T, Device>::diag_mock(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T
 template<typename T, typename Device>
 void DiagoCG<T, Device>::calculate_gradient()
 {
+    ModuleBase::timer::tick("DiagoCG", "calculate_gradient");
     if (this->test_cg == 1) {
         ModuleBase::TITLE("DiagoCG", "calculate_gradient");
     }
@@ -248,11 +249,13 @@ void DiagoCG<T, Device>::calculate_gradient()
     // }
     // haozhihan replace this 2022-10-6
     constantvector_addORsub_constantVector_op<T, Device>()(this->ctx, this->dim, this->gradient, this->gradient, 1.0, this->pphi, (-lambda));
+    ModuleBase::timer::tick("DiagoCG", "calculate_gradient");
 }
 
 template<typename T, typename Device>
 void DiagoCG<T, Device>::orthogonal_gradient(hamilt::Hamilt<T, Device> *phm_in, const psi::Psi<T, Device> &eigenfunction, const int m)
 {
+    ModuleBase::timer::tick("DiagoCG", "orthogonal_gradient");
     if (test_cg == 1) {
         ModuleBase::TITLE("DiagoCG", "orthogonal_gradient");
     }
@@ -308,6 +311,7 @@ void DiagoCG<T, Device>::orthogonal_gradient(hamilt::Hamilt<T, Device> *phm_in, 
         this->one,
         this->scg,
         1);
+    ModuleBase::timer::tick("DiagoCG", "orthogonal_gradient");
 }
 
 inline void init_real(const double in, double& out)
@@ -323,6 +327,8 @@ inline void init_real(const FPTYPE  in, std::complex<FPTYPE>& out)
 template<typename T, typename Device>
 void DiagoCG<T, Device>::calculate_gamma_cg(const int iter, Real &gg_last, const Real &cg_norm, const Real &theta)
 {
+    ModuleBase::timer::tick("DiagoCG", "calculate_gamma_cg");
+
     if (test_cg == 1) {
         ModuleBase::TITLE("DiagoCG", "calculate_gamma_cg");
     }
@@ -399,11 +405,13 @@ void DiagoCG<T, Device>::calculate_gamma_cg(const int iter, Real &gg_last, const
         }*/
         axpy_op<T, Device>()(this->ctx, this->dim, &znorma, pphi_m, 1, pcg, 1);
     }
+    ModuleBase::timer::tick("DiagoCG", "calculate_gamma_cg");
 }
 
 template<typename T, typename Device>
 bool DiagoCG<T, Device>::update_psi(Real &cg_norm, Real &theta, Real &eigenvalue)
 {
+    ModuleBase::timer::tick("DiagoCG", "update_psi");
     if (test_cg == 1)
         ModuleBase::TITLE("DiagoCG", "update_psi");
     cg_norm = sqrt(hsolver::dot_real_op<T, Device>()(this->ctx, this->dim, this->cg->get_pointer(), this->scg));
@@ -452,6 +460,7 @@ bool DiagoCG<T, Device>::update_psi(Real &cg_norm, Real &theta, Real &eigenvalue
     if (std::abs(eigenvalue - e0) < DiagoIterAssist<T, Device>::PW_DIAG_THR)
     {
         // ModuleBase::timer::tick("DiagoCG","update");
+        ModuleBase::timer::tick("DiagoCG", "update_psi");
         return 1;
     }
     else
@@ -465,6 +474,7 @@ bool DiagoCG<T, Device>::update_psi(Real &cg_norm, Real &theta, Real &eigenvalue
         // haozhihan replace this 2022-10-6
         constantvector_addORsub_constantVector_op<T, Device>()(this->ctx, this->dim, this->sphi, this->sphi, cost, this->scg, sint_norm);
         constantvector_addORsub_constantVector_op<T, Device>()(this->ctx, this->dim, this->hphi, this->hphi, cost, this->pphi, sint_norm);
+        ModuleBase::timer::tick("DiagoCG", "update_psi");
         return 0;
     }
 }
@@ -498,6 +508,7 @@ void DiagoCG<T, Device>::schmit_orth(
                           const int &m, // end
                           const psi::Psi<T, Device> &psi)
 {
+    ModuleBase::timer::tick("DiagoCG", "schmit_orth");
     //	ModuleBase::TITLE("DiagoCG","schmit_orth");
     // ModuleBase::timer::tick("DiagoCG","schmit_orth");
     // orthogonalize starting eigenfunction to those already calculated
@@ -591,6 +602,7 @@ void DiagoCG<T, Device>::schmit_orth(
 
     // ModuleBase::timer::tick("DiagoCG","schmit_orth");
     delmem_complex_op()(this->ctx, lagrange_so);
+    ModuleBase::timer::tick("DiagoCG", "schmit_orth");
 }
 
 template<typename T, typename Device>
