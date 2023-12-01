@@ -1,4 +1,5 @@
 #include <module_hsolver/diago_cg_new.h>
+#include <module_hsolver/diago_iter_assist.h>
 
 #include <module_base/memory.h>
 #include <module_base/parallel_reduce.h>
@@ -197,11 +198,11 @@ void DiagoCG_New<T, Device>::calc_grad(
     // Update lambda !
     // (4) <psi|SPH|psi >
     // auto eh = ct::extract<Real>(ct::op::einsum("i,i->", sphi, grad));
-    auto eh = hsolver::dot_real_op<T, Device>()(ctx_, this->n_basis_, sphi.data<T>(), grad.data<T>());
+    auto eh = dot_real_op<T, Device>()(ctx_, this->n_basis_, sphi.data<T>(), grad.data<T>());
 
     // (5) <psi|SPS|psi >
     // auto es = ct::extract<Real>(ct::op::einsum("i,i->", sphi, pphi));
-    auto es = hsolver::dot_real_op<T, Device>()(ctx_, this->n_basis_, sphi.data<T>(), pphi.data<T>());
+    auto es = dot_real_op<T, Device>()(ctx_, this->n_basis_, sphi.data<T>(), pphi.data<T>());
     auto lambda = eh / es;
     // Update g!
     // grad = - lambda * pphi + 1 * grad;
@@ -290,7 +291,7 @@ void DiagoCG_New<T, Device>::calc_gamma_cg(
     // Attention : the 'g' in g0 is got last time
     Real gg_inter = 0.0;
     if (iter > 0) {
-        gg_inter = hsolver::dot_real_op<T, Device>()(ctx_, n_basis_, grad.data<T>(), g0.data<T>());
+        gg_inter = dot_real_op<T, Device>()(ctx_, n_basis_, grad.data<T>(), g0.data<T>());
     }
     // (2) Update for g0!
     // two usage:
@@ -302,7 +303,7 @@ void DiagoCG_New<T, Device>::calc_gamma_cg(
 
     // (3) Update gg_now!
     // gg_now = < g|P|scg > = < g|g0 >
-    auto gg_now = hsolver::dot_real_op<T, Device>()(ctx_, n_basis_, grad.data<T>(), g0.data<T>());
+    auto gg_now = dot_real_op<T, Device>()(ctx_, n_basis_, grad.data<T>(), g0.data<T>());
 
     if (iter == 0)
     {
@@ -343,16 +344,17 @@ bool DiagoCG_New<T, Device>::update_psi(
     ct::Tensor& sphi,
     ct::Tensor& hphi)
 {
-    cg_norm = sqrt(ct::extract<Real>(
-        ct::op::einsum("i,i->", cg, scg)));
+    ModuleBase::timer::tick("DiagoCG_New", "update_psi");
+    cg_norm = sqrt(dot_real_op<T, Device>()(
+        ctx_, n_basis_, cg.data<T>(), scg.data<T>()));
 
     if (cg_norm < 1.0e-10) {
         return true;
     }
-    const Real a0 = hsolver::dot_real_op<T, Device>()(
+    const Real a0 = dot_real_op<T, Device>()(
         ctx_, n_basis_, phi_m.data<T>(), pphi.data<T>()) * 2.0 / cg_norm;
     
-    const Real b0 = hsolver::dot_real_op<T, Device>()(
+    const Real b0 = dot_real_op<T, Device>()(
         ctx_, n_basis_, cg.data<T>(), pphi.data<T>()) / (cg_norm * cg_norm);
 
     const Real e0 = eigen;
@@ -445,7 +447,7 @@ void DiagoCG_New<T, Device>::schmit_orth(
         1);
 
     auto psi_norm = ct::extract<Real>(lagrange_so[m])
-        - hsolver::dot_real_op<T, Device>()(ctx_, m, lagrange_so.data<T>(), lagrange_so.data<T>(), false);
+        - dot_real_op<T, Device>()(ctx_, m, lagrange_so.data<T>(), lagrange_so.data<T>(), false);
 
     REQUIRES_OK(psi_norm > 0.0,
         "DiagoCG_New::schmit_orth: psi_norm < 0")
@@ -520,6 +522,7 @@ bool DiagoCG_New<T, Device>::test_exit_cond(
 
 template<typename T, typename Device>
 void DiagoCG_New<T, Device>::diag(
+    hamilt::Hamilt<T, Device>* hm,
     const Func& hpsi_func, 
     const Func& spsi_func, 
     ct::Tensor& psi,
@@ -534,7 +537,12 @@ void DiagoCG_New<T, Device>::diag(
     do
     {
         if (need_subspace_ || ntry > 0) {
-            this->diagH_subspace(hpsi_func, spsi_func, psi, eigen);
+            // this->diagH_subspace(hpsi_func, spsi_func, psi, eigen);
+            auto psi_wrapper = psi::Psi<T, Device>(
+                psi.data<T>(), 1, 
+                psi.shape().dim_size(0), 
+                psi.shape().dim_size(1));
+            DiagoIterAssist<T, Device>::diagH_subspace(hm, psi_wrapper, psi_wrapper, eigen.data<Real>());
         }
         ++ntry;
         avg_iter_ += 1.0;

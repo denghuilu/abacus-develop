@@ -380,7 +380,22 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::P
 {
     ModuleBase::timer::tick("HSolverPW", "diag");
     if (this->method != "cg-new") {
-        this->pdiagh->diag(hm, psi, eigenvalue);
+        using ct_Device = typename ct::PsiToContainer<Device>::type;
+        
+        ct::Tensor psi_tensor = ct::TensorMap(
+            psi.get_pointer(), 
+            ct::DataTypeToEnum<T>::value, 
+            ct::DeviceTypeToEnum<ct_Device>::value,
+            ct::TensorShape({psi.get_nbands(), psi.get_nbasis()})).slice({0, 0}, {psi.get_nbands(), psi.get_current_nbas()});
+        
+        auto psi_wrapper = psi::Psi<T, Device>(
+            psi_tensor.data<T>(), 1, 
+            psi_tensor.shape().dim_size(0), 
+            psi_tensor.shape().dim_size(1));
+        
+        this->pdiagh->diag(hm, psi_wrapper, eigenvalue);
+
+        ct::TensorMap(psi.get_pointer(), psi_tensor, {psi.get_nbands(), psi.get_nbasis()}).sync(psi_tensor);
     }
     else {
         // warp the hpsi_func and spsi_func into a lambda function
@@ -433,7 +448,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::P
             ct::DeviceTypeToEnum<ct::DEVICE_CPU>::value,
             ct::TensorShape({static_cast<int>(precondition.size())})).to_device<ct_Device>().slice({0}, {psi.get_current_nbas()});
         
-        cg->diag(hpsi_func, spsi_func, psi_tensor, eigen_tensor, prec_tensor);
+        cg->diag(hm, hpsi_func, spsi_func, psi_tensor, eigen_tensor, prec_tensor);
         // TODO: Double check tensormap's potential problem
         ct::TensorMap(psi.get_pointer(), psi_tensor, {psi.get_nbands(), psi.get_nbasis()}).sync(psi_tensor);
     }

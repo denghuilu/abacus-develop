@@ -36,7 +36,7 @@ class DiagoCG_New final : public DiagH<T, Device>
     // Destructor for DiagoCG_New
     ~DiagoCG_New() override = default;
     // brand-new interface for cg diagonalization
-    void diag(const Func& hpsi_func, const Func& spsi_func, ct::Tensor& psi, ct::Tensor& eigen, const ct::Tensor& prec = {});
+    void diag(hamilt::Hamilt<T, Device>* hm, const Func& hpsi_func, const Func& spsi_func, ct::Tensor& psi, ct::Tensor& eigen, const ct::Tensor& prec = {});
     // obtain the average iteration steps for cg diagonalization
     int get_avg_iter() const;
   private:
