@@ -12,6 +12,7 @@
 #define FULL_MASK 0xffffffff
 #define THREAD_PER_BLOCK 256
 
+namespace hsolver {
 template <>
 struct GetTypeReal<thrust::complex<float>> {
     using type = float; /**< The return type specialization for std::complex<double>. */
@@ -20,7 +21,6 @@ template <>
 struct GetTypeReal<thrust::complex<double>> {
     using type = double; /**< The return type specialization for std::complex<double>. */
 };
-namespace hsolver {
 
 template <typename T>
 struct GetTypeThrust {
