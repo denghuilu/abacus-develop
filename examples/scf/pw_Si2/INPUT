@@ -4,9 +4,9 @@ pseudo_dir      ../../../tests/PP_ORB
 symmetry        1	
 #Parameters  (Accuracy)
 basis_type      pw
-ecutwfc         6 
+ecutwfc         60 
 scf_thr         1e-7
 scf_nmax        100
-device          gpu
+device          cpu
 ks_solver       cg
-precision       single
+precision       double
