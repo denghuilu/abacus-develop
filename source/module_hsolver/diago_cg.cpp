@@ -120,12 +120,11 @@ void DiagoCG<T, Device>::diag_mock(const ct::Tensor& prec, ct::Tensor& psi, ct::
         this->spsi_func_(phi_m, sphi); // sphi = S|psi(m)>
         this->schmit_orth(m, psi, sphi, phi_m);
         this->spsi_func_(phi_m, sphi); // sphi = S|psi(m)>
-
         this->hpsi_func_(phi_m, hphi); // hphi = H|psi(m)>
 
-        eigen_pack[m] = ct::extract<Real>(
-            ct::op::einsum("i,i->", phi_m, hphi));
-
+        eigen_pack[m]  = 
+            dot_real_op()(ctx_, this->n_basis_, phi_m.data<T>(), hphi.data<T>());
+        
         int  iter      = 0;
         Real gg_last   = 0.0;
         Real cg_norm   = 0.0;
