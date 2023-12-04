@@ -59,7 +59,7 @@ DiagoCG<T, Device>::~DiagoCG()
 }
 
 template<typename T, typename Device>
-void DiagoCG<T, Device>::diag_mock(const ct::Tensor& prec, ct::Tensor& psi, ct::Tensor& eigen)
+void DiagoCG<T, Device>::diag_mock(const ct::Tensor& prec_in, ct::Tensor& psi, ct::Tensor& eigen)
 {
     ModuleBase::TITLE("DiagoCG", "diag_once");
     ModuleBase::timer::tick("DiagoCG", "diag_once");
@@ -108,8 +108,15 @@ void DiagoCG<T, Device>::diag_mock(const ct::Tensor& prec, ct::Tensor& psi, ct::
     // lagrange.resize(this->n_band, ModuleBase::ZERO);
     auto lagrange = std::move(ct::Tensor(
         ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<ct_Device>::value, {this->n_band_}));
+    
+    auto prec = prec_in;
+    if (prec.NumElements() == 0) {
+        prec = ct::Tensor(
+            ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<ct_Device>::value, {this->n_basis_});
+        prec.set_value(static_cast<T>(1.0));
+    }
 
-    ModuleBase::Memory::record("DiagoCG", this->n_basis_ * 9);
+    ModuleBase::Memory::record("DiagoCG", this->n_basis_ * 10);
 
     eigen.zero();
     auto eigen_pack = eigen.accessor<Real, 1>();
@@ -557,7 +564,7 @@ void DiagoCG<T, Device>::diag(
     const Func& spsi_func, 
     ct::Tensor& psi,
     ct::Tensor& eigen,
-    ct::Tensor& prec)
+    const ct::Tensor& prec)
 {
     /// record the times of trying iterative diagonalization
     int ntry = 0;

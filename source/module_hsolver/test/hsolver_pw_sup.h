@@ -121,7 +121,7 @@ void DiagoCG<T, Device>::diag(
     const Func& spsi_func, 
     ct::Tensor& psi,
     ct::Tensor& eigen,
-    ct::Tensor& prec)
+    const ct::Tensor& prec)
 {
     auto n_bands = psi.shape().dim_size(0);
     auto n_basis = psi.shape().dim_size(1);

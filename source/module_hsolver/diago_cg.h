@@ -41,7 +41,7 @@ class DiagoCG final : public DiagH<T, Device>
     // virtual void init(){};
     // refactor hpsi_info
     // this is the override function diag() for CG method
-    void diag(const Func& hpsi_func, const Func& spsi_func, ct::Tensor& psi, ct::Tensor& eigen, ct::Tensor& prec = {});
+    void diag(const Func& hpsi_func, const Func& spsi_func, ct::Tensor& psi, ct::Tensor& eigen, const ct::Tensor& prec = {});
 
   private:
     Device * ctx_ = {};
