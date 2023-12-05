@@ -126,7 +126,7 @@ void DiagoCG<T, Device>::diag(
     auto n_bands = psi.shape().dim_size(0);
     auto n_basis = psi.shape().dim_size(1);
     auto psi_pack = psi.accessor<T, 2>();
-    auto eigen_pack = eigen.accessor<T, 1>();
+    auto eigen_pack = eigen.accessor<Real, 1>();
     //do something
     for(int ib = 0;ib<n_bands;ib++)
     {
