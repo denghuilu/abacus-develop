@@ -3,7 +3,7 @@
 #include <module_base/memory.h>
 #include <module_base/parallel_reduce.h>
 #include <module_base/timer.h>
-#include <module_hamilt_pw/hamilt_pwdft/hamilt_pw.h>
+#include <module_base/constants.h>
 
 #include <ATen/kernels/lapack.h>
 #include <ATen/kernels/memory.h>
@@ -12,7 +12,6 @@
 
 #include <ATen/ops/einsum_op.h>
 #include <ATen/ops/linalg_op.h>
-#include <module_basis/module_pw/test/pw_test.h>
 
 using namespace hsolver;
 
@@ -113,7 +112,7 @@ void DiagoCG<T, Device>::diag_mock(const ct::Tensor& prec_in, ct::Tensor& psi, c
     if (prec.NumElements() == 0) {
         prec = ct::Tensor(
             ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<ct_Device>::value, {this->n_basis_});
-        prec.set_value(static_cast<T>(1.0));
+        prec.set_value(static_cast<Real>(1.0));
     }
 
     ModuleBase::Memory::record("DiagoCG", this->n_basis_ * 10);
