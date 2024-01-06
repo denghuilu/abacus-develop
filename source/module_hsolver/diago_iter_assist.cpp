@@ -238,11 +238,17 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(
     setmem_complex_op()(ctx, hpsi, 0, psi_temp.get_nbands() * psi_temp.get_nbasis());
     // ================================================
     // std::vector<T> hpsi(psi_temp.get_nbands() * psi_temp.get_nbasis());
-
+    MPI_Barrier(MPI_COMM_WORLD);
+    std::cout << "I'm in diagH_subspace_init at position 0 " << std::endl;
+    MPI_Barrier(MPI_COMM_WORLD);
     // do hPsi for all bands
     psi::Range all_bands_range(1, psi_temp.get_current_k(), 0, psi_temp.get_nbands()-1);
     hpsi_info hpsi_in(&psi_temp, all_bands_range, hpsi);
     pHamilt->ops->hPsi(hpsi_in);
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    std::cout << "I'm in diagH_subspace_init at position 1 " << std::endl;
+    MPI_Barrier(MPI_COMM_WORLD);
 
     gemm_op<T, Device>()(
         ctx,
@@ -262,6 +268,9 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(
     );
     delmem_complex_op()(ctx, hpsi);
 
+    MPI_Barrier(MPI_COMM_WORLD);
+    std::cout << "I'm in diagH_subspace_init at position 2 " << std::endl;
+    MPI_Barrier(MPI_COMM_WORLD);
     // allocated spsi
     T* spsi = nullptr;
     resmem_complex_op()(ctx, spsi, psi_temp.get_nbands() * psi_temp.get_nbasis(), "DiagSub::spsi");
@@ -269,8 +278,16 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(
     // do sPsi for all bands
     pHamilt->sPsi(ppsi, spsi, psi_temp.get_nbasis(), psi_temp.get_current_nbas(), psi_temp.get_nbands());
 
+    MPI_Barrier(MPI_COMM_WORLD);
+    std::cout << "I'm in diagH_subspace_init at position 3 " << std::endl;
+    MPI_Barrier(MPI_COMM_WORLD);
+
     gemm_op<T, Device>()(ctx, 'C', 'N', nstart, nstart, dmin, &one, ppsi, dmax, spsi, dmax, &zero, scc, nstart);
     delmem_complex_op()(ctx, spsi);
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    std::cout << "I'm in diagH_subspace_init at position 4 " << std::endl;
+    MPI_Barrier(MPI_COMM_WORLD);
 
     if (GlobalV::NPROC_IN_POOL > 1)
     {

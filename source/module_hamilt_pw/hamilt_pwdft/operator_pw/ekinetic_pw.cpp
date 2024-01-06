@@ -1,5 +1,6 @@
 #include "ekinetic_pw.h"
 
+#include "mpi.h"
 #include "module_base/timer.h"
 #include "module_base/tool_quit.h"
 #include "module_psi/kernels/device.h"
@@ -38,8 +39,13 @@ void Ekinetic<OperatorPW<T, Device>>::act(
     T* tmhpsi,
     const int ngk_ik)const
 {
-    ModuleBase::timer::tick("Operator", "EkineticPW");
-    int max_npw = nbasis / npol;
+
+  MPI_Barrier(MPI_COMM_WORLD);
+  std::cout << "I'm in Ekinetic::act() now!" << std::endl;
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  ModuleBase::timer::tick("Operator", "EkineticPW");
+  int max_npw = nbasis / npol;
 
   const Real *gk2_ik = &(this->gk2[this->ik * this->gk2_col]);
   // denghui added 20221019

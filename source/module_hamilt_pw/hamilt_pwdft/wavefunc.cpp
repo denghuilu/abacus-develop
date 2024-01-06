@@ -538,6 +538,10 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_GPU *ctx,
     }
 	if(GlobalV::KS_SOLVER=="cg") //xiaohui add 2013-09-02
 	{
+		MPI_Barrier(MPI_COMM_WORLD);
+		std::cout << "I'm in cg solver at begin" << std::endl;
+		MPI_Barrier(MPI_COMM_WORLD);
+
 		// (7) Diago with cg method.
 		if(phm_in!= nullptr)
 		{
@@ -555,6 +559,9 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_GPU *ctx,
 			//this diagonalization method is obsoleted now
 			//GlobalC::hm.diagH_subspace(ik ,starting_nw, nbands, wfcatom, wfcatom, etatom.data());
 		}
+		MPI_Barrier(MPI_COMM_WORLD);
+		std::cout << "I'm in cg solver at end" << std::endl;
+		MPI_Barrier(MPI_COMM_WORLD);
 	}
 	else if(GlobalV::KS_SOLVER=="dav")
 	{

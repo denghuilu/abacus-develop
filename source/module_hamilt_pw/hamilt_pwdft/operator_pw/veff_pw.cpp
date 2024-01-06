@@ -4,6 +4,8 @@
 #include "module_base/tool_quit.h"
 #include "module_psi/kernels/device.h"
 
+#include "mpi.h"
+
 namespace hamilt {
 
 template<typename T, typename Device>
@@ -45,6 +47,10 @@ void Veff<OperatorPW<T, Device>>::act(
     const int ngk_ik)const
 {
     ModuleBase::timer::tick("Operator", "VeffPW");
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    std::cout << "I'm in Veff::act() now!" << std::endl;
+    MPI_Barrier(MPI_COMM_WORLD);
 
     int max_npw = nbasis / npol;
     const int current_spin = this->isk[this->ik];

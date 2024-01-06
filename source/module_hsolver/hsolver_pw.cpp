@@ -193,7 +193,15 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
         }
 #endif
 
+        MPI_Barrier(MPI_COMM_WORLD);
+        std::cout << "I'm in before updatePsiK" << std::endl;
+        MPI_Barrier(MPI_COMM_WORLD);
+
         this->updatePsiK(pHamilt, psi, ik);
+
+        MPI_Barrier(MPI_COMM_WORLD);
+        std::cout << "I'm in after updatePsiK" << std::endl;
+        MPI_Barrier(MPI_COMM_WORLD);
 
         // template add precondition calculating here
         update_precondition(precondition, ik, this->wfc_basis->npwk[ik]);
@@ -376,6 +384,9 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::P
         this->pdiagh->diag(hm, psi, eigenvalue);
         return;
     }
+    MPI_Barrier(MPI_COMM_WORLD);
+    std::cout << "I'm in HSolverPW::hamiltSolvePsiK at begin" << std::endl;
+    MPI_Barrier(MPI_COMM_WORLD);
     // warp the hpsi_func and spsi_func into a lambda function
     using ct_Device = typename ct::PsiToContainer<Device>::type;
     auto cg = reinterpret_cast<DiagoCG<T, Device>*>(this->pdiagh);

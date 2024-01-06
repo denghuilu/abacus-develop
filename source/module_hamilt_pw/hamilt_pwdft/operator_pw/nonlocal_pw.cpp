@@ -1,5 +1,6 @@
 #include "nonlocal_pw.h"
 
+#include "mpi.h"
 #include "module_base/blas_connector.h"
 #include "module_base/timer.h"
 #include "module_base/parallel_reduce.h"
@@ -219,6 +220,12 @@ void Nonlocal<OperatorPW<T, Device>>::act(
     ModuleBase::timer::tick("Operator", "NonlocalPW");
     if(!GlobalV::use_paw)
     {
+        MPI_Barrier(MPI_COMM_WORLD);
+        if (GlobalV::MY_RANK != 0) std::cout.clear();
+        std::cout << "I'm in Nonlocal::act() now at 0 with rank " << GlobalV::MY_RANK << std::endl;
+        if (GlobalV::MY_RANK != 0) std::cout.setstate(std::ios::failbit);
+        MPI_Barrier(MPI_COMM_WORLD);
+
         this->npw = ngk_ik;
         this->max_npw = nbasis / npol;
         this->npol = npol;
@@ -231,6 +238,11 @@ void Nonlocal<OperatorPW<T, Device>>::act(
             if (this->nkb_m < nbands * nkb) {
                 resmem_complex_op()(this->ctx, this->becp, nbands * nkb, "Nonlocal<PW>::becp");
             }
+            MPI_Barrier(MPI_COMM_WORLD);
+            if (GlobalV::MY_RANK != 0) std::cout.clear();
+            std::cout << "I'm in Nonlocal::act() now at 1 with rank " << GlobalV::MY_RANK << std::endl;
+            if (GlobalV::MY_RANK != 0) std::cout.setstate(std::ios::failbit);
+            MPI_Barrier(MPI_COMM_WORLD);
             // ModuleBase::ComplexMatrix becp(nbands, nkb, false);
             char transa = 'C';
             char transb = 'N';
@@ -255,6 +267,12 @@ void Nonlocal<OperatorPW<T, Device>>::act(
             }
             else
             {
+                MPI_Barrier(MPI_COMM_WORLD);
+                if (GlobalV::MY_RANK != 0) std::cout.clear();
+                std::cout << "I'm in Nonlocal::act() now at 2 with rank " << GlobalV::MY_RANK << std::endl;
+                if (GlobalV::MY_RANK != 0) std::cout.setstate(std::ios::failbit);
+                MPI_Barrier(MPI_COMM_WORLD);
+
                 int npm = nbands;
                 //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
                 // denghui replace 2022-10-20
@@ -274,10 +292,19 @@ void Nonlocal<OperatorPW<T, Device>>::act(
                     this->becp,
                     nkb
                 );
+                
+
+                MPI_Barrier(MPI_COMM_WORLD);
+                if (GlobalV::MY_RANK != 0) std::cout.clear();
+                std::cout << "I'm in Nonlocal::act() now at 3 with rank " << GlobalV::MY_RANK << std::endl;
+                if (GlobalV::MY_RANK != 0) std::cout.setstate(std::ios::failbit);
+                MPI_Barrier(MPI_COMM_WORLD);
             }
-
-            Parallel_Reduce::reduce_pool(becp, nkb * nbands);
-
+            MPI_Barrier(MPI_COMM_WORLD);
+            if (GlobalV::MY_RANK != 0) std::cout.clear();
+            std::cout << "I'm in Nonlocal::act() now at 4 with rank " << GlobalV::MY_RANK << std::endl;
+            if (GlobalV::MY_RANK != 0) std::cout.setstate(std::ios::failbit);
+            MPI_Barrier(MPI_COMM_WORLD);
             this->add_nonlocal_pp(tmhpsi, becp, nbands);
         }
     }
