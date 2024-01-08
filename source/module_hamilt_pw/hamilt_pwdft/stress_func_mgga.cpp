@@ -3,6 +3,10 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "stress_func.h"
 
+#include <ATen/core/tensor.h>
+#include <ATen/core/tensor_map.h>
+#include <ATen/core/tensor_types.h>
+
 // calculate the Pulay term of mGGA stress correction in PW
 template <typename FPTYPE, typename Device>
 void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma,
@@ -22,63 +26,55 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma,
     const int nrxx = wfc_basis->nrxx;
 
     std::complex<FPTYPE>* psi;
-    int ipol2xy[3][3];
+    int ipol2xy[3][3] = {{0, 1, 3}, {1, 2, 4}, {3, 4, 5}};
     FPTYPE sigma_mgga[3][3];
 
     std::complex<FPTYPE>* gradwfc = new std::complex<FPTYPE>[nrxx * 3];
     ModuleBase::GlobalFunc::ZEROS(gradwfc, nrxx * 3);
 
-    FPTYPE** crosstaus = new FPTYPE*[GlobalV::NSPIN];
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
-    {
-        crosstaus[is] = new FPTYPE[nrxx * 6];
-        ModuleBase::GlobalFunc::ZEROS(crosstaus[is], 6*nrxx);
+    using ct_Device = typename ct::PsiToContainer<Device>::type;
+    auto crosstaus = ct::Tensor(
+        ct::DataTypeToEnum<FPTYPE>::value,
+        ct::DeviceType::CpuDevice,
+        {GlobalV::NSPIN, nrxx * 6});
+    auto crosstaus_pack = crosstaus.accessor<FPTYPE, 2>();
+    ct::Tensor crosstaus_device = {};
+    if (ct::DeviceTypeToEnum<ct_Device>::value == ct::DeviceType::CpuDevice) {
+        crosstaus_device = crosstaus.to_device<ct_Device>();
+    }
+    else {
+        crosstaus_device = ct::TensorMap(crosstaus.data<FPTYPE>(), crosstaus);
     }
 
+    auto cal_stress_mgga_solver = hamilt::cal_stress_mgga_op<std::complex<FPTYPE>, psi::DEVICE_CPU>();
+    ModuleBase::timer::tick("Stress_Func", "stress_mgga_impt");
     for (int ik = 0; ik < p_kv->nks; ik++)
     {
         if (GlobalV::NSPIN == 2)
             current_spin = p_kv->isk[ik];
         const int npw = p_kv->ngk[ik];
-        psi = new complex<FPTYPE>[npw];
 
         for (int ibnd = 0; ibnd < GlobalV::NBANDS; ibnd++)
         {
             const FPTYPE w1 = wg(ik, ibnd) / GlobalC::ucell.omega;
-            const std::complex<FPTYPE>* ppsi = nullptr;
-            ppsi = &(psi_in[0](ik, ibnd, 0));
-            for (int ig = 0; ig < npw; ig++)
-            {
-                psi[ig] = ppsi[ig];
-            }
+            const std::complex<FPTYPE>* psi = nullptr;
+            psi = &(psi_in[0](ik, ibnd, 0));
             XC_Functional::grad_wfc(psi, ik, gradwfc, wfc_basis, GlobalC::ucell.tpiba);
-
-            int ipol = 0;
-            for (int ix = 0; ix < 3; ix++)
-            {
-                for (int iy = 0; iy < ix + 1; iy++)
-                {
-                    ipol2xy[ix][iy] = ipol;
-                    ipol2xy[iy][ix] = ipol;
-                    for (int ir = 0; ir < nrxx; ir++)
-                    {
-                        crosstaus[current_spin][ipol*nrxx + ir] += 2.0 * w1
-                                                             * (gradwfc[ix*nrxx + ir].real() * gradwfc[iy*nrxx + ir].real()
-                                                                + gradwfc[ix*nrxx + ir].imag() * gradwfc[iy*nrxx + ir].imag());
-                    }
-                    ipol += 1;
-                }
-            }
+            cal_stress_mgga_solver(
+                current_spin, nrxx, w1, gradwfc, crosstaus_device.data<FPTYPE>());
         } // band loop
-        delete[] psi;
+        // delete[] psi;
     } // k loop
-
+    if (ct::DeviceTypeToEnum<ct_Device>::value == ct::DeviceType::CpuDevice) {
+        crosstaus.sync(crosstaus_device);
+    }
+    ModuleBase::timer::tick("Stress_Func", "stress_mgga_impt");
 #ifdef __MPI
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
         for (int ipol = 0; ipol < 6; ++ipol)
         {
-            chr->reduce_diff_pools(crosstaus[is] + ipol * nrxx);
+            chr->reduce_diff_pools(&crosstaus_pack[is][ipol * nrxx]);
         }
     }
 #endif
@@ -105,18 +101,12 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma,
                 for (int ir = 0; ir < nrxx; ir++)
                 {
                     FPTYPE x
-                        = v_ofk(is, ir) * (chr->kin_r[is][ir] * delta + crosstaus[is][ipol2xy[ix][iy] * nrxx + ir]);
+                        = v_ofk(is, ir) * (chr->kin_r[is][ir] * delta + crosstaus_pack[is][ipol2xy[ix][iy] * nrxx + ir]);
                     sigma_mgga[ix][iy] += x;
                 }
             }
         }
     }
-
-    for (int is = 0; is < GlobalV::NSPIN; is++)
-    {
-        delete[] crosstaus[is];
-    }
-    delete[] crosstaus;
 
 #ifdef __MPI
     for (int l = 0; l < 3; l++)

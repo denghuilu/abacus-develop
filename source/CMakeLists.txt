@@ -39,6 +39,7 @@ list(APPEND device_srcs
   module_hamilt_pw/hamilt_pwdft/kernels/wf_op.cpp
   module_hamilt_pw/hamilt_pwdft/kernels/vnl_op.cpp
   module_base/kernels/math_op.cpp
+  module_hamilt_general/module_xc/kernels/xc_functional_op.cpp
 )
 
 if(USE_CUDA)

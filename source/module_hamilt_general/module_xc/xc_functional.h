@@ -10,7 +10,7 @@
 #else
 #include "xc_funcs.h"
 #endif	// ifdef USE_LIBXC
-
+#include "module_base/macros.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/vector3.h"
@@ -214,6 +214,14 @@ class XC_Functional
                          std::complex<double>* grad,
                          const ModulePW::PW_Basis_K* wfc_basis,
                          const double tpiba);
+	template <typename T, typename Device,
+		      typename Real = typename GetTypeReal<T>::type> // C++ template metaprogramming
+	static void grad_wfc(
+    	const int ik,
+    	const typename GetTypeReal<T>::type tpiba,
+    	const ModulePW::PW_Basis_K* wfc_basis,
+		const T* rhog,
+    	T* grad);
     static void grad_rho(const std::complex<double>* rhog,
                          ModuleBase::Vector3<double>* gdr,
                          const ModulePW::PW_Basis* rho_basis,
