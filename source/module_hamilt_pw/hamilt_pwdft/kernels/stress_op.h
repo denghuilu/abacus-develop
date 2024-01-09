@@ -103,9 +103,9 @@ namespace hamilt {
                         FPTYPE* stress);
     };
 
-template <typename T, typename Device,
-          typename Real = typename GetTypeReal<T>::type>
+template <typename T, typename Device>
 struct cal_stress_mgga_op {
+    using Real = typename GetTypeReal<T>::type;
     void operator()(
         const int& spin,
         const int& nrxx,

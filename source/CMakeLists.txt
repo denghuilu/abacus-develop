@@ -58,6 +58,7 @@ if(USE_CUDA)
     module_hamilt_pw/hamilt_pwdft/kernels/cuda/wf_op.cu
     module_hamilt_pw/hamilt_pwdft/kernels/cuda/vnl_op.cu
     module_base/kernels/cuda/math_op.cu
+    module_hamilt_general/module_xc/kernels/cuda/xc_functional_op.cu
   )
 endif()
 

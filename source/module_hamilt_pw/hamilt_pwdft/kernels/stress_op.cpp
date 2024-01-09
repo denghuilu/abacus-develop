@@ -132,25 +132,24 @@ struct cal_stress_nl_op<FPTYPE, psi::DEVICE_CPU> {
     }
 };
 
-template <typename T, typename Device,
-          typename Real>
-void cal_stress_mgga_op<T, Device, Real>::operator()(
+template <typename T, typename Device>
+void cal_stress_mgga_op<T, Device>::operator()(
     const int& spin,
     const int& nrxx,
     const Real& w1,
     const T * gradwfc,
     Real * crosstaus)
 {
-    int ipol = 0;
-    for (int ix = 0; ix < 3; ix++) {
-        for (int iy = 0; iy < ix + 1; iy++) {
-            for (int ir = 0; ir < nrxx; ir++) {
+    for (int ir = 0; ir < nrxx; ir++) {
+        int ipol = 0;
+        for (int ix = 0; ix < 3; ix++) {
+            for (int iy = 0; iy < ix + 1; iy++) {
                 crosstaus[spin * nrxx * 6 + ipol * nrxx + ir] 
                     += 2.0 * w1 
                     * (gradwfc[ix*nrxx + ir].real() * gradwfc[iy*nrxx + ir].real()
                     +  gradwfc[ix*nrxx + ir].imag() * gradwfc[iy*nrxx + ir].imag());
+                ipol += 1;
             }
-            ipol += 1;
         }
     }
 }

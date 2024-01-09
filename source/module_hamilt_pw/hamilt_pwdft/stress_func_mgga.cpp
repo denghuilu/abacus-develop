@@ -15,7 +15,8 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma,
                                               const Charge* const chr,
                                               K_Vectors* p_kv,
                                               ModulePW::PW_Basis_K* wfc_basis,
-                                              const psi::Psi<complex<FPTYPE>>* psi_in)
+                                              const psi::Psi<complex<FPTYPE>>* psi_in,
+                                              const psi::Psi<complex<FPTYPE>, Device>* d_psi_in)
 {
     ModuleBase::timer::tick("Stress_Func", "stress_mgga");
 
@@ -29,25 +30,18 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma,
     int ipol2xy[3][3] = {{0, 1, 3}, {1, 2, 4}, {3, 4, 5}};
     FPTYPE sigma_mgga[3][3];
 
-    std::complex<FPTYPE>* gradwfc = new std::complex<FPTYPE>[nrxx * 3];
-    ModuleBase::GlobalFunc::ZEROS(gradwfc, nrxx * 3);
-
     using ct_Device = typename ct::PsiToContainer<Device>::type;
+
+    auto gradwfc = ct::Tensor(
+        ct::DataTypeToEnum<std::complex<FPTYPE>>::value,
+        ct::DeviceTypeToEnum<ct_Device>::value,
+        {nrxx * 3});
     auto crosstaus = ct::Tensor(
         ct::DataTypeToEnum<FPTYPE>::value,
-        ct::DeviceType::CpuDevice,
+        ct::DeviceTypeToEnum<ct_Device>::value,
         {GlobalV::NSPIN, nrxx * 6});
-    auto crosstaus_pack = crosstaus.accessor<FPTYPE, 2>();
-    ct::Tensor crosstaus_device = {};
-    if (ct::DeviceTypeToEnum<ct_Device>::value == ct::DeviceType::CpuDevice) {
-        crosstaus_device = crosstaus.to_device<ct_Device>();
-    }
-    else {
-        crosstaus_device = ct::TensorMap(crosstaus.data<FPTYPE>(), crosstaus);
-    }
 
-    auto cal_stress_mgga_solver = hamilt::cal_stress_mgga_op<std::complex<FPTYPE>, psi::DEVICE_CPU>();
-    ModuleBase::timer::tick("Stress_Func", "stress_mgga_impt");
+    auto cal_stress_mgga_solver = hamilt::cal_stress_mgga_op<std::complex<FPTYPE>, Device>();
     for (int ik = 0; ik < p_kv->nks; ik++)
     {
         if (GlobalV::NSPIN == 2)
@@ -58,17 +52,15 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma,
         {
             const FPTYPE w1 = wg(ik, ibnd) / GlobalC::ucell.omega;
             const std::complex<FPTYPE>* psi = nullptr;
-            psi = &(psi_in[0](ik, ibnd, 0));
-            XC_Functional::grad_wfc(psi, ik, gradwfc, wfc_basis, GlobalC::ucell.tpiba);
+            psi = &(d_psi_in[0](ik, ibnd, 0));
+            grad_wfc_impt<std::complex<FPTYPE>, Device>(ik, GlobalC::ucell.tpiba, wfc_basis, psi, gradwfc.data<std::complex<FPTYPE>>());
             cal_stress_mgga_solver(
-                current_spin, nrxx, w1, gradwfc, crosstaus_device.data<FPTYPE>());
+                current_spin, nrxx, w1, gradwfc.data<std::complex<FPTYPE>>(), crosstaus.data<FPTYPE>());
         } // band loop
         // delete[] psi;
     } // k loop
-    if (ct::DeviceTypeToEnum<ct_Device>::value == ct::DeviceType::CpuDevice) {
-        crosstaus.sync(crosstaus_device);
-    }
-    ModuleBase::timer::tick("Stress_Func", "stress_mgga_impt");
+    auto crosstaus_host = crosstaus.to_device<ct::DEVICE_CPU>();
+    auto crosstaus_pack = crosstaus_host.accessor<FPTYPE, 2>();
 #ifdef __MPI
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
@@ -78,8 +70,6 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma,
         }
     }
 #endif
-
-    delete[] gradwfc;
 
     for(int ix = 0; ix < 3; ix++)
     {

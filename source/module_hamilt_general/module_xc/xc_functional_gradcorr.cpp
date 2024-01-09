@@ -596,51 +596,10 @@ void XC_Functional::grad_wfc(const std::complex<double>* rhog,
                              const ModulePW::PW_Basis_K* wfc_basis,
                              const double tpiba)
 {
-	XC_Functional::grad_wfc<std::complex<double>, psi::DEVICE_CPU>(
+	grad_wfc_impt<std::complex<double>, psi::DEVICE_CPU>(
 		ik, tpiba, wfc_basis, rhog, grad);
 }
 
-template <typename T, typename Device,
-		  typename Real = typename GetTypeReal<T>::type>
-void XC_Functional::grad_wfc(
-	const int ik,
-    const typename GetTypeReal<T>::type tpiba,
-    const ModulePW::PW_Basis_K* wfc_basis,
-	const T* rhog,
-    T* grad)
-{
-	ModuleBase::timer::tick("XC_Functional", "grad_wfc");
-    using ct_Device = typename ct::PsiToContainer<Device>::type;
-	const int npw_k = wfc_basis->npwk[ik];
-	
-	auto porter = std::move(ct::Tensor(
-        ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<ct_Device>::value, {wfc_basis->nmaxgr}));
-	auto gcar = ct::TensorMap(
-		&wfc_basis->gcar[0][0], ct::DataType::DT_DOUBLE, ct::DeviceType::CpuDevice, {wfc_basis->nks * wfc_basis->npwk_max, 3}).to_device<ct_Device>();
-	auto kvec_c = ct::TensorMap(
-		&wfc_basis->kvec_c[0][0],ct::DataType::DT_DOUBLE, ct::DeviceType::CpuDevice, {wfc_basis->nks, 3}).to_device<ct_Device>();
-	
-	auto xc_functional_grad_wfc_solver 
-		= hamilt::xc_functional_grad_wfc_op<T, Device>();
-
-	for(int ipol=0; ipol<3; ipol++) {
-		xc_functional_grad_wfc_solver(
-            ik, ipol, npw_k, wfc_basis->npwk_max, // Integers
-			tpiba,	// Double
-            gcar.template data<Real>(),   // Array of Real
-            kvec_c.template data<Real>(), // Array of double
-			rhog, porter.data<T>());    // Array of std::complex<double>
-
-		// bring the gdr from G --> R
-		Device * ctx = nullptr;
-		wfc_basis->recip_to_real(ctx, porter.data<T>(), porter.data<T>(), ik);
-
-		xc_functional_grad_wfc_solver(
-            ipol, wfc_basis->nrxx,	// Integers
-			porter.data<T>(), grad);	// Array of std::complex<double>
-    }
-    ModuleBase::timer::tick("XC_Functional", "grad_wfc");
-}
 
 void XC_Functional::grad_rho(const std::complex<double>* rhog,
                              ModuleBase::Vector3<double>* gdr,
