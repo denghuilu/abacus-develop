@@ -40,6 +40,7 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma,
         ct::DataTypeToEnum<FPTYPE>::value,
         ct::DeviceTypeToEnum<ct_Device>::value,
         {GlobalV::NSPIN, nrxx * 6});
+    crosstaus.zero(); // Must be zeroed out 
 
     auto cal_stress_mgga_solver = hamilt::cal_stress_mgga_op<std::complex<FPTYPE>, Device>();
     for (int ik = 0; ik < p_kv->nks; ik++)
