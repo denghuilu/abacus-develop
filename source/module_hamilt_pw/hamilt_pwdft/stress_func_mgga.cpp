@@ -15,8 +15,7 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma,
                                               const Charge* const chr,
                                               K_Vectors* p_kv,
                                               ModulePW::PW_Basis_K* wfc_basis,
-                                              const psi::Psi<complex<FPTYPE>>* psi_in,
-                                              const psi::Psi<complex<FPTYPE>, Device>* d_psi_in)
+                                              const psi::Psi<complex<FPTYPE>, Device>* psi_in)
 {
     ModuleBase::timer::tick("Stress_Func", "stress_mgga");
 
@@ -52,8 +51,7 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma,
         for (int ibnd = 0; ibnd < GlobalV::NBANDS; ibnd++)
         {
             const FPTYPE w1 = wg(ik, ibnd) / GlobalC::ucell.omega;
-            const std::complex<FPTYPE>* psi = nullptr;
-            psi = &(d_psi_in[0](ik, ibnd, 0));
+            const std::complex<FPTYPE>* psi = &psi_in[0](ik, ibnd, 0);
             grad_wfc_impt<std::complex<FPTYPE>, Device>(ik, GlobalC::ucell.tpiba, wfc_basis, psi, gradwfc.data<std::complex<FPTYPE>>());
             cal_stress_mgga_solver(
                 current_spin, nrxx, w1, gradwfc.data<std::complex<FPTYPE>>(), crosstaus.data<FPTYPE>());
