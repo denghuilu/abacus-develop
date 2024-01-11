@@ -20,11 +20,6 @@
 #include "module_elecstate/module_charge/charge.h"
 #include "module_cell/unitcell.h"
 
-#include <ATen/core/tensor.h>
-#include <ATen/core/tensor_map.h>
-#include <ATen/core/tensor_types.h>
-#include <module_base/timer.h>
-#include <module_hamilt_general/module_xc/kernels/xc_functional_op.h>
 class XC_Functional
 {
 	public:
@@ -215,11 +210,14 @@ class XC_Functional
                          const UnitCell* ucell,
                          std::vector<double>& stress_gga,
                          const bool is_stress = 0);
-    static void grad_wfc(const std::complex<double>* rhog,
-                         const int ik,
-                         std::complex<double>* grad,
-                         const ModulePW::PW_Basis_K* wfc_basis,
-                         const double tpiba);
+	template <typename T, typename Device,
+          typename Real = typename GetTypeReal<T>::type>
+	static void grad_wfc(
+	    const int ik,
+	    const Real tpiba,
+	    const ModulePW::PW_Basis_K* wfc_basis,
+		const T* rhog,
+	    T* grad);
     static void grad_rho(const std::complex<double>* rhog,
                          ModuleBase::Vector3<double>* gdr,
                          const ModulePW::PW_Basis* rho_basis,
@@ -358,47 +356,5 @@ class XC_Functional
 	static void pwcorr(const double r, const double c[], double &g, double &dg);
 
 };
-
-template <typename T, typename Device,
-		  typename Real = typename GetTypeReal<T>::type>
-void grad_wfc_impt(
-	const int ik,
-    const typename GetTypeReal<T>::type tpiba,
-    const ModulePW::PW_Basis_K* wfc_basis,
-	const T* rhog,
-    T* grad)
-{
-	ModuleBase::timer::tick("XC_Functional", "grad_wfc");
-    using ct_Device = typename ct::PsiToContainer<Device>::type;
-	const int npw_k = wfc_basis->npwk[ik];
-	
-	auto porter = std::move(ct::Tensor(
-        ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<ct_Device>::value, {wfc_basis->nmaxgr}));
-	auto gcar = ct::TensorMap(
-		&wfc_basis->gcar[0][0], ct::DataType::DT_DOUBLE, ct::DeviceType::CpuDevice, {wfc_basis->nks * wfc_basis->npwk_max, 3}).to_device<ct_Device>();
-	auto kvec_c = ct::TensorMap(
-		&wfc_basis->kvec_c[0][0],ct::DataType::DT_DOUBLE, ct::DeviceType::CpuDevice, {wfc_basis->nks, 3}).to_device<ct_Device>();
-	
-	auto xc_functional_grad_wfc_solver 
-		= hamilt::xc_functional_grad_wfc_op<T, Device>();
-
-	for(int ipol=0; ipol<3; ipol++) {
-		xc_functional_grad_wfc_solver(
-            ik, ipol, npw_k, wfc_basis->npwk_max, // Integers
-			tpiba,	// Double
-            gcar.template data<Real>(),   // Array of Real
-            kvec_c.template data<Real>(), // Array of double
-			rhog, porter.data<T>());    // Array of std::complex<double>
-
-		// bring the gdr from G --> R
-		Device * ctx = nullptr;
-		wfc_basis->recip_to_real(ctx, porter.data<T>(), porter.data<T>(), ik);
-
-		xc_functional_grad_wfc_solver(
-            ipol, wfc_basis->nrxx,	// Integers
-			porter.data<T>(), grad);	// Array of std::complex<double>
-    }
-    ModuleBase::timer::tick("XC_Functional", "grad_wfc");
-}
 
 #endif //XC_FUNCTION_H

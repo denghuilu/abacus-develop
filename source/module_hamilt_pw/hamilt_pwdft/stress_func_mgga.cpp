@@ -52,7 +52,7 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma,
         {
             const FPTYPE w1 = wg(ik, ibnd) / GlobalC::ucell.omega;
             const std::complex<FPTYPE>* psi = &psi_in[0](ik, ibnd, 0);
-            grad_wfc_impt<std::complex<FPTYPE>, Device>(ik, GlobalC::ucell.tpiba, wfc_basis, psi, gradwfc.data<std::complex<FPTYPE>>());
+            XC_Functional::grad_wfc<std::complex<FPTYPE>, Device>(ik, GlobalC::ucell.tpiba, wfc_basis, psi, gradwfc.data<std::complex<FPTYPE>>());
             cal_stress_mgga_solver(
                 current_spin, nrxx, w1, gradwfc.data<std::complex<FPTYPE>>(), crosstaus.data<FPTYPE>());
         } // band loop
