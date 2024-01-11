@@ -338,3 +338,4 @@ AddTest(
     ../../../module_base/libm/branred.cpp
     ../../../module_base/libm/sincos.cpp
 )
+

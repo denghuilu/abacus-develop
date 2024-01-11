@@ -13,7 +13,7 @@ public:
     ~StressMggaTest() override = default;
 };
 
-TYPED_TEST_SUITE(StressMggaTest, base::utils::Types);
+TYPED_TEST_SUITE(StressMggaTest, base::utils::ComplexTypes);
 
 TYPED_TEST(StressMggaTest, cal_stress_mgga_op) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
@@ -31,12 +31,12 @@ TYPED_TEST(StressMggaTest, cal_stress_mgga_op) {
                 static_cast<Type>(-0.0000000207916), static_cast<Type>( 0.0000000366767), static_cast<Type>( 0.0000003353377)}).to_device<Device>());
 
     ct::Tensor crosstaus = std::move(ct::Tensor(
-        ct::DataTypeToEnum<Real>::value, ct::DeviceTypeToEnum<Device>::value, {nspin, nrxx * 6}));
-
+        ct::DataTypeToEnum<Real>::value, ct::DeviceTypeToEnum<Device>::value, {nrxx * 3}));
+    crosstaus.zero();
     ct::Tensor expected_crosstaus = crosstaus;
     expected_crosstaus.zero();
 
-    auto cal_stress_mgga_solver = cal_stress_mgga_op<Type, Device>();
+    auto cal_stress_mgga_solver = cal_stress_mgga_op<Type, typename ct::ContainerToPsi<Device>::type>();
     cal_stress_mgga_solver(nspin, nrxx, w1, gradwfc.data<Type>(), crosstaus.data<Real>());
 
     EXPECT_EQ(crosstaus, expected_crosstaus);
