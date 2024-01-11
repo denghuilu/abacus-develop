@@ -1,6 +1,8 @@
 #include "module_hamilt_pw/hamilt_pwdft/kernels/stress_op.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
+#include <iomanip>
+
 namespace hamilt{
 
 template <typename FPTYPE>
@@ -135,11 +137,14 @@ struct cal_stress_nl_op<FPTYPE, psi::DEVICE_CPU> {
 template <typename T, typename Device>
 void cal_stress_mgga_op<T, Device>::operator()(
     const int& spin,
-    const int& nrxx,
+    const int& nrxx_,
     const Real& w1,
     const T * gradwfc,
     Real * crosstaus)
 {
+    std::cout << std::fixed;
+    
+    const int nrxx = 4;
     for (int ir = 0; ir < nrxx; ir++) {
         int ipol = 0;
         for (int ix = 0; ix < 3; ix++) {
@@ -152,6 +157,10 @@ void cal_stress_mgga_op<T, Device>::operator()(
             }
         }
     }
+
+    for (int ir = 0; ir < nrxx * 3; ir++) {
+        std::cout << std::setprecision(13) << "gradwfc[" << ir << "] = " << gradwfc[ir] << std::endl;
+   }
 }
 
 template struct cal_stress_mgga_op<std::complex<float>,  psi::DEVICE_CPU>;
