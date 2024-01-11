@@ -590,8 +590,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 	return;
 }
 
-template <typename T, typename Device = psi::DEVICE_CPU,
-      typename Real = typename GetTypeReal<T>::type>
+template <typename T, typename Device, typename Real>
 void XC_Functional::grad_wfc(
     const int ik,
     const Real tpiba,
