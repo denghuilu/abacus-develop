@@ -4,7 +4,6 @@
 #include "stress_func.h"
 
 #include <ATen/core/tensor.h>
-#include <ATen/core/tensor_map.h>
 #include <ATen/core/tensor_types.h>
 
 // calculate the Pulay term of mGGA stress correction in PW

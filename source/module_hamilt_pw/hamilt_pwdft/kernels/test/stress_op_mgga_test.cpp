@@ -31,7 +31,7 @@ TYPED_TEST(StressMggaTest, cal_stress_mgga_op) {
                 static_cast<Type>(-0.0000000207916), static_cast<Type>( 0.0000000366767), static_cast<Type>( 0.0000003353377)}).to_device<Device>());
 
     ct::Tensor crosstaus = std::move(ct::Tensor(
-        ct::DataTypeToEnum<Real>::value, ct::DeviceTypeToEnum<Device>::value, {nrxx * 3}));
+    ct::DataTypeToEnum<Real>::value, ct::DeviceTypeToEnum<Device>::value, {nrxx * 6}));
     crosstaus.zero();
     ct::Tensor expected_crosstaus = crosstaus;
     expected_crosstaus.zero();

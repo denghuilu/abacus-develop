@@ -73,7 +73,7 @@ namespace ModulePW
     {
         ModuleBase::Vector3<double> x = {1,2,3};
         return x;
-    };
+    }
 
     
     template <typename FPTYPE, typename Device>
