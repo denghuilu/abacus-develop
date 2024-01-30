@@ -185,7 +185,7 @@ inline void cublasAssert(cublasStatus_t res, const char *file, int line) {
 // CUDA API errors
 #define cudaErrcheck(res) {                                             \
     if (res != cudaSuccess) {                                           \
-        fprintf(stderr, " Unexpected Device Error %s:%d: %s\n", __FILE__, __LINE__, cudaGetErrorString(res)); \
+        fprintf(stderr, " Unexpected Device Error %s:%d: %s, %s\n", __FILE__, __LINE__, cudaGetErrorName(res), cudaGetErrorString(res)); \
         exit(res);                                                      \
     }                                                                   \
 }
