@@ -72,8 +72,8 @@ void xhegvd_wrapper (
 
     // calculate the sizes needed for pre-allocated buffer.
     hipsolverErrcheck(hipsolverDnChegvd_bufferSize(hipsolver_handle, HIPSOLVER_EIG_TYPE_1, HIPSOLVER_EIG_MODE_VECTOR, uplo, n,
-                                                 reinterpret_cast<const float2 *>(A), lda,
-                                                 reinterpret_cast<const float2 *>(B), ldb, W, &lwork));
+                                                 reinterpret_cast<float2 *>(A), lda,
+                                                 reinterpret_cast<float2 *>(B), ldb, W, &lwork));
     // allocate memery
     hipErrcheck(hipMalloc((void**)&work, sizeof(float2) * lwork));
 
@@ -104,8 +104,8 @@ void xhegvd_wrapper (
 
     // calculate the sizes needed for pre-allocated buffer.
     hipsolverErrcheck(hipsolverDnZhegvd_bufferSize(hipsolver_handle, HIPSOLVER_EIG_TYPE_1, HIPSOLVER_EIG_MODE_VECTOR, uplo, n,
-                                                 reinterpret_cast<const double2 *>(A), lda,
-                                                 reinterpret_cast<const double2 *>(B), ldb, W, &lwork));
+                                                 reinterpret_cast<double2 *>(A), lda,
+                                                 reinterpret_cast<double2 *>(B), ldb, W, &lwork));
     // allocate memery
     hipErrcheck(hipMalloc((void**)&work, sizeof(double2) * lwork));
 
@@ -162,7 +162,7 @@ void xheevd_wrapper (
 
     // calculate the sizes needed for pre-allocated buffer.
     hipsolverErrcheck(hipsolverDnCheevd_bufferSize(hipsolver_handle, HIPSOLVER_EIG_MODE_VECTOR, uplo, n,
-                                                 reinterpret_cast<const float2 *>(A), lda, W, &lwork));
+                                                 reinterpret_cast<float2 *>(A), lda, W, &lwork));
     // allocate memery
     hipErrcheck(hipMalloc((void**)&work, sizeof(float2) * lwork));
     // compute eigenvalues and eigenvectors.
@@ -189,7 +189,7 @@ void xheevd_wrapper (
 
     // calculate the sizes needed for pre-allocated buffer.
     hipsolverErrcheck(hipsolverDnZheevd_bufferSize(hipsolver_handle, HIPSOLVER_EIG_MODE_VECTOR, uplo, n,
-                                                 reinterpret_cast<const double2 *>(A), lda, W, &lwork));
+                                                 reinterpret_cast<double2 *>(A), lda, W, &lwork));
     // allocate memery
     hipErrcheck(hipMalloc((void**)&work, sizeof(double2) * lwork));
     // compute eigenvalues and eigenvectors.
