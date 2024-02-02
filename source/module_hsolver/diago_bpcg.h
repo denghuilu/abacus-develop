@@ -1,5 +1,7 @@
-#ifndef DIAGO_BPCG_H_
-#define DIAGO_BPCG_H_
+#ifndef MODULE_HSOLVER_DIAGO_BPCG_H_
+#define MODULE_HSOLVER_DIAGO_BPCG_H_
+
+#include <functional>
 
 #include "diagh.h"
 #include "module_base/complexmatrix.h"
@@ -32,19 +34,21 @@ class DiagoBPCG : public DiagH<T, Device>
     // return T if T is real type(float, double), 
     // otherwise return the real type of T(complex<float>, complex<double>)
     using Real = typename GetTypeReal<T>::type;
-  // Column major psi in this class
+    using ct_Device = typename ct::PsiToContainer<Device>::type;
   public:
+    using Func = std::function<void(const ct::Tensor&, ct::Tensor&)>;
     /**
      * @brief Constructor for DiagoBPCG class.
      *
-     * @param precondition precondition data passed by the "Hamilt_PW" class.
+     * @param n_band The number of rows of the input psi.
+     * @param n_basis The number of cols of the input psi.
      */
-    explicit DiagoBPCG(const Real* precondition);
+    DiagoBPCG(int n_band, int n_basis);
 
     /**
      * @brief Destructor for DiagoBPCG class.
      */
-    ~DiagoBPCG();
+    ~DiagoBPCG() = default;
 
     /**
      * @brief Initialize the class before diagonalization.
@@ -52,9 +56,9 @@ class DiagoBPCG : public DiagH<T, Device>
      * This function allocates all the related variables, such as hpsi, hsub, before the diag call.
      * It is called by the HsolverPW::initDiagh() function.
      *
-     * @param psi_in The input wavefunction psi.
+     * @param psi The input wavefunction psi.
      */
-    void init_iter(const psi::Psi<T, Device> &psi_in);
+    void init_iter(const ct::Tensor& psi);
 
     /**
      * @brief Diagonalize the Hamiltonian using the CG method.
@@ -65,47 +69,49 @@ class DiagoBPCG : public DiagH<T, Device>
      * @param psi The input wavefunction psi matrix with [dim: n_basis x n_band, column major].
      * @param eigenvalue_in Pointer to the eigen array with [dim: n_band, column major].
      */
-    void diag(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T, Device> &psi, Real *eigenvalue_in) override;
+    void diag(const Func& hpsi_func, const Func& spsi_func, ct::Tensor& psi, ct::Tensor& eigen, const ct::Tensor& prec = {});
 
 
   private:
     /// the number of rows of the input psi
-    int n_band = 0;
+    int n_band_ = 0;
     /// the number of cols of the input psi
-    int n_basis = 0;
+    int n_basis_ = 0;
+    /// the max number of cols of the input psi
+    int n_basis_x_ = 0;
     /// max iter steps for all-band cg loop
-    int nline = 4;
+    int nline_ = 4;
     /// cg convergence thr
-    Real all_band_cg_thr = 1E-5;
+    Real all_band_cg_thr_ = 1E-5;
 
-    ct::DataType r_type  = ct::DataType::DT_INVALID;
-    ct::DataType t_type  = ct::DataType::DT_INVALID;
-    ct::DeviceType device_type = ct::DeviceType::UnKnown;
-
-    ct::Tensor prec = {}, h_prec = {};
+    ct::DataType r_type_  = ct::DataType::DT_INVALID;
+    ct::DataType c_type_  = ct::DataType::DT_INVALID;
+    ct::DeviceType device_type_ = ct::DeviceType::UnKnown;
 
     /// The coefficient for mixing the current and previous step gradients, used in iterative methods.
-    ct::Tensor beta = {};
+    ct::Tensor beta_ = {};
     /// Error state value, if it is smaller than the given threshold, then exit the iteration.
-    ct::Tensor err_st = {};
-    /// Calculated eigen
-    ct::Tensor eigen = {};
+    ct::Tensor err_st_ = {};
 
+    ct::Tensor eigen_ = {};
     /// Pointer to the input wavefunction.
     /// Note: this pointer does not own memory, instead it ref the psi_in object.
     /// H|psi> matrix.
-    ct::Tensor psi = {}, hpsi = {};
+    ct::Tensor hpsi_ = {};
     
-    ct::Tensor hsub = {};
+    ct::Tensor hsub_ = {};
 
     /// H|psi> - epsilo * psi, grad of the given problem.
     /// Dim: n_basis * n_band, column major, lda = n_basis_max.
-    ct::Tensor grad = {}, hgrad = {}, grad_old = {};
+    ct::Tensor grad_ = {}, hgrad_ = {}, grad_old_ = {};
 
     /// work for some calculations within this class, including rotate_wf call
-    ct::Tensor work = {};
+    ct::Tensor work_ = {}, work_space_ = {};
 
-    psi::Psi<T, Device>* grad_wrapper;
+    /// A function object that performs the hPsi calculation.
+    std::function<void(const ct::Tensor&, ct::Tensor&)> hpsi_func_ = nullptr;
+    /// A function object that performs the sPsi calculation.
+    std::function<void(const ct::Tensor&, ct::Tensor&)> spsi_func_ = nullptr;
     /**
      * @brief Update the precondition array.
      *
@@ -122,27 +128,6 @@ class DiagoBPCG : public DiagH<T, Device>
      * @param d_prec Pointer to the device precondition array with [dim: n_band, column major].
      */
     void calc_prec();
-
-    /**
-     *
-     * @brief Apply the H operator to psi and obtain the hpsi matrix.
-     *
-     * This function calculates the matrix product of the Hamiltonian operator (H) and the input wavefunction (psi).
-     * The resulting matrix is stored in the output array hpsi_out.
-     *
-     * @note hpsi = H|psi>;
-     *
-     * psi_in[dim: n_basis x n_band, column major, lda = n_basis_max],
-     * hpsi_out[dim: n_basis x n_band, column major, lda = n_basis_max].
-     *
-     * @param hamilt_in A pointer to the hamilt::Hamilt object representing the Hamiltonian operator.
-     * @param psi_in The input wavefunction psi.
-     * @param hpsi_out Pointer to the array where the resulting hpsi matrix will be stored.
-     */
-    void calc_hpsi_with_block(
-        hamilt::Hamilt<T, Device>* hamilt_in, 
-        const psi::Psi<T, Device>& psi_in,  
-        ct::Tensor& hpsi_out);
 
     /**
      * @brief Diagonalization of the subspace matrix.
@@ -229,8 +214,7 @@ class DiagoBPCG : public DiagH<T, Device>
      * @param eigenvalue_out Computed eigen.
      */
     void calc_hsub_with_block(
-        hamilt::Hamilt<T, Device>* hamilt_in,
-        const psi::Psi<T, Device>& psi_in,
+        const ct::Tensor& psi_in,
         ct::Tensor& psi_out, ct::Tensor& hpsi_out,
         ct::Tensor& hsub_out, ct::Tensor& workspace_in,
         ct::Tensor& eigenvalue_out);
@@ -317,7 +301,6 @@ class DiagoBPCG : public DiagH<T, Device>
 
     using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
 
-    using ct_Device = typename ct::PsiToContainer<Device>::type;
     using setmem_var_op = ct::kernels::set_memory<Real, ct_Device>;
     using resmem_var_op = ct::kernels::resize_memory<Real, ct_Device>;
     using delmem_var_op = ct::kernels::delete_memory<Real, ct_Device>;
@@ -335,4 +318,4 @@ class DiagoBPCG : public DiagH<T, Device>
 };
 
 } // namespace hsolver
-#endif // DIAGO_BPCG_H_
+#endif // MODULE_HSOLVER_DIAGO_BPCG_H_

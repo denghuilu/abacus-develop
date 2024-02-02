@@ -109,15 +109,13 @@ void HSolverPW<T, Device>::initDiagh(const psi::Psi<T, Device>& psi)
         if(this->pdiagh!=nullptr) {
             if(this->pdiagh->method != this->method) {
                 delete (DiagoBPCG<T, Device>*)this->pdiagh;
-                this->pdiagh = new DiagoBPCG<T, Device>(precondition.data());
+                this->pdiagh = new DiagoBPCG<T, Device>(psi.get_nbands(), psi.get_nbasis());
                 this->pdiagh->method = this->method;
-                reinterpret_cast<DiagoBPCG<T, Device>*>(this->pdiagh)->init_iter(psi);
             }
         }
         else {
-            this->pdiagh = new DiagoBPCG<T, Device>(precondition.data());
+            this->pdiagh = new DiagoBPCG<T, Device>(psi.get_nbands(), psi.get_nbasis());
             this->pdiagh->method = this->method;
-            reinterpret_cast<DiagoBPCG<T, Device>*>(this->pdiagh)->init_iter(psi);
         }
     }
     else
@@ -597,13 +595,12 @@ void HSolverPW<T, Device>::updatePsiK(hamilt::Hamilt<T, Device>* pHamilt,
 template<typename T, typename Device>
 void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::Psi<T, Device>& psi, Real* eigenvalue)
 {
-    if (this->method != "cg") {
+    if (this->method == "dav") {
         this->pdiagh->diag(hm, psi, eigenvalue);
         return;
     }
     // warp the hpsi_func and spsi_func into a lambda function
     using ct_Device = typename ct::PsiToContainer<Device>::type;
-    auto cg = reinterpret_cast<DiagoCG<T, Device>*>(this->pdiagh);
     // warp the hpsi_func and spsi_func into a lambda function
     auto ngk_pointer = psi.get_ngk_pointer();
     auto hpsi_func = [hm, ngk_pointer](const ct::Tensor& psi_in, ct::Tensor& hpsi_out) {
@@ -667,7 +664,23 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::P
         ct::DeviceTypeToEnum<ct::DEVICE_CPU>::value,
         ct::TensorShape({static_cast<int>(precondition.size())})).to_device<ct_Device>().slice({0}, {psi.get_current_nbas()});
     
-    cg->diag(hpsi_func, spsi_func, psi_tensor, eigen_tensor, prec_tensor);
+    if (this->method == "cg")
+    {
+        // DiagoCG would keep 9*nbasis memory in cache during loop-k
+        // it should be deleted before calculating charge
+        auto cg = reinterpret_cast<DiagoCG<T, Device>*>(this->pdiagh);
+        cg->diag(hpsi_func, spsi_func, psi_tensor, eigen_tensor, prec_tensor);
+    }
+    else if (this->method == "bpcg")
+    {
+        auto bpcg = reinterpret_cast<DiagoBPCG<T, Device>*>(this->pdiagh);
+        bpcg->diag(hpsi_func, spsi_func, psi_tensor, eigen_tensor, prec_tensor);
+    }
+    else
+    {
+        ModuleBase::WARNING_QUIT("HSolverPW::hamiltSolvePsiK", "This method" + this->method + " of DiagH is not supported!");
+    }
+
     // TODO: Double check tensormap's potential problem
     ct::TensorMap(psi.get_pointer(), psi_tensor, {psi.get_nbands(), psi.get_nbasis()}).sync(psi_tensor);
 }
