@@ -1,4 +1,4 @@
-#include <math.h>
+#include <cmath>
 #include <cassert>
 #include "ORB_gaunt_table.h"
 #include "module_base/timer.h"

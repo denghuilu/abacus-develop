@@ -1,5 +1,5 @@
 #include "./opt_test_tools.h"
-#include <math.h>
+#include <cmath>
 
 LinearEqu::LinearEqu()
 {

@@ -4,7 +4,7 @@
 //==========================================================
 
 #include <complex>
-#include <math.h>
+#include <cmath>
 #include <stdint.h>
 #include <float.h>
 #include <limits>
@@ -30,8 +30,8 @@ inline std::complex<FLOAT>
 __cexp_impl (const std::complex<FLOAT> &x)
 {
   std::complex<FLOAT> retval;
-  int rcls = fpclassify (x.real());
-  int icls = fpclassify (x.imag());
+  int rcls = std::fpclassify (x.real());
+  int icls = std::fpclassify (x.imag());
 
   if (rcls >= FP_ZERO)
     {
@@ -94,7 +94,7 @@ __cexp_impl (const std::complex<FLOAT> &x)
       if (icls >= FP_ZERO)
 	{
 	  /* Imaginary part is finite.  */
-	  FLOAT value = signbit (x.real()) ? 0 : __mhugeval<FLOAT>();
+	  FLOAT value = std::signbit (x.real()) ? 0 : __mhugeval<FLOAT>();
 
 	  if (icls == FP_ZERO)
 	    {
@@ -120,7 +120,7 @@ __cexp_impl (const std::complex<FLOAT> &x)
 	      retval.imag(copysign (value, sinix));
 	    }
 	}
-      else if (signbit (x.real()) == 0)
+      else if (std::signbit (x.real()) == 0)
 	{
 	  retval.real(__mhugeval<FLOAT>());
 	  retval.imag(x.imag() - x.imag());

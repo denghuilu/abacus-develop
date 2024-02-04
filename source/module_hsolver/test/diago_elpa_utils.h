@@ -7,7 +7,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
-#include <math.h>
+#include <cmath>
 #include <random>
 #include <type_traits>
 #include <vector>

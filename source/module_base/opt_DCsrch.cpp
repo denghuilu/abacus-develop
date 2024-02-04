@@ -1,6 +1,6 @@
 #include "opt_DCsrch.h"
 
-#include <math.h>
+#include <cmath>
 #include <string.h>
 
 // This file is translated from fortran codes dcstep.f of scipy.
