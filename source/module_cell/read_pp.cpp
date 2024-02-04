@@ -1,6 +1,6 @@
 #include "read_pp.h"
 
-#include <math.h>
+#include <cmath>
 
 #include <cstring> // Peize Lin fix bug about strcpy 2016-08-02
 #include <fstream>

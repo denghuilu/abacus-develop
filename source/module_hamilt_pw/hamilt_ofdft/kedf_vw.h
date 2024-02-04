@@ -1,6 +1,6 @@
 #ifndef KEDF_vW_H
 #define KEDF_vW_H
-#include <math.h>
+#include <cmath>
 #include <stdio.h>
 
 #include "module_base/global_function.h"

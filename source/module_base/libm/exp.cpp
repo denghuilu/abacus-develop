@@ -3,7 +3,7 @@
 // DATE : 2023-01-06
 //==========================================================
 
-#include <math.h>
+#include <cmath>
 #include <stdint.h>
 #include <float.h>
 

@@ -1,6 +1,6 @@
 #include "../math_polyint.h"
 
-#include <math.h>
+#include <cmath>
 
 #include "../realarray.h"
 #include "gmock/gmock.h"

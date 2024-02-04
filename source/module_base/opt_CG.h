@@ -1,7 +1,7 @@
 #ifndef OPT_CG_H
 #define OPT_CG_H
 
-#include <math.h>
+#include <cmath>
 
 #include <iostream>
 

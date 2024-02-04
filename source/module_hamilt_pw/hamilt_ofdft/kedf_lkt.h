@@ -1,6 +1,6 @@
 #ifndef KEDF_LKT_H
 #define KEDF_LKT_H
-#include <math.h>
+#include <cmath>
 #include <stdio.h>
 
 #include "module_base/global_function.h"

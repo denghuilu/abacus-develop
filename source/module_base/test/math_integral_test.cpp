@@ -1,7 +1,7 @@
 #include"../math_integral.h"
 #include"gtest/gtest.h"
 
-#include<math.h>
+#include<cmath>
 
 #include "module_base/constants.h"
 
