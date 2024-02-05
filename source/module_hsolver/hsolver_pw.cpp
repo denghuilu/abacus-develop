@@ -760,7 +760,7 @@ typename HSolverPW<T, Device>::Real HSolverPW<T, Device>::set_diagethr(const int
     // less or equal to the single-precision limit of convergence(0.5e-4).
     // modified by denghuilu at 2023-05-15
     if (GlobalV::precision_flag == "single") {
-        this->diag_ethr = std::max(this->diag_ethr, static_cast<Real>(0.5e-4));
+        this->diag_ethr = std::max(this->diag_ethr, static_cast<Real>(1e-5));
     }
     return this->diag_ethr;
 }
@@ -777,7 +777,7 @@ typename HSolverPW<T, Device>::Real HSolverPW<T, Device>::reset_diagethr(std::of
     // less or equal to the single-precision limit of convergence(0.5e-4).
     // modified by denghuilu at 2023-05-15
     if (GlobalV::precision_flag == "single") {
-        this->diag_ethr = std::max(this->diag_ethr, static_cast<Real>(0.5e-4));
+        this->diag_ethr = std::max(this->diag_ethr, static_cast<Real>(1e-5));
     }
     ofs_running << " New    diag_ethr = " << this->diag_ethr << std::endl;
     return this->diag_ethr;
