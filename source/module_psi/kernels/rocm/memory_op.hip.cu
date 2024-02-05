@@ -98,6 +98,7 @@ struct cast_memory_op<FPTYPE_out, FPTYPE_in, psi::DEVICE_GPU, psi::DEVICE_GPU> {
                     FPTYPE_out* arr_out,
                     const FPTYPE_in* arr_in,
                     const size_t size) {
+        if (size == 0) {return;}
         const int block = (size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
         hipLaunchKernelGGL(cast_memory, dim3(block), dim3(THREADS_PER_BLOCK), 0, 0, arr_out, arr_in, size);
         hipErrcheck(hipGetLastError());
@@ -112,6 +113,7 @@ struct cast_memory_op<FPTYPE_out, FPTYPE_in, psi::DEVICE_GPU, psi::DEVICE_CPU> {
                     FPTYPE_out* arr_out,
                     const FPTYPE_in* arr_in,
                     const size_t size) {
+        if (size == 0) {return;}
         FPTYPE_in * arr = nullptr;
         hipErrcheck(hipMalloc((void **)&arr, sizeof(FPTYPE_in) * size));
         hipErrcheck(hipMemcpy(arr, arr_in, sizeof(FPTYPE_in) * size, hipMemcpyHostToDevice));
