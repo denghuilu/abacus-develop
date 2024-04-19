@@ -211,10 +211,12 @@ class Stress_Func
     using gemm_op = hsolver::gemm_op<std::complex<FPTYPE>, Device>;
     using cal_stress_nl_op = hamilt::cal_stress_nl_op<FPTYPE, Device>;
     using cal_dbecp_noevc_nl_op = hamilt::cal_dbecp_noevc_nl_op<FPTYPE, Device>;
+    using cal_dbecp_noevc_nl_host_op = hamilt::cal_dbecp_noevc_nl_op<FPTYPE, psi::DEVICE_CPU>;
 
     using resmem_complex_op = psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
     using resmem_complex_h_op = psi::memory::resize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU>;
     using setmem_complex_op = psi::memory::set_memory_op<std::complex<FPTYPE>, Device>;
+    using setmem_complex_h_op = psi::memory::set_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU>;
     using delmem_complex_op = psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
     using delmem_complex_h_op = psi::memory::delete_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU>;
     using syncmem_complex_h2d_op = psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, psi::DEVICE_CPU>;

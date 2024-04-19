@@ -24,11 +24,11 @@ void sparse_format::cal_dH(
     // cal T + VNL(P1) in LCAO basis
     if(GlobalV::CAL_STRESS)
 	{
-        GlobalV::CAL_STRESS = false;
+        GlobalV::CAL_STRESS = 0;
 
         gen_h.build_ST_new('T', true, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD), lm.Hloc_fixedR.data());
 
-        GlobalV::CAL_STRESS = true;
+        GlobalV::CAL_STRESS = 1;
     }
     else
     {

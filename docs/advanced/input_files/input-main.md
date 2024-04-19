@@ -1352,11 +1352,12 @@ These variables are used to control the geometry relaxation.
 
 ### cal_stress
 
-- **Type**: Boolean
+- **Type**: Integer
 - **Description**: 
-  - **True**: calculate the stress at the end of the electronic iteration
-  - **False**: no calculation of the stress at the end of the electronic iteration
-- **Default**: True if `calculation` is `cell-relax`, False otherwise. 
+  - **0**: no calculation of the stress at the end of the electronic iteration
+  - **1**: calculate the stress at the end of the electronic iteration
+  - **2**: calculate stress by utilizing the CPU to execute the cal_dbecp_noevc_nl_host_op function.
+- **Default**: 1 if `calculation` is `cell-relax`, 0 otherwise. 
 
 ### stress_thr
 
