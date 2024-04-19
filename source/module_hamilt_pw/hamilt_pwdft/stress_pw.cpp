@@ -14,7 +14,8 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
                                            K_Vectors* p_kv,
                                            ModulePW::PW_Basis_K* wfc_basis,
                                            const psi::Psi<complex<FPTYPE>>* psi_in,
-                                           const psi::Psi<complex<FPTYPE>, Device>* d_psi_in)
+                                           const psi::Psi<complex<FPTYPE>, Device>* d_psi_in,
+                                           const int& stress_mode)
 {
 	ModuleBase::TITLE("Stress_PW","cal_stress");
 	ModuleBase::timer::tick("Stress_PW","cal_stress");    
@@ -95,7 +96,7 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     this->stress_cc(sigmaxcc, rho_basis, p_sf, 1, pelec->charge);
 
     // nonlocal
-    this->stress_nl(sigmanl, this->pelec->wg, this->pelec->ekb, p_sf, p_kv, p_symm, wfc_basis, d_psi_in);
+    this->stress_nl(sigmanl, this->pelec->wg, this->pelec->ekb, p_sf, p_kv, p_symm, wfc_basis, d_psi_in, stress_mode);
 
     // add US term from augmentation charge derivatives
     if (GlobalV::use_uspp)

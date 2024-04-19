@@ -139,7 +139,8 @@ class Stress_Func
                    K_Vectors* p_kv,
                    ModuleSymmetry::Symmetry* p_symm,
                    ModulePW::PW_Basis_K* wfc_basis,
-                   const psi::Psi<complex<FPTYPE>, Device>* psi_in); // nonlocal part in PW basis
+                   const psi::Psi<complex<FPTYPE>, Device>* psi_in,
+                   const int& stress_mode); // nonlocal part in PW basis
 
     void get_dvnl1(ModuleBase::ComplexMatrix& vkb,
                    const int ik,

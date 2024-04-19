@@ -14,7 +14,8 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
                                             K_Vectors* p_kv,
                                             ModuleSymmetry::Symmetry* p_symm,
                                             ModulePW::PW_Basis_K* wfc_basis,
-                                            const psi::Psi<complex<FPTYPE>, Device>* psi_in)
+                                            const psi::Psi<complex<FPTYPE>, Device>* psi_in,
+                                            const int& stress_mode)
 {
     ModuleBase::TITLE("Stress_Func", "stress_nl");
     ModuleBase::timer::tick("Stress_Func", "stress_nl");
@@ -147,8 +148,8 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
             get_dvnl1(vkb0[i], ik, i, p_sf, wfc_basis);
         }
         get_dvnl2(vkb2, ik, p_sf, wfc_basis);
-        // GlobalV::CAL_STRESS equal to 2 means that the cal_dbecp_noevc_nl_op is calculated by the CPU;
-        if (this->device == psi::GpuDevice && GlobalV::CAL_STRESS != 2)
+        // stress_mode equal to 2 means that the cal_dbecp_noevc_nl_op is calculated by the CPU;
+        if (this->device == psi::GpuDevice && stress_mode != 2)
         {
             // kvec_c
             kvec_c = wfc_basis->get_kvec_c_data<FPTYPE>();
@@ -191,7 +192,7 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
 
         // cal_stress equal to 2 means that the cal_dbecp_noevc_nl_op is calculated by the CPU;
         // we need to copy the vkb data to the HOST memory
-        if (this->device == psi::GpuDevice && GlobalV::CAL_STRESS == 2)
+        if (this->device == psi::GpuDevice && stress_mode == 2)
         {
             syncmem_complex_d2h_op()(this->cpu_ctx, this->ctx, GlobalC::ppcell.vkb.c, vkb, nkb * npwx);
             vkb = GlobalC::ppcell.vkb.c;
@@ -202,7 +203,7 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
         {
             for (int jpol = 0; jpol < ipol + 1; jpol++)
             {
-                if (this->device == psi::GpuDevice && GlobalV::CAL_STRESS == 2) 
+                if (this->device == psi::GpuDevice && stress_mode == 2) 
                 {
                     setmem_complex_h_op()(this->cpu_ctx, vkb1, 0, nkb * npwx);
                     setmem_complex_h_op()(this->cpu_ctx, h_dbecp_noevc, 0, nkb * npwx);
@@ -349,7 +350,7 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
         delmem_int_op()(this->ctx, atom_nh);
         delmem_int_op()(this->ctx, atom_na);
     }
-    if (this->device == psi::GpuDevice && GlobalV::CAL_STRESS != 2) {
+    if (this->device == psi::GpuDevice && stress_mode != 2) {
         delmem_var_op()(this->ctx, gcar);
         delmem_complex_op()(this->ctx, vkb1);
         delmem_complex_op()(this->ctx, pvkb0);
@@ -359,7 +360,7 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
     {
         delmem_complex_h_op()(this->cpu_ctx, vkb1);
     }
-    if (this->device == psi::GpuDevice && GlobalV::CAL_STRESS == 2)
+    if (this->device == psi::GpuDevice && stress_mode == 2)
     {
         delmem_complex_h_op()(this->cpu_ctx, h_dbecp_noevc);
     }

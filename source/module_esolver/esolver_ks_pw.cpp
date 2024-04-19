@@ -1181,7 +1181,8 @@ void ESolver_KS_PW<T, Device>::cal_stress(ModuleBase::matrix& stress)
 			&this->kv,
 			this->pw_wfc,
 			this->psi,
-			this->__kspw_psi);
+			this->__kspw_psi,
+            GlobalV::CAL_STRESS);
 
 	// external stress
 	double unit_transform = 0.0;
