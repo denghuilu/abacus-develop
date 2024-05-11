@@ -3,6 +3,7 @@
 #include "module_base/global_variable.h"
 #include "module_base/tool_quit.h"
 #include "module_psi/kernels/device.h"
+#include <type_traits>
 
 #include <cassert>
 #include <complex>
@@ -163,11 +164,23 @@ Psi<T, Device>::Psi(const Psi<T_in, Device_in>& psi_in)
     // this function will copy psi_in.psi to this->psi no matter the device types of each other.
     this->device = device::get_device_type<Device>(this->ctx);
     this->resize(psi_in.get_nk(), psi_in.get_nbands(), psi_in.get_nbasis());
-    memory::cast_memory_op<T, T_in, Device, Device_in>()(this->ctx,
-                                                         psi_in.get_device(),
-                                                         this->psi,
-                                                         psi_in.get_pointer() - psi_in.get_psi_bias(),
-                                                         psi_in.size());
+    if (std::is_same<T, T_in>::value) {
+        memory::synchronize_memory_op<T, Device, Device_in>()(this->ctx,
+                                                              psi_in.get_device(),
+                                                              this->psi,
+                                                              psi_in.get_pointer() - psi_in.get_psi_bias(),
+                                                              psi_in.size());
+    }
+    else {
+        // reduce the peak memory usage of devices
+        for (int ii = 0; ii < this->nk; ii++) {
+            memory::cast_memory_op<T, T_in, Device, Device_in>()(this->ctx,
+                                                                 psi_in.get_device(),
+                                                                 this->psi + ii * this->nbands * this->nbasis,
+                                                                 psi_in.get_pointer() - psi_in.get_psi_bias() + ii * this->nbands * this->nbasis,
+                                                                 this->nbands * this->nbasis);
+        }
+    }
     this->psi_bias = psi_in.get_psi_bias();
     this->current_nbasis = psi_in.get_current_nbas();
     this->psi_current = this->psi + psi_in.get_psi_bias();
