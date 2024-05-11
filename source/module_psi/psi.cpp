@@ -168,7 +168,7 @@ Psi<T, Device>::Psi(const Psi<T_in, Device_in>& psi_in)
         memory::synchronize_memory_op<T, Device, Device_in>()(this->ctx,
                                                               psi_in.get_device(),
                                                               this->psi,
-                                                              psi_in.get_pointer() - psi_in.get_psi_bias(),
+                                                              reinterpret_cast<T*>(psi_in.get_pointer()) - psi_in.get_psi_bias(),
                                                               psi_in.size());
     }
     else {
