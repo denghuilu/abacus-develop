@@ -2,6 +2,7 @@
 
 #include <complex>
 #include <iostream>
+#include <type_traits>
 
 #include <cuda_runtime.h>
 #include <thrust/complex.h>
@@ -117,6 +118,16 @@ struct cast_memory_op<FPTYPE_out, FPTYPE_in, psi::DEVICE_GPU, psi::DEVICE_CPU> {
                     const size_t size) {
         
         if (size == 0) {return;}
+        // No need to cast the memory if the data types are the same.
+        if (std::is_same<FPTYPE_out, FPTYPE_in>::value) 
+        {
+            synchronize_memory_op<FPTYPE_out, psi::DEVICE_GPU, psi::DEVICE_CPU>()(dev_out,
+                                                                         dev_in,
+                                                                         arr_out,
+                                                                         reinterpret_cast<const FPTYPE_out*>(arr_in),
+                                                                         size);
+            return;
+        }
         FPTYPE_in * arr = nullptr;
         cudaErrcheck(cudaMalloc((void **)&arr, sizeof(FPTYPE_in) * size));
         cudaErrcheck(cudaMemcpy(arr, arr_in, sizeof(FPTYPE_in) * size, cudaMemcpyHostToDevice));
@@ -135,6 +146,17 @@ struct cast_memory_op<FPTYPE_out, FPTYPE_in, psi::DEVICE_CPU, psi::DEVICE_GPU> {
                     FPTYPE_out* arr_out,
                     const FPTYPE_in* arr_in,
                     const size_t size) {
+        if (size == 0) {return;}
+        // No need to cast the memory if the data types are the same.
+        if (std::is_same<FPTYPE_out, FPTYPE_in>::value) 
+        {
+            synchronize_memory_op<FPTYPE_out, psi::DEVICE_CPU, psi::DEVICE_GPU>()(dev_out,
+                                                                                  dev_in,
+                                                                                  arr_out,
+                                                                                  reinterpret_cast<const FPTYPE_out*>(arr_in),
+                                                                                  size);
+            return;
+        }
         auto * arr = (FPTYPE_in*) malloc(sizeof(FPTYPE_in) * size);
         cudaErrcheck(cudaMemcpy(arr, arr_in, sizeof(FPTYPE_in) * size, cudaMemcpyDeviceToHost));
         for (int ii = 0; ii < size; ii++) {
