@@ -2,6 +2,7 @@
 #include "module_hsolver/kernels/math_kernel_op.h"
 #include "module_psi/kernels/memory_op.h"
 #include "module_psi/psi.h"
+#include "module_base/tool_quit.h"
 
 #include <base/macros/macros.h>
 #include <cuda_runtime.h>
