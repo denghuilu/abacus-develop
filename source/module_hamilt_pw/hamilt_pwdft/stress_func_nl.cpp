@@ -14,7 +14,8 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
                                             K_Vectors* p_kv,
                                             ModuleSymmetry::Symmetry* p_symm,
                                             ModulePW::PW_Basis_K* wfc_basis,
-                                            const psi::Psi<complex<FPTYPE>, Device>* psi_in)
+                                            const psi::Psi<complex<FPTYPE>, Device>* psi_in,
+                                            const int& stress_mode)
 {
     ModuleBase::TITLE("Stress_Func", "stress_nl");
     ModuleBase::timer::tick("Stress_Func", "stress_nl");
@@ -32,70 +33,43 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
     // Actually, the judge of nondiagonal should be done on every atom type
     const bool nondiagonal = (GlobalV::use_uspp || GlobalC::ppcell.multi_proj) ? true : false;
 
-    // FPTYPE sigmanlc[3][3];
-    // for(int l=0;l<3;l++)
-    // {
-    // 	for(int m=0;m<3;m++)
-    // 	{
-    // 		sigmanlc[l][m]=0.0;
-    // 	}
-    // }
-
-    // dbecp: conj( -iG * <Beta(nkb,npw)|psi(nbnd,npw)> )
-    // ModuleBase::ComplexMatrix dbecp( GlobalV::NBANDS, nkb );
-    // ModuleBase::ComplexMatrix becp( GlobalV::NBANDS, nkb );
-
-    // vkb1: |Beta(nkb,npw)><Beta(nkb,npw)|psi(nbnd,npw)>
-    // ModuleBase::ComplexMatrix vkb1( nkb, npwx );
     ModuleBase::ComplexMatrix vkb0[3];
     for (int i = 0; i < 3; i++)
     {
         vkb0[i].create(nkb, npwx);
     }
     ModuleBase::ComplexMatrix vkb2(nkb, npwx);
-    std::complex<FPTYPE> *dbecp = nullptr, *becp = nullptr, *dbecp_noevc = nullptr, *vkb = nullptr, *pvkb0 = nullptr,
+    std::complex<FPTYPE> *dbecp = nullptr, *becp = nullptr, *dbecp_noevc = nullptr, *h_dbecp_noevc = nullptr, *vkb = nullptr, *pvkb0 = nullptr,
                          *vkb1 = nullptr, *pvkb2 = nullptr;
     std::complex<FPTYPE> *_vkb0[3] = {nullptr, nullptr, nullptr};
     resmem_complex_op()(this->ctx, becp, GlobalV::NBANDS * nkb, "Stress::becp");
     resmem_complex_op()(this->ctx, dbecp, GlobalV::NBANDS * nkb, "Stress::dbecp");
     resmem_complex_op()(this->ctx, dbecp_noevc, nkb * npwx, "Stress::dbecp_noevc");
-    resmem_complex_op()(this->ctx, vkb1, nkb * npwx, "Stress::vkb1");
 
     int wg_nc = wg.nc;
-    int *atom_nh = nullptr, *atom_na = nullptr, *h_atom_nh = new int[GlobalC::ucell.ntype],
-        *h_atom_na = new int[GlobalC::ucell.ntype];
+    int *atom_nh = nullptr, *atom_na = nullptr;
+    int *h_atom_nh = new int[GlobalC::ucell.ntype];
+    int *h_atom_na = new int[GlobalC::ucell.ntype];
     for (int ii = 0; ii < GlobalC::ucell.ntype; ii++)
     {
         h_atom_nh[ii] = GlobalC::ucell.atoms[ii].ncpp.nh;
         h_atom_na[ii] = GlobalC::ucell.atoms[ii].na;
     }
     FPTYPE *stress = nullptr, *sigmanlc = nullptr, *d_wg = nullptr, *d_ekb = nullptr, *gcar = nullptr,
-           *deeq = GlobalC::ppcell.get_deeq_data<FPTYPE>(), *kvec_c = wfc_basis->get_kvec_c_data<FPTYPE>(),
+           *deeq = GlobalC::ppcell.get_deeq_data<FPTYPE>(), *kvec_c = nullptr,
            *qq_nt = GlobalC::ppcell.get_qq_nt_data<FPTYPE>(), *qvec = nullptr;
-    resmem_var_op()(this->ctx, qvec, 3);
-    resmem_var_op()(this->ctx, stress, 9);
+    resmem_var_op()(this->ctx, qvec, 3, "Stress::qvec");
+    resmem_var_op()(this->ctx, stress, 9, "Stress::stress");
     setmem_var_op()(this->ctx, stress, 0, 9);
     resmem_var_h_op()(this->cpu_ctx, sigmanlc, 9);
     if (this->device == psi::GpuDevice)
     {
-        resmem_var_op()(this->ctx, d_wg, wg.nr * wg.nc);
-        resmem_var_op()(this->ctx, d_ekb, ekb.nr * ekb.nc);
-        resmem_var_op()(this->ctx, gcar, 3 * p_kv->nks * wfc_basis->npwk_max);
+        resmem_var_op()(this->ctx, d_wg, wg.nr * wg.nc, "Stress::d_wg");
+        resmem_var_op()(this->ctx, d_ekb, ekb.nr * ekb.nc, "Stress::d_ekb");
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_wg, wg.c, wg.nr * wg.nc);
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_ekb, ekb.c, ekb.nr * ekb.nc);
-        syncmem_var_h2d_op()(this->ctx,
-                             this->cpu_ctx,
-                             gcar,
-                             &wfc_basis->gcar[0][0],
-                             3 * p_kv->nks * wfc_basis->npwk_max);
-        resmem_complex_op()(this->ctx, pvkb2, nkb * npwx);
-        resmem_complex_op()(this->ctx, pvkb0, 3 * nkb * npwx);
-        for (int ii = 0; ii < 3; ii++)
-        {
-            _vkb0[ii] = pvkb0 + ii * nkb * npwx;
-        }
-        resmem_int_op()(this->ctx, atom_nh, GlobalC::ucell.ntype);
-        resmem_int_op()(this->ctx, atom_na, GlobalC::ucell.ntype);
+        resmem_int_op()(this->ctx, atom_nh, GlobalC::ucell.ntype, "Stress::atom_nh");
+        resmem_int_op()(this->ctx, atom_na, GlobalC::ucell.ntype, "Stress::atom_na");
         syncmem_int_h2d_op()(this->ctx, this->cpu_ctx, atom_nh, h_atom_nh, GlobalC::ucell.ntype);
         syncmem_int_h2d_op()(this->ctx, this->cpu_ctx, atom_na, h_atom_na, GlobalC::ucell.ntype);
     }
@@ -103,13 +77,8 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
     {
         d_wg = wg.c;
         d_ekb = ekb.c;
-        gcar = &wfc_basis->gcar[0][0];
         atom_nh = h_atom_nh;
         atom_na = h_atom_na;
-        for (int ii = 0; ii < 3; ii++)
-        {
-            _vkb0[ii] = vkb0[ii].c;
-        }
     }
 
     for (int ik = 0; ik < p_kv->nks; ik++)
@@ -164,7 +133,7 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
         if (this->device == psi::GpuDevice)
         {
             std::complex<FPTYPE> *h_becp = nullptr;
-            resmem_complex_h_op()(this->cpu_ctx, h_becp, GlobalV::NBANDS * nkb);
+            resmem_complex_h_op()(this->cpu_ctx, h_becp, GlobalV::NBANDS * nkb, "Stress::becp");
             syncmem_complex_d2h_op()(this->cpu_ctx, this->ctx, h_becp, becp, GlobalV::NBANDS * nkb);
             Parallel_Reduce::reduce_pool(h_becp, GlobalV::NBANDS * nkb);
             syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, becp, h_becp, GlobalV::NBANDS * nkb);
@@ -177,43 +146,106 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
         for (int i = 0; i < 3; i++)
         {
             get_dvnl1(vkb0[i], ik, i, p_sf, wfc_basis);
-            if (this->device == psi::GpuDevice)
-            {
-                syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, _vkb0[i], vkb0[i].c, nkb * npwx);
-            }
         }
         get_dvnl2(vkb2, ik, p_sf, wfc_basis);
-        if (this->device == psi::GpuDevice)
+        // stress_mode equal to 2 means that the cal_dbecp_noevc_nl_op is calculated by the CPU;
+        if (this->device == psi::GpuDevice && stress_mode != 2)
         {
+            // kvec_c
+            kvec_c = wfc_basis->get_kvec_c_data<FPTYPE>();
+            // gcar
+            resmem_var_op()(this->ctx, gcar, 3 * p_kv->nks * wfc_basis->npwk_max, "Stress::gcar");
+            syncmem_var_h2d_op()(this->ctx,
+                                 this->cpu_ctx,
+                                 gcar,
+                                 &wfc_basis->gcar[0][0],
+                                 3 * p_kv->nks * wfc_basis->npwk_max);
+            // vkb1
+            resmem_complex_op()(this->ctx, vkb1, nkb * npwx, "Stress::vkb1");
+            // vkb2
+            resmem_complex_op()(this->ctx, pvkb2, nkb * npwx, "Stress::pvkb2");
             syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, pvkb2, vkb2.c, nkb * npwx);
+            // pvkb
+            resmem_complex_op()(this->ctx, pvkb0, 3 * nkb * npwx, "Stress::pvkb0");
+            for (int ii = 0; ii < 3; ii++)
+            {
+                _vkb0[ii] = pvkb0 + ii * nkb * npwx;
+                syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, _vkb0[ii], vkb0[ii].c, nkb * npwx);
+            }
         }
         else
         {
+            // kvec_c
+            kvec_c = reinterpret_cast<FPTYPE *>(&wfc_basis->kvec_c[0][0]);
+            // gcar
+            gcar = &wfc_basis->gcar[0][0];
+            // vkb1
+            resmem_complex_h_op()(this->cpu_ctx, vkb1, nkb * npwx, "Stress::vkb1");
+            // vkb2
             pvkb2 = vkb2.c;
+            // pvkb
+            for (int ii = 0; ii < 3; ii++)
+            {
+                _vkb0[ii] = vkb0[ii].c;
+            }
+        }
+
+        // cal_stress equal to 2 means that the cal_dbecp_noevc_nl_op is calculated by the CPU;
+        // we need to copy the vkb data to the HOST memory
+        if (this->device == psi::GpuDevice && stress_mode == 2)
+        {
+            syncmem_complex_d2h_op()(this->cpu_ctx, this->ctx, GlobalC::ppcell.vkb.c, vkb, nkb * npwx);
+            vkb = GlobalC::ppcell.vkb.c;
+            resmem_complex_h_op()(this->cpu_ctx, h_dbecp_noevc, nkb * npwx, "Stress::dbecp_noevc");
         }
 
         for (int ipol = 0; ipol < 3; ipol++)
         {
             for (int jpol = 0; jpol < ipol + 1; jpol++)
             {
-                setmem_complex_op()(this->ctx, vkb1, 0, nkb * npwx);
-                setmem_complex_op()(this->ctx, dbecp_noevc, 0, nkb * npwx);
-                cal_dbecp_noevc_nl_op()(this->ctx,
-                                        ipol,
-                                        jpol,
-                                        nkb,
-                                        npw,
-                                        npwx,
-                                        ik,
-                                        GlobalC::ucell.tpiba,
-                                        gcar,
-                                        kvec_c,
-                                        _vkb0[ipol],
-                                        _vkb0[jpol],
-                                        vkb,
-                                        vkb1,
-                                        pvkb2,
-                                        dbecp_noevc);
+                if (this->device == psi::GpuDevice && stress_mode == 2) 
+                {
+                    setmem_complex_h_op()(this->cpu_ctx, vkb1, 0, nkb * npwx);
+                    setmem_complex_h_op()(this->cpu_ctx, h_dbecp_noevc, 0, nkb * npwx);
+                    cal_dbecp_noevc_nl_host_op()(this->cpu_ctx,
+                                            ipol,
+                                            jpol,
+                                            nkb,
+                                            npw,
+                                            npwx,
+                                            ik,
+                                            GlobalC::ucell.tpiba,
+                                            gcar,
+                                            kvec_c,
+                                            _vkb0[ipol],
+                                            _vkb0[jpol],
+                                            vkb,
+                                            vkb1,
+                                            pvkb2,
+                                            h_dbecp_noevc);
+                    syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, dbecp_noevc, h_dbecp_noevc, nkb * npwx);
+                }
+                else 
+                {
+                    setmem_complex_op()(this->ctx, vkb1, 0, nkb * npwx);
+                    setmem_complex_op()(this->ctx, dbecp_noevc, 0, nkb * npwx);
+                    cal_dbecp_noevc_nl_op()(this->ctx,
+                                            ipol,
+                                            jpol,
+                                            nkb,
+                                            npw,
+                                            npwx,
+                                            ik,
+                                            GlobalC::ucell.tpiba,
+                                            gcar,
+                                            kvec_c,
+                                            _vkb0[ipol],
+                                            _vkb0[jpol],
+                                            vkb,
+                                            vkb1,
+                                            pvkb2,
+                                            dbecp_noevc);
+                }
                 gemm_op()(this->ctx,
                           transa,
                           transb,
@@ -308,18 +340,29 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
     delmem_var_op()(this->ctx, qvec);
     delmem_var_op()(this->ctx, stress);
     delmem_complex_op()(this->ctx, becp);
-    delmem_complex_op()(this->ctx, vkb1);
-    delmem_complex_op()(this->ctx, pvkb0);
     delmem_complex_op()(this->ctx, dbecp);
     delmem_complex_op()(this->ctx, dbecp_noevc);
 	delmem_var_h_op()(this->cpu_ctx, sigmanlc);
-    if (this->device == psi::GpuDevice) {
+    if (this->device == psi::GpuDevice) 
+    {
         delmem_var_op()(this->ctx, d_wg);
         delmem_var_op()(this->ctx, d_ekb);
-        delmem_var_op()(this->ctx, gcar);
         delmem_int_op()(this->ctx, atom_nh);
         delmem_int_op()(this->ctx, atom_na);
+    }
+    if (this->device == psi::GpuDevice && stress_mode != 2) {
+        delmem_var_op()(this->ctx, gcar);
+        delmem_complex_op()(this->ctx, vkb1);
+        delmem_complex_op()(this->ctx, pvkb0);
         delmem_complex_op()(this->ctx, pvkb2);
+    }
+    else 
+    {
+        delmem_complex_h_op()(this->cpu_ctx, vkb1);
+    }
+    if (this->device == psi::GpuDevice && stress_mode == 2)
+    {
+        delmem_complex_h_op()(this->cpu_ctx, h_dbecp_noevc);
     }
 	//  this->print(GlobalV::ofs_running, "nonlocal stress", stresnl);
 	ModuleBase::timer::tick("Stress_Func","stress_nl");

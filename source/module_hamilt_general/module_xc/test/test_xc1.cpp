@@ -18,7 +18,7 @@ namespace ModuleBase
 namespace GlobalV
 {
     std::string BASIS_TYPE = "";
-    bool CAL_STRESS = 0;
+    int CAL_STRESS = 0;
     int CAL_FORCE = 0;
     int NSPIN = 1;
     double XC_TEMPERATURE;

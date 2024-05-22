@@ -227,7 +227,7 @@ void Input::Default(void)
     press1 = 0.0;
     press2 = 0.0;
     press3 = 0.0;
-    cal_stress = false;
+    cal_stress = 0;
     fixed_axes = "None"; // pengfei 2018-11-9
     fixed_ibrav = false;
     fixed_atoms = false;
@@ -1021,7 +1021,7 @@ bool Input::Read(const std::string& fn)
         }
         else if (strcmp("cal_stress", word) == 0)
         {
-            read_bool(ifs, cal_stress);
+            read_value(ifs, cal_stress);
         }
         else if (strcmp("fixed_axes", word) == 0)
         {
@@ -2968,7 +2968,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         }
         if (esolver_type == "lj" || esolver_type == "dp" || mdp.md_type == "msst" || mdp.md_type == "npt")
         {
-            cal_stress = 1;
+            cal_stress = cal_stress == 0 ? 1 : cal_stress;
         }
 
         // md_prec_level only used in vc-md  liuyu 2023-03-27
@@ -2980,7 +2980,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
     else if (calculation == "cell-relax") // mohan add 2011-11-04
     {
         cal_force = 1;
-        cal_stress = 1;
+        cal_stress = cal_stress == 0 ? 1 : cal_stress;
         if (!this->relax_nmax)
             this->relax_nmax = 50;
     }
@@ -3326,7 +3326,7 @@ void Input::Bcast()
     Parallel_Common::bcast_double(press1);
     Parallel_Common::bcast_double(press2);
     Parallel_Common::bcast_double(press3);
-    Parallel_Common::bcast_bool(cal_stress);
+    Parallel_Common::bcast_int(cal_stress);
     Parallel_Common::bcast_string(fixed_axes);
     Parallel_Common::bcast_bool(fixed_ibrav);
     Parallel_Common::bcast_bool(fixed_atoms);

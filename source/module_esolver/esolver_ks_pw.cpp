@@ -1134,17 +1134,14 @@ template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::cal_force(ModuleBase::matrix& force)
 {
     Forces<double, Device> ff(GlobalC::ucell.nat);
-	if (this->__kspw_psi != nullptr)
-	{
-		this->__kspw_psi = nullptr;
-	}
-
-	if (this->__kspw_psi == nullptr)
-    {
-        this->__kspw_psi = GlobalV::precision_flag == "single"
-                               ? new psi::Psi<std::complex<double>, Device>(this->kspw_psi[0])
-                               : reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->kspw_psi);
+    if (this->__kspw_psi != nullptr && GlobalV::precision_flag == "single") {
+        delete reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->__kspw_psi);
     }
+
+    // Refresh __kspw_psi
+    this->__kspw_psi = GlobalV::precision_flag == "single"
+                           ? new psi::Psi<std::complex<double>, Device>(this->kspw_psi[0])
+                           : reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->kspw_psi);
 
     //! Calculate forces
 	ff.cal_force(force, 
@@ -1162,17 +1159,14 @@ template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::cal_stress(ModuleBase::matrix& stress)
 {
     Stress_PW<double, Device> ss(this->pelec);
-    if (this->__kspw_psi != nullptr)
-    {
-        this->__kspw_psi = nullptr;
+    if (this->__kspw_psi != nullptr && GlobalV::precision_flag == "single") {
+        delete reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->__kspw_psi);
     }
 
-    if (this->__kspw_psi == nullptr)
-    {
-		this->__kspw_psi = GlobalV::precision_flag == "single"
-			? new psi::Psi<std::complex<double>, Device>(this->kspw_psi[0])
-			: reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->kspw_psi);
-	}
+    // Refresh __kspw_psi
+    this->__kspw_psi = GlobalV::precision_flag == "single"
+                           ? new psi::Psi<std::complex<double>, Device>(this->kspw_psi[0])
+                           : reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->kspw_psi);
 	ss.cal_stress(stress,
 			GlobalC::ucell,
 			this->pw_rhod,
@@ -1181,7 +1175,8 @@ void ESolver_KS_PW<T, Device>::cal_stress(ModuleBase::matrix& stress)
 			&this->kv,
 			this->pw_wfc,
 			this->psi,
-			this->__kspw_psi);
+			this->__kspw_psi,
+            GlobalV::CAL_STRESS);
 
 	// external stress
 	double unit_transform = 0.0;
