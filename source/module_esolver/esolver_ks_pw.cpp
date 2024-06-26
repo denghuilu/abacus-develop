@@ -874,7 +874,8 @@ template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::cal_force(ModuleBase::matrix& force)
 {
     Forces<double, Device> ff(GlobalC::ucell.nat);
-    if (this->__kspw_psi != nullptr && GlobalV::precision_flag == "single") {
+    if (this->__kspw_psi != nullptr && GlobalV::precision_flag == "single")
+    {
         delete reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->__kspw_psi);
     }
 
@@ -898,7 +899,8 @@ template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::cal_stress(ModuleBase::matrix& stress)
 {
     Stress_PW<double, Device> ss(this->pelec);
-    if (this->__kspw_psi != nullptr && GlobalV::precision_flag == "single") {
+    if (this->__kspw_psi != nullptr && GlobalV::precision_flag == "single")
+    {
         delete reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->__kspw_psi);
     }
 
